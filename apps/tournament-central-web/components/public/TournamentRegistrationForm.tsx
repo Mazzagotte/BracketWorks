@@ -1,11 +1,22 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Dispatch, KeyboardEvent as ReactKeyboardEvent, SetStateAction } from 'react';
-import { CalendarDays, Check, Info, MapPin, Trophy, X } from 'lucide-react';
-import { capitalizeFirstLetter, ICON_SIZE } from '@bracketworks/ui';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { ArrowRight, Check, Info } from 'lucide-react';
+import {
+  Button,
+  CardDivider,
+  FormGrid,
+  ICON_SIZE,
+  Modal,
+  Notice,
+  SelectField,
+  TextAreaField,
+  TextField,
+  capitalizeFirstLetter,
+} from '@bracketworks/ui';
 
-import styles from '../../app/page.module.css';
+import styles from './TournamentRegistrationForm.module.css';
 import TournamentRules, { type PublicTournamentDocument } from './TournamentRules';
 import { getMyAccount } from '@/components/organizer/organizerApi';
 
@@ -66,6 +77,8 @@ type TournamentRegistrationFormProps = {
   onSubmit: () => void | Promise<void>;
   onClose?: () => void;
   footerHint?: string;
+  /** Loading or error message shown at the top of the form, for example while settings load. */
+  notice?: ReactNode;
   rulesText?: string;
   documents?: PublicTournamentDocument[];
   confirmation?: { code: string; status: string } | null;
@@ -98,15 +111,10 @@ function getRegistrationFieldInputType(field: RegistrationFieldConfigLike): 'tex
   return 'text';
 }
 
-function isWideRegistrationField(field: RegistrationFieldConfigLike): boolean {
+/** USBC number and address span both columns so names, email and phone, and city and state pair up. */
+function isFullRowRegistrationField(field: RegistrationFieldConfigLike): boolean {
   const key = normalizeRegistrationFieldKey(field.key);
-  return key.includes('email')
-    || key.includes('phone')
-    || key.includes('usbc')
-    || key.includes('address')
-    || key.includes('zip')
-    || key.includes('city')
-    || key.includes('state');
+  return key.includes('address') || key.includes('usbc');
 }
 
 function isNameOrLocationField(field: RegistrationFieldConfigLike): boolean {
@@ -145,6 +153,7 @@ export default function TournamentRegistrationForm({
   onSubmit,
   onClose,
   footerHint = 'Your entry is saved after submission.',
+  notice,
   rulesText,
   documents = [],
   confirmation,
@@ -159,7 +168,6 @@ export default function TournamentRegistrationForm({
   const confirmationRef = useRef<HTMLHeadingElement>(null);
   const mountedRef = useRef(true);
   const disclosureAgreementRef = useRef<HTMLInputElement | null>(null);
-  const disclosureTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -227,558 +235,341 @@ export default function TournamentRegistrationForm({
     }
   }, [isDisclosureOpen]);
 
-  const closeDisclosure = () => {
-    setIsDisclosureOpen(false);
-    disclosureTriggerRef.current?.focus();
+  const closeDisclosure = () => setIsDisclosureOpen(false);
+
+  const setBowlerField = (bowlerIndex: number, key: string, value: string) => {
+    setFormState((prev) => ({
+      ...prev,
+      bowlers: prev.bowlers.map((entry, index) => (index === bowlerIndex ? { ...entry, [key]: value } : entry)),
+    }));
   };
 
-  const handleDisclosureKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    event.stopPropagation();
-
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      closeDisclosure();
-      return;
-    }
-
-    if (event.key !== 'Tab') {
-      return;
-    }
-
-    const focusable = event.currentTarget.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    );
-    if (focusable.length === 0) {
-      event.preventDefault();
-      return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
+  const setAnswer = (bowlerIndex: number, questionId: string, value: RegistrationQuestionAnswerValue) => {
+    setFormState((prev) => ({
+      ...prev,
+      bowlerQuestionAnswers: prev.bowlerQuestionAnswers.map((entry, index) => (
+        index === bowlerIndex ? { ...entry, [questionId]: value } : entry
+      )),
+    }));
   };
 
-  const progress = (current: number) => <ol className={styles.registrationProgress} aria-label="Registration progress">
-    {['Details', 'Review', 'Confirmation'].map((label, index) => <li key={label}
-      className={index < current ? styles.registrationStepComplete : undefined}
-      aria-label={`${label}${index < current ? ', completed' : ''}`}
-      aria-current={index === current ? 'step' : undefined}>
-      <span className={styles.registrationStepNumber} aria-hidden="true">{index < current ? <Check size={ICON_SIZE.md} strokeWidth={3} /> : index + 1}</span>
-      <span className={styles.registrationStepLabel}>{label}</span>
-    </li>)}
-  </ol>;
+  const toggleAnswerOption = (bowlerIndex: number, questionId: string, option: string, checked: boolean) => {
+    setFormState((prev) => {
+      const current = prev.bowlerQuestionAnswers[bowlerIndex]?.[questionId];
+      const selected = Array.isArray(current) ? current : [];
+      const next = checked ? [...selected, option] : selected.filter((value) => value !== option);
+      return {
+        ...prev,
+        bowlerQuestionAnswers: prev.bowlerQuestionAnswers.map((entry, index) => (
+          index === bowlerIndex ? { ...entry, [questionId]: next } : entry
+        )),
+      };
+    });
+  };
 
-  if (confirmation) return <>
-    <header className={styles.detailsModalHeader}><h2 ref={confirmationRef} tabIndex={-1}>Registration received</h2></header>
-    <div className={styles.registrationModalBody}>
-      {progress(2)}
-      <section className={styles.registrationReviewCard}>
-        <h3>{tournamentName}</h3>
-        <p>Your confirmation number</p><strong className={styles.registrationConfirmationCode}>{confirmation.code}</strong>
-        <p>Status: {confirmation.status}</p>
-        <p>Save this number for your records. Registration does not mean payment has been collected.</p>
-        <p>Payment is collected in cash at the venue during check-in. No online payment is collected here.</p>
-      </section>
-    </div>
-    <footer className={styles.detailsModalFooter}><button type="button" className={styles.registrationSubmitButton} onClick={onClose}>Done</button></footer>
-  </>;
+  const progress = (current: number) => (
+    <ol className={styles.progress} aria-label="Registration progress">
+      {['Details', 'Review', 'Confirmation'].map((label, index) => {
+        const isComplete = index < current;
+        return (
+          <li
+            key={label}
+            className={index === current ? styles.stepCurrent : styles.step}
+            aria-label={`${label}${isComplete ? ', completed' : ''}`}
+            aria-current={index === current ? 'step' : undefined}
+          >
+            {isComplete
+              ? <Check className={styles.stepCheck} size={ICON_SIZE.sm} aria-hidden="true" />
+              : <span className={styles.stepNumber} aria-hidden="true">{index + 1}.</span>}
+            {label}
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  const renderQuestion = (question: RegistrationQuestionConfigLike, bowlerIndex: number) => {
+    const questionType = (question.type || 'short-text').toLowerCase();
+    const options = normalizeQuestionOptions(question.options);
+    const answer = formState.bowlerQuestionAnswers[bowlerIndex]?.[question.id];
+    const label = question.label || 'Untitled question';
+    const optional = !question.required;
+    const text = typeof answer === 'string' ? answer : '';
+    const key = `${question.id}-${bowlerIndex}`;
+    const onText = (event: { target: { value: string } }) => setAnswer(bowlerIndex, question.id, event.target.value);
+
+    if (questionType === 'long-text') {
+      return <TextAreaField key={key} label={label} optional={optional} fullRow value={text} required={question.required} rows={3} onChange={onText} />;
+    }
+    if (questionType === 'number' || questionType === 'date') {
+      return <TextField key={key} label={label} optional={optional} type={questionType} value={text} required={question.required} onChange={onText} />;
+    }
+    if (questionType === 'yes-no' || ((questionType === 'dropdown' || questionType === 'multiple-choice') && options.length > 0)) {
+      const choices = questionType === 'yes-no' ? [['yes', 'Yes'], ['no', 'No']] : options.map((option) => [option, option]);
+      return (
+        <SelectField key={key} label={label} optional={optional} value={text} required={question.required} onChange={onText}>
+          <option value="">Select an option</option>
+          {choices.map(([value, optionLabel]) => <option key={value} value={value}>{optionLabel}</option>)}
+        </SelectField>
+      );
+    }
+    if (questionType === 'checkbox') {
+      const selected = Array.isArray(answer) ? answer : [];
+      return (
+        <fieldset key={key} className={styles.choiceGroup}>
+          <legend className={styles.choiceLegend}>
+            {label}
+            {optional ? <span className={styles.optional}> (optional)</span> : null}
+          </legend>
+          {options.length > 0 ? options.map((option) => (
+            <label key={option} className={styles.choice}>
+              <input
+                type="checkbox"
+                checked={selected.includes(option)}
+                onChange={(event) => toggleAnswerOption(bowlerIndex, question.id, option, event.target.checked)}
+              />
+              {option}
+            </label>
+          )) : (
+            <label className={styles.choice}>
+              <input type="checkbox" checked={answer === true} onChange={(event) => setAnswer(bowlerIndex, question.id, event.target.checked)} />
+              Yes
+            </label>
+          )}
+        </fieldset>
+      );
+    }
+    return <TextField key={key} label={label} optional={optional} value={text} required={question.required} onChange={onText} />;
+  };
+
+  const sharedContactKeys = ['email', 'phone', 'address', 'city', 'state', 'zip'];
+  const canCopyContact = fields.some((field) => sharedContactKeys.includes(normalizeRegistrationFieldKey(field.key)));
+  const selectedEvent = events.find((entry) => entry.id === formState.eventId)?.name || 'Not selected';
+  const selectedSquad = squads.find((entry) => entry.id === formState.squadId)?.name || 'Not selected';
+  const selectedDivision = divisions.find((entry) => entry.id === formState.divisionId)?.name;
+
+  const formatAnswer = (answer: RegistrationQuestionAnswerValue | undefined): string => {
+    if (Array.isArray(answer)) return answer.join(', ') || 'Not provided';
+    if (typeof answer === 'boolean') return answer ? 'Yes' : 'No';
+    if (answer === 'yes') return 'Yes';
+    if (answer === 'no') return 'No';
+    return answer || 'Not provided';
+  };
+
+  const footer = confirmation ? (
+    <Button variant="primary" onClick={onClose}>Done</Button>
+  ) : (
+    <>
+      <span className={styles.footerHint}>
+        <Info size={ICON_SIZE.md} aria-hidden="true" />
+        {footerHint}
+      </span>
+      <Button
+        variant="primary"
+        onClick={openReview}
+        disabled={isSubmitting}
+        icon={<ArrowRight size={ICON_SIZE.md} aria-hidden="true" />}
+        iconPosition="end"
+      >
+        {isSubmitting ? 'Submitting...' : 'Continue to review'}
+      </Button>
+    </>
+  );
 
   return (
-    <>
-      <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
-        <h4>Register: {tournamentName}</h4>
-        {onClose ? (
-          <button type="button" className={styles.detailsModalClose} onClick={onClose} aria-label="Close tournament registration">
-            <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
-          </button>
-        ) : null}
-      </header>
-      <div ref={bodyRef} className={styles.registrationModalBody}>
-        {progress(0)}
-        <aside className={styles.registrationPaymentNotice} aria-label="Payment timing">
-          <strong>Register now, pay at check-in</strong>
-          <p>Payment is collected in cash at the venue during check-in. No online payment is collected on this form.</p>
-        </aside>
-        {(rulesText?.trim() || documents.length > 0) && <details className={styles.registrationRules}>
-          <summary>Review tournament rules and documents</summary>
-          <TournamentRules rulesText={rulesText} documents={documents} />
-        </details>}
-        <p className={styles.registrationModalLead}>Fill out this registration form to reserve your spot.</p>
-
-        <div className={styles.registrationSummary}>
-          <span className={styles.registrationSummaryIcon} aria-hidden="true">
-            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.registrationSummaryLogo} /> : <Trophy size={ICON_SIZE['2xl']} />}
-          </span>
-          <div className={styles.registrationSummaryItem}>
-            <span>Event</span>
-            <strong>{tournamentName}</strong>
-          </div>
-          <div className={styles.registrationSummaryItem}>
-            <span>Location</span>
-            <strong>{tournamentLocation || 'TBD'}</strong>
-          </div>
-          <div className={styles.registrationSummaryItem}>
-            <span>Date</span>
-            <strong>{tournamentDate || 'Date TBA'}</strong>
-          </div>
+    <Modal
+      open
+      onClose={() => onClose?.()}
+      title={confirmation ? tournamentName : `Register: ${tournamentName}`}
+      description={confirmation ? undefined : 'Choose your squad and event, then enter each bowler\'s information.'}
+      size="lg"
+      closeLabel="Close tournament registration"
+      closeOnBackdrop={false}
+      footer={footer}
+    >
+      {confirmation ? (
+        <div className={styles.form}>
+          {progress(2)}
+          <section className={styles.confirmation}>
+            <h3 ref={confirmationRef} tabIndex={-1} className={styles.subsectionTitle}>Registration received</h3>
+            <p className={styles.body}>Your confirmation number</p>
+            <strong className={styles.code}>{confirmation.code}</strong>
+            <p className={styles.body}>Status: {confirmation.status}</p>
+          </section>
+          <p className={styles.body}>Save this number for your records. Registration does not mean payment has been collected.</p>
+          <p className={styles.body}>Payment is collected in cash at the venue during check-in. No online payment is collected here.</p>
         </div>
+      ) : (
+        <div ref={bodyRef} className={styles.form}>
+          {progress(0)}
+          {notice}
+          <section aria-label="Payment timing">
+            <Notice tone="info">
+              <strong>Register now, pay at check-in.</strong> Payment is collected in cash at the venue during check-in. No online payment is collected on this form.
+            </Notice>
+          </section>
 
-        <div className={styles.registrationGrid}>
-          {squads.length > 0 && (
-            <label className={styles.registrationSelectRow}>
-              Squad
-              <select
-                value={formState.squadId}
-                onChange={(event) => setFormState((prev) => ({ ...prev, squadId: event.target.value }))}
-              >
+          <div className={styles.summary}>
+            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.logo} /> : null}
+            <dl className={styles.summaryList}>
+              <div><dt>Location</dt><dd>{tournamentLocation || 'TBD'}</dd></div>
+              <div><dt>Date</dt><dd>{tournamentDate || 'Date TBA'}</dd></div>
+            </dl>
+          </div>
+
+          {(rulesText?.trim() || documents.length > 0) ? (
+            <details className={styles.rules}>
+              <summary>Review tournament rules and documents</summary>
+              <TournamentRules rulesText={rulesText} documents={documents} />
+            </details>
+          ) : null}
+
+          <FormGrid>
+            {squads.length > 0 ? (
+              <SelectField label="Squad" value={formState.squadId} onChange={(event) => setFormState((prev) => ({ ...prev, squadId: event.target.value }))}>
                 {squads.map((entry) => (
                   <option key={entry.id} value={entry.id}>{entry.name || `${entry.dateIso || ''} ${entry.startTime || ''}`.trim() || 'Squad'}</option>
                 ))}
-              </select>
-            </label>
-          )}
+              </SelectField>
+            ) : null}
+            {events.length > 0 ? (
+              <SelectField label="Event" value={formState.eventId} onChange={(event) => setFormState((prev) => ({ ...prev, eventId: event.target.value }))}>
+                {events.map((entry) => <option key={entry.id} value={entry.id}>{entry.name || 'Untitled event'}</option>)}
+              </SelectField>
+            ) : null}
+            {divisions.length > 0 ? (
+              <SelectField label="Division" value={formState.divisionId} onChange={(event) => setFormState((prev) => ({ ...prev, divisionId: event.target.value }))}>
+                {divisions.map((entry) => <option key={entry.id} value={entry.id}>{entry.name || 'Untitled division'}</option>)}
+              </SelectField>
+            ) : null}
+          </FormGrid>
 
-          {events.length > 0 && (
-            <label className={styles.registrationSelectRow}>
-              Event
-              <select
-                value={formState.eventId}
-                onChange={(event) => setFormState((prev) => ({ ...prev, eventId: event.target.value }))}
-              >
-                {events.map((entry) => (
-                  <option key={entry.id} value={entry.id}>{entry.name || 'Untitled Event'}</option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          {divisions.length > 0 && (
-            <label className={styles.registrationSelectRow}>
-              Division
-              <select
-                value={formState.divisionId}
-                onChange={(event) => setFormState((prev) => ({ ...prev, divisionId: event.target.value }))}
-              >
-                {divisions.map((entry) => (
-                  <option key={entry.id} value={entry.id}>{entry.name || 'Untitled Division'}</option>
-                ))}
-              </select>
-            </label>
-          )}
-
-          <p className={styles.registrationBowlerCountInfo}>
-            <Info size={ICON_SIZE.xl} aria-hidden="true" />
+          <p className={styles.bowlerCount}>
+            <Info size={ICON_SIZE.md} aria-hidden="true" />
             {`This event requires ${requiredBowlerCount} bowler ${requiredBowlerCount === 1 ? 'form' : 'forms'}.`}
           </p>
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
-            <div key={`bowler-${bowlerIndex}`} className={styles.registrationBowlerSection}>
-              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={ICON_SIZE.md} /></span>{`Bowler ${bowlerIndex + 1}`}</h5>
-              {bowlerIndex === 0 && isSignedIn && <div className={styles.registrationConvenience}>
-                <button type="button" className={styles.detailsModalSecondaryAction} disabled={isLoadingProfile} onClick={() => void fillAccountInformation()}>
-                  {isLoadingProfile ? 'Loading account...' : 'Use my account information'}
-                </button>
-                <small>Fills only empty name and email fields for Bowler 1.</small>
-                {profileMessage && <p role="status">{profileMessage}</p>}
-                {profileError && <p role="alert">{profileError}</p>}
-              </div>}
-              {bowlerIndex > 0 && fields.some((field) => ['email', 'phone', 'address', 'city', 'state', 'zip'].includes(normalizeRegistrationFieldKey(field.key))) && <div className={styles.registrationConvenience}>
-                <button type="button" className={styles.detailsModalSecondaryAction} onClick={() => copyContact(bowlerIndex)}>Copy address/contact from Bowler 1</button>
-                <small>Copies once. Names and bowling details stay separate; all fields remain editable.</small>
-              </div>}
-              <div className={styles.registrationGrid}>
+            <section key={`bowler-${bowlerIndex}`} className={styles.bowler}>
+              <CardDivider />
+              <h3 className={styles.subsectionTitle}>{`Bowler ${bowlerIndex + 1}`}</h3>
+              {bowlerIndex === 0 && isSignedIn ? (
+                <div className={styles.convenience}>
+                  <Button size="sm" variant="secondary" disabled={isLoadingProfile} onClick={() => void fillAccountInformation()}>
+                    {isLoadingProfile ? 'Loading account...' : 'Use my account information'}
+                  </Button>
+                  <span className={styles.helper}>Fills only empty name and email fields for Bowler 1.</span>
+                  {profileMessage ? <p role="status" className={styles.helper}>{profileMessage}</p> : null}
+                  {profileError ? <p role="alert" className={styles.error}>{profileError}</p> : null}
+                </div>
+              ) : null}
+              {bowlerIndex > 0 && canCopyContact ? (
+                <div className={styles.convenience}>
+                  <Button size="sm" variant="secondary" onClick={() => copyContact(bowlerIndex)}>Copy address/contact from Bowler 1</Button>
+                  <span className={styles.helper}>Copies once. Names and bowling details stay separate; all fields remain editable.</span>
+                </div>
+              ) : null}
+              <FormGrid>
                 {fields.map((field) => {
                   const key = normalizeRegistrationFieldKey(field.key);
-                  const label = field.customLabel || field.label || 'Field';
-                  const required = field.mode === 'required';
-                  const inputType = getRegistrationFieldInputType(field);
                   const shouldCapitalize = isNameOrLocationField(field);
-
                   return (
-                    <label key={`${field.id}-${bowlerIndex}`} className={isWideRegistrationField(field) ? styles.registrationFieldWide : undefined}>
-                      {label} {required ? '*' : ''}
-                      <input
-                        type={inputType}
-                        value={bowlerFields[key] || ''}
-                        autoCapitalize={shouldCapitalize ? 'words' : 'off'}
-                        required={required}
-                        onChange={(event) => setFormState((prev) => {
-                          const nextBowlers = prev.bowlers.map((entry, index) => (
-                            index === bowlerIndex
-                              ? {
-                                  ...entry,
-                                  [key]: shouldCapitalize ? capitalizeFirstLetter(event.target.value) : event.target.value,
-                                }
-                              : entry
-                          ));
-
-                          return {
-                            ...prev,
-                            bowlers: nextBowlers,
-                          };
-                        })}
-                      />
-                    </label>
+                    <TextField
+                      key={`${field.id}-${bowlerIndex}`}
+                      label={field.customLabel || field.label || 'Field'}
+                      optional={field.mode === 'optional'}
+                      fullRow={isFullRowRegistrationField(field)}
+                      type={getRegistrationFieldInputType(field)}
+                      value={bowlerFields[key] || ''}
+                      autoCapitalize={shouldCapitalize ? 'words' : 'off'}
+                      required={field.mode === 'required'}
+                      onChange={(event) => setBowlerField(bowlerIndex, key, shouldCapitalize ? capitalizeFirstLetter(event.target.value) : event.target.value)}
+                    />
                   );
                 })}
-              </div>
-              {copyMessage && <p role="status">{copyMessage}</p>}
-
-              {questions.length > 0 && (
-                <div className={styles.registrationDynamicSection}>
-                  <h5>Custom Questions</h5>
-                  {questions.map((question) => (
-                    <label key={`${question.id}-${bowlerIndex}`} className={styles.registrationQuestionRow}>
-                      {question.label || 'Untitled question'} {question.required ? '*' : ''}
-                      {(() => {
-                        const questionType = (question.type || 'short-text').toLowerCase();
-                        const options = normalizeQuestionOptions(question.options);
-                        const answerSet = formState.bowlerQuestionAnswers[bowlerIndex] || {};
-                        const answer = answerSet[question.id];
-
-                        if (questionType === 'long-text') {
-                          return (
-                            <textarea
-                              value={typeof answer === 'string' ? answer : ''}
-                              required={question.required}
-                              rows={3}
-                              onChange={(event) => setFormState((prev) => {
-                                const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                  index === bowlerIndex
-                                    ? {
-                                        ...entry,
-                                        [question.id]: event.target.value,
-                                      }
-                                    : entry
-                                ));
-
-                                return {
-                                  ...prev,
-                                  bowlerQuestionAnswers: nextAnswers,
-                                };
-                              })}
-                            />
-                          );
-                        }
-
-                        if (questionType === 'number') {
-                          return (
-                            <input
-                              type="number"
-                              value={typeof answer === 'string' ? answer : ''}
-                              required={question.required}
-                              onChange={(event) => setFormState((prev) => {
-                                const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                  index === bowlerIndex
-                                    ? {
-                                        ...entry,
-                                        [question.id]: event.target.value,
-                                      }
-                                    : entry
-                                ));
-
-                                return {
-                                  ...prev,
-                                  bowlerQuestionAnswers: nextAnswers,
-                                };
-                              })}
-                            />
-                          );
-                        }
-
-                        if (questionType === 'date') {
-                          return (
-                            <input
-                              type="date"
-                              value={typeof answer === 'string' ? answer : ''}
-                              required={question.required}
-                              onChange={(event) => setFormState((prev) => {
-                                const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                  index === bowlerIndex
-                                    ? {
-                                        ...entry,
-                                        [question.id]: event.target.value,
-                                      }
-                                    : entry
-                                ));
-
-                                return {
-                                  ...prev,
-                                  bowlerQuestionAnswers: nextAnswers,
-                                };
-                              })}
-                            />
-                          );
-                        }
-
-                        if (questionType === 'yes-no') {
-                          return (
-                            <select
-                              value={typeof answer === 'string' ? answer : ''}
-                              required={question.required}
-                              onChange={(event) => setFormState((prev) => {
-                                const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                  index === bowlerIndex
-                                    ? {
-                                        ...entry,
-                                        [question.id]: event.target.value,
-                                      }
-                                    : entry
-                                ));
-
-                                return {
-                                  ...prev,
-                                  bowlerQuestionAnswers: nextAnswers,
-                                };
-                              })}
-                            >
-                              <option value="">Select an option</option>
-                              <option value="yes">Yes</option>
-                              <option value="no">No</option>
-                            </select>
-                          );
-                        }
-
-                        if ((questionType === 'dropdown' || questionType === 'multiple-choice') && options.length > 0) {
-                          return (
-                            <select
-                              value={typeof answer === 'string' ? answer : ''}
-                              required={question.required}
-                              onChange={(event) => setFormState((prev) => {
-                                const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                  index === bowlerIndex
-                                    ? {
-                                        ...entry,
-                                        [question.id]: event.target.value,
-                                      }
-                                    : entry
-                                ));
-
-                                return {
-                                  ...prev,
-                                  bowlerQuestionAnswers: nextAnswers,
-                                };
-                              })}
-                            >
-                              <option value="">Select an option</option>
-                              {options.map((option) => (
-                                <option key={option} value={option}>{option}</option>
-                              ))}
-                            </select>
-                          );
-                        }
-
-                        if (questionType === 'checkbox' && options.length > 0) {
-                          const selectedOptions = Array.isArray(answer) ? answer : [];
-
-                          return (
-                            <div className={styles.registrationQuestionChoices}>
-                              {options.map((option) => {
-                                const isChecked = selectedOptions.includes(option);
-
-                                return (
-                                  <label key={option} className={styles.registrationChoiceItem}>
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(event) => {
-                                        const checked = event.target.checked;
-                                        setFormState((prev) => {
-                                          const currentBowlerAnswers = prev.bowlerQuestionAnswers[bowlerIndex] || {};
-                                          const currentQuestionAnswer = currentBowlerAnswers[question.id];
-                                          const prevSelected = Array.isArray(currentQuestionAnswer)
-                                            ? currentQuestionAnswer as string[]
-                                            : [];
-
-                                          const nextSelected = checked
-                                            ? [...prevSelected, option]
-                                            : prevSelected.filter((value) => value !== option);
-
-                                          const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                            index === bowlerIndex
-                                              ? {
-                                                  ...entry,
-                                                  [question.id]: nextSelected,
-                                                }
-                                              : entry
-                                          ));
-
-                                          return {
-                                            ...prev,
-                                            bowlerQuestionAnswers: nextAnswers,
-                                          };
-                                        });
-                                      }}
-                                    />
-                                    <span>{option}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          );
-                        }
-
-                        if (questionType === 'checkbox') {
-                          return (
-                            <label className={styles.registrationChoiceItem}>
-                              <input
-                                type="checkbox"
-                                checked={answer === true}
-                                onChange={(event) => setFormState((prev) => {
-                                  const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                    index === bowlerIndex
-                                      ? {
-                                          ...entry,
-                                          [question.id]: event.target.checked,
-                                        }
-                                      : entry
-                                  ));
-
-                                  return {
-                                    ...prev,
-                                    bowlerQuestionAnswers: nextAnswers,
-                                  };
-                                })}
-                              />
-                              <span>Yes</span>
-                            </label>
-                          );
-                        }
-
-                        return (
-                          <input
-                            value={typeof answer === 'string' ? answer : ''}
-                            required={question.required}
-                            onChange={(event) => setFormState((prev) => {
-                              const nextAnswers = prev.bowlerQuestionAnswers.map((entry, index) => (
-                                index === bowlerIndex
-                                  ? {
-                                      ...entry,
-                                      [question.id]: event.target.value,
-                                    }
-                                  : entry
-                              ));
-
-                              return {
-                                ...prev,
-                                bowlerQuestionAnswers: nextAnswers,
-                              };
-                            })}
-                          />
-                        );
-                      })()}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+                {questions.map((question) => renderQuestion(question, bowlerIndex))}
+              </FormGrid>
+              {bowlerIndex > 0 && copyMessage ? <p role="status" className={styles.helper}>{copyMessage}</p> : null}
+            </section>
           ))}
-        </div>
 
-        <label className={styles.registrationNotesRow}>
-          Notes for Organizer
-          <textarea
+          <CardDivider />
+          <TextAreaField
+            label="Notes for the organizer"
+            optional
             value={formState.notes}
             onChange={(event) => setFormState((prev) => ({ ...prev, notes: event.target.value }))}
             rows={3}
           />
-        </label>
 
-        {submitMessage && <p className={styles.registrationSubmitMessage}>{submitMessage}</p>}
-      </div>
-      <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
-        <span className={styles.detailsModalHint}><Info size={ICON_SIZE.xl} aria-hidden="true" />{footerHint}</span>
-        <button
-          ref={disclosureTriggerRef}
-          type="button"
-          className={styles.registrationSubmitButton}
-          onClick={openReview}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Submitting...' : 'Continue to Review'}
-        </button>
-      </footer>
-      {isDisclosureOpen
-        ? (
-          <div
-            className={styles.registrationDisclosureBackdrop}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                closeDisclosure();
-              }
-            }}
-          >
-            <section
-              className={styles.registrationDisclosureDialog}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="registration-disclosure-title"
-              aria-describedby="registration-disclosure-copy"
-              tabIndex={-1}
-              onKeyDown={handleDisclosureKeyDown}
+          {submitMessage ? <Notice tone="info" role="status">{submitMessage}</Notice> : null}
+        </div>
+      )}
+
+      <Modal
+        open={isDisclosureOpen}
+        onClose={closeDisclosure}
+        title="Please review before submitting"
+        size="lg"
+        closeLabel="Close review"
+        closeOnBackdrop={false}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={closeDisclosure}>Go back</Button>
+            <Button
+              variant="primary"
+              disabled={!formState.acceptTerms || isSubmitting}
+              onClick={() => {
+                setIsDisclosureOpen(false);
+                void onSubmit();
+              }}
             >
-              <div className={styles.registrationDisclosureCopy}>
-                {progress(1)}
-                <span className={styles.detailsModalEyebrow}>Registration Disclosure</span>
-                <h2 id="registration-disclosure-title">Please review before submitting</h2>
-                <section className={styles.registrationReviewCard} aria-label="Registration review">
-                  <dl>
-                    <dt>Tournament</dt><dd>{tournamentName}</dd>
-                    <dt>Event</dt><dd>{events.find((entry) => entry.id === formState.eventId)?.name || 'Not selected'}</dd>
-                    <dt>Squad</dt><dd>{squads.find((entry) => entry.id === formState.squadId)?.name || 'Not selected'}</dd>
-                    {formState.divisionId && <><dt>Division</dt><dd>{divisions.find((entry) => entry.id === formState.divisionId)?.name}</dd></>}
-                  </dl>
-                  {formState.bowlers.map((bowler, index) => <div key={index}>
-                    <h3>Bowler {index + 1}</h3>
-                    <dl>{fields.map((field) => <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>)}
-                    {questions.map((question) => {
-                      const answer = formState.bowlerQuestionAnswers[index]?.[question.id];
-                      return <div key={question.id}><dt>{question.label}</dt><dd>{Array.isArray(answer) ? answer.join(', ') : typeof answer === 'boolean' ? answer ? 'Yes' : 'No' : answer || 'Not provided'}</dd></div>;
-                    })}</dl>
-                  </div>)}
-                  {formState.notes && <p>Notes: {formState.notes}</p>}
-                  <p>Payment: cash at the venue during check-in. No online payment is collected.</p>
-                </section>
-                <p id="registration-disclosure-copy">
-                  By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
-                </p>
+              {isSubmitting ? 'Submitting...' : 'Agree and submit registration'}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.form}>
+          {progress(1)}
+          <section className={styles.review} aria-label="Registration review">
+            <dl className={styles.reviewList}>
+              <div><dt>Tournament</dt><dd>{tournamentName}</dd></div>
+              <div><dt>Event</dt><dd>{selectedEvent}</dd></div>
+              <div><dt>Squad</dt><dd>{selectedSquad}</dd></div>
+              {formState.divisionId ? <div><dt>Division</dt><dd>{selectedDivision}</dd></div> : null}
+            </dl>
+            {formState.bowlers.map((bowler, index) => (
+              <div key={index} className={styles.reviewGroup}>
+                <CardDivider />
+                <h3 className={styles.subsectionTitle}>Bowler {index + 1}</h3>
+                <dl className={styles.reviewList}>
+                  {fields.map((field) => (
+                    <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>
+                  ))}
+                  {questions.map((question) => (
+                    <div key={question.id}><dt>{question.label}</dt><dd>{formatAnswer(formState.bowlerQuestionAnswers[index]?.[question.id])}</dd></div>
+                  ))}
+                </dl>
               </div>
-              <label className={styles.registrationConsentRow}>
-                <input
-                  ref={disclosureAgreementRef}
-                  type="checkbox"
-                  checked={formState.acceptTerms}
-                  onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
-                />
-                <span>I have read and agree to this disclosure.</span>
-              </label>
-              <div className={styles.registrationDisclosureActions}>
-                <button type="button" className={styles.registrationDisclosureCancel} onClick={closeDisclosure}>
-                  Go Back
-                </button>
-                <button
-                  type="button"
-                  className={styles.registrationSubmitButton}
-                  disabled={!formState.acceptTerms || isSubmitting}
-                  onClick={() => {
-                    setIsDisclosureOpen(false);
-                    void onSubmit();
-                  }}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Agree & Submit Registration'}
-                </button>
-              </div>
-            </section>
-          </div>
-        )
-        : null}
-    </>
+            ))}
+            <CardDivider />
+            {formState.notes ? <p className={styles.body}>Notes: {formState.notes}</p> : null}
+            <p className={styles.body}>Payment: cash at the venue during check-in. No online payment is collected.</p>
+          </section>
+          <p className={styles.body}>
+            By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
+          </p>
+          <label className={styles.choice}>
+            <input
+              ref={disclosureAgreementRef}
+              type="checkbox"
+              checked={formState.acceptTerms}
+              onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
+            />
+            I have read and agree to this disclosure.
+          </label>
+        </div>
+      </Modal>
+    </Modal>
   );
 }

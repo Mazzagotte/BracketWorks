@@ -67,17 +67,17 @@ describe('registration conveniences and review flow', () => {
     render(<Form />);
     await user.click(screen.getByRole('button', { name: 'Copy address/contact from Bowler 1' }));
     for (const key of ['email', 'phone', 'address', 'city', 'state', 'zip']) {
-      expect(bowler(2).getByLabelText(key)).toHaveValue(initial.bowlers[0][key]);
+      expect(bowler(2).getByLabelText(new RegExp(`^${key}`))).toHaveValue(initial.bowlers[0][key]);
     }
-    expect(bowler(2).getByLabelText('first_name')).toHaveValue('Sam');
-    expect(bowler(2).getByLabelText('usbc_number')).toHaveValue('222');
-    expect(bowler(2).getByLabelText('average')).toHaveValue(180);
-    await user.clear(bowler(1).getByLabelText('address'));
-    await user.type(bowler(1).getByLabelText('address'), '2 Main');
-    expect(bowler(2).getByLabelText('address')).toHaveValue('1 Main');
-    await user.clear(bowler(2).getByLabelText('email'));
-    await user.type(bowler(2).getByLabelText('email'), 'sam@example.com');
-    expect(bowler(1).getByLabelText('email')).toHaveValue('alex@example.com');
+    expect(bowler(2).getByLabelText(/^first_name/)).toHaveValue('Sam');
+    expect(bowler(2).getByLabelText(/^usbc_number/)).toHaveValue('222');
+    expect(bowler(2).getByLabelText(/^average/)).toHaveValue(180);
+    await user.clear(bowler(1).getByLabelText(/^address/));
+    await user.type(bowler(1).getByLabelText(/^address/), '2 Main');
+    expect(bowler(2).getByLabelText(/^address/)).toHaveValue('1 Main');
+    await user.clear(bowler(2).getByLabelText(/^email/));
+    await user.type(bowler(2).getByLabelText(/^email/), 'sam@example.com');
+    expect(bowler(1).getByLabelText(/^email/)).toHaveValue('alex@example.com');
   });
 
   it('offers opt-in profile prefill only to signed-in users and preserves typed details', async () => {
@@ -90,10 +90,10 @@ describe('registration conveniences and review flow', () => {
     render(<Form value={{ ...initial, bowlers: [{ first_name: 'Already typed' }, initial.bowlers[1]] }} />);
     expect(getMyAccount).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Use my account information' }));
-    await waitFor(() => expect(bowler(1).getByLabelText('email')).toHaveValue('account@example.com'));
-    expect(bowler(1).getByLabelText('first_name')).toHaveValue('Already typed');
-    expect(bowler(1).getByLabelText('last_name')).toHaveValue('Player');
-    expect(bowler(2).getByLabelText('first_name')).toHaveValue('Sam');
+    await waitFor(() => expect(bowler(1).getByLabelText(/^email/)).toHaveValue('account@example.com'));
+    expect(bowler(1).getByLabelText(/^first_name/)).toHaveValue('Already typed');
+    expect(bowler(1).getByLabelText(/^last_name/)).toHaveValue('Player');
+    expect(bowler(2).getByLabelText(/^first_name/)).toHaveValue('Sam');
   });
 
   it('does not offer profile prefill to visitors and explains payment before data entry', () => {
@@ -110,13 +110,13 @@ describe('registration conveniences and review flow', () => {
     render(<Form />);
     await user.click(screen.getByRole('button', { name: 'Use my account information' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load profile.');
-    expect(bowler(1).getByLabelText('first_name')).toHaveValue('Alex');
+    expect(bowler(1).getByLabelText(/^first_name/)).toHaveValue('Alex');
   });
 
   it('reviews both bowlers and answers, allows going back, and submits only after agreement', async () => {
     const user = userEvent.setup();
     render(<Form />);
-    await user.click(screen.getByRole('button', { name: 'Continue to Review' }));
+    await user.click(screen.getByRole('button', { name: 'Continue to review' }));
     const dialog = screen.getByRole('dialog', { name: 'Please review before submitting' });
     expect(within(dialog).getByLabelText('Registration progress').querySelector('[aria-current="step"]')).toHaveTextContent('Review');
     expect(within(dialog).getByRole('listitem', { name: 'Details, completed' })).toBeInTheDocument();
@@ -127,21 +127,21 @@ describe('registration conveniences and review flow', () => {
     expect(review).toHaveTextContent('Sam');
     expect(review).toHaveTextContent('Large');
     expect(review).toHaveTextContent('Small');
-    expect(within(dialog).getByRole('button', { name: 'Agree & Submit Registration' })).toBeDisabled();
-    await user.click(within(dialog).getByRole('button', { name: 'Go Back' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(bowler(1).getByLabelText('first_name')).toHaveValue('Alex');
-    await user.click(screen.getByRole('button', { name: 'Continue to Review' }));
+    expect(within(dialog).getByRole('button', { name: 'Agree and submit registration' })).toBeDisabled();
+    await user.click(within(dialog).getByRole('button', { name: 'Go back' }));
+    expect(screen.queryByRole('dialog', { name: 'Please review before submitting' })).not.toBeInTheDocument();
+    expect(bowler(1).getByLabelText(/^first_name/)).toHaveValue('Alex');
+    await user.click(screen.getByRole('button', { name: 'Continue to review' }));
     await user.click(screen.getByRole('checkbox', { name: 'I have read and agree to this disclosure.' }));
-    await user.click(screen.getByRole('button', { name: 'Agree & Submit Registration' }));
+    await user.click(screen.getByRole('button', { name: 'Agree and submit registration' }));
     expect(submit).toHaveBeenCalledTimes(1);
   });
 
   it('does not enter review when a required field is missing', async () => {
     const user = userEvent.setup();
     render(<Form requiredEmail />);
-    await user.click(screen.getByRole('button', { name: 'Continue to Review' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continue to review' }));
+    expect(screen.queryByRole('dialog', { name: 'Please review before submitting' })).not.toBeInTheDocument();
     expect(submit).not.toHaveBeenCalled();
   });
 
@@ -154,7 +154,7 @@ describe('registration conveniences and review flow', () => {
     expect(screen.getByLabelText('Registration progress').querySelector('[aria-current="step"]')).toHaveTextContent('Confirmation');
     expect(screen.getByRole('listitem', { name: 'Details, completed' })).toBeInTheDocument();
     expect(screen.getByRole('listitem', { name: 'Review, completed' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Continue to Review' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue to review' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Done' }));
     expect(done).toHaveBeenCalledTimes(1);
   });

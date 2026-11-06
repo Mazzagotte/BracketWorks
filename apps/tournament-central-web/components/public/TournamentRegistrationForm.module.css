@@ -1,0 +1,210 @@
+/* Tournament registration form inside the shared Modal: docs/ui-standards.md sections 6 and 8. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Steps: plain text, current step in primary text, completed steps with a success check. */
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step,
+.stepCurrent {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.stepCurrent {
+  font-weight: var(--font-weight-semibold);
+  color: var(--bw-text-title);
+}
+
+.stepCheck {
+  color: var(--color-success);
+}
+
+.stepNumber {
+  font-variant-numeric: tabular-nums;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.logo {
+  flex-shrink: 0;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
+
+.summaryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+
+.summaryList dt,
+.reviewList dt {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.summaryList dd,
+.reviewList dd {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+.rules summary {
+  font: var(--type-button);
+  color: var(--color-accent-primary);
+  cursor: pointer;
+}
+
+.rules > section {
+  margin-top: var(--space-4);
+}
+
+.bowlerCount {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.bowler,
+.reviewGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.subsectionTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.convenience {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.helper {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.error {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--color-danger);
+}
+
+.choiceGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choiceLegend {
+  width: 100%;
+  margin-bottom: var(--space-1-5);
+  padding: 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.optional {
+  font-weight: var(--font-weight-normal);
+  color: var(--bw-text-body);
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  cursor: pointer;
+}
+
+.choice input {
+  accent-color: var(--color-accent-primary);
+}
+
+.footerHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reviewList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.code {
+  font: var(--type-stat);
+  font-family: var(--font-family-code);
+  color: var(--bw-text-title);
+}
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+@media (max-width: 767px) {
+  .reviewList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footerHint {
+    margin-right: 0;
+  }
+}

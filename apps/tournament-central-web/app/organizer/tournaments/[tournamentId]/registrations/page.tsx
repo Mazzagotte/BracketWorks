@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
 import { ArrowDownToLine, CircleDollarSign, MoreHorizontal, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import {
   Button,
@@ -26,7 +25,6 @@ import {
   TableToolbar,
   TextAreaField,
   TextField,
-  useModalFocus,
 } from '@bracketworks/ui';
 
 import {
@@ -42,7 +40,6 @@ import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney } from '@/components/organizer/organizerFormatting';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
-import publicStyles from '@/app/page.module.css';
 import styles from './registrations.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
@@ -767,27 +764,25 @@ export default function OrganizerTournamentRegistrationsPage() {
       ) : null}
 
       {isFormOpen && manualRegistrationConfig ? (
-        <ManualRegistrationSurface onClose={closeManualRegistration} label={`Manual registration for ${tournamentName}`}>
-          <TournamentRegistrationForm
-            tournamentName={manualRegistrationConfig.tournament_name || tournamentName}
-            tournamentDate={[tournament?.start_date, tournament?.end_date].filter(Boolean).join(' - ')}
-            tournamentLocation={tournament?.location || 'TBD'}
-            tournamentLogoUrl={tournament?.has_logo ? `/api/v1/tc/tournaments/${tournamentId}/logo` : null}
-            squads={manualSquadsForEvent}
-            events={manualEventsForSquad}
-            divisions={manualDivisionsForEvent}
-            fields={manualFields}
-            questions={manualQuestions}
-            requiredBowlerCount={manualRequiredBowlerCount}
-            formState={manualRegistrationForm}
-            setFormState={setManualRegistrationForm}
-            submitMessage={manualRegistrationError || manualRegistrationMessage}
-            isSubmitting={isManualRegistrationSubmitting}
-            onSubmit={() => { void handleManualRegistrationSubmit(); }}
-            onClose={closeManualRegistration}
-            footerHint="Entered by tournament staff on behalf of the participant."
-          />
-        </ManualRegistrationSurface>
+        <TournamentRegistrationForm
+          tournamentName={manualRegistrationConfig.tournament_name || tournamentName}
+          tournamentDate={[tournament?.start_date, tournament?.end_date].filter(Boolean).join(' - ')}
+          tournamentLocation={tournament?.location || 'TBD'}
+          tournamentLogoUrl={tournament?.has_logo ? `/api/v1/tc/tournaments/${tournamentId}/logo` : null}
+          squads={manualSquadsForEvent}
+          events={manualEventsForSquad}
+          divisions={manualDivisionsForEvent}
+          fields={manualFields}
+          questions={manualQuestions}
+          requiredBowlerCount={manualRequiredBowlerCount}
+          formState={manualRegistrationForm}
+          setFormState={setManualRegistrationForm}
+          submitMessage={manualRegistrationError || manualRegistrationMessage}
+          isSubmitting={isManualRegistrationSubmitting}
+          onSubmit={() => { void handleManualRegistrationSubmit(); }}
+          onClose={closeManualRegistration}
+          footerHint="Entered by tournament staff on behalf of the participant."
+        />
       ) : null}
 
       <Modal
@@ -897,17 +892,3 @@ export default function OrganizerTournamentRegistrationsPage() {
   );
 }
 
-/**
- * Frame for the shared registration form, which draws its own header and footer. It matches the
- * public site's registration dialog; both move to the shared Modal when the public pages migrate.
- */
-function ManualRegistrationSurface({ onClose, label, children }: { onClose: () => void; label: string; children: ReactNode }) {
-  const dialogRef = useModalFocus<HTMLElement>(true, onClose);
-  return (
-    <div className={publicStyles.detailsModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section ref={dialogRef} tabIndex={-1} className={publicStyles.registrationModalCard} role="dialog" aria-modal="true" aria-label={label}>
-        {children}
-      </section>
-    </div>
-  );
-}

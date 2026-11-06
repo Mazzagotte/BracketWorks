@@ -14,7 +14,7 @@ import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
 import { useModalFocus } from '@/lib/useModalFocus';
-import { ICON_SIZE } from '@bracketworks/ui';
+import { ICON_SIZE, Notice } from '@bracketworks/ui';
 
 const TournamentRegistrationForm = dynamic(() => import('@/components/public/TournamentRegistrationForm'));
 
@@ -644,7 +644,6 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
       resizeObserver.disconnect();
     };
   }, []);
-  const registrationModalRef = useModalFocus<HTMLElement>(Boolean(registrationTournamentId), () => setRegistrationTournamentId(null));
   const lastTriggerRef = useRef<HTMLElement | null>(null);
 
   const getRegistrationConfigUrl = useCallback((tournament: Tournament | null): string | null => {
@@ -1864,44 +1863,30 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
             )}
 
             {registrationTournament && (
-              <div className={styles.detailsModalBackdrop} onClick={closeRegistrationModal}>
-                <section
-                  ref={registrationModalRef}
-                  tabIndex={-1}
-                  className={styles.registrationModalCard}
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label="Tournament registration"
-                  aria-describedby="tournament-registration-description"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <p id="tournament-registration-description" className={styles.srOnly}>Choose your event and squad, then enter bowler information to register.</p>
-                  {isRegistrationConfigLoading && <p className={styles.detailsModalHint}>Loading tournament registration settings...</p>}
-                  {registrationConfigError && <p className={styles.registrationError}>{registrationConfigError}</p>}
-
-                  <TournamentRegistrationForm
-                    tournamentName={registrationTournament.name}
-                    tournamentDate={registrationTournament.date}
-                    tournamentLocation={registrationTournament.locationText}
-                    tournamentLogoUrl={registrationTournament.logoUrl}
-                    rulesText={registrationConfig?.details?.rulesText}
-                    documents={registrationConfig?.documents}
-                    confirmation={registrationConfirmation}
-                    squads={squadsForSelectedEvent}
-                    events={eventsForSelectedSquad}
-                    divisions={divisionsForSelectedEvent}
-                    fields={registrationFields}
-                    questions={registrationQuestions}
-                    requiredBowlerCount={requiredBowlerCount}
-                    formState={registrationForm}
-                    setFormState={setRegistrationForm}
-                    submitMessage={registrationSubmitMessage}
-                    isSubmitting={isSubmittingRegistration}
-                    onSubmit={handleRegistrationSubmit}
-                    onClose={closeRegistrationModal}
-                  />
-                </section>
-              </div>
+              <TournamentRegistrationForm
+                notice={isRegistrationConfigLoading
+                  ? <Notice tone="info" role="status">Loading tournament registration settings...</Notice>
+                  : registrationConfigError ? <Notice tone="danger" role="alert">{registrationConfigError}</Notice> : null}
+                tournamentName={registrationTournament.name}
+                tournamentDate={registrationTournament.date}
+                tournamentLocation={registrationTournament.locationText}
+                tournamentLogoUrl={registrationTournament.logoUrl}
+                rulesText={registrationConfig?.details?.rulesText}
+                documents={registrationConfig?.documents}
+                confirmation={registrationConfirmation}
+                squads={squadsForSelectedEvent}
+                events={eventsForSelectedSquad}
+                divisions={divisionsForSelectedEvent}
+                fields={registrationFields}
+                questions={registrationQuestions}
+                requiredBowlerCount={requiredBowlerCount}
+                formState={registrationForm}
+                setFormState={setRegistrationForm}
+                submitMessage={registrationSubmitMessage}
+                isSubmitting={isSubmittingRegistration}
+                onSubmit={handleRegistrationSubmit}
+                onClose={closeRegistrationModal}
+              />
             )}
           </aside>
         </div>

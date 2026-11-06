@@ -98,7 +98,7 @@ describe('public tournament discovery', () => {
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
     await user.click(within(await screen.findByRole('dialog', { name: 'Fall Open' })).getByRole('button', { name: 'Sign Up' }));
-    expect(await screen.findByRole('dialog', { name: 'Tournament registration' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Register: Fall Open' })).toBeInTheDocument();
     expect(window.location.search).toBe('?tournament=tc-1');
     await user.click(await screen.findByRole('button', { name: 'Close tournament registration' }));
     expect(await screen.findByRole('dialog', { name: 'Fall Open' })).toHaveFocus();
@@ -117,14 +117,14 @@ describe('public tournament discovery', () => {
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
     await user.click(screen.getAllByRole('button', { name: 'Register' })[0]);
-    await user.click(await screen.findByRole('button', { name: 'Continue to Review' }));
+    await user.click(await screen.findByRole('button', { name: 'Continue to review' }));
     const review = screen.getByRole('dialog', { name: 'Please review before submitting' });
     await user.click(within(review).getByRole('checkbox'));
     expect(within(review).getByRole('checkbox')).toHaveFocus();
-    await user.click(within(review).getByRole('button', { name: 'Agree & Submit Registration' }));
+    await user.click(within(review).getByRole('button', { name: 'Agree and submit registration' }));
     expect(await screen.findByText('FO-2099-0007')).toBeInTheDocument();
     expect(screen.getByText('Status: confirmed')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Continue to Review' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue to review' })).not.toBeInTheDocument();
   });
 
   it('traps keyboard focus in details, closes on Escape, and restores the trigger', async () => {
