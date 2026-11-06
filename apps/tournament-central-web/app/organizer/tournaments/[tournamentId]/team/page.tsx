@@ -1,8 +1,24 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Mail, Shield, UserMinus, UserPlus, UsersRound } from 'lucide-react';
+import { MoreHorizontal, UserMinus, UserPlus } from 'lucide-react';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  ICON_SIZE,
+  Menu,
+  MenuItem,
+  Notice,
+  Page,
+  PageColumns,
+  PageHeader,
+  SelectField,
+  TextField,
+} from '@bracketworks/ui';
 
 import {
   inviteTournamentStaff,
@@ -14,14 +30,14 @@ import {
 } from '@/components/organizer/organizerApi';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
-import styles from '../page.module.css';
-import localStyles from './team.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import cells from '@/components/organizer/OrganizerTable.module.css';
+import styles from './team.module.css';
+
+const EMPTY_VALUE = '\u2014';
 
 const roleLabels: Record<StaffRole, string> = {
-  tournament_admin: 'Tournament Admin',
-  entries_manager: 'Entries Manager',
+  tournament_admin: 'Tournament admin',
+  entries_manager: 'Entries manager',
   scorer: 'Scorer',
   viewer: 'Viewer',
 };
@@ -39,10 +55,6 @@ function getCurrentUserId(): number | null {
   const stored = localStorage.getItem('user_id');
   const parsed = stored ? Number(stored) : NaN;
   return Number.isInteger(parsed) ? parsed : null;
-}
-
-function getInitials(name: string): string {
-  return name.trim().split(/\s+/u).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join('') || '?';
 }
 
 export default function OrganizerTournamentTeamPage() {
@@ -143,189 +155,121 @@ export default function OrganizerTournamentTeamPage() {
     }
   };
 
+  const inviteCard = canManageStaff ? (
+    <Card aria-label="Invite a team member">
+      <CardHeader title="Invite staff" description="Invitations expire after 7 days." />
+      <form onSubmit={handleInvite} className={styles.inviteForm}>
+        {inviteError ? <Notice tone="danger" role="alert">{inviteError}</Notice> : null}
+        {inviteMessage ? <Notice tone="success" role="status">{inviteMessage}</Notice> : null}
+        <TextField
+          label="Email"
+          type="email"
+          value={inviteEmail}
+          onChange={(event) => setInviteEmail(event.target.value)}
+          placeholder="teammate@example.com"
+          required
+        />
+        <SelectField
+          label="Role"
+          value={inviteRole}
+          onChange={(event) => setInviteRole(event.target.value as StaffRole)}
+          helper={roleDescriptions[inviteRole]}
+        >
+          {roleOptions.map((role) => (
+            <option key={role} value={role}>{roleLabels[role]}</option>
+          ))}
+        </SelectField>
+        <div className={styles.inviteActions}>
+          <Button type="submit" variant="primary" icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />} disabled={isInviting}>
+            {isInviting ? 'Sending...' : 'Send invitation'}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  ) : (
+    <Notice tone="info">Team access is managed by the tournament owner and tournament admins.</Notice>
+  );
+
+  const membersCard = (
+    <Card padding="flush" aria-label="Team members">
+      <CardHeader title="Team members" description={`${staff.length} ${staff.length === 1 ? 'member' : 'members'}`} />
+      <DataTable caption="Team members" className={cells.nowrap}>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Role</th>
+            {showMemberActions ? <th scope="col"><span className="sr-only">Actions</span></th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {staff.map((member) => {
+            const isOwner = member.role === 'owner';
+            const isSelf = currentUserId !== null && member.user_id === currentUserId;
+            const canChange = !isOwner && member.id !== null;
+            return (
+              <tr key={`${member.user_id}-${member.role}`}>
+                <td>
+                  <span className={styles.identity}>
+                    <Avatar name={member.display_name} />
+                    <span className={cells.primaryText}>{member.display_name}</span>
+                    {isSelf ? <Badge tone="neutral">You</Badge> : null}
+                  </span>
+                </td>
+                <td data-tone="secondary">{member.email ?? EMPTY_VALUE}</td>
+                <td>
+                  {!canChange ? (
+                    <Badge tone="neutral">Owner</Badge>
+                  ) : canManageStaff ? (
+                    <SelectField
+                      label={`Role for ${member.display_name}`}
+                      hideLabel
+                      className={styles.roleSelect}
+                      value={member.role}
+                      onChange={(event) => { void handleRoleChange(member, event.target.value as StaffRole); }}
+                      disabled={isMutating}
+                    >
+                      {roleOptions.map((role) => (
+                        <option key={role} value={role}>{roleLabels[role]}</option>
+                      ))}
+                    </SelectField>
+                  ) : (
+                    <Badge tone="neutral">{roleLabels[member.role as StaffRole]}</Badge>
+                  )}
+                </td>
+                {showMemberActions ? (
+                  <td data-align="right">
+                    {canChange ? (
+                      <Menu triggerLabel={`More actions for ${member.display_name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                        <MenuItem
+                          tone="danger"
+                          icon={<UserMinus size={ICON_SIZE.md} />}
+                          onSelect={() => setPendingRemoval(member)}
+                          disabled={isMutating}
+                          aria-label={`Remove ${member.display_name} from team`}
+                        >
+                          Remove from team
+                        </MenuItem>
+                      </Menu>
+                    ) : null}
+                  </td>
+                ) : null}
+              </tr>
+            );
+          })}
+        </tbody>
+      </DataTable>
+    </Card>
+  );
+
   return (
-    <main className={styles.registrationPage}>
-      <header className={styles.registrationHeader}>
-        <div>
-          <span className={styles.registrationEyebrow}>Tournament team</span>
-          <h1>Team</h1>
-          <p>Invite co-organizers and manage staff access for {tournamentName}.</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+    <Page>
+      <PageHeader title="Team" description={`Invite co-organizers and manage staff access for ${tournamentName}.`} />
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isLoading ? (
-        <div className={localStyles.loadingLayout} role="status" aria-label="Loading tournament team" aria-busy="true">
-          <span className={localStyles.loadingAnnouncement}>Loading team members and access settings...</span>
-          <section className={`${styles.registrationTableCard} ${localStyles.loadingCard}`} aria-hidden="true">
-            <div className={styles.registrationPanelHeading}>
-              <div>
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonHeading}`} />
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonCaption}`} />
-              </div>
-            </div>
-            <div className={localStyles.loadingInviteFields}>
-              <div className={localStyles.loadingField}>
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonLabel}`} />
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonInput}`} />
-              </div>
-              <div className={localStyles.loadingField}>
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonLabel}`} />
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonInput}`} />
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonRoleHint}`} />
-              </div>
-              <div className={localStyles.loadingInviteAction}>
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonButton}`} />
-              </div>
-            </div>
-          </section>
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+      {isLoading ? <Notice tone="info" role="status">Loading team members and access settings...</Notice> : null}
 
-          <section className={`${styles.registrationTableCard} ${localStyles.loadingCard}`} aria-hidden="true">
-            <div className={styles.registrationPanelHeading}>
-              <div>
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonHeading}`} />
-                <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonCaption}`} />
-              </div>
-            </div>
-            <div className={localStyles.loadingMemberList}>
-              {Array.from({ length: 3 }, (_, index) => (
-                <div className={localStyles.loadingMemberRow} key={index}>
-                  <div className={localStyles.loadingMemberIdentity}>
-                    <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonAvatar}`} />
-                    <div className={localStyles.loadingMemberText}>
-                      <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonName}`} />
-                      <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonEmail}`} />
-                    </div>
-                  </div>
-                  <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonRole}`} />
-                  <div className={`${localStyles.skeletonBlock} ${localStyles.skeletonRemove}`} />
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      ) : null}
-
-      {!isLoading && !error ? (
-        <>
-          {canManageStaff ? <section className={styles.registrationTableCard} aria-label="Invite a team member">
-            <div className={styles.registrationPanelHeading}>
-              <div>
-                <h2><span className={localStyles.headingIcon}><Mail size={ICON_SIZE.md} aria-hidden="true" /></span>Invite Staff</h2>
-                <p>Invitations expire after 7 days.</p>
-              </div>
-            </div>
-            <form onSubmit={handleInvite} className={`${styles.entryEditGrid} ${localStyles.inviteForm}`}>
-              {inviteError ? <p className={`${styles.error} ${localStyles.fullWidth}`} role="alert">{inviteError}</p> : null}
-              {inviteMessage ? <p role="status" className={`${localStyles.successText} ${localStyles.fullWidth}`}>{inviteMessage}</p> : null}
-              <label>
-                Email
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                  placeholder="teammate@example.com"
-                  required
-                />
-              </label>
-              <label>
-                Role
-                <select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as StaffRole)}>
-                  {roleOptions.map((role) => (
-                    <option key={role} value={role}>{roleLabels[role]}</option>
-                  ))}
-                </select>
-                <span className={localStyles.roleDescription}>{roleDescriptions[inviteRole]}</span>
-              </label>
-              <div className={localStyles.inviteActions}>
-                <button type="submit" className={`${styles.manualRegistrationButton} ${localStyles.inviteButton}`} disabled={isInviting}>
-                  <UserPlus size={ICON_SIZE.sm} aria-hidden="true" /> {isInviting ? 'Sending...' : 'Send Invitation'}
-                </button>
-              </div>
-            </form>
-          </section> : (
-            <p className={styles.registrationTableCard}>
-              Team access is managed by the tournament owner and Tournament Admins.
-            </p>
-          )}
-
-          <section className={styles.registrationTableCard} aria-label="Team members">
-            <div className={styles.registrationPanelHeading}>
-              <div>
-                <h2><span className={localStyles.headingIcon}><UsersRound size={ICON_SIZE.md} aria-hidden="true" /></span>Team Members</h2>
-                <p className={localStyles.memberCount}>
-                  <UsersRound size={ICON_SIZE.sm} aria-hidden="true" />
-                  {staff.length} {staff.length === 1 ? 'member' : 'members'}
-                </p>
-              </div>
-            </div>
-            <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Team table, scroll horizontally for more columns">
-              <table className={`${styles.registrationTable} ${localStyles.teamTable} ${showMemberActions ? '' : localStyles.teamTableWithoutActions}`}>
-                <thead>
-                  <tr><th>Name</th><th>Email</th><th>Role</th>{showMemberActions ? <th>Actions</th> : null}</tr>
-                </thead>
-                <tbody>
-                  {staff.map((member) => {
-                    const isOwner = member.role === 'owner';
-                    const isSelf = currentUserId !== null && member.user_id === currentUserId;
-                    return (
-                      <tr key={`${member.user_id}-${member.role}`}>
-                        <td>
-                          <div className={localStyles.memberIdentity}>
-                            <span className={localStyles.memberAvatar} aria-hidden="true">{getInitials(member.display_name)}</span>
-                            <div>
-                              <strong>{member.display_name}</strong>
-                              {isSelf ? <span className={localStyles.youBadge}>You</span> : null}
-                            </div>
-                          </div>
-                        </td>
-                        <td><span className={localStyles.memberEmail}>{member.email ?? '\u2014'}</span></td>
-                        <td>
-                          {isOwner || member.id === null ? (
-                            <span className={`${localStyles.roleBadge} ${localStyles.ownerRole}`}><Shield size={ICON_SIZE.xs} aria-hidden="true" />Owner</span>
-                          ) : canManageStaff ? (
-                            <select
-                              value={member.role}
-                              className={localStyles.roleSelect}
-                              onChange={(event) => handleRoleChange(member, event.target.value as StaffRole)}
-                              disabled={isMutating}
-                              aria-label={`Role for ${member.display_name}`}
-                            >
-                              {roleOptions.map((role) => (
-                                <option key={role} value={role}>{roleLabels[role]}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className={localStyles.roleBadge}>{roleLabels[member.role as StaffRole]}</span>
-                          )}
-                        </td>
-                        {showMemberActions ? (
-                          <td>
-                            {!isOwner && member.id !== null ? (
-                              <button
-                                type="button"
-                                className={localStyles.removeButton}
-                                onClick={() => setPendingRemoval(member)}
-                                disabled={isMutating}
-                                aria-label={`Remove ${member.display_name} from team`}
-                              >
-                                <UserMinus size={ICON_SIZE.sm} aria-hidden="true" /> Remove
-                              </button>
-                            ) : <span className={localStyles.noAction}>—</span>}
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </>
-      ) : null}
+      {!isLoading && !error ? <PageColumns main={membersCard} side={inviteCard} /> : null}
 
       <ConfirmDialog
         open={Boolean(pendingRemoval)}
@@ -337,6 +281,6 @@ export default function OrganizerTournamentTeamPage() {
         onConfirm={handleRemove}
         onCancel={() => setPendingRemoval(null)}
       />
-    </main>
+    </Page>
   );
 }
