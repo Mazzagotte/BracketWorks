@@ -1,3 +1,6 @@
+import { Check, Minus } from 'lucide-react';
+import { ICON_SIZE, ProgressBar } from '@bracketworks/ui';
+
 import styles from './PasswordStrengthPanel.module.css';
 
 export type PasswordStrengthTone = 'weak' | 'fair' | 'good' | 'strong';
@@ -16,49 +19,30 @@ type PasswordStrengthPanelProps = {
   className?: string;
 };
 
-const toneClassMap: Record<PasswordStrengthTone, string | undefined> = {
-  weak: styles.toneWeak,
-  fair: styles.toneFair,
-  good: styles.toneGood,
-  strong: styles.toneStrong,
-};
-
+/** Password strength under a new-password field: a progress bar with its value, then each requirement. */
 export default function PasswordStrengthPanel({
   strengthText,
   strengthPercent,
-  tone,
   requirements,
-  title = 'Password Strength',
+  title = 'Password strength',
   className = '',
 }: PasswordStrengthPanelProps) {
-  const toneClassName = toneClassMap[tone] ?? '';
-  const strengthWidthBucket = Math.max(10, Math.min(100, Math.round(strengthPercent / 10) * 10));
-  const strengthWidthClass = styles[`barW${strengthWidthBucket}` as keyof typeof styles] as string;
+  const value = Math.max(0, Math.min(100, Math.round(strengthPercent)));
 
   return (
     <div className={`${styles.panel}${className ? ` ${className}` : ''}`}>
-      <div className={styles.header}>
-        <span className={styles.label}>{title}</span>
-        <span className={`${styles.badge} ${toneClassName}`}>{strengthText}</span>
-      </div>
-      <div className={styles.meter}>
-        <div
-          className={`${styles.bar} ${toneClassName} ${strengthWidthClass}`}
-        ></div>
-      </div>
-      <div className={styles.requirements}>
+      <ProgressBar value={value} max={100} label={title} valueText={`${title}: ${strengthText}`} />
+      <ul className={styles.requirements}>
         {requirements.map(requirement => (
-          <div
-            key={requirement.label}
-            className={`${styles.requirementItem} ${requirement.met ? styles.requirementMet : styles.requirementPending}`}
-          >
-            <span className={styles.requirementIcon} aria-hidden="true">
-              {requirement.met ? '✓' : '✕'}
-            </span>
+          <li key={requirement.label} className={requirement.met ? styles.met : styles.pending}>
+            {requirement.met
+              ? <Check size={ICON_SIZE.sm} aria-hidden="true" className={styles.metIcon} />
+              : <Minus size={ICON_SIZE.sm} aria-hidden="true" />}
             <span>{requirement.label}</span>
-          </div>
+            <span className="sr-only">{requirement.met ? ' (met)' : ' (not met)'}</span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
