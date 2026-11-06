@@ -1,123 +1,34 @@
-/* ImportLoadingModal */
+/* Import progress inside the shared Modal. */
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-@keyframes slideIn {
-  from { transform: translateY(-40px); opacity: 0; }
-  to   { transform: translateY(0);     opacity: 1; }
-}
-
-/* Bowling ball */
-.bowlingBall {
-  width: var(--space-20);
-  height: var(--space-20);
-  position: relative;
-  animation: spin 2s linear infinite;
+.spinner {
   flex-shrink: 0;
+  width: var(--space-5);
+  height: var(--space-5);
+  border: 2px solid var(--bw-border-card);
+  border-top-color: var(--color-accent-primary);
+  border-radius: var(--radius-full);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spinner {
+    animation: spin 0.8s linear infinite;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-.ballBody {
-  width: var(--space-20);
-  height: var(--space-20);
-  background: radial-gradient(circle at 30% 30%, var(--color-gray-500), var(--color-text-primary));
-  border-radius: 50%;
-  border: 3px solid var(--color-brand-charcoal);
-  box-shadow:
-    0 8px 16px var(--opacity-black-30),
-    inset 2px 2px 8px var(--opacity-white-10),
-    inset -2px -2px 8px var(--opacity-black-50);
-}
-
-.fingerHole {
-  position: absolute;
-  width: var(--space-2-5);
-  height: var(--space-2-5);
-  background-color: var(--color-black);
-  border-radius: 50%;
-  box-shadow:
-    inset 1px 1px 2px var(--opacity-black-80),
-    0 1px 2px var(--opacity-white-10);
-}
-
-.fingerHole1 { top: var(--space-4); left: var(--space-4); }
-.fingerHole2 { top: var(--space-6); left: var(--space-9); }
-.fingerHole3 { top: var(--space-9); left: var(--space-6); }
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--bw-page) 76%, transparent);
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.25s ease;
-}
-
-.card {
-  min-width: min(var(--space-96), calc(100vw - var(--space-8)));
-  max-width: var(--size-md);
-  padding: var(--space-6);
-  gap: var(--space-3-5);
+.text {
+  margin: 0;
+  font: var(--type-body);
   color: var(--bw-text-body);
-  background: var(--bw-surface-card);
-  border: 1px solid var(--bw-border-subtle);
-  border-top: 3px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-modal);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  animation: slideIn 0.25s ease;
-}
-
-.bowlingBall {
-  width: var(--space-14);
-  height: var(--space-14);
-  animation: none;
-}
-
-.ballBody {
-  width: var(--space-14);
-  height: var(--space-14);
-  background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--bw-text-title) 85%, transparent), color-mix(in srgb, var(--bw-text-muted) 86%, transparent) 42%, color-mix(in srgb, var(--bw-surface-card) 92%, var(--color-black)) 100%);
-  border: 2px solid color-mix(in srgb, var(--bw-text-title) 55%, transparent);
-  box-shadow: 0 10px 26px color-mix(in srgb, var(--color-black) 32%, transparent), inset 2px 2px 8px color-mix(in srgb, var(--bw-text-title) 18%, transparent);
-}
-
-.fingerHole {
-  width: var(--space-2);
-  height: var(--space-2);
-  background-color: color-mix(in srgb, var(--bw-page) 90%, var(--color-black));
-}
-
-.fingerHole1 { top: var(--space-3-5); left: var(--space-4); }
-.fingerHole2 { top: var(--space-6); left: var(--space-7); }
-.fingerHole3 { top: var(--space-8); left: var(--space-5); }
-
-.title {
-  margin: 0;
-  color: var(--bw-text-title);
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0;
-}
-
-.subtitle {
-  margin: 0;
-  color: var(--bw-text-muted);
-  font-size: var(--font-size-base);
-  line-height: 1.45;
-  letter-spacing: 0;
 }

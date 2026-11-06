@@ -1,0 +1,70 @@
+/* Excel import review inside the shared Modal. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.selected {
+  margin-right: auto;
+  align-self: center;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.meta {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.checkbox {
+  width: var(--space-4);
+  height: var(--space-4);
+  accent-color: var(--color-accent-primary);
+}
+
+.nameFields {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cellInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: var(--space-24);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+  font: var(--type-table);
+}
+
+.cellInput:focus-visible {
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.cellNumber {
+  width: var(--space-20);
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}

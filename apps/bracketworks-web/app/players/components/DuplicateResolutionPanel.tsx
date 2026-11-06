@@ -1,12 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, GitMerge, RefreshCcw } from 'lucide-react'
+import { GitMerge, RefreshCcw } from 'lucide-react'
+import { Button, Card, CardHeader, ICON_SIZE, Notice, SelectField, TextField } from '@bracketworks/ui'
 import { apiClient } from '../../lib/api'
-import styles from '../entries.module.css'
-import cardStyles from '../../styles/cards.module.css'
-import buttonStyles from '../../styles/buttons.module.css'
-import formStyles from '../../styles/forms.module.css'
+import styles from './DuplicateResolutionPanel.module.css'
 
 type DuplicatePlayer = {
   id: number
@@ -35,12 +33,16 @@ function PlayerComparison({ player }: { player: DuplicatePlayer }) {
   const entries = Object.entries(player.program_entry_counts || {}).filter(([, count]) => count > 0)
   const sidePots = Object.entries(player.side_pot_entries || {}).filter(([, entered]) => entered).map(([name]) => name)
   return (
-    <div className={styles.duplicatePlayer}>
-      <strong>{player.full_name}</strong>
-      <span>USBC: {player.usbc_number || 'Not provided'}</span>
-      <span>Average: {player.average ?? 'Missing'} · Lane: {player.lane || '—'}</span>
-      <span>Entries: {entries.length ? entries.map(([name, count]) => `${name} ${count}`).join(', ') : 'None'}</span>
-      <span>Side pots: {sidePots.length ? sidePots.join(', ') : 'None'} · Paid: ${Number(player.amount_paid).toFixed(2)}</span>
+    <div className={styles.player}>
+      <p className={styles.playerName}>{player.full_name}</p>
+      <dl className={styles.facts}>
+        <div><dt>USBC</dt><dd>{player.usbc_number || 'Not provided'}</dd></div>
+        <div><dt>Average</dt><dd>{player.average ?? 'Missing'}</dd></div>
+        <div><dt>Lane</dt><dd>{player.lane || '-'}</dd></div>
+        <div><dt>Entries</dt><dd>{entries.length ? entries.map(([name, count]) => `${name} ${count}`).join(', ') : 'None'}</dd></div>
+        <div><dt>Side pots</dt><dd>{sidePots.length ? sidePots.join(', ') : 'None'}</dd></div>
+        <div><dt>Paid</dt><dd>${Number(player.amount_paid).toFixed(2)}</dd></div>
+      </dl>
     </div>
   )
 }
@@ -113,50 +115,61 @@ export default function DuplicateResolutionPanel({ tournamentId, onResolved }: {
   if (!error && (!data || data.count === 0)) return null
 
   return (
-    <section className={`${cardStyles.card} ${styles.duplicatePanel}`} aria-labelledby="duplicate-player-heading">
-      <div className={styles.duplicateHeader}>
-        <div>
-          <h3 id="duplicate-player-heading"><AlertTriangle aria-hidden="true" /> Possible duplicate players</h3>
-          <p>Compare records before merging. Entries, payments, scores, and downstream results are preserved.</p>
-        </div>
-        <button type="button" className={`${buttonStyles.button} ${buttonStyles.ghost}`} onClick={() => void load()} disabled={busy}><RefreshCcw aria-hidden="true" />Refresh</button>
-      </div>
-      {error && <p className={styles.duplicateError} role="alert">{error}</p>}
-      {data?.candidates.map(candidate => (
-        <div className={styles.duplicateCandidate} key={candidate.pair_key}>
-          <div className={styles.duplicateReason}>{candidate.reason}</div>
-          <div className={styles.duplicateComparison}>
-            <PlayerComparison player={candidate.left} />
-            <span className={styles.duplicateVersus}>and</span>
-            <PlayerComparison player={candidate.right} />
-          </div>
-          {!candidate.can_merge && <p className={styles.duplicateWarning}>These records belong to different squads and cannot be merged.</p>}
-          {mergePair === candidate.pair_key ? (
-            <div className={styles.duplicateMergeForm}>
-              <label>Record to keep
-                <select className={formStyles.field} value={targetId ?? ''} onChange={event => setTargetId(Number(event.target.value))}>
-                  <option value="" disabled>Select the canonical record</option>
+    <Card aria-labelledby="duplicate-player-heading">
+      <CardHeader
+        title={<span id="duplicate-player-heading">Possible duplicate players</span>}
+        description="Compare records before merging. Entries, payments, scores, and results are kept."
+        actions={(
+          <Button size="sm" variant="ghost" icon={<RefreshCcw size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => void load()} disabled={busy}>
+            Refresh
+          </Button>
+        )}
+      />
+      <div className={styles.body}>
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+        {data?.candidates.map(candidate => (
+          <section className={styles.candidate} key={candidate.pair_key} aria-label={candidate.reason}>
+            <h3 className={styles.reason}>{candidate.reason}</h3>
+            <div className={styles.comparison}>
+              <PlayerComparison player={candidate.left} />
+              <PlayerComparison player={candidate.right} />
+            </div>
+            {!candidate.can_merge ? (
+              <Notice tone="warning">These records belong to different squads and cannot be merged.</Notice>
+            ) : null}
+            {mergePair === candidate.pair_key ? (
+              <div className={styles.mergeForm}>
+                <SelectField label="Record to keep" value={targetId ?? ''} onChange={event => setTargetId(Number(event.target.value))}>
+                  <option value="" disabled>Select the record to keep</option>
                   <option value={candidate.left.id}>{candidate.left.full_name} (#{candidate.left.id})</option>
                   <option value={candidate.right.id}>{candidate.right.full_name} (#{candidate.right.id})</option>
-                </select>
-              </label>
-              <label>Reason for merge
-                <input className={formStyles.field} value={reason} onChange={event => setReason(event.target.value)} placeholder="Example: duplicate import" maxLength={1000} />
-              </label>
-              <div className={styles.duplicateActions}>
-                <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary}`} disabled={busy || !targetId || !reason.trim()} onClick={() => void merge(candidate)}><GitMerge aria-hidden="true" />Confirm Merge</button>
-                <button type="button" className={`${buttonStyles.button} ${buttonStyles.ghost}`} disabled={busy} onClick={() => setMergePair(null)}>Cancel</button>
+                </SelectField>
+                <TextField label="Reason for merge" value={reason} onChange={event => setReason(event.target.value)} helper="For example: duplicate import" maxLength={1000} />
+                <div className={styles.actions}>
+                  <Button variant="secondary" disabled={busy} onClick={() => setMergePair(null)}>Cancel</Button>
+                  <Button variant="primary" icon={<GitMerge size={ICON_SIZE.md} aria-hidden="true" />} disabled={busy || !targetId || !reason.trim()} onClick={() => void merge(candidate)}>
+                    Confirm merge
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className={styles.duplicateActions}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary}`} disabled={busy || !candidate.can_merge} onClick={() => { setMergePair(candidate.pair_key); setTargetId(candidate.left.id) }}><GitMerge aria-hidden="true" />Merge Records</button>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary}`} disabled={busy} onClick={() => void resolve(candidate, 'keep_both')}>Keep Both</button>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.ghost}`} disabled={busy} onClick={() => void resolve(candidate, 'not_duplicate')}>Not a Duplicate</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </section>
+            ) : (
+              <div className={styles.actions}>
+                <Button size="sm" variant="ghost" disabled={busy} onClick={() => void resolve(candidate, 'not_duplicate')}>Not a duplicate</Button>
+                <Button size="sm" variant="secondary" disabled={busy} onClick={() => void resolve(candidate, 'keep_both')}>Keep both</Button>
+                <Button
+                  size="sm"
+                  variant="accent-outline"
+                  icon={<GitMerge size={ICON_SIZE.md} aria-hidden="true" />}
+                  disabled={busy || !candidate.can_merge}
+                  onClick={() => { setMergePair(candidate.pair_key); setTargetId(candidate.left.id) }}
+                >
+                  Merge records
+                </Button>
+              </div>
+            )}
+          </section>
+        ))}
+      </div>
+    </Card>
   )
 }

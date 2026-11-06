@@ -1,9 +1,9 @@
 'use client'
 
 import { useMemo } from 'react'
-import buttonStyles from '../../styles/buttons.module.css'
-import formStyles from '../../styles/forms.module.css'
-import styles from '../entries.module.css'
+import { Badge, Button, DataTable, Modal } from '@bracketworks/ui'
+
+import styles from './ImportPreviewModal.module.css'
 import { importPreviewCounts, type ImportPreviewRow } from '../utils/buildImportPreview'
 
 interface Props {
@@ -20,6 +20,12 @@ const labels = {
   invalid: 'Invalid', warning: 'Warning', skipped: 'Skipped',
 }
 
+const tones = {
+  new: 'success', existing_match: 'neutral', possible_duplicate: 'warning',
+  invalid: 'danger', warning: 'warning', skipped: 'neutral',
+} as const
+
+/** Review an Excel import before it is saved: status per row, editable names and averages. */
 export default function ImportPreviewModal({ fileName, rows, isCommitting, onRowsChange, onCancel, onConfirm }: Props) {
   const counts = useMemo(() => importPreviewCounts(rows), [rows])
   const selectedCount = rows.filter(row => row.selected && row.player).length
@@ -29,44 +35,71 @@ export default function ImportPreviewModal({ fileName, rows, isCommitting, onRow
   }
 
   return (
-    <div className={styles.importPreviewOverlay} role="presentation">
-      <section className={styles.importPreviewModal} role="dialog" aria-modal="true" aria-labelledby="import-preview-title">
-        <header className={styles.importPreviewHeader}>
-          <div><h2 id="import-preview-title">Review Excel Import</h2><p>{fileName} · {rows.length} detected rows</p></div>
-        </header>
-        <div className={styles.importPreviewCounts}>
+    <Modal
+      open
+      onClose={onCancel}
+      size="lg"
+      dismissible={!isCommitting}
+      title="Review Excel import"
+      description={`${fileName} · ${rows.length} rows found. Checked rows are saved together when you confirm.`}
+      footer={(
+        <>
+          <span className={styles.selected}>{selectedCount} row{selectedCount === 1 ? '' : 's'} selected</span>
+          <Button variant="secondary" onClick={onCancel} disabled={isCommitting}>Cancel</Button>
+          <Button variant="primary" onClick={onConfirm} disabled={selectedCount === 0 || isCommitting}>
+            {isCommitting ? 'Importing...' : `Import ${selectedCount} row${selectedCount === 1 ? '' : 's'}`}
+          </Button>
+        </>
+      )}
+    >
+      <div className={styles.body}>
+        <p className={styles.counts}>
           {Object.entries(counts).filter(([, count]) => count > 0).map(([category, count]) => (
-            <span key={category} data-category={category}><strong>{count}</strong> {labels[category as keyof typeof labels]}</span>
+            <Badge key={category} tone={tones[category as keyof typeof tones]}>{count} {labels[category as keyof typeof labels].toLowerCase()}</Badge>
           ))}
-        </div>
-        <p className={styles.importPreviewHelp}>Review warnings and duplicates. Checked rows are committed together only after confirmation.</p>
-        <div className={styles.importPreviewTableWrap}>
-          <table className={styles.importPreviewTable}>
-            <thead><tr><th>Import</th><th>Row</th><th>Player</th><th>Average</th><th>Status</th></tr></thead>
-            <tbody>
-              {rows.map(row => (
-                <tr key={row.id}>
-                  <td><input type="checkbox" aria-label={`Import row ${row.sourceRow}`} checked={row.selected} disabled={!row.player || isCommitting} onChange={event => update(row.id, value => ({ ...value, selected: event.target.checked }))} /></td>
-                  <td>{row.sourceRow}</td>
-                  <td>{row.player ? (
-                    <div className={styles.importNameFields}>
-                      <input className={formStyles.field} aria-label={`Row ${row.sourceRow} first name`} value={row.player.firstName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, firstName: event.target.value } : value.player }))} />
-                      <input className={formStyles.field} aria-label={`Row ${row.sourceRow} last name`} value={row.player.lastName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, lastName: event.target.value } : value.player }))} />
+        </p>
+        <DataTable caption="Rows to import">
+          <thead>
+            <tr><th>Import</th><th data-align="right">Row</th><th>Bowler</th><th data-align="right">Average</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {rows.map(row => (
+              <tr key={row.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    aria-label={`Import row ${row.sourceRow}`}
+                    checked={row.selected}
+                    disabled={!row.player || isCommitting}
+                    onChange={event => update(row.id, value => ({ ...value, selected: event.target.checked }))}
+                  />
+                </td>
+                <td data-align="right" data-tone="secondary">{row.sourceRow}</td>
+                <td>
+                  {row.player ? (
+                    <div className={styles.nameFields}>
+                      <input className={styles.cellInput} aria-label={`Row ${row.sourceRow} first name`} value={row.player.firstName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, firstName: event.target.value } : value.player }))} />
+                      <input className={styles.cellInput} aria-label={`Row ${row.sourceRow} last name`} value={row.player.lastName} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, lastName: event.target.value } : value.player }))} />
                     </div>
-                  ) : '—'}</td>
-                  <td>{row.player ? <input className={formStyles.field} type="number" min="0" max="300" aria-label={`Row ${row.sourceRow} average`} value={row.player.average} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, average: Number(event.target.value) } : value.player }))} /> : '—'}</td>
-                  <td><span className={styles.importStatus} data-category={row.category}>{labels[row.category]}</span><small>{row.reason}</small></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <footer className={styles.importPreviewActions}>
-          <span>{selectedCount} row{selectedCount === 1 ? '' : 's'} selected</span>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`} onClick={onCancel} disabled={isCommitting}>Cancel</button>
-          <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`} onClick={onConfirm} disabled={selectedCount === 0 || isCommitting}>{isCommitting ? 'Importing…' : `Confirm ${selectedCount} Rows`}</button>
-        </footer>
-      </section>
-    </div>
+                  ) : <span className={styles.meta}>-</span>}
+                </td>
+                <td data-align="right">
+                  {row.player ? (
+                    <input className={`${styles.cellInput} ${styles.cellNumber}`} type="number" min="0" max="300" aria-label={`Row ${row.sourceRow} average`} value={row.player.average} disabled={isCommitting} onChange={event => update(row.id, value => ({ ...value, player: value.player ? { ...value.player, average: Number(event.target.value) } : value.player }))} />
+                  ) : <span className={styles.meta}>-</span>}
+                </td>
+                <td>
+                  <div className={styles.status}>
+                    <Badge tone={tones[row.category]}>{labels[row.category]}</Badge>
+                    {row.reason ? <span className={styles.meta}>{row.reason}</span> : null}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </DataTable>
+      </div>
+    </Modal>
   )
 }

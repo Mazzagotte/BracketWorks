@@ -1,0 +1,89 @@
+/* Possible duplicate players: candidates split by dividers inside one card. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-4);
+}
+
+.candidate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.candidate:last-child {
+  padding-bottom: 0;
+}
+
+.reason {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.playerName {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font: var(--type-body-small);
+}
+
+.facts > div {
+  display: contents;
+}
+
+.facts dt {
+  color: var(--bw-text-body);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--bw-text-title);
+}
+
+.mergeForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.mergeForm .actions {
+  grid-column: 1 / -1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .comparison,
+  .mergeForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
