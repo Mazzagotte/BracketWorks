@@ -25,10 +25,14 @@
   color: var(--bw-text-title);
 }
 
+/* Fixed to the viewport; Menu.tsx sets --menu-top/-bottom and --menu-right/-left from the trigger. */
 .panel {
-  position: absolute;
-  top: calc(100% + var(--space-1-5));
-  right: 0;
+  position: fixed;
+  top: var(--menu-top, auto);
+  right: var(--menu-right, auto);
+  bottom: var(--menu-bottom, auto);
+  left: var(--menu-left, auto);
+  margin-top: var(--space-1-5);
   z-index: var(--z-popover);
   display: flex;
   flex-direction: column;
@@ -40,9 +44,9 @@
   box-shadow: var(--elevation-2);
 }
 
-.alignStart {
-  right: auto;
-  left: 0;
+.opensUp {
+  margin-top: 0;
+  margin-bottom: var(--space-1-5);
 }
 
 .header {

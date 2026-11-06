@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { AnchorHTMLAttributes, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import type { AnchorHTMLAttributes, CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { cx } from './cx';
 import styles from './Menu.module.css';
 
@@ -24,6 +24,7 @@ const ITEM_SELECTOR = '[role="menuitem"]:not([disabled])';
 /** A dropdown menu for account and overflow actions. Closes on Escape, outside click, or selection. */
 export function Menu({ triggerLabel, trigger, header, children, align = 'end', className }: MenuProps) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<CSSProperties | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -36,9 +37,44 @@ export function Menu({ triggerLabel, trigger, header, children, align = 'end', c
     if (restoreFocus) triggerRef.current?.focus();
   }, []);
 
+  // The panel is fixed to the viewport so scrolling containers (such as tables) cannot clip it.
+  // It opens below the trigger, or above when there is no room below.
+  useLayoutEffect(() => {
+    if (!open) {
+      setPosition(undefined);
+      return;
+    }
+    const trigger = triggerRef.current;
+    const panel = panelRef.current;
+    if (!trigger || !panel) return;
+    const rect = trigger.getBoundingClientRect();
+    const opensUp = rect.bottom + panel.offsetHeight > window.innerHeight && rect.top > panel.offsetHeight;
+    const vars: Record<string, string> = opensUp
+      ? { '--menu-bottom': `${window.innerHeight - rect.top}px` }
+      : { '--menu-top': `${rect.bottom}px` };
+    if (align === 'start') vars['--menu-left'] = `${rect.left}px`;
+    else vars['--menu-right'] = `${document.documentElement.clientWidth - rect.right}px`;
+    setPosition(vars as CSSProperties);
+  }, [open, align]);
+
   useEffect(() => {
     if (!open) return undefined;
-    items()[0]?.focus();
+    const onResize = () => close(false);
+    const onScroll = (event: Event) => {
+      if (event.target instanceof Node && panelRef.current?.contains(event.target)) return;
+      close(false);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [open, close]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    items()[0]?.focus({ preventScroll: true });
     const onPointerDown = (event: MouseEvent) => {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) close(false);
     };
@@ -95,7 +131,8 @@ export function Menu({ triggerLabel, trigger, header, children, align = 'end', c
           id={menuId}
           role="menu"
           aria-label={triggerLabel.replace(/^Open\s+/i, '')}
-          className={cx(styles.panel, align === 'start' && styles.alignStart)}
+          className={cx(styles.panel, position && '--menu-bottom' in position && styles.opensUp)}
+          style={position}
           onKeyDown={onPanelKeyDown}
           onClick={(event) => {
             // Return focus to the trigger so a dialog opened by the item can restore it later.
