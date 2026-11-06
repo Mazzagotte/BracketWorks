@@ -1,24 +1,16 @@
+import { Badge } from '@bracketworks/ui';
+import type { BadgeProps } from '@bracketworks/ui';
+
 import type { SetupStatus } from './types';
-import styles from './tournament-setup.module.css';
 
-type SetupStatusBadgeProps = {
-  status: SetupStatus;
+const statusBadge: Record<SetupStatus, { label: string; tone: NonNullable<BadgeProps['tone']> }> = {
+  complete: { label: 'Complete', tone: 'success' },
+  incomplete: { label: 'Incomplete', tone: 'neutral' },
+  'needs-attention': { label: 'Needs attention', tone: 'warning' },
+  'not-used': { label: 'Not used', tone: 'neutral' },
 };
 
-const statusLabel: Record<SetupStatus, string> = {
-  complete: 'Complete',
-  incomplete: 'Incomplete',
-  'needs-attention': 'Needs Attention',
-  'not-used': 'Not Used',
-};
-
-export default function SetupStatusBadge({ status }: SetupStatusBadgeProps) {
-  const badgeClass =
-    status === 'complete'
-      ? styles.statusComplete
-      : status === 'needs-attention'
-        ? styles.statusNeedsAttention
-        : styles.statusIncomplete;
-
-  return <span className={`${styles.statusBadge} ${badgeClass}`}>{statusLabel[status]}</span>;
+export default function SetupStatusBadge({ status }: { status: SetupStatus }) {
+  const { label, tone } = statusBadge[status];
+  return <Badge tone={tone}>{label}</Badge>;
 }

@@ -83,6 +83,8 @@ type TournamentRegistrationFormProps = {
   rulesText?: string;
   documents?: PublicTournamentDocument[];
   confirmation?: { code: string; status: string } | null;
+  /** `modal` (default) opens in the shared Modal; `inline` renders in place, for example as a live preview. */
+  presentation?: 'modal' | 'inline';
 };
 
 function normalizeRegistrationFieldKey(key: string): string {
@@ -158,6 +160,7 @@ export default function TournamentRegistrationForm({
   rulesText,
   documents = [],
   confirmation,
+  presentation = 'modal',
 }: TournamentRegistrationFormProps) {
   const [isDisclosureOpen, setIsDisclosureOpen] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -372,17 +375,11 @@ export default function TournamentRegistrationForm({
     </>
   );
 
-  return (
-    <Modal
-      open
-      onClose={() => onClose?.()}
-      title={confirmation ? tournamentName : `Register: ${tournamentName}`}
-      description={confirmation ? undefined : 'Choose your squad and event, then enter each bowler\'s information.'}
-      size="lg"
-      closeLabel="Close tournament registration"
-      closeOnBackdrop={false}
-      footer={footer}
-    >
+  const title = confirmation ? tournamentName : `Register: ${tournamentName}`;
+  const description = confirmation ? undefined : "Choose your squad and event, then enter each bowler's information.";
+
+  const body = (
+    <>
       {confirmation ? (
         <div className={styles.form}>
           {progress(2)}
@@ -501,68 +498,102 @@ export default function TournamentRegistrationForm({
           {submitMessage ? <Notice tone="info" role="status">{submitMessage}</Notice> : null}
         </div>
       )}
+    </>
+  );
 
-      <Modal
-        open={isDisclosureOpen}
-        onClose={closeDisclosure}
-        title="Please review before submitting"
-        size="lg"
-        closeLabel="Close review"
-        closeOnBackdrop={false}
-        footer={(
-          <>
-            <Button variant="secondary" onClick={closeDisclosure}>Go back</Button>
-            <Button
-              variant="primary"
-              disabled={!formState.acceptTerms || isSubmitting}
-              onClick={() => {
-                setIsDisclosureOpen(false);
-                void onSubmit();
-              }}
-            >
-              {isSubmitting ? 'Submitting...' : 'Agree and submit registration'}
-            </Button>
-          </>
-        )}
-      >
-        <div className={styles.form}>
-          {progress(1)}
-          <section className={styles.review} aria-label="Registration review">
-            <dl className={styles.reviewList}>
-              <div><dt>Tournament</dt><dd>{tournamentName}</dd></div>
-              <div><dt>Event</dt><dd>{selectedEvent}</dd></div>
-              <div><dt>Squad</dt><dd>{selectedSquad}</dd></div>
-              {formState.divisionId ? <div><dt>Division</dt><dd>{selectedDivision}</dd></div> : null}
-            </dl>
-            {formState.bowlers.map((bowler, index) => (
-              <div key={index} className={styles.reviewGroup}>
-                <CardDivider />
-                <h3 className={styles.subsectionTitle}>Bowler {index + 1}</h3>
-                <dl className={styles.reviewList}>
-                  {fields.map((field) => (
-                    <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>
-                  ))}
-                  {questions.map((question) => (
-                    <div key={question.id}><dt>{question.label}</dt><dd>{formatAnswer(formState.bowlerQuestionAnswers[index]?.[question.id])}</dd></div>
-                  ))}
-                </dl>
-              </div>
-            ))}
-            <CardDivider />
-            {formState.notes ? <p className={styles.body}>Notes: {formState.notes}</p> : null}
-            <p className={styles.body}>Payment: cash at the venue during check-in. No online payment is collected.</p>
-          </section>
-          <p className={styles.body}>
-            By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
-          </p>
-          <CheckboxField
-            ref={disclosureAgreementRef}
-            label="I have read and agree to this disclosure."
-            checked={formState.acceptTerms}
-            onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
-          />
-        </div>
-      </Modal>
+  const reviewDialog = (
+    <Modal
+      open={isDisclosureOpen}
+      onClose={closeDisclosure}
+      title="Please review before submitting"
+      size="lg"
+      closeLabel="Close review"
+      closeOnBackdrop={false}
+      footer={(
+        <>
+          <Button variant="secondary" onClick={closeDisclosure}>Go back</Button>
+          <Button
+            variant="primary"
+            disabled={!formState.acceptTerms || isSubmitting}
+            onClick={() => {
+              setIsDisclosureOpen(false);
+              void onSubmit();
+            }}
+          >
+            {isSubmitting ? 'Submitting...' : 'Agree and submit registration'}
+          </Button>
+        </>
+      )}
+    >
+      <div className={styles.form}>
+        {progress(1)}
+        <section className={styles.review} aria-label="Registration review">
+          <dl className={styles.reviewList}>
+            <div><dt>Tournament</dt><dd>{tournamentName}</dd></div>
+            <div><dt>Event</dt><dd>{selectedEvent}</dd></div>
+            <div><dt>Squad</dt><dd>{selectedSquad}</dd></div>
+            {formState.divisionId ? <div><dt>Division</dt><dd>{selectedDivision}</dd></div> : null}
+          </dl>
+          {formState.bowlers.map((bowler, index) => (
+            <div key={index} className={styles.reviewGroup}>
+              <CardDivider />
+              <h3 className={styles.subsectionTitle}>Bowler {index + 1}</h3>
+              <dl className={styles.reviewList}>
+                {fields.map((field) => (
+                  <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>
+                ))}
+                {questions.map((question) => (
+                  <div key={question.id}><dt>{question.label}</dt><dd>{formatAnswer(formState.bowlerQuestionAnswers[index]?.[question.id])}</dd></div>
+                ))}
+              </dl>
+            </div>
+          ))}
+          <CardDivider />
+          {formState.notes ? <p className={styles.body}>Notes: {formState.notes}</p> : null}
+          <p className={styles.body}>Payment: cash at the venue during check-in. No online payment is collected.</p>
+        </section>
+        <p className={styles.body}>
+          By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
+        </p>
+        <CheckboxField
+          ref={disclosureAgreementRef}
+          label="I have read and agree to this disclosure."
+          checked={formState.acceptTerms}
+          onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
+        />
+      </div>
     </Modal>
+  );
+
+  if (presentation === 'inline') {
+    return (
+      <section className={styles.inline} aria-label={title}>
+        <header className={styles.inlineHeader}>
+          <h3 className={styles.subsectionTitle}>{title}</h3>
+          {description ? <p className={styles.helper}>{description}</p> : null}
+        </header>
+        {body}
+        <div className={styles.inlineFooter}>{footer}</div>
+        {reviewDialog}
+      </section>
+    );
+  }
+
+  return (
+    <>
+      <Modal
+        open
+        onClose={() => onClose?.()}
+        title={title}
+        description={description}
+        size="lg"
+        closeLabel="Close tournament registration"
+        closeOnBackdrop={false}
+        footer={footer}
+      >
+        {body}
+      </Modal>
+      {reviewDialog}
+    </>
   );
 }

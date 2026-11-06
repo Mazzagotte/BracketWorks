@@ -95,8 +95,22 @@ import type {
   TournamentWritePayload,
   UserTournamentSummary,
 } from './setupTypes';
-import styles from './tournament-setup.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './tournament-setup.module.css';
+import layout from './setup/setupLayout.module.css';
+import {
+  Badge,
+  Button,
+  ICON_SIZE,
+  Menu,
+  MenuItem,
+  Modal,
+  Notice,
+  Page,
+  PageHeader,
+  ProgressBar,
+  SelectField,
+  SideNav,
+} from '@bracketworks/ui';
 
 type DrawerState =
   | { kind: 'event'; id?: string }
@@ -236,7 +250,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     : null;
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const templateInputRef = useRef<HTMLInputElement | null>(null);
-  const builderActionsMenuRef = useRef<HTMLDetailsElement | null>(null);
   const [activeSection, setActiveSection] = useState<SetupSectionKey>('tournament-details');
   const { confirm, confirmationDialog } = useConfirmation();
   const [drawerState, setDrawerState] = useState<DrawerState>(null);
@@ -312,29 +325,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       document.removeEventListener('pointerdown', handlePointerDown);
     };
   }, [openCardMenu]);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      const menu = builderActionsMenuRef.current;
-      if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
-        menu.open = false;
-      }
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('scroll', handleScroll, true);
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-
-    function handleScroll() {
-      const menu = builderActionsMenuRef.current;
-      if (menu?.open) {
-        menu.open = false;
-      }
-    }
-  }, []);
 
   useEffect(() => {
     setActiveSection(getUrlActiveSection());
@@ -2460,132 +2450,106 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     void applyLogoFile(event.dataTransfer.files?.[0] ?? null);
   };
 
+  const selectedEvent = selectedEventId ? events.find((entry) => entry.id === selectedEventId) ?? null : null;
+  const selectedDivision = selectedDivisionId ? divisions.find((entry) => entry.id === selectedDivisionId) ?? null : null;
+  const activeIndex = setupSections.findIndex((section) => section.key === activeSection);
+  const activeLabel = setupSections[activeIndex]?.label ?? '';
+  const previousSection = activeIndex > 0 ? setupSections[activeIndex - 1] : null;
+  const nextSection = activeIndex < setupSections.length - 1 ? setupSections[activeIndex + 1] : null;
+  const blockingIssueCount = validationIssues.filter((issue) => issue.severity === 'error').length;
+  const builderState = publishedAt
+    ? { label: 'Published', tone: 'success' as const }
+    : completion === 100
+      ? { label: 'Ready to publish', tone: 'info' as const }
+      : blockingIssueCount > 0
+        ? { label: 'Needs attention', tone: 'warning' as const }
+        : { label: 'Draft', tone: 'neutral' as const };
+
+  const navMeta = (key: SetupSectionKey): string | undefined => {
+    if (key === 'review-publish') return blockingIssueCount > 0 ? `${blockingIssueCount} blocking` : 'Ready';
+    const issueCount = validationIssues.filter((issue) => issue.section === key).length;
+    if (issueCount > 0) return `${issueCount} issue${issueCount === 1 ? '' : 's'}`;
+    if (statusBySection[key] === 'not-used') return 'Not used';
+    if (statusBySection[key] === 'complete') return 'Ready';
+    return key === 'squads-availability' || key === 'fees-payments-documents' ? 'Optional' : undefined;
+  };
+
   return (
-    <div className={styles.shell}>
-      <section className={styles.topOverviewCard} aria-label="Builder overview">
-        <header className={styles.topBar}>
-          <div className={styles.builderIdentity}>
-            <p className={styles.eyebrow}>Tournament Builder</p>
-            <div className={styles.builderTitleRow}>
-              <h1>{details.name.trim() || 'Untitled Tournament'}</h1>
-              <span className={`${styles.builderStateBadge} ${publishedAt ? styles.builderStatePublished : ''}`}>
-                {publishedAt ? 'Published' : completion === 100 ? 'Ready to Publish' : validationIssues.some((issue) => issue.severity === 'error') ? 'Needs Attention' : 'Draft'}
-              </span>
-            </div>
-            <p>{setupSections.find((section) => section.key === activeSection)?.label} · Step {setupSections.findIndex((section) => section.key === activeSection) + 1} of {setupSections.length}</p>
-          </div>
-          <div className={styles.topActions}>
+    <Page>
+      <PageHeader
+        overline="Tournament setup"
+        title={details.name.trim() || 'Untitled tournament'}
+        badge={<Badge tone={builderState.tone}>{builderState.label}</Badge>}
+        description={`Step ${activeIndex + 1} of ${setupSections.length}: ${activeLabel} · ${autosaveStatusLabel}`}
+        actions={(
+          <>
             <input
               ref={templateInputRef}
               type="file"
               accept="application/json,.json"
-              className={styles.visuallyHidden}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
               onChange={(event) => { void handleImportTemplate(event); }}
             />
-            <details ref={builderActionsMenuRef} className={styles.builderActionsMenu}>
-              <summary><MoreHorizontal size={ICON_SIZE.md} /> More</summary>
-              <div
-                className={styles.builderActionsMenuPanel}
-                onClick={() => {
-                  if (builderActionsMenuRef.current) {
-                    builderActionsMenuRef.current.open = false;
-                  }
-                }}
-              >
-                <button type="button" onClick={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}><RotateCcw size={ICON_SIZE.sm} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}</button>
-                <button type="button" onClick={() => templateInputRef.current?.click()}><Upload size={ICON_SIZE.sm} /> Import Template</button>
-                <button type="button" onClick={handleExportReport}><Download size={ICON_SIZE.sm} /> Download Summary</button>
-                <button type="button" onClick={handleExportTemplate}><FileJson size={ICON_SIZE.sm} /> Export Template</button>
-              </div>
-            </details>
-            <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
-              <Save size={ICON_SIZE.md} /> {isSavingDraft ? 'Saving...' : 'Save'}
-            </button>
-            <button type="button" className={styles.primaryAction} onClick={() => setActiveSection('review-publish')}>
-              Review & Publish
-            </button>
-          </div>
-        </header>
+            <Menu triggerLabel="More setup actions" trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+              <MenuItem icon={<RotateCcw size={ICON_SIZE.md} />} onSelect={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}>
+                {isLoadingTournamentLibrary ? 'Loading...' : 'Load tournament'}
+              </MenuItem>
+              <MenuItem icon={<Upload size={ICON_SIZE.md} />} onSelect={() => templateInputRef.current?.click()}>Import template</MenuItem>
+              <MenuItem icon={<FileJson size={ICON_SIZE.md} />} onSelect={handleExportTemplate}>Export template</MenuItem>
+              <MenuItem icon={<Download size={ICON_SIZE.md} />} onSelect={handleExportReport}>Download summary</MenuItem>
+            </Menu>
+            <Button variant="secondary" icon={<Save size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
+              {isSavingDraft ? 'Saving...' : 'Save'}
+            </Button>
+            <Button variant="primary" onClick={() => setActiveSection('review-publish')}>Review and publish</Button>
+          </>
+        )}
+      />
 
-        <div className={styles.topOverviewMeta}>
-          {(draftSavedAt || publishedAt || saveError || autosaveError) ? (
-            <div
-              className={styles.noticeRow}
-              role={saveError ? 'alert' : 'status'}
-              aria-live={saveError ? 'assertive' : 'polite'}
-            >
-              {publishedAt && <span className={styles.publishSuccess}>Tournament published {new Date(publishedAt).toLocaleString()}.</span>}
-              {draftSavedAt && <span>Draft saved {new Date(draftSavedAt).toLocaleString()}.</span>}
-              {autosaveError && <span className={styles.autosaveError}>{autosaveError}</span>}
-              {saveError && <span className={styles.saveError}>{saveError}</span>}
-            </div>
-          ) : null}
+      {saveError ? <Notice tone="danger" role="alert">{saveError}</Notice> : null}
+      {autosaveError ? <Notice tone="warning" role="status">{autosaveError}</Notice> : null}
+      {publishedAt ? <Notice tone="success" role="status">Tournament published {new Date(publishedAt).toLocaleString()}.</Notice> : null}
+      {draftSavedAt && !publishedAt ? <Notice tone="info" role="status">Draft saved {new Date(draftSavedAt).toLocaleString()}.</Notice> : null}
 
-          <div className={styles.builderProgressRow}>
-            <div className={styles.builderProgressCopy}>
-              <strong>{completion}% complete</strong>
-              <span>{completedSectionCount} of {setupSections.length} sections ready</span>
-            </div>
-            <progress
-              className={styles.builderProgressTrack}
-              value={completion}
-              max={100}
-              aria-label={`${completion}% of tournament setup complete`}
-            />
-            <span className={styles.builderSaveState}><CircleCheck size={ICON_SIZE.sm} /> {autosaveStatusLabel}</span>
-          </div>
-        </div>
-      </section>
-
-      <div className={styles.contentGrid}>
-        <aside className={styles.navRail}>
-          <div className={styles.navRailTitle}><h2>Tournament Setup</h2><span>{completedSectionCount} of {setupSections.length} ready</span></div>
-          <div className={styles.mobileSectionPicker}>
-            <label htmlFor="section-picker">Step {setupSections.findIndex((section) => section.key === activeSection) + 1} of {setupSections.length}</label>
-            <select id="section-picker" value={activeSection} onChange={(event) => setActiveSection(event.target.value as SetupSectionKey)}>
-              {setupSections.map((section) => (
-                <option key={section.key} value={section.key}>{section.label}</option>
-              ))}
-            </select>
-          </div>
-          <span className={styles.navGroupLabel}>Setup</span>
-          <ul>
-            {setupSections.filter((section) => section.key !== 'review-publish').map((section) => {
-              const index = setupSections.findIndex((entry) => entry.key === section.key);
-              const active = section.key === activeSection;
-              const status = statusBySection[section.key];
-              const issueCount = validationIssues.filter((issue) => issue.section === section.key).length;
-              const optional = section.key === 'squads-availability' || section.key === 'fees-payments-documents';
-              return (
-                <li key={section.key}>
-                  <button
-                    type="button"
-                    className={`${styles.navItem} ${active ? styles.navItemActive : ''}`}
-                    onClick={() => setActiveSection(section.key)}
-                  >
-                    <span className={styles.navText}>
-                      <strong>{section.label}</strong>
-                      <small>{active ? `Step ${index + 1} of ${setupSections.length}` : status === 'not-used' ? 'Not Used' : optional ? 'Optional' : ''}</small>
-                    </span>
-                    {issueCount > 0 ? <span className={styles.navIssueCount}>{issueCount} issue{issueCount === 1 ? '' : 's'}</span> : null}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className={styles.navReviewGroup}>
-            <span className={styles.navGroupLabel}>Review</span>
-            {setupSections.filter((section) => section.key === 'review-publish').map((section) => {
-              const active = section.key === activeSection;
-              const issueCount = validationIssues.filter((issue) => issue.severity === 'error').length;
-              return <button key={section.key} type="button" className={`${styles.navItem} ${styles.navReviewItem} ${active ? styles.navItemActive : ''}`} onClick={() => setActiveSection(section.key)}><span className={styles.navText}><strong>{section.label}</strong><small>{issueCount > 0 ? `${issueCount} blocking` : 'Ready'}</small></span></button>;
-            })}
-          </div>
-
+      <div className={layout.layout}>
+        <aside className={layout.nav}>
+          <ProgressBar
+            value={completedSectionCount}
+            max={setupSections.length}
+            label="Tournament setup progress"
+            valueText={`${completedSectionCount} of ${setupSections.length} sections ready`}
+          />
+          <SelectField
+            label="Setup step"
+            className={layout.stepPicker}
+            value={activeSection}
+            onChange={(event) => setActiveSection(event.target.value as SetupSectionKey)}
+          >
+            {setupSections.map((section, index) => (
+              <option key={section.key} value={section.key}>{`${index + 1}. ${section.label}`}</option>
+            ))}
+          </SelectField>
+          <SideNav
+            label="Setup steps"
+            className={layout.stepList}
+            activeId={activeSection}
+            onSelect={(id) => setActiveSection(id as SetupSectionKey)}
+            sections={[
+              {
+                heading: 'Setup',
+                items: setupSections.filter((section) => section.key !== 'review-publish').map((section) => ({ id: section.key, label: section.label, meta: navMeta(section.key) })),
+              },
+              {
+                heading: 'Review',
+                items: setupSections.filter((section) => section.key === 'review-publish').map((section) => ({ id: section.key, label: section.label, meta: navMeta(section.key) })),
+              },
+            ]}
+          />
         </aside>
 
-        <main className={styles.workspace}>
+        <div className={layout.content}>
           {activeSection === 'tournament-details' && (
             <TournamentDetailsSection
               details={details}
@@ -2817,72 +2781,52 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </section>
           )}
 
-          {/* ✨ Event editor modal ✨ */}
-          {selectedEventId && events.find((e) => e.id === selectedEventId) && (
-            <div className={styles.editorModal} role="dialog" aria-modal="true">
-              <div className={styles.editorModalBox}>
-                <div className={styles.editorModalHead}>
-                  <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Trophy size={ICON_SIZE.sm} /></span>
-                    <div className={styles.divisionEditorHeadText}>
-                      <span className={styles.editorModalTitle}>Event Details</span>
-                      <small className={styles.divisionEditorHeadSubtitle}>{events.find((e) => e.id === selectedEventId)!.name || 'New Event'}</small>
-                    </div>
-                  </div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedEventId(null)} aria-label="Close">
-                    <X size={ICON_SIZE.md} />
-                  </button>
-                </div>
-                <div className={styles.editorModalBody}>
-                  <InlineEventEditor
-                    key={selectedEventId}
-                    event={events.find((e) => e.id === selectedEventId)!}
-                    divisions={divisions}
-                    squads={squads}
-                    onSave={(updated) => {
-                      handleSaveEvent(updated);
-                      setSelectedEventId(null);
-                    }}
-                    onCancel={() => setSelectedEventId(null)}
-                    onDelete={() => handleDeleteEvent(selectedEventId)}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <Modal
+            open={Boolean(selectedEvent)}
+            onClose={() => setSelectedEventId(null)}
+            title="Event details"
+            description={selectedEvent?.name || 'New event'}
+            size="lg"
+            closeLabel="Close event editor"
+          >
+            {selectedEvent ? (
+              <InlineEventEditor
+                key={selectedEvent.id}
+                event={selectedEvent}
+                divisions={divisions}
+                squads={squads}
+                onSave={(updated) => {
+                  handleSaveEvent(updated);
+                  setSelectedEventId(null);
+                }}
+                onCancel={() => setSelectedEventId(null)}
+                onDelete={() => handleDeleteEvent(selectedEvent.id)}
+              />
+            ) : null}
+          </Modal>
 
-          {/* ✨ Division editor modal ✨ */}
-          {selectedDivisionId && divisions.find((d) => d.id === selectedDivisionId) && (
-            <div className={styles.editorModal} role="dialog" aria-modal="true">
-              <div className={styles.editorModalBox}>
-                <div className={styles.editorModalHead}>
-                  <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Layers size={ICON_SIZE.sm} /></span>
-                    <div className={styles.divisionEditorHeadText}>
-                      <span className={styles.editorModalTitle}>Division Details</span>
-                      <small className={styles.divisionEditorHeadSubtitle}>{divisions.find((d) => d.id === selectedDivisionId)!.name || 'New Division'}</small>
-                    </div>
-                  </div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedDivisionId(null)} aria-label="Close">
-                    <X size={ICON_SIZE.md} />
-                  </button>
-                </div>
-                <div className={styles.editorModalBody}>
-                  <InlineDivisionEditor
-                    key={selectedDivisionId}
-                    division={divisions.find((d) => d.id === selectedDivisionId)!}
-                    usedByEventNames={events.filter((event) => event.connectedDivisionIds.includes(selectedDivisionId)).map((event) => event.name || 'Untitled Event')}
-                    onSave={(updated) => {
-                      handleSaveDivision(updated);
-                      setSelectedDivisionId(null);
-                    }}
-                    onCancel={() => setSelectedDivisionId(null)}
-                    onDelete={() => handleDeleteDivision(selectedDivisionId)}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <Modal
+            open={Boolean(selectedDivision)}
+            onClose={() => setSelectedDivisionId(null)}
+            title="Division details"
+            description={selectedDivision?.name || 'New division'}
+            size="lg"
+            closeLabel="Close division editor"
+          >
+            {selectedDivision ? (
+              <InlineDivisionEditor
+                key={selectedDivision.id}
+                division={selectedDivision}
+                usedByEventNames={events.filter((event) => event.connectedDivisionIds.includes(selectedDivision.id)).map((event) => event.name || 'Untitled event')}
+                onSave={(updated) => {
+                  handleSaveDivision(updated);
+                  setSelectedDivisionId(null);
+                }}
+                onCancel={() => setSelectedDivisionId(null)}
+                onDelete={() => handleDeleteDivision(selectedDivision.id)}
+              />
+            ) : null}
+          </Modal>
 
           {activeSection === 'squads-availability' && (
             <div className={styles.squadDashLayout}>
@@ -3224,6 +3168,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         void handleSignupPreviewSubmit();
                       }}
                       footerHint="Live preview updates as you configure fields and questions."
+                      presentation="inline"
                     />
                   </section>
                 </aside>
@@ -3379,17 +3324,23 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           )}
 
           {showRegistrationPreview ? (
-            <div className={styles.editorModal} role="dialog" aria-modal="true" aria-label="Registration preview" onClick={() => setShowRegistrationPreview(false)}>
-              <div className={`${styles.editorModalBox} ${styles.registrationPreviewModal}`} onClick={(event) => event.stopPropagation()}>
-                <div className={styles.editorModalHead}>
-                  <div><span className={styles.editorModalTitle}>Registration Preview</span><small className={styles.divisionEditorHeadSubtitle}>Preview only · Changes update automatically</small></div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setShowRegistrationPreview(false)} aria-label="Close preview"><X size={ICON_SIZE.md} /></button>
-                </div>
-                <div className={styles.editorModalBody}>
-                  <TournamentRegistrationForm rulesText={details.rulesText} tournamentName={details.name || 'Tournament Name'} squads={enabledSquads} events={eventsForSelectedPreviewSquad} divisions={enabledDivisions} fields={askedFields} questions={enabledQuestions} requiredBowlerCount={requiredPreviewBowlerCount} formState={signupPreviewForm} setFormState={setSignupPreviewForm} submitMessage={signupPreviewSubmitMessage} isSubmitting={isSubmittingSignupPreview} onSubmit={() => { void handleSignupPreviewSubmit(); }} footerHint="Preview only. No registration will be submitted." />
-                </div>
-              </div>
-            </div>
+            <TournamentRegistrationForm
+              rulesText={details.rulesText}
+              tournamentName={details.name || 'Tournament name'}
+              squads={enabledSquads}
+              events={eventsForSelectedPreviewSquad}
+              divisions={enabledDivisions}
+              fields={askedFields}
+              questions={enabledQuestions}
+              requiredBowlerCount={requiredPreviewBowlerCount}
+              formState={signupPreviewForm}
+              setFormState={setSignupPreviewForm}
+              submitMessage={signupPreviewSubmitMessage}
+              isSubmitting={isSubmittingSignupPreview}
+              onSubmit={() => { void handleSignupPreviewSubmit(); }}
+              onClose={() => setShowRegistrationPreview(false)}
+              footerHint="Preview only. No registration will be submitted."
+            />
           ) : null}
 
           {activeSection === 'review-publish' && (
@@ -3437,109 +3388,89 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               </div>
             </section>
           )}
-          <nav className={styles.setupStepFooter} aria-label="Setup step navigation">
-            {setupSections.findIndex((section) => section.key === activeSection) > 0 ? <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].key)}><ArrowLeft aria-hidden="true" size={ICON_SIZE.sm} /> {setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].label}</button> : <span />}
-            {setupSections.findIndex((section) => section.key === activeSection) < setupSections.length - 1 ? <button type="button" className={styles.primaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].key)}>{setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].label} <ArrowRight aria-hidden="true" size={ICON_SIZE.sm} /></button> : null}
+          <nav className={layout.stepFooter} aria-label="Setup step navigation">
+            {previousSection ? (
+              <Button variant="secondary" icon={<ArrowLeft size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setActiveSection(previousSection.key)}>
+                {previousSection.label}
+              </Button>
+            ) : <span />}
+            {nextSection ? (
+              <Button variant="primary" icon={<ArrowRight size={ICON_SIZE.md} aria-hidden="true" />} iconPosition="end" onClick={() => setActiveSection(nextSection.key)}>
+                {nextSection.label}
+              </Button>
+            ) : null}
           </nav>
-        </main>
+        </div>
       </div>
 
-      {isTournamentModalOpen && (
-        <div className={styles.tournamentLibraryBackdrop} onClick={() => setIsTournamentModalOpen(false)}>
-          <section
-            className={styles.tournamentLibraryModal}
-            role="dialog"
-            aria-modal="true"
-            aria-label="All Tournaments"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header className={styles.tournamentLibraryHeader}>
-              <div>
-                <h3>All Tournaments</h3>
-                <p>{userTournaments.length} available tournament{userTournaments.length === 1 ? '' : 's'}</p>
-              </div>
-              <button
-                type="button"
-                className={`${styles.tournamentLibraryClose} ${styles.modalCloseButton}`}
-                aria-label="Close tournament list"
-                onClick={() => setIsTournamentModalOpen(false)}
-              >
-                <X size={ICON_SIZE.md} />
-              </button>
-            </header>
-
-            <div className={styles.tournamentLibraryBody}>
-              {isLoadingTournamentLibrary ? (
-                <p className={styles.tournamentLibraryHint}>Loading tournaments...</p>
-              ) : userTournaments.length === 0 ? (
-                <p className={styles.tournamentLibraryHint}>No tournaments found for this user.</p>
-              ) : (
-                <ul className={styles.tournamentLibraryList}>
-                  {userTournaments.map((tournament) => {
-                    const setupState = setupStateByTournamentId[tournament.id];
-                    const squadCount = countTournamentSquads(tournament.squad_times);
-                    const tournamentStatusLabel = setupState?.is_published || tournament.is_public ? 'ACTIVE' : 'DRAFT';
-
-                    return (
-                      <li key={tournament.id} className={styles.tournamentLibraryItem}>
-                        <article className={styles.tournamentCard}>
-                          <div className={styles.tournamentCardMain}>
-                            <span className={styles.tournamentIconWrap}>
-                              <Trophy size={ICON_SIZE.md} />
-                            </span>
-                            <div className={styles.tournamentCardText}>
-                              <div className={styles.tournamentCardTitleRow}>
-                                <strong>{tournament.name}</strong>
-                                <span className={styles.tournamentStatusBadge}>{tournamentStatusLabel}</span>
-                              </div>
-                              <p>{tournament.location || 'Location not set'}</p>
-                              <p>{formatTournamentCardDate(tournament.start_date, tournament.end_date)}</p>
-                              <div className={styles.tournamentChipRow}>
-                                <span>{squadCount} Squad{squadCount === 1 ? '' : 's'}</span>
-                                <span>{tournament.entry_count ?? 0} Entries</span>
-                                <span>{tournament.brackets_configured ? 'Brackets Configured' : 'Brackets Pending'}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className={styles.tournamentCardActions}>
-                            <button
-                              type="button"
-                              className={styles.secondaryAction}
-                              onClick={() => { void handleLoadExistingTournament(tournament.id); }}
-                              disabled={loadingTournamentId === tournament.id || deletingTournamentId === tournament.id}
-                            >
-                              <RotateCcw size={ICON_SIZE.sm} /> {loadingTournamentId === tournament.id ? 'Loading...' : 'Edit'}
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.dangerAction}
-                              onClick={() => { void handleDeleteTournament(tournament.id); }}
-                              disabled={loadingTournamentId === tournament.id || deletingTournamentId === tournament.id}
-                            >
-                              <Trash2 size={ICON_SIZE.sm} /> {deletingTournamentId === tournament.id ? 'Deleting...' : 'Delete'}
-                            </button>
-                          </div>
-                        </article>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </section>
-        </div>
-      )}
+      <Modal
+        open={isTournamentModalOpen}
+        onClose={() => setIsTournamentModalOpen(false)}
+        title="All tournaments"
+        description={`${userTournaments.length} available tournament${userTournaments.length === 1 ? '' : 's'}`}
+        size="lg"
+        closeLabel="Close tournament list"
+      >
+        {isLoadingTournamentLibrary ? (
+          <p className={layout.bodyText}>Loading tournaments...</p>
+        ) : userTournaments.length === 0 ? (
+          <p className={layout.bodyText}>No tournaments found for this user.</p>
+        ) : (
+          <ul className={layout.rows}>
+            {userTournaments.map((tournament) => {
+              const setupState = setupStateByTournamentId[tournament.id];
+              const squadCount = countTournamentSquads(tournament.squad_times);
+              const isActive = Boolean(setupState?.is_published || tournament.is_public);
+              const isBusy = loadingTournamentId === tournament.id || deletingTournamentId === tournament.id;
+              return (
+                <li key={tournament.id} className={layout.row}>
+                  <div className={layout.rowText}>
+                    <span className={layout.rowTitle}>
+                      {tournament.name}
+                      <Badge tone={isActive ? 'success' : 'neutral'}>{isActive ? 'Active' : 'Draft'}</Badge>
+                    </span>
+                    <span className={layout.rowMeta}>
+                      {[
+                        tournament.location || 'Location not set',
+                        formatTournamentCardDate(tournament.start_date, tournament.end_date),
+                        `${squadCount} squad${squadCount === 1 ? '' : 's'}`,
+                        `${tournament.entry_count ?? 0} entries`,
+                        tournament.brackets_configured ? 'Brackets configured' : 'Brackets pending',
+                      ].join(' · ')}
+                    </span>
+                  </div>
+                  <div className={layout.rowActions}>
+                    <Button size="sm" variant="secondary" onClick={() => { void handleLoadExistingTournament(tournament.id); }} disabled={isBusy}>
+                      {loadingTournamentId === tournament.id ? 'Loading...' : 'Edit'}
+                    </Button>
+                    <Menu triggerLabel={`More actions for ${tournament.name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                      <MenuItem
+                        tone="danger"
+                        icon={<Trash2 size={ICON_SIZE.md} />}
+                        onSelect={() => { void handleDeleteTournament(tournament.id); }}
+                        disabled={isBusy}
+                        aria-label={`Delete ${tournament.name}`}
+                      >
+                        {deletingTournamentId === tournament.id ? 'Deleting...' : 'Delete tournament'}
+                      </MenuItem>
+                    </Menu>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Modal>
 
       {confirmationDialog}
       <ConfigDrawer
         open={Boolean(drawerState)}
         title={drawerState
-          ? `${drawerState.id ? 'Edit' : 'Add'} ${drawerState.kind === 'fee' ? 'Add-on' : `${drawerState.kind.charAt(0).toUpperCase()}${drawerState.kind.slice(1)}`}`
+          ? `${drawerState.id ? 'Edit' : 'Add'} ${drawerState.kind === 'fee' ? 'add-on' : drawerState.kind}`
           : ''}
         subtitle={drawerState?.kind === 'squad' && activeSquad
           ? `${activeSquad.dateIso || 'Date not set'} · ${activeSquad.startTime || 'Time not set'}`
-          : drawerState ? ({ location: 'Squads & Availability', field: 'Registration Setup', question: 'Registration Setup', fee: 'Add-ons, Payments & Docs' } as Record<string, string>)[drawerState.kind] ?? '' : ''}
+          : drawerState ? ({ location: 'Squads and availability', field: 'Registration setup', question: 'Registration setup', fee: 'Add-ons, payments, and documents' } as Record<string, string>)[drawerState.kind] ?? '' : ''}
         onClose={() => setDrawerState(null)}
       >
         {drawerState?.kind === 'squad' && activeSquad && (
@@ -3564,6 +3495,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           <LocationEditor location={activeLocation} onSave={handleSaveLocation} />
         )}
       </ConfigDrawer>
-    </div>
+    </Page>
   );
 }

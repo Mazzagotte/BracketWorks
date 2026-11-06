@@ -1,0 +1,107 @@
+/* Tournament setup shell: step nav on the left, the active step on the right (docs/ui-standards.md 5, 8a). */
+
+.layout {
+  display: grid;
+  grid-template-columns: var(--space-60) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.nav {
+  position: sticky;
+  top: calc(var(--space-16) + var(--space-4));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stepPicker {
+  display: none;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bw-stack-gap);
+  min-width: 0;
+}
+
+.stepFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.bodyText {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.rowTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.rowMeta {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nav {
+    position: static;
+  }
+
+  .stepPicker {
+    display: flex;
+  }
+
+  .stepList {
+    display: none;
+  }
+}
