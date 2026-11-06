@@ -23,6 +23,12 @@
   color: var(--bw-text-title);
 }
 
+/* The dialog box takes focus only so screen readers start inside it; its controls keep their rings. */
+.dialog:focus,
+.dialog:focus-visible {
+  outline: none;
+}
+
 .sm {
   max-width: var(--size-md);
 }
