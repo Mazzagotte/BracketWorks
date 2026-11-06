@@ -76,6 +76,12 @@
   min-width: 0;
 }
 
+@media (max-width: 640px) {
+  .toolbar > * {
+    flex: 1 1 100%;
+  }
+}
+
 .pagination {
   display: flex;
   flex-wrap: wrap;
