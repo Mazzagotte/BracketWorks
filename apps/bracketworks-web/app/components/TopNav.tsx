@@ -27,6 +27,7 @@ import {
   shouldRequireTimeSlotBeforeLeavingDashboard,
 } from '../lib/selection-session';
 import { preparePublicTournamentView } from '../lib/public-view';
+import { formatSquadLabel } from '../lib/squadDate';
 import { navLinks } from '../../components/nav-links';
 import ShareQRModal from './ShareQRModal';
 import { useToastHelpers } from './Toast';
@@ -55,7 +56,7 @@ export default function TopNav({ firstName }: TopNavProps) {
     const readContext = () => {
       setTournamentId(localStorage.getItem('tournament_id') || localStorage.getItem('lastTournamentId'));
       setActiveTournament(getActiveTournamentName());
-      setActiveSquad(getActiveSquadLabel());
+      setActiveSquad(formatSquadLabel(getActiveSquadLabel()));
     };
 
     readContext();

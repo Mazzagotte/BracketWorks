@@ -31,6 +31,7 @@ import ImportLoadingModal from '../components/ImportLoadingModal'
 import { getSelectedSquadId, getSelectedTournamentId, setSelectedSquad } from '../lib/selection-session'
 import { resetScrollLocks, setBodyInteractionState } from '../utils/modalUtils'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
+import { formatSquadDate } from '../lib/squadDate'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import ImportPreviewModal from './components/ImportPreviewModal'
 import DuplicateResolutionPanel from './components/DuplicateResolutionPanel'
@@ -264,26 +265,13 @@ export default function PlayersPage() {
     return () => window.removeEventListener('settings-changed', handleSettingsChanged)
   }, [cancelPendingPatches, loadEntryFee, loadPlayers])
 
-  const formatSquadDateLabel = useCallback((isoDate?: string) => {
-    if (!isoDate) return 'Date pending'
-    // Date-only values are calendar dates; parse them as local so they do not shift a day.
-    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
-    const parsedDate = new Date(dateOnly ? `${isoDate}T00:00:00` : isoDate)
-    if (Number.isNaN(parsedDate.getTime())) return isoDate
-    return parsedDate.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }, [])
 
   const entriesTableSubtitle = useMemo(() => {
     if (!selectedSquad) return 'No squad selected'
-    const dateLabel = formatSquadDateLabel(selectedSquad.date)
+    const dateLabel = formatSquadDate(selectedSquad.date)
     const timeLabel = selectedSquad.time || 'Time pending'
     return `${dateLabel} · ${timeLabel} squad`
-  }, [formatSquadDateLabel, selectedSquad])
+  }, [selectedSquad])
 
   // Adapter function to match PlayersTable expected signature
   const handleUpdatePlayer = useCallback((playerId: number, field: string, value: string | number | boolean) => {
