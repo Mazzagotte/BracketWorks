@@ -626,11 +626,6 @@ export default function PlayersPage() {
       <NoTournamentState
         title="Entries board standing by"
         description="Load a tournament to start rostering bowlers, assigning entry types, and tracking registration flow."
-        cards={[
-          { title: 'Build the roster', text: 'Add bowlers with averages, divisions, and entry type so each squad has clean participant data.' },
-          { title: 'Track entry mix', text: 'Monitor scratch vs handicap participation and projected bracket volume per squad.' },
-          { title: 'Keep fees aligned', text: 'Use consistent entry settings so totals and expected revenue stay accurate.' },
-        ]}
       />
     )
   }
@@ -640,9 +635,6 @@ export default function PlayersPage() {
       <NoTournamentState
         title="Entries need a squad"
         description="Choose a squad from the dashboard to open the player list for that session."
-        cards={[
-          { title: 'Pick a session', text: 'Select the correct squad first, then add and manage entries for that lineup.' },
-        ]}
       />
     )
   }

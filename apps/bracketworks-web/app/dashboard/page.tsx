@@ -1318,16 +1318,11 @@ export default function TournamentDashboard() {
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
               <NoTournamentState
-                title="Command Center Ready"
+                title="Command center ready"
                 description="Create a new tournament or load an existing one to activate your full tournament command center."
                 actions={[
-                  { label: 'Create Tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
-                  { label: 'Load Tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
-                ]}
-                cards={[
-                  { title: 'Build the Event', text: 'Set squads, bracket programs, entry pricing, side pots, and payout logic before lanes go live.' },
-                  { title: 'Run It Live', text: 'Manage entries, generate brackets, and enter scores from one control surface during play.' },
-                  { title: 'Close with Confidence', text: 'Review outcomes, payouts, exports, and public links when the tournament is complete.' },
+                  { label: 'Create tournament', onClick: () => { setCreateMode(true); setModalOpen(true); }, variant: 'primary' },
+                  { label: 'Load tournament', onClick: () => setLoadModalOpen(true), variant: 'secondary' },
                 ]}
               />
             )}

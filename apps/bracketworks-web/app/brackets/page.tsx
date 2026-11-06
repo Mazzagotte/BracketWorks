@@ -256,19 +256,11 @@ export default function BracketsPage() {
         <NoTournamentState
           title="Bracket engine ready"
           description="Load a tournament to generate bracket trees, manage match progress, and keep rounds moving cleanly."
-          cards={[
-            { title: 'Generate the tree', text: 'Build brackets directly from your tournament entries.' },
-            { title: 'Advance winners', text: 'Track matchups, winners, and round progression as scores come in.' },
-            { title: 'Switch programs easily', text: 'Move between scratch and handicap brackets on desktop or phone.' },
-          ]}
         />
       ) : !selectedSquad ? (
         <NoTournamentState
           title="Brackets need a squad"
           description="Select a squad from the dashboard to generate and manage brackets for that session."
-          cards={[
-            { title: 'Choose a session', text: 'Pick the correct squad first, then generate and manage its bracket rounds.' },
-          ]}
         />
       ) : (
         <Page>

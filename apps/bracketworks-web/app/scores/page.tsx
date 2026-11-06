@@ -357,11 +357,6 @@ export default function ScoresPage() {
       <NoTournamentState
         title="Scoring console waiting"
         description="Load a tournament to start entering game scores, validating round totals, and keeping standings current."
-        cards={[
-          { title: 'Capture results fast', text: 'Record each game directly in the score sheet for fast lane-side updates.' },
-          { title: 'Stay saved', text: 'Edits save as you type, so your progress stays protected between updates.' },
-          { title: 'Find bowlers quickly', text: 'Sort and filter by name, average, or score to correct and confirm entries quickly.' },
-        ]}
       />
     )
   }
@@ -370,7 +365,6 @@ export default function ScoresPage() {
       <NoTournamentState
         title="Scores need a squad"
         description="Select a squad from the dashboard to open scoring for that session."
-        cards={[{ title: 'Open the right session', text: 'Choose the squad first, then enter game-by-game scores for its bowlers.' }]}
       />
     )
   }
@@ -422,11 +416,6 @@ export default function ScoresPage() {
         {!tournament && !showInitialScoresLoad ? (
           <NoTournamentState
             description="Load a tournament from the dashboard before entering scores. Once loaded, this page becomes the live scoring workspace for the selected squad."
-            cards={[
-              { title: 'Enter games', text: 'Record scratch scores for each game and review handicap-adjusted totals.' },
-              { title: 'Live save status', text: 'See when rows are saving, saved, or need attention during score entry.' },
-              { title: 'Calculate payouts', text: 'Finalize scores and move directly into payout review when the squad is complete.' },
-            ]}
           />
         ) : (
           <Page>
