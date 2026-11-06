@@ -29,7 +29,6 @@ const colorTokenFiles = new Set([
   'src/bracketworks-theme.css',
   // bracketworks-web
   'app/styles/main.css',
-  'app/styles/landing-global.css',
   // tournament-central-web
   'styles/main.css',
   'lib/printTheme.ts',
