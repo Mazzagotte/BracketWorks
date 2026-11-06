@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { forwardRef, useId } from 'react';
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { ICON_SIZE } from '../iconSize';
 import { cx } from './cx';
@@ -63,11 +63,15 @@ function describedBy(helper: ReactNode, error: ReactNode, helperId: string, erro
 export interface TextFieldProps extends FieldFrameProps, Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {}
 
 /** Label above, control, then helper or error text. */
-export function TextField({ label, optional, helper, error, fullRow, hideLabel, className, id, ...inputProps }: TextFieldProps) {
+export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
+  { label, optional, helper, error, fullRow, hideLabel, className, id, ...inputProps },
+  ref,
+) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
     <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <input
+        ref={ref}
         id={controlId}
         className={cx(styles.control, error ? styles.invalid : undefined)}
         aria-invalid={error ? true : undefined}
@@ -76,17 +80,21 @@ export function TextField({ label, optional, helper, error, fullRow, hideLabel, 
       />
     </FieldFrame>
   );
-}
+});
 
 export interface SelectFieldProps extends FieldFrameProps, Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className'> {
   children: ReactNode;
 }
 
-export function SelectField({ label, optional, helper, error, fullRow, hideLabel, className, id, children, ...selectProps }: SelectFieldProps) {
+export const SelectField = forwardRef<HTMLSelectElement, SelectFieldProps>(function SelectField(
+  { label, optional, helper, error, fullRow, hideLabel, className, id, children, ...selectProps },
+  ref,
+) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
     <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <select
+        ref={ref}
         id={controlId}
         className={cx(styles.control, error ? styles.invalid : undefined)}
         aria-invalid={error ? true : undefined}
@@ -97,15 +105,19 @@ export function SelectField({ label, optional, helper, error, fullRow, hideLabel
       </select>
     </FieldFrame>
   );
-}
+});
 
 export interface TextAreaFieldProps extends FieldFrameProps, Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className'> {}
 
-export function TextAreaField({ label, optional, helper, error, fullRow, hideLabel, className, id, ...areaProps }: TextAreaFieldProps) {
+export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>(function TextAreaField(
+  { label, optional, helper, error, fullRow, hideLabel, className, id, ...areaProps },
+  ref,
+) {
   const { controlId, helperId, errorId } = useFieldIds(id);
   return (
     <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
       <textarea
+        ref={ref}
         id={controlId}
         className={cx(styles.control, styles.textarea, error ? styles.invalid : undefined)}
         aria-invalid={error ? true : undefined}
@@ -114,7 +126,7 @@ export function TextAreaField({ label, optional, helper, error, fullRow, hideLab
       />
     </FieldFrame>
   );
-}
+});
 
 export interface SearchFieldProps extends Omit<TextFieldProps, 'type' | 'optional'> {}
 
