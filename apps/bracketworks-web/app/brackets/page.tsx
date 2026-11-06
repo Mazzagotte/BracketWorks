@@ -1,33 +1,40 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
-import { BookOpen, ChevronLeft, ChevronRight, RefreshCw, Trash2, Zap } from 'lucide-react'
+import { BookOpen, ChevronLeft, ChevronRight, Network, RefreshCw, Search, Trash2 } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  EmptyState,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageHeader,
+  SearchField,
+  SegmentedControl,
+  SelectField,
+  StatGroup,
+} from '@bracketworks/ui'
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { useBrackets, BracketPreview } from '../hooks/useBrackets'
 import { useTournaments, useSquads } from '../hooks/useTournaments'
 import { useToast } from '../components/Toast'
-import { BracketResponse } from '../lib/types'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { cleanupModalState, resetScrollLocks } from '../utils/modalUtils'
 import { getMemoryAccessToken } from '../lib/api'
-import { BracketTabs } from './components/BracketTabs'
-import { SearchFilter } from './components/SearchFilter'
-import { EmptyBracketState } from './components/EmptyBracketState'
+import { formatSquadDate } from '../lib/squadDate'
 import ExplainBracketsModal from './components/ExplainBracketsModal'
-import { BracketSummaryCard } from './components/BracketSummaryCard'
-import { EntriesMismatchBanner } from './components/EntriesMismatchBanner'
 import { useBracketLoader } from './hooks/useBracketLoader'
 import { useBracketGenerationFlow } from './hooks/useBracketGenerationFlow'
 import { useBracketSelection } from './hooks/useBracketSelection'
 import { useBracketDisplay } from './hooks/useBracketDisplay'
 import NoTournamentState from '../components/NoTournamentState'
-import styles from './brackets.module.css'
-import cardStyles from '../styles/cards.module.css'
-import buttonStyles from '../styles/buttons.module.css'
-import shellStyles from '../styles/page-shell.module.css'
+import styles from './components/BracketsPage.module.css'
 
 // Lazy load heavy components for better initial load performance
 const BracketGenerationModal = lazy(() => import('../components/BracketGenerationModal'))
@@ -42,8 +49,6 @@ export default function BracketsPage() {
 
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false)
   const [deleteBracketsConfirmOpen, setDeleteBracketsConfirmOpen] = useState(false)
-  const [entriesMismatchPromptOpen, setEntriesMismatchPromptOpen] = useState(false)
-  const [entriesMismatchPromptDismissedKey, setEntriesMismatchPromptDismissedKey] = useState<string | null>(null)
   const [selectionRefreshKey, setSelectionRefreshKey] = useState(0)
   const isMobile = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [loadedBrackets, setLoadedBrackets] = useState<BracketPreview | null>(null)
@@ -83,15 +88,15 @@ export default function BracketsPage() {
   const {
     activeTab, setActiveTab,
     selectedBracketIndex, setSelectedBracketIndex,
-    mobileOpenBracketIndex, setMobileOpenBracketIndex,
     searchFirstName, setSearchFirstName,
     searchLastName, setSearchLastName,
     bracketGroups, filteredBracketItems, searchFilteredBracketItems,
-    mobileBracketSections, activeBracketItem, rounds,
+    activeBracketItem, rounds,
     bracketSearchTerm, searchResultCount,
     totalBracketCount, totalPlayersAtGeneration,
     handleClearFilters,
   } = useBracketDisplay({ loadedBrackets, isMobile })
+  const filteredBracketCountAll = bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0)
   const { reloadAfterGeneration } = useBracketLoader({
     selectedTournament,
     selectedSquad,
@@ -113,11 +118,6 @@ export default function BracketsPage() {
     addToast,
     reloadAfterGeneration,
   })
-
-  const entriesMismatchPromptKey = useMemo(
-    () => (selectedTournament && selectedSquad ? `${selectedTournament.id}:${selectedSquad.id}` : null),
-    [selectedTournament, selectedSquad],
-  )
 
   // Cleanup modals and state on unmount to prevent navigation blocking
   useEffect(() => {
@@ -173,21 +173,11 @@ export default function BracketsPage() {
     } catch {
       // Toast is handled in the hook
     }
-  }, [selectedTournament, selectedSquad, deleteTournamentBrackets, setActiveTab])
+  }, [selectedTournament, selectedSquad, deleteTournamentBrackets, setActiveTab, setSelectedBracketIndex])
 
   const handleDeleteAllBrackets = useCallback(() => {
     setDeleteBracketsConfirmOpen(true)
   }, [])
-
-  // Entries mismatch: open confirmation dialog when bracket data becomes stale
-  useEffect(() => {
-    if (!entriesMismatchPromptKey || !loadedBrackets?.entries_mismatch) {
-      setEntriesMismatchPromptOpen(false)
-      return
-    }
-    if (entriesMismatchPromptDismissedKey === entriesMismatchPromptKey) return
-    setEntriesMismatchPromptOpen(true)
-  }, [loadedBrackets?.entries_mismatch, entriesMismatchPromptDismissedKey, entriesMismatchPromptKey])
 
   const handleCloseExplainModal = useCallback(() => setIsExplainModalOpen(false), [])
 
@@ -195,62 +185,57 @@ export default function BracketsPage() {
   const hasActiveSession = Boolean(getMemoryAccessToken())
   const isDev = process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin
 
-  const bracketsQuickActions = useMemo(() => {
-    if (!selectedTournament) return undefined
-    return (
-      <div className={`${cardStyles.quickActionsRow} ${styles.bracketsQuickActionsRow}`}>
-        <div className={`${cardStyles.quickActionsGroupLeft} ${styles.bracketsQuickActionsGroupLeft}`}>
-          <button
-            onClick={() => setIsExplainModalOpen(true)}
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          >
-            <BookOpen aria-hidden="true" />
-            Bracket Guide
-          </button>
-          <button
-            type="button"
-            onClick={handleGenerateBrackets}
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          >
-            <RefreshCw aria-hidden="true" />
-            {totalBracketCount > 0 ? 'Regenerate Brackets' : 'Generate Brackets'}
-          </button>
-        </div>
-        {isDev && (
-          <div className={`${cardStyles.quickActionsGroupRight} ${styles.bracketsQuickActionsGroupRight}`}>
-            <div className={styles.quickActionAdminLabel}>Admin Tools</div>
-            <button onClick={handleDeleteAllBrackets} className={`${cardStyles.quickActionControl} ${styles.quickActionDangerBtn}`}>
-              <Trash2 aria-hidden="true" />
-              Delete All Brackets
-            </button>
-          </div>
-        )}
-      </div>
-    )
-  }, [selectedTournament, handleDeleteAllBrackets, handleGenerateBrackets, isDev, setIsExplainModalOpen, totalBracketCount])
-
+  const matchTotals = useMemo(() => {
+    let total = 0
+    let completed = 0
+    bracketGroups.forEach(group => group.brackets.forEach(bracket => (bracket.rounds || []).forEach(round => {
+      total += round.matches.length
+      completed += round.matches.filter(match => match.winner || match.split_pot || match.both_advance).length
+    })))
+    return { total, completed }
+  }, [bracketGroups])
 
   // Wait for auth initialization
   if (!isAuthInitialized) {
-    return (
-      <div className={styles.loadingState}>
-        <div role="status">Loading brackets...</div>
-      </div>
-    )
+    return <Page><p className={styles.status} role="status">Loading brackets...</p></Page>
   }
 
   // Authentication guard
   if (!isUserAuthenticated && !hasActiveSession) {
     return (
-      <div className={styles.authRequired}>
-        <div>Please log in to access bracket management</div>
-      </div>
+      <Page>
+        <Card>
+          <EmptyState title="Log in to manage brackets" description="Please log in to generate and review brackets for your tournament." />
+        </Card>
+      </Page>
     )
   }
 
+  const hasBrackets = Boolean(loadedBrackets) && filteredBracketItems.length > 0
+  const isOutOfDate = Boolean(loadedBrackets?.entries_mismatch)
+  const completionPercent = matchTotals.total > 0 ? Math.round((matchTotals.completed / matchTotals.total) * 100) : 0
+  const statusBadge = !hasBrackets
+    ? <Badge tone="neutral">Not generated</Badge>
+    : isOutOfDate
+      ? <Badge tone="warning">Out of date</Badge>
+      : completionPercent === 100
+        ? <Badge tone="success">Complete</Badge>
+        : <Badge tone="info">In progress</Badge>
+  const squadLabel = selectedSquad ? `${formatSquadDate(selectedSquad.date)} · ${selectedSquad.time || 'Time pending'} squad` : null
+  const totalVisible = searchFilteredBracketItems.length
+  const safeIndex = Math.min(selectedBracketIndex, Math.max(0, totalVisible - 1))
+  const programOptions = [
+    ...(bracketGroups.length > 1 ? [{ value: 'all', label: 'All', count: filteredBracketCountAll }] : []),
+    ...bracketGroups.map(group => ({ value: group.key, label: group.name, count: group.brackets.length })),
+  ]
+  const changeProgram = (value: string) => {
+    setActiveTab(value)
+    setSelectedBracketIndex(0)
+  }
+  const activeLabel = activeBracketItem ? `${activeBracketItem.group.name} bracket ${safeIndex + 1} of ${totalVisible}` : 'Bracket'
+
   return (
     <ErrorBoundary>
-      {/* Bracket Generation Modal - only load when needed */}
       {isModalOpen && (
         <Suspense fallback={<div role="status">Loading bracket tools...</div>}>
           <BracketGenerationModal
@@ -259,294 +244,171 @@ export default function BracketsPage() {
             onRegenerate={handleRegenerate}
             bracketGenerationPromise={bracketGenerationPromise}
             tournamentName={selectedTournament?.name}
-            squadName={selectedSquad ? `${selectedSquad.date} - ${selectedSquad.time}` : undefined}
+            squadName={squadLabel ?? undefined}
             playerCount={undefined}
           />
         </Suspense>
       )}
 
-      <ActionConfirmDialog
-        open={entriesMismatchPromptOpen}
-        title="Brackets Are Out of Date"
-        message="Brackets out of date: Entries have changed. Regenerate brackets to ensure accurate results and payouts."
-        confirmLabel="Regenerate Brackets"
-        cancelLabel="Dismiss"
-        showCloseButton={false}
-        onCancel={() => {
-          setEntriesMismatchPromptOpen(false)
-          if (entriesMismatchPromptKey) {
-            setEntriesMismatchPromptDismissedKey(entriesMismatchPromptKey)
-          }
-        }}
-        onConfirm={() => {
-          setEntriesMismatchPromptOpen(false)
-          setEntriesMismatchPromptDismissedKey(null)
-          handleGenerateBrackets()
-        }}
-      />
-
-      {/* Bracket content */}
-      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
-        {selectedTournament && (
-          <section className={styles.bracketsTopRow}>
-            {bracketsQuickActions && (
-              <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.bracketsQuickActionsCard}`}>
-                <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.bracketsQuickActionsTitle}`}>
-                  <Zap aria-hidden="true" />
-                  Quick Actions
-                </h2>
-                <div className={cardStyles.quickActionsBody}>
-                  {bracketsQuickActions}
-                </div>
-              </div>
+      {isInitializing ? (
+        <Page><p className={styles.status} role="status">Loading brackets...</p></Page>
+      ) : !selectedTournament ? (
+        <NoTournamentState
+          title="Bracket engine ready"
+          description="Load a tournament to generate bracket trees, manage match progress, and keep rounds moving cleanly."
+          cards={[
+            { title: 'Generate the tree', text: 'Build brackets directly from your tournament entries.' },
+            { title: 'Advance winners', text: 'Track matchups, winners, and round progression as scores come in.' },
+            { title: 'Switch programs easily', text: 'Move between scratch and handicap brackets on desktop or phone.' },
+          ]}
+        />
+      ) : !selectedSquad ? (
+        <NoTournamentState
+          title="Brackets need a squad"
+          description="Select a squad from the dashboard to generate and manage brackets for that session."
+          cards={[
+            { title: 'Choose a session', text: 'Pick the correct squad first, then generate and manage its bracket rounds.' },
+          ]}
+        />
+      ) : (
+        <Page>
+          <PageHeader
+            title="Brackets"
+            badge={statusBadge}
+            description={[selectedTournament.name, squadLabel].filter(Boolean).join(' · ')}
+            actions={(
+              <>
+                <Button variant="secondary" icon={<BookOpen size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setIsExplainModalOpen(true)}>
+                  Bracket guide
+                </Button>
+                <Button variant="primary" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleGenerateBrackets}>
+                  {totalBracketCount > 0 ? 'Regenerate brackets' : 'Generate brackets'}
+                </Button>
+              </>
             )}
-
-            <BracketSummaryCard
-              totalBracketCount={totalBracketCount}
-              totalPlayersAtGeneration={totalPlayersAtGeneration}
-            />
-          </section>
-        )}
-
-        {/* Loading State */}
-        {isInitializing ? (
-          <div className={styles.loadingState}>
-            <div role="status">Loading brackets...</div>
-          </div>
-        ) : /* No Tournament Loaded State */
-        !selectedTournament ? (
-          <NoTournamentState
-            title="Bracket Engine Ready"
-            description="Load a tournament to generate bracket trees, manage match progress, and keep rounds moving cleanly."
-            cards={[
-              { title: 'Generate the Tree', text: 'Build single or double elimination brackets directly from your tournament entries.' },
-              { title: 'Advance Winners', text: 'Track matchups, update winners, and view round progression in real time.' },
-              { title: 'Switch Modes Easily', text: 'Move between scratch and handicap views with navigation built for desk and mobile.' },
-            ]}
           />
-        ) : !selectedSquad ? (
-          <NoTournamentState
-            title="Brackets Need a Squad"
-            description="Select a squad from the dashboard to generate and manage brackets for that session."
-            cards={[
-              { title: 'Choose a Session', text: 'Pick the correct squad first, then generate and manage its bracket rounds.' },
-            ]}
-          />
-        ) : (
-        /* Show empty state if no brackets */
-        (() => {
-          const hasLoadedBrackets = !!loadedBrackets
-          const showEmpty = !hasLoadedBrackets || filteredBracketItems.length === 0
 
-          return showEmpty
-        })() ? (
-          <EmptyBracketState
-            onGenerateClick={handleGenerateBrackets}
-            showDemo={true}
-          />
-        ) : (
-          <>
-            {/* Entries mismatch warning */}
-            {loadedBrackets?.entries_mismatch && (
-              <EntriesMismatchBanner onRegenerate={handleGenerateBrackets} />
-            )}
-            <section className={styles.bracketWorkspaceCard}>
-              {/* Bracket Tabs + Navigator */}
-              <div className={styles.controlPanel}>
-              {/* Bracket Tabs */}
-              <BracketTabs
-                tabs={[
-                  ...(bracketGroups.length > 1 ? [{ id: 'all', label: 'All Brackets', count: filteredBracketItems.length }] : []),
-                  ...bracketGroups.map(group => ({ id: group.key, label: group.name, count: group.brackets.length })),
+          {hasBrackets && isOutOfDate ? (
+            <Notice tone="warning">
+              Entries changed after these brackets were generated. Regenerate brackets so results and payouts are accurate.
+            </Notice>
+          ) : null}
+
+          {!hasBrackets ? (
+            <Card aria-label="Brackets">
+              <EmptyState
+                icon={<Network size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                title="No brackets generated yet"
+                description="Generate brackets to seed matchups from this squad's entries. They update as scores come in."
+                action={<Button variant="primary" onClick={handleGenerateBrackets}>Generate brackets</Button>}
+              />
+            </Card>
+          ) : (
+            <>
+              <StatGroup
+                label="Bracket totals"
+                items={[
+                  { label: 'Brackets', value: String(totalBracketCount) },
+                  { label: 'Bowlers', value: String(totalPlayersAtGeneration) },
+                  { label: 'Completion', value: `${completionPercent}%`, detail: `${matchTotals.completed} of ${matchTotals.total} matches` },
                 ]}
-                activeTab={activeTab}
-                onTabChange={(tab) => {
-                  setActiveTab(tab)
-                  setSelectedBracketIndex(0)
-                  setMobileOpenBracketIndex(null)
-                }}
               />
 
-              {/* Bracket Navigator - only shown when there are multiple brackets */}
-              {!isMobile && (() => {
-              const totalBrackets = searchFilteredBracketItems.length
-              
-              if (totalBrackets <= 1) return null // Don't show if only one bracket
-              
-              // Calculate bracket stats
-              const totalMatches = rounds.reduce((sum, round) => sum + round.matches.length, 0)
-              const completedMatches = rounds.reduce((sum, round) =>
-                sum + round.matches.filter((match) => match.winner || match.split_pot || match.both_advance).length, 0)
-              const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0
-              
-              return (
-                <>
-                  <div className={styles.bracketNav}>
-                    <div className={styles.navMeta}>
-                      <div className={styles.bracketPicker}>
-                        <label className={styles.bracketSelectLabel} htmlFor="bracket-select-desktop">Bracket</label>
-                        <select
-                          id="bracket-select-desktop"
-                          className={styles.bracketSelectControl}
-                          value={selectedBracketIndex}
-                          onChange={(event) => setSelectedBracketIndex(Number(event.target.value))}
-                        >
-                          {searchFilteredBracketItems.map((item, index) => (
-                            <option key={`${item.group.key}-${index}`} value={index}>
-                              {`${item.group.name} ${index + 1} of ${totalBrackets}`}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className={styles.bracketProgress}>
-                        <span className={styles.navMetaSecondary}>{progressPercent}% complete</span>
-                        <progress
-                          className={styles.bracketProgressMeter}
-                          value={progressPercent}
-                          max={100}
-                          aria-label={`${progressPercent}% of matches complete`}
-                        />
-                      </div>
+              <Card aria-label="Bracket viewer">
+                <div className={styles.controls}>
+                  {programOptions.length > 1 ? (
+                    isMobile || programOptions.length > 5 ? (
+                      <SelectField label="Program" value={activeTab} onChange={event => changeProgram(event.target.value)}>
+                        {programOptions.map(option => (
+                          <option key={option.value} value={option.value}>{`${option.label} (${option.count})`}</option>
+                        ))}
+                      </SelectField>
+                    ) : (
+                      <SegmentedControl label="Program" options={programOptions} value={activeTab} onChange={changeProgram} />
+                    )
+                  ) : null}
+
+                  <div className={styles.pickerRow}>
+                    <div className={styles.picker}>
+                      <Button
+                        size={isMobile ? undefined : 'sm'}
+                        variant="secondary"
+                        icon={<ChevronLeft size={ICON_SIZE.md} aria-hidden="true" />}
+                        aria-label="Previous bracket"
+                        onClick={() => setSelectedBracketIndex(Math.max(0, safeIndex - 1))}
+                        disabled={safeIndex === 0}
+                      />
+                      <SelectField
+                        label="Bracket"
+                        hideLabel
+                        value={safeIndex}
+                        onChange={event => setSelectedBracketIndex(Number(event.target.value))}
+                        disabled={totalVisible === 0}
+                      >
+                        {searchFilteredBracketItems.map((item, index) => (
+                          <option key={`${item.group.key}-${index}`} value={index}>{`${item.group.name} ${index + 1} of ${totalVisible}`}</option>
+                        ))}
+                      </SelectField>
+                      <Button
+                        size={isMobile ? undefined : 'sm'}
+                        variant="secondary"
+                        icon={<ChevronRight size={ICON_SIZE.md} aria-hidden="true" />}
+                        aria-label="Next bracket"
+                        onClick={() => setSelectedBracketIndex(Math.min(totalVisible - 1, safeIndex + 1))}
+                        disabled={safeIndex >= totalVisible - 1}
+                      />
                     </div>
-                    <div className={styles.navBtns}>
-                        <button
-                          onClick={() => setSelectedBracketIndex(Math.max(0, selectedBracketIndex - 1))}
-                          disabled={selectedBracketIndex === 0}
-                          className={styles.navBtn}
-                        >
-                          <ChevronLeft aria-hidden="true" />
-                          Previous
-                        </button>
-                        <button
-                          onClick={() => setSelectedBracketIndex(Math.min(totalBrackets - 1, selectedBracketIndex + 1))}
-                          disabled={selectedBracketIndex >= totalBrackets - 1}
-                          className={styles.navBtn}
-                        >
-                          Next
-                          <ChevronRight aria-hidden="true" />
-                        </button>
-                      </div>
+                    <SearchField
+                      label="Highlight a bowler"
+                      placeholder="Highlight a bowler"
+                      value={searchFirstName}
+                      onChange={event => { setSearchFirstName(event.target.value); setSearchLastName('') }}
+                      className={styles.search}
+                    />
                   </div>
-                </>
-              )
-            })()}
-              <div className={styles.bracketSearchRow}>
-                <SearchFilter
-                  firstName={searchFirstName}
-                  lastName={searchLastName}
-                  onFirstNameChange={setSearchFirstName}
-                  onLastNameChange={setSearchLastName}
-                  onClearFilters={handleClearFilters}
-                  searchResultCount={searchResultCount}
-                />
+                  {bracketSearchTerm ? (
+                    <p className={styles.meta} role="status">
+                      {searchResultCount === 1 ? '1 bracket' : `${searchResultCount ?? 0} brackets`} with &quot;{bracketSearchTerm}&quot;
+                    </p>
+                  ) : null}
+                </div>
+
+                <CardDivider />
+
+                <Suspense fallback={<p className={styles.status} role="status">Loading bracket view...</p>}>
+                  {totalVisible === 0 ? (
+                    <EmptyState
+                      icon={<Search size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                      title="No brackets with that bowler"
+                      description="Try a different name, or clear the search."
+                      action={<Button variant="secondary" onClick={handleClearFilters}>Clear search</Button>}
+                    />
+                  ) : rounds.length > 0 ? (
+                    <BracketTreeView rounds={rounds} isMobile={isMobile} searchTerm={bracketSearchTerm} label={activeLabel} />
+                  ) : (
+                    <p className={styles.status}>This bracket has no matches yet.</p>
+                  )}
+                </Suspense>
+              </Card>
+
+              <div className={styles.footer}>
+                <p className={styles.meta}>Brackets update as scores change.</p>
+                {isDev ? (
+                  <Button size="sm" variant="ghost-danger" icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleDeleteAllBrackets}>
+                    Delete all brackets
+                  </Button>
+                ) : null}
               </div>
-              </div>{/* end controlPanel */}
+            </>
+          )}
+        </Page>
+      )}
 
-              {/* Bracket Display */}
-              <div className={styles.bracketWorkspaceStage}>
-              <Suspense fallback={<div className={styles.loadingState} role="status"><div>Loading bracket view...</div></div>}>
-            {isMobile ? (
-              searchFilteredBracketItems.length === 0 ? (
-                <div className={`${cardStyles.card} ${styles.noMatches}`}>
-                  <p>No brackets contain that player name.</p>
-                </div>
-              ) : mobileOpenBracketIndex === null ? (
-                <div className={styles.mobileBracketList}>
-                  {mobileBracketSections.map(section => (
-                    <section key={section.key} className={styles.mobileBracketSection}>
-                      <h3 className={styles.mobileBracketSectionTitle}>{section.name}</h3>
-                      <div className={styles.mobileBracketSectionList}>
-                        {section.items.map(({ item, index }) => {
-                          const itemRounds = item.bracket.rounds || []
-                          const totalMatches = itemRounds.reduce((sum, round) => sum + round.matches.length, 0)
-                          const completedMatches = itemRounds.reduce(
-                            (sum, round) => sum + round.matches.filter(m => m.winner || m.split_pot || m.both_advance).length,
-                            0
-                          )
-
-                          return (
-                            <button
-                              key={`${section.key}-${index}`}
-                              className={`${cardStyles.panel} ${styles.mobileBracketListItem}`}
-                              onClick={() => {
-                                setSelectedBracketIndex(index)
-                                setMobileOpenBracketIndex(index)
-                              }}
-                            >
-                              <div className={styles.mobileBracketListTitleRow}>
-                                <span className={styles.mobileBracketListTitle}>Bracket {index + 1}</span>
-                                <span className={styles.mobileBracketListMode}>{item.group.name}</span>
-                              </div>
-                              <div className={styles.mobileBracketListMeta}>
-                                {completedMatches}/{totalMatches} matches complete
-                              </div>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-              ) : activeBracketItem ? (
-                <div className={styles.mobileTreeViewWrap}>
-                  <div className={styles.mobileTreeHeader}>
-                    <button
-                      className={styles.mobileTreeBackBtn}
-                      onClick={() => setMobileOpenBracketIndex(null)}
-                    >
-                      Back to Brackets
-                    </button>
-                    <div className={styles.mobileTreeTitle}>
-                      Bracket {selectedBracketIndex + 1} • {activeBracketItem.group.name}
-                    </div>
-                  </div>
-                  <BracketTreeView
-                    rounds={rounds}
-                    isMobile={true}
-                    bracketType={activeBracketItem.group.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
-                    searchTerm={bracketSearchTerm}
-                    statusFilter="all"
-                    bracketTitle={`${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}`}
-                  />
-                </div>
-              ) : (
-                <div className={`${cardStyles.card} ${styles.noMatches}`}>
-                  <p>No bracket selected.</p>
-                </div>
-              )
-            ) : rounds.length > 0 ? (
-              <BracketTreeView
-                rounds={rounds}
-                isMobile={false}
-                bracketType={activeBracketItem?.group?.scoring_mode === 'scratch' ? 'scratch' : 'handicap'}
-                searchTerm={bracketSearchTerm}
-                statusFilter="all"
-                bracketTitle={activeBracketItem ? `${activeBracketItem.group.scoring_mode === 'scratch' ? 'Scratch' : 'Handicap'} Bracket ${selectedBracketIndex + 1} of ${searchFilteredBracketItems.length}` : undefined}
-              />
-            ) : (
-              <div className={`${cardStyles.card} ${styles.noMatches}`}>
-                <p>No matches found for the selected filters.</p>
-              </div>
-            )}
-              </Suspense>
-              </div>
-
-              <footer className={styles.bracketWorkspaceFooter}>
-                <span>Brackets auto-update as scores change.</span>
-                <span>{totalBracketCount} brackets generated for {totalPlayersAtGeneration} players.</span>
-              </footer>
-            </section>
-          </>
-        )
-        )}
-      </div>
-
-      {/* Explain Brackets Modal */}
       <ActionConfirmDialog
         open={deleteBracketsConfirmOpen}
-        title="Delete Saved Brackets?"
-        message="Delete all saved brackets for this tournament/squad? This cannot be undone."
-        confirmLabel="Delete Brackets"
+        title="Delete all brackets?"
+        message="Delete all saved brackets for this squad? This cannot be undone."
+        confirmLabel="Delete brackets"
         cancelLabel="Cancel"
         onCancel={() => setDeleteBracketsConfirmOpen(false)}
         onConfirm={() => {

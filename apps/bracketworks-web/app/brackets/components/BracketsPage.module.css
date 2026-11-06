@@ -1,0 +1,58 @@
+/* Organizer Brackets page: viewer controls and footer (docs/ui-standards.md section 7a). */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.search {
+  flex: 0 1 calc(var(--space-20) * 3.5);
+}
+
+.meta,
+.status {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.status {
+  font: var(--type-body);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .picker {
+    width: 100%;
+  }
+
+  .picker > :nth-child(2) {
+    flex: 1;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+}
