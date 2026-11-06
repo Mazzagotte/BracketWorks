@@ -252,6 +252,10 @@ Neutral badge: `--bw-surface-panel` background with secondary text.
 - Numeric columns are right-aligned with tabular numbers. Row actions are ghost icon buttons in
   the last column.
 - Lists inside cards follow the same row pattern (divider rows, no boxed items).
+- Each row shows at most one visible action (for example "Manage" as accent outline). Every other
+  row action, including destructive ones, goes in a "More actions for <name>" `Menu` (a "⋯"
+  ghost icon button). A disabled menu item explains why with a `MenuNote`. Never a column of red
+  Delete buttons.
 - Table toolbar, above the table inside the same card: search input (fills the row), then
   filter selects, then a secondary action (Export). Gap `--space-2`. Primary actions such as
   "Manual registration" go in the card header, not the toolbar.
