@@ -1,14 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { History } from 'lucide-react';
+import { ActivityList, Button, Card, CardHeader, EmptyState, ICON_SIZE, Notice, Page, PageHeader } from '@bracketworks/ui';
 
 import { listTournamentActivity, type TournamentActivityEntry } from '@/components/organizer/organizerApi';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
-import styles from '../page.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './activity.module.css';
 
 const PAGE_SIZE = 25;
 
@@ -63,53 +61,40 @@ export default function OrganizerTournamentActivityPage() {
   };
 
   return (
-    <main className={styles.registrationPage}>
-      <header className={styles.registrationHeader}>
-        <div>
-          <span className={styles.registrationEyebrow}>Tournament activity</span>
-          <h1>Activity</h1>
-          <p>Recent changes and events for {tournamentName}.</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+    <Page width="narrow">
+      <PageHeader title="Activity" description={`Recent changes and events for ${tournamentName}.`} />
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isLoading ? <section className={styles.registrationLoading}>Loading activity...</section> : null}
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+      {isLoading ? <Notice tone="info">Loading activity...</Notice> : null}
 
       {!isLoading && !error ? (
-        <section className={styles.registrationTableCard} aria-label="Activity log">
-          <div className={styles.registrationPanelHeading}>
-            <div>
-              <h2>Recent Activity</h2>
-              <p>{entries.length} event{entries.length === 1 ? '' : 's'} shown</p>
-            </div>
-          </div>
+        <Card aria-label="Activity log">
+          <CardHeader title="Recent activity" description={`${entries.length} event${entries.length === 1 ? '' : 's'} shown`} />
           {entries.length === 0 ? (
-            <p className={styles.emptyRegistrations}>No activity recorded yet.</p>
+            <EmptyState
+              icon={<History size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title="No activity yet"
+              description="Changes to setup, registrations, and payments are recorded here."
+            />
           ) : (
-            <ul className={styles.tournamentAttentionList} aria-label="Activity entries">
-              {entries.map((entry) => (
-                <li key={entry.id}>
-                  <span>
-                    <strong>{entry.summary}</strong>
-                    {entry.user_display_name ? ` \u2014 ${entry.user_display_name}` : ''}
-                  </span>
-                  <span>{formatActivityTimestamp(entry.created_at)}</span>
-                </li>
-              ))}
-            </ul>
+            <ActivityList
+              items={entries.map((entry) => ({
+                id: String(entry.id),
+                title: entry.summary,
+                time: formatActivityTimestamp(entry.created_at),
+                detail: entry.user_display_name || undefined,
+              }))}
+            />
           )}
-          {hasMore ? (
-            <footer className={styles.registrationPagination}>
-              <button type="button" className={styles.registrationBackButton} onClick={loadMore} disabled={isLoadingMore}>
+          {hasMore && entries.length > 0 ? (
+            <div className={styles.loadMore}>
+              <Button variant="secondary" size="sm" onClick={() => { void loadMore(); }} disabled={isLoadingMore}>
                 {isLoadingMore ? 'Loading...' : 'Load more'}
-              </button>
-            </footer>
+              </Button>
+            </div>
           ) : null}
-        </section>
+        </Card>
       ) : null}
-    </main>
+    </Page>
   );
 }
