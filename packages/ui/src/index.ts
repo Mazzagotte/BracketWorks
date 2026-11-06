@@ -39,3 +39,6 @@ export function capitalizeFirstLetter(value: string): string {
 
 export { BracketMatch, BracketTree, bracketWinningMargin } from './components/Bracket';
 export type { BracketChampionData, BracketMatchData, BracketMatchProps, BracketPlayerData, BracketRoundData, BracketTreeProps } from './components/Bracket';
+
+export { AuthShell } from './components/AuthShell';
+export type { AuthFeature, AuthShellProps } from './components/AuthShell';

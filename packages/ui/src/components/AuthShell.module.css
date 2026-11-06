@@ -1,4 +1,4 @@
-/* Auth pages: a short intro beside one form card (docs/ui-standards.md rule 1.9). */
+/* Shared auth frame: a short intro beside one form card (docs/ui-standards.md rule 1.9). */
 
 .page {
   display: flex;
@@ -26,7 +26,7 @@
   max-width: var(--size-md);
 }
 
-.brand {
+.brand a {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -100,6 +100,16 @@
   margin: 0;
   font: var(--type-page-title);
   color: var(--bw-text-title);
+}
+
+.switchRow a,
+.switchRow button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--color-accent-primary);
+  cursor: pointer;
 }
 
 .switchRow {
