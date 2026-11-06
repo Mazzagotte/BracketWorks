@@ -1,7 +1,0 @@
-/* Activity page: the Load more row under the list. */
-
-.loadMore {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--space-4);
-}

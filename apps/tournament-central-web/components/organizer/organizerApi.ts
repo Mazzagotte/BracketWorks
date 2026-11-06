@@ -531,28 +531,3 @@ export function respondToTcStaffInvitation(
 ): Promise<{ ok: boolean; status: 'accepted' | 'declined' }> {
   return organizerMutation(token, `/api/v1/tc/staff-invitations/${invitationId}/${decision}`, 'POST', {});
 }
-
-export type TournamentActivityEntry = {
-  id: number;
-  tournament_id: number;
-  event_type: string;
-  user_id: number | null;
-  user_display_name: string | null;
-  summary: string;
-  reason?: string | null;
-  entity_type?: string | null;
-  entity_id?: number | null;
-  created_at: string;
-};
-
-export function listTournamentActivity(
-  token: string,
-  tournamentId: number,
-  options?: { limit?: number; offset?: number },
-): Promise<TournamentActivityEntry[]> {
-  const params = new URLSearchParams();
-  if (options?.limit) params.set('limit', String(options.limit));
-  if (options?.offset) params.set('offset', String(options.offset));
-  const query = params.toString();
-  return organizerGet(token, `/api/v1/tournament-activity/${tournamentId}${query ? `?${query}` : ''}`);
-}

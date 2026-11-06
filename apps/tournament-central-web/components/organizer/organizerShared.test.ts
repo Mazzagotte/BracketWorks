@@ -13,7 +13,6 @@ describe('organizerRoutes', () => {
     expect(organizerRoutes.overview(42)).toBe('/organizer/tournaments/42');
     expect(organizerRoutes.setup(42, 'registration setup')).toBe('/organizer/tournaments/42/setup?section=registration%20setup');
     expect(organizerRoutes.team(42)).toBe('/organizer/tournaments/42/team');
-    expect(organizerRoutes.activity(42)).toBe('/organizer/tournaments/42/activity');
     expect(organizerRoutes.account).toBe('/organizer/account');
   });
 

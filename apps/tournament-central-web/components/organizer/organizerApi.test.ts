@@ -4,7 +4,6 @@ import {
   changeMyPassword,
   getMyAccount,
   inviteTournamentStaff,
-  listTournamentActivity,
   listMyTcStaffInvitations,
   listTournamentStaff,
   markTournamentRegistrationsPaid,
@@ -137,23 +136,5 @@ describe('organizerApi staff functions', () => {
       method: 'POST',
       body: '{}',
     }));
-  });
-});
-
-describe('organizerApi activity feed', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('listTournamentActivity encodes limit/offset as query params', async () => {
-    const fetchMock = mockFetchOnce([]);
-    await listTournamentActivity('token-123', 42, { limit: 25, offset: 25 });
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tournament-activity/42?limit=25&offset=25', expect.objectContaining({ method: 'GET' }));
-  });
-
-  it('listTournamentActivity omits query params when not provided', async () => {
-    const fetchMock = mockFetchOnce([]);
-    await listTournamentActivity('token-123', 42);
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/tournament-activity/42', expect.objectContaining({ method: 'GET' }));
   });
 });
