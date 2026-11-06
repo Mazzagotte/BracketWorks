@@ -68,7 +68,7 @@ const SCORE_FIELDS = ['game1_scratch', 'game2_scratch', 'game3_scratch'] as cons
  * Owns score-entry state: per-row save status, debounced API saves, undo history,
  * bulk save, and clear-game operations.
  *
- * Save flow: optimistic local state update → debounced API call → mark row as
+ * Save flow: optimistic local state update then debounced API call then mark row as
  * saved/failed. Failed saves surface a toast and keep the entered value so the
  * user can retry without re-entering data.
  */

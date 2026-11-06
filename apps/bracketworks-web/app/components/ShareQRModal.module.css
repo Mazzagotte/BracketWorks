@@ -94,8 +94,8 @@
 /* The QR canvas renders off screen; the poster preview shows the result. */
 .qrGenerator {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: 0;
+  height: 0;
   overflow: hidden;
   clip-path: inset(50%);
 }
