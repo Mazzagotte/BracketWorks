@@ -14,7 +14,8 @@ All values below are tokens from `packages/ui/styles/tokens.css` and `app-theme.
 write a raw color, size, or font value; `npm run lint` rejects them.
 
 Visual reference: the "BracketWorks UI Standard" canvas (Foundations, BW dashboard, BW entries,
-TC organizer overview, TC find a tournament, shared login). When this document and a mockup
+TC organizer overview, TC find a tournament, shared login, BW brackets, Live View on desktop,
+Live View standings and bracket on a phone, and the bracket match component). When this document and a mockup
 disagree, this document wins.
 
 ## 0. Design direction
@@ -268,6 +269,53 @@ Neutral badge: `--bw-surface-panel` background with secondary text.
   winner is text-primary 700 with a success check icon; the other player is text-secondary. Round
   titles use `overline`. Connector lines are `--bw-border-subtle`.
 
+## 7a. Brackets and Live View
+These are the product's showcase pages. They use the same shell and components as every other
+page, plus the bracket pieces below.
+
+**Bracket match** (one shared component, used by the organizer Brackets page and Live View):
+- Box: `1px solid var(--bw-border-subtle)`, radius `--radius-md`, `--bw-surface-card`, no tint or rail.
+- Header row: match name in `overline` ("Match 1", "Semifinal 1", "Final"), winning margin
+  ("+35") in `body-small` on the right, then a divider.
+- Player rows: name, then score right-aligned in tabular numbers. Winner: text-primary, weight 700,
+  with a success check icon (`ICON_SIZE.sm`, labelled "Winner"). Other player: text-secondary,
+  weight 400. No "vs" label.
+- Highlighted bowler: the row background is `--bw-surface-panel`. Never orange.
+
+**Bracket tree** (desktop): columns for Quarterfinals, Semifinals, Final, and Champion, each titled
+in `overline`. Connector lines are 1px `--bw-border-subtle`. The champion column shows a success
+trophy icon, the name in `section-title`, and "Won the final 214 to 191" and the runner-up in
+`body-small`. No winner banner.
+
+**Organizer Brackets page:**
+- Header badge shows bracket status. When entries changed after generation: a warning `Badge`
+  ("Out of date"), a warning `Notice` explaining it, and "Regenerate brackets" as the page's
+  primary action.
+- `StatGroup`: brackets, bowlers, completion, payout split.
+- One card: program `SegmentedControl` with counts (All, Handicap, Scratch, ...), a bracket picker
+  (previous / select / next), "Highlight a bowler" search, then the tree.
+- Destructive admin actions (Delete all brackets) are a danger link at the bottom of the page.
+
+**Live View (public):**
+- Top bar nav items are the views: **Standings**, **Brackets**, **Side pots**. Share is a
+  secondary button with an icon. No large logo lockup or "Public tournament view" eyebrow.
+- Header: tournament name, status badge, and a `body` line (date · center · bowlers). "Updated
+  8:08 AM · auto-refresh on" in `body-small` and a ghost Refresh button sit on the right.
+- `StatGroup`: bowlers, brackets, high game.
+- Standings: one table card. Columns "#", "Bowler", "After game 1", "After game 2", "1st or 2nd"
+  (phone: "G1", "G2", "Top 2"). All numbers text-primary, zeros text-secondary, last column
+  weight 700. Never orange numbers. "Find a bowler" filters the rows.
+- Side pots: one card, one subsection per pot: place badge (neutral), bowler, score, then
+  "10 entries · $40 pool" in `body-small`.
+- Footer: one `body-small` line, "Powered by BracketWorks".
+
+**Live View on a phone (≤767px):**
+- Compact top bar (56px): mark, product name, and an icon-only Share button (44px target).
+- The three views become a full-width segmented control, 40px tall.
+- Search and selects are 44px tall with 16px text.
+- Brackets: "Program" and "Bracket" selects with previous and next buttons, then one card with the
+  champion first, a divider, and the rounds stacked **Final, Semifinals, Quarterfinals**.
+
 ## 8. Overlays (modal, drawer, menu, toast)
 - Same surface as a card (`--bw-surface-card`, `--bw-border-subtle`), radius `--radius-2xl` (20) for
   modals and `--radius-lg` (12) for menus and toasts.
@@ -322,6 +370,7 @@ is replaced by these during the migration.
 | `ActivityList` | History and audit rows |
 | `TopNav`, `TopNavBrand`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |
 | `Avatar` | User initials |
+| `BracketMatch`, `BracketTree` (to build in the migration) | Bracket boxes and tree for the Brackets page and Live View (§7a) |
 | `ICON_SIZE` | Every icon size |
 
 If a screen needs something this list does not cover, add it to `packages/ui` first, with a test,
