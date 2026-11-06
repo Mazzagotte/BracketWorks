@@ -1,108 +1,72 @@
-/* Changelog Modal Styles */
+/* Changelog entries inside the shared Modal, split by dividers. */
 
-.headerContent {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.icon {
-  color: var(--color-primary);
-  flex-shrink: 0;
-}
-
-.title {
+.status,
+.text {
   margin: 0;
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font: var(--type-body);
+  color: var(--bw-text-body);
 }
 
-.loadingText,
-.emptyText {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  text-align: center;
-  padding: var(--space-5) 0;
-}
-
-.entriesList {
+.entries {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
 }
 
 .entry {
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3-5);
-  background: color-mix(in srgb, var(--color-text-primary) 2%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.entry:first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .entryHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-2-5);
+  gap: var(--space-2);
 }
-
-.entryMeta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-1-5); }
-.tag { padding: var(--space-0-5) var(--space-1-5); border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent); border-radius: var(--radius-full); color: var(--color-text-muted); font-size: var(--font-size-3xs); font-weight: 700; text-transform: uppercase; }
 
 .version {
-  margin: 0;
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  color: var(--color-primary);
+  font: var(--type-label);
+  color: var(--bw-text-title);
 }
-
-.entryTitle { margin: 0; color: var(--color-text-primary); font-size: var(--font-size-xl); line-height: 1.3; }
-.summary { margin: var(--space-1-5) 0 0; color: var(--color-text-secondary); font-size: var(--font-size-base); line-height: 1.5; }
-.structuredContent { display: grid; gap: var(--space-3); }
-.section { display: grid; gap: var(--space-1-5); }
-.section h4 { margin: 0; color: var(--color-text-primary); font-size: var(--font-size-base); }
 
 .date {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  margin-left: auto;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
 }
 
-.changesList {
+.title {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1-5);
+  gap: var(--space-1);
 }
 
-.changeItem {
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-  margin-left: var(--space-4);
-  position: relative;
+.sectionTitle {
+  margin: var(--space-1) 0 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
 }
 
-.changeItem::before {
-  content: '•';
-  position: absolute;
-  left: calc(var(--space-2-5) * -1);
-  color: var(--color-primary);
-}
-
-.closeButton {
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.closeButton:hover {
-  background: var(--color-primary);
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  font: var(--type-body);
+  color: var(--bw-text-body);
 }

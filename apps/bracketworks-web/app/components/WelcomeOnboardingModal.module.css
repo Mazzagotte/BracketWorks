@@ -1,18 +1,62 @@
-.content { display: grid; gap: var(--space-3-5); }
-.content > p { margin: 0; color: var(--bw-text-muted); line-height: 1.55; }
-.firstStep { display: flex; gap: var(--space-3); padding: var(--space-3-5); border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-panel); }
-.stepNumber { display: grid; place-items: center; flex: 0 0 var(--space-8); height: var(--space-8); border-radius: 50%; background: var(--color-primary); color: var(--color-white); font-weight: 800; }
-.firstStep strong, .firstStep div span { display: block; }
-.firstStep strong { color: var(--bw-text-title); }
-.firstStep div span { margin-top: var(--space-1); color: var(--bw-text-muted); font-size: var(--font-size-md); line-height: 1.4; }
-.workflow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-1-5); }
-.workflow button { display: grid; justify-items: center; gap: var(--space-1); min-width: 0; min-height: var(--space-12); padding: var(--space-1-5) var(--space-1); border: 1px solid var(--bw-border-subtle); border-radius: var(--radius-md); color: var(--bw-text-muted); background: var(--bw-surface-panel-strong); cursor: pointer; font: inherit; font-size: var(--font-size-xs); font-weight: 700; }
-.workflow button span { display: grid; place-items: center; width: var(--space-5); height: var(--space-5); border-radius: 50%; background: var(--bw-surface-panel); color: var(--bw-text-body); font-size: var(--font-size-2xs); }
-.workflow button:hover { border-color: var(--bw-border-accent); color: var(--bw-text-title); }
-.workflow button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.workflow .workflowActive { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, var(--bw-surface-panel-strong)); color: var(--bw-text-title); }
-.workflow .workflowActive span { background: var(--color-primary); color: var(--color-white); }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2-5); }
-.actions a { text-decoration: none; }
-.reopenNote { margin: calc(var(--space-0-5) * -1) 0 0 !important; text-align: center; color: var(--bw-text-muted) !important; font-size: var(--font-size-sm); }
-@media (max-width: 520px) { .workflow { grid-template-columns: repeat(4, minmax(0, 1fr)); } .actions { grid-template-columns: 1fr; } .actions > * { width: 100%; min-height: var(--space-10); } }
+/* Welcome overview inside the shared Modal: stage list and the selected stage. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-0-5);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel);
+  list-style: none;
+}
+
+.stage {
+  min-height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--bw-text-body);
+  font: var(--type-button);
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard), color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.stage:hover,
+.stageActive {
+  color: var(--bw-text-title);
+}
+
+.stageActive {
+  background: var(--bw-surface-card);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.panelTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.text,
+.meta {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.meta {
+  font: var(--type-body-small);
+}

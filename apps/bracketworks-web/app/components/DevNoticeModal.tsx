@@ -1,13 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button, CheckboxField, Modal, Notice } from '@bracketworks/ui';
 import { apiClient } from '../lib/api';
-import CloseControl from '../../components/CloseControl';
-import buttonStyles from '../styles/buttons.module.css';
-import modalStyles from '../styles/modals.module.css';
-import styles from './DevNoticeModal.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './DevNoticeModal.module.css';
 
 export interface DevNoticeModalProps {
   isOpen: boolean;
@@ -40,9 +36,6 @@ export default function DevNoticeModal({
   const [acknowledged, setAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const checkboxRef = useRef<HTMLInputElement>(null);
 
   // Reset checkbox when modal opens
   useEffect(() => {
@@ -51,43 +44,6 @@ export default function DevNoticeModal({
       setError('');
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const previous = document.activeElement as HTMLElement | null;
-    const priorOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.setTimeout(() => (mode === 'require-acceptance' ? checkboxRef.current : dialogRef.current)?.focus(), 0);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (mode === 'require-acceptance') event.preventDefault();
-        else onClose?.();
-        return;
-      }
-      if (event.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ));
-      if (!focusable.length) return;
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, true);
-      document.body.style.overflow = priorOverflow;
-      previous?.focus();
-    };
-  }, [isOpen, mode, onClose]);
-
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Never close on backdrop click in require-acceptance mode
-    if (mode === 'require-acceptance') return;
-    if (e.target === overlayRef.current) onClose?.();
-  };
 
   const handleAgree = async () => {
     if (!acknowledged || submitting) return;
@@ -104,119 +60,56 @@ export default function DevNoticeModal({
     onAccepted?.();
   };
 
-  if (!isOpen) return null;
+  const requireAcceptance = mode === 'require-acceptance';
 
   return (
-    <div
-      ref={overlayRef}
-      className={modalStyles.overlay}
-      onClick={handleOverlayClick}
+    <Modal
+      open={isOpen}
+      onClose={() => onClose?.()}
+      dismissible={!requireAcceptance}
+      closeOnBackdrop={!requireAcceptance}
+      role={requireAcceptance ? 'alertdialog' : 'dialog'}
+      closeLabel="Close development notice"
+      title="BracketWorks is still in development"
+      description={requireAcceptance ? 'Please read and accept this notice before you continue.' : undefined}
+      footer={requireAcceptance ? (
+        <>
+          <Button variant="secondary" onClick={onLogout}>Cancel and log out</Button>
+          <Button variant="primary" disabled={!acknowledged || submitting} onClick={handleAgree}>
+            {submitting ? 'Saving...' : 'Agree and continue'}
+          </Button>
+        </>
+      ) : (
+        <Button variant="secondary" onClick={onClose}>Close</Button>
+      )}
     >
-      <div
-        ref={dialogRef}
-        className={`${modalStyles.modal} ${modalStyles.compactModal}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dev-notice-title"
-        tabIndex={-1}
-      >
-        {mode === 'view-only' && <CloseControl className={modalStyles.closeButton} position="absolute" size="sm" label="Close development notice" onClick={onClose} />}
-        {/* Header */}
-        <div className={`${modalStyles.header} ${styles.header}`}>
-          <div className={styles.warningIcon} aria-hidden="true">
-            <AlertTriangle size={ICON_SIZE.lg} strokeWidth={2.5} />
-          </div>
-          <div>
-            <p className={styles.kicker}>
-              {mode === 'require-acceptance' ? 'First Login — Development Notice (Required)' : 'Development Notice'}
-            </p>
-            <h2 id="dev-notice-title" className={styles.title}>
-              BracketWorks Is Still in Development
-            </h2>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className={`${modalStyles.content} ${styles.body}`}>
-          <p className={styles.bodyText}>
-            BracketWorks is currently in active development and may contain incomplete features,
-            errors, interruptions, or unexpected behavior.
-          </p>
-          <p className={styles.bodyText}>
-            Tournament directors are responsible for reviewing and verifying all entries, scores,
-            bracket results, standings, payouts, and exported reports before they are published,
-            distributed, or relied upon.
-          </p>
-          <p className={styles.bodyText}>
-            Please do not use BracketWorks as the only record of important tournament information.
-            Maintain a separate backup of tournament entries, scores, results, and payout records
-            while the platform remains in development.
-          </p>
-          <p className={styles.bodyText}>
-            Inactive accounts, including their tournament data, may be deleted at any time.
-            Maintain backups of any information you want to keep.
-          </p>
-
-          <p className={styles.sectionLabel}>By continuing, you acknowledge that:</p>
-          <ul className={styles.checkList} aria-label="Acknowledgment checklist">
-            {CHECKLIST_ITEMS.map(item => (
-              <li key={item} className={styles.checkItem}>
-                <CheckCircle2 size={ICON_SIZE.md} className={styles.checkIcon} aria-hidden="true" />
-                {item}
-              </li>
-            ))}
-          </ul>
-
-          {mode === 'require-acceptance' && (
-            <div className={styles.acknowledgment}>
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  ref={checkboxRef}
-                  className={styles.checkboxInput}
-                  checked={acknowledged}
-                  onChange={e => setAcknowledged(e.target.checked)}
-                />
-                <span className={styles.checkboxLabel}>
-                  I acknowledge that BracketWorks is currently in development, and I agree to
-                  independently review and verify tournament data, results, and payouts before
-                  relying on or publishing them. I understand that inactive accounts and their
-                  tournament data may be deleted at any time.
-                </span>
-              </label>
-            </div>
-          )}
-          {error && <p className={styles.error} role="alert">{error}</p>}
-        </div>
-
-        {/* Footer */}
-        <div className={`${modalStyles.footer} ${styles.footer}`}>
-          {mode === 'require-acceptance' ? (
-            <>
-              <button
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.fullWidth}`}
-                disabled={!acknowledged || submitting}
-                onClick={handleAgree}
-              >
-                {submitting ? 'Saving...' : 'Agree and Continue'}
-              </button>
-              <button className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.fullWidth}`} onClick={onLogout}>
-                Cancel and Log Out
-              </button>
-            </>
-          ) : (
-            <button className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.fullWidth}`} onClick={onClose}>
-              Close
-            </button>
-          )}
-        </div>
-        {mode === 'require-acceptance' && (
-          <p className={styles.footerHint}>
-            <Lock size={ICON_SIZE.xs} aria-hidden="true" />
-            You must agree to continue.
-          </p>
-        )}
+      <div className={styles.body}>
+        <p className={styles.text}>
+          BracketWorks is in active development and may contain incomplete features, errors, interruptions, or unexpected behavior.
+        </p>
+        <p className={styles.text}>
+          Tournament directors are responsible for reviewing and verifying all entries, scores, bracket results, standings,
+          payouts, and exported reports before they are published, distributed, or relied on.
+        </p>
+        <p className={styles.text}>
+          Do not use BracketWorks as the only record of important tournament information. Keep a separate backup of entries,
+          scores, results, and payout records while the platform is in development. Inactive accounts, including their
+          tournament data, may be deleted at any time.
+        </p>
+        <h3 className={styles.label}>By continuing, you acknowledge that:</h3>
+        <ul className={styles.list} aria-label="Acknowledgment checklist">
+          {CHECKLIST_ITEMS.map(item => <li key={item}>{item}</li>)}
+        </ul>
+        {requireAcceptance ? (
+          <CheckboxField
+            label="I understand and agree"
+            helper="I will independently review and verify tournament data, results, and payouts before relying on or publishing them, and I understand that inactive accounts and their data may be deleted at any time."
+            checked={acknowledged}
+            onChange={e => setAcknowledged(e.target.checked)}
+          />
+        ) : null}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
       </div>
-    </div>
+    </Modal>
   );
 }

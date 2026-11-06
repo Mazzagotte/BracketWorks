@@ -1,6 +1,6 @@
 'use client';
 
-import styles from './ResetSuccessModal.module.css';
+import { Button, Modal } from '@bracketworks/ui';
 
 interface ResetSuccessModalProps {
   isOpen: boolean;
@@ -8,40 +8,16 @@ interface ResetSuccessModalProps {
   onDismiss: () => void;
 }
 
-export default function ResetSuccessModal({
-  isOpen,
-  countdown,
-  onDismiss,
-}: ResetSuccessModalProps) {
-  if (!isOpen) return null;
-
+/** Confirms a password reset on the login page, then closes on its own. */
+export default function ResetSuccessModal({ isOpen, countdown, onDismiss }: ResetSuccessModalProps) {
   return (
-    <div className={styles.overlay} role="presentation">
-      <div
-        className={styles.card}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="password-reset-success-title"
-      >
-        <div className={styles.header}>
-          <h2 id="password-reset-success-title" className={styles.title}>
-            Password Updated
-          </h2>
-          <p className={styles.text}>
-            Your password has been reset successfully. You can log in now with your new password.
-          </p>
-        </div>
-        <div className={styles.countdown}>
-          This message closes in {countdown}s.
-        </div>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={onDismiss}
-        >
-          Continue to Login
-        </button>
-      </div>
-    </div>
+    <Modal
+      open={isOpen}
+      onClose={onDismiss}
+      size="sm"
+      title="Password updated"
+      description={`Your password was reset. You can log in with your new password. This message closes in ${countdown} seconds.`}
+      footer={<Button variant="primary" onClick={onDismiss}>Continue to log in</Button>}
+    />
   );
 }

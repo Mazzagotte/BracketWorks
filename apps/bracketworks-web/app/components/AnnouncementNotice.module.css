@@ -1,3 +1,15 @@
-.content { display: grid; gap: var(--space-3-5); padding: var(--space-4); }
-.content p { margin: 0; color: var(--bw-text-body); line-height: 1.55; white-space: pre-wrap; }
-.content span { color: var(--bw-text-muted); font-size: var(--font-size-sm); text-align: center; }
+/* Announcement body inside the shared Modal. */
+
+.message {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+  white-space: pre-line;
+}
+
+.more {
+  margin-right: auto;
+  align-self: center;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}

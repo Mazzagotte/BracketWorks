@@ -1,13 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { BookOpen } from 'lucide-react';
-import CloseControl from '../../components/CloseControl';
+import { useEffect, useState } from 'react';
+import { Badge, Button, Modal } from '@bracketworks/ui';
 import { apiClient } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
-import modalStyles from '../styles/modals.module.css';
-import styles from './ChangelogModal.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './ChangelogModal.module.css';
 
 export interface ChangelogModalProps {
   isOpen: boolean;
@@ -17,7 +14,6 @@ export interface ChangelogModalProps {
 export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,91 +42,47 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
     };
   }, [isOpen]);
 
-  // Block Escape key to allow natural close behavior
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose?.();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === overlayRef.current) onClose?.();
-  };
-
-  if (!isOpen) return null;
+  const close = () => onClose?.();
 
   return (
-    <div
-      ref={overlayRef}
-      className={modalStyles.overlay}
-      onClick={handleOverlayClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="changelog-title"
+    <Modal
+      open={isOpen}
+      onClose={close}
+      closeLabel="Close changelog"
+      title="What's new"
+      footer={<Button variant="secondary" onClick={close}>Close</Button>}
     >
-      <div className={`${modalStyles.modal} ${modalStyles.compactModal}`}>
-        {/* Header */}
-        <div className={modalStyles.header}>
-          <div className={styles.headerContent}>
-            <BookOpen size={ICON_SIZE.lg} className={styles.icon} aria-hidden="true" />
-            <h2 id="changelog-title" className={styles.title}>
-              What&apos;s New
-            </h2>
-          </div>
-          <CloseControl
-            onClick={onClose}
-            label="Close changelog"
-            size="xs"
-            className={modalStyles.closeButton}
-            position="absolute"
-          />
+      {loading ? (
+        <p className={styles.status} role="status">Loading changelog...</p>
+      ) : entries.length === 0 ? (
+        <p className={styles.status}>No changelog entries yet.</p>
+      ) : (
+        <div className={styles.entries}>
+          {entries.map((entry, idx) => (
+            <article key={idx} className={styles.entry}>
+              <div className={styles.entryHeader}>
+                <span className={styles.version}>Version {entry.version}</span>
+                {entry.tags?.map(tag => <Badge key={tag} tone="neutral">{tag}</Badge>)}
+                <time className={styles.date}>{entry.date}</time>
+              </div>
+              {entry.sections?.length ? (
+                <>
+                  <h3 className={styles.title}>{entry.title}</h3>
+                  {entry.summary ? <p className={styles.text}>{entry.summary}</p> : null}
+                  {entry.sections.map((section, sectionIndex) => (
+                    <section className={styles.section} key={sectionIndex}>
+                      <h4 className={styles.sectionTitle}>{section.heading}</h4>
+                      <ul className={styles.list}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</ul>
+                    </section>
+                  ))}
+                </>
+              ) : (
+                <ul className={styles.list}>{entry.changes.map((change, changeIdx) => <li key={changeIdx}>{change}</li>)}</ul>
+              )}
+            </article>
+          ))}
         </div>
-
-        {/* Body */}
-        <div className={modalStyles.content}>
-          {loading ? (
-            <p className={styles.loadingText}>Loading changelog...</p>
-          ) : entries.length === 0 ? (
-            <p className={styles.emptyText}>No changelog entries available.</p>
-          ) : (
-            <div className={styles.entriesList}>
-              {entries.map((entry, idx) => (
-                <div key={idx} className={styles.entry}>
-                  <div className={styles.entryHeader}>
-                    <div className={styles.entryMeta}>
-                      <span className={styles.version}>v{entry.version}</span>
-                      {entry.tags?.map((tag) => <span className={styles.tag} key={tag}>{tag}</span>)}
-                    </div>
-                    <time className={styles.date}>{entry.date}</time>
-                  </div>
-                  {entry.sections?.length ? (
-                    <div className={styles.structuredContent}>
-                      <h3 className={styles.entryTitle}>{entry.title}</h3>
-                      {entry.summary && <p className={styles.summary}>{entry.summary}</p>}
-                      {entry.sections.map((section, sectionIndex) => <section className={styles.section} key={sectionIndex}>
-                        <h4>{section.heading}</h4>
-                        <ul className={styles.changesList}>{section.items.map((item, itemIndex) => <li key={itemIndex} className={styles.changeItem}>{item}</li>)}</ul>
-                      </section>)}
-                    </div>
-                  ) : (
-                    <ul className={styles.changesList}>{entry.changes.map((change, changeIdx) => <li key={changeIdx} className={styles.changeItem}>{change}</li>)}</ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className={modalStyles.footer}>
-          <button className={styles.closeButton} onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }
