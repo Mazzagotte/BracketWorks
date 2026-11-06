@@ -12,6 +12,7 @@ import {
   Menu,
   MenuItem,
   Modal,
+  PasswordField,
   NavItem,
   Notice,
   PageColumns,
@@ -58,6 +59,16 @@ describe('shared UI: form fields', () => {
     const average = screen.getByLabelText('Average');
     expect(average).toHaveAttribute('aria-invalid', 'true');
     expect(average).toHaveAccessibleDescription('Average must be 300 or less.');
+  });
+
+  it('shows and hides a password with a labelled toggle', async () => {
+    const user = userEvent.setup();
+    render(<PasswordField label="Password" defaultValue="secret" />);
+    const input = screen.getByLabelText('Password');
+    expect(input).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(input).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('labels a checkbox, describes it with helper text, and toggles from the label', async () => {

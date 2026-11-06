@@ -16,8 +16,8 @@ export type { MenuItemProps, MenuProps } from './components/Menu';
 export { ActivityList, Avatar, Badge, EmptyState, Notice, ProgressBar } from './components/Feedback';
 export type { ActivityItem, BadgeProps, EmptyStateProps, NoticeProps, ProgressBarProps, StatusTone } from './components/Feedback';
 
-export { CheckboxField, FormGrid, SearchField, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
-export type { CheckboxFieldProps, SearchFieldProps, SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
+export { CheckboxField, FormGrid, PasswordField, SearchField, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
+export type { CheckboxFieldProps, PasswordFieldProps, SearchFieldProps, SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
 
 export { DataTable, Pagination, TableToolbar } from './components/Table';
 export type { DataTableProps, PaginationProps, TableToolbarProps } from './components/Table';

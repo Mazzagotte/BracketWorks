@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useId } from 'react';
+import { forwardRef, useEffect, useId, useState } from 'react';
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { ICON_SIZE } from '../iconSize';
 import { cx } from './cx';
@@ -156,6 +156,57 @@ export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(fu
         {helper ? <span id={helperId} className={styles.helper}>{helper}</span> : null}
       </span>
     </div>
+  );
+});
+
+export interface PasswordFieldProps extends Omit<TextFieldProps, 'type'> {
+  /** Accessible names for the show and hide toggle. Default "Show password" and "Hide password". */
+  showLabel?: string;
+  hideLabelText?: string;
+  /** Hide the password again after this many milliseconds, for example on shared devices. */
+  autoHideAfterMs?: number;
+  /** Called when the password is hidden automatically. */
+  onAutoHide?: () => void;
+}
+
+/** A password input with a Show/Hide toggle inside the field. */
+export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(function PasswordField(
+  { label, optional, helper, error, fullRow, hideLabel, className, id, showLabel = 'Show password', hideLabelText = 'Hide password', autoHideAfterMs, onAutoHide, ...inputProps },
+  ref,
+) {
+  const { controlId, helperId, errorId } = useFieldIds(id);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!visible || !autoHideAfterMs) return undefined;
+    const timer = window.setTimeout(() => {
+      setVisible(false);
+      onAutoHide?.();
+    }, autoHideAfterMs);
+    return () => window.clearTimeout(timer);
+  }, [visible, autoHideAfterMs, onAutoHide]);
+  return (
+    <FieldFrame {...{ label, optional, helper, error, fullRow, hideLabel, className, controlId, helperId, errorId }}>
+      <span className={styles.passwordWrap}>
+        <input
+          ref={ref}
+          id={controlId}
+          type={visible ? 'text' : 'password'}
+          className={cx(styles.control, styles.passwordControl, error ? styles.invalid : undefined)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy(helper, error, helperId, errorId)}
+          {...inputProps}
+        />
+        <button
+          type="button"
+          className={styles.passwordToggle}
+          onClick={() => setVisible((value) => !value)}
+          aria-label={visible ? hideLabelText : showLabel}
+          aria-pressed={visible}
+        >
+          {visible ? 'Hide' : 'Show'}
+        </button>
+      </span>
+    </FieldFrame>
   );
 });
 
