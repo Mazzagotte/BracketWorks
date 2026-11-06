@@ -1,0 +1,32 @@
+/* Public top-bar account controls. */
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.name {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.status {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.narrowOnly {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .name,
+  .wideOnly {
+    display: none;
+  }
+
+  .narrowOnly {
+    display: flex;
+  }
+}

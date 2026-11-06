@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { formatTournamentDate, parseTournamentDate } from '@/lib/tournamentDates';
 import { formatMoney, formatSquadTime } from '@/components/organizer/organizerFormatting';
-import styles from '@/app/page.module.css';
+import { Badge, Button, CardDivider, Notice, capitalizeFirstLetter } from '@bracketworks/ui';
+import styles from './publicInfo.module.css';
 import TournamentRules from './TournamentRules';
 
 type PublicInformation = {
@@ -45,9 +46,15 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
     return () => controller.abort();
   }, [configUrl, attempt]);
 
-  if (error) return <div role="alert">{error} <button type="button" onClick={() => setAttempt((value) => value + 1)}>Try again</button></div>;
-  if (!configUrl) return <p>Additional tournament information has not been provided. Contact the organizer before registering.</p>;
-  if (!information) return <p role="status">Loading tournament information...</p>;
+  if (error) {
+    return (
+      <Notice tone="danger" role="alert" action={<Button size="sm" variant="ghost" onClick={() => setAttempt((value) => value + 1)}>Try again</Button>}>
+        {error}
+      </Notice>
+    );
+  }
+  if (!configUrl) return <p className={styles.empty}>Additional tournament information has not been provided. Contact the organizer before registering.</p>;
+  if (!information) return <p className={styles.empty} role="status">Loading tournament information...</p>;
   const details = information.details ?? {};
   const events = information.events ?? [];
   const divisions = information.divisions ?? [];
@@ -56,60 +63,120 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
   const prices = events.flatMap((event) => typeof event.entryFeeCents === 'number' ? [event.entryFeeCents] : []);
   const organizerNames = [...new Set([details.organizer, details.contactName].map((name) => name?.trim()).filter(Boolean))];
 
-  return <div className={styles.tournamentInformation}>
-    <dl className={styles.informationHighlights}>
-      {details.tournamentType && <div><dt>Tournament type</dt><dd>{details.tournamentType}</dd></div>}
-      {prices.length > 0 && <div><dt>Entry fee</dt><dd>From {formatMoney(Math.min(...prices))}</dd></div>}
-      {details.registrationCloseIso && <div className={styles.informationDeadline}><dt>Registration deadline</dt><dd>
-        {formatTournamentDate(details.registrationCloseIso)}{details.registrationCloseTime ? ` at ${formatSquadTime(details.registrationCloseTime)}` : ''}
-        {details.timezone && <small>{details.timezone.replaceAll('_', ' ')}</small>}
-      </dd></div>}
-    </dl>
-    {events.length > 0 ? <section className={styles.informationSection}><h3>Events and format</h3><ul className={styles.informationEventList}>{events.map((event) => <li key={event.id}>
-      <div className={styles.informationEventHeading}>
-        <strong>{event.name}</strong>
-        {typeof event.entryFeeCents === 'number' && <span className={styles.informationEventPrice}>{formatMoney(event.entryFeeCents)}</span>}
-      </div>
-      {event.scoring && <span className={styles.informationScoring}>{event.scoring.replaceAll('-', ' ')}</span>}
-      {event.description && <p>{event.description}</p>}
-    </li>)}</ul></section> : <p className={styles.informationEmpty}>Event and format details have not been provided.</p>}
-    {divisions.length > 0 && <section className={styles.informationSection}><h3>Divisions</h3><ul className={styles.informationDivisionList}>{divisions.map((division) => <li key={division.id}><strong>{division.name}</strong>{division.eligibilityNotes && <p>{division.eligibilityNotes}</p>}</li>)}</ul></section>}
-    {squads.length > 0 ? <section className={styles.informationSection}>
-      <div className={styles.informationSectionHeading}><h3>Squad times and availability</h3><span>{`${squads.length} ${squads.length === 1 ? 'squad' : 'squads'}`}</span></div>
-      <ul className={styles.informationSquadList}>{squads.map((squad) => {
-        const availability = typeof squad.capacity === 'number' && squad.capacity > 0 && typeof squad.registeredCount === 'number'
-          ? { capacity: squad.capacity, bowlers: squad.registeredCount, remaining: Math.max(0, squad.capacity - squad.registeredCount) }
-          : null;
-        const date = parseTournamentDate(squad.dateIso);
-        const fullDate = date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        const scheduleIsInName = fullDate && squad.startTime
-          && squad.name === `${fullDate} - ${formatSquadTime(squad.startTime)}`;
-        return <li key={squad.id} className={styles.informationSquadCard}>
-          <div className={styles.informationSquadHeading}>
-            <strong>{squad.name}</strong>
-            {availability && <span className={availability.remaining > 0 ? styles.informationAvailability : styles.informationFull}>{availability.remaining > 0 ? 'Spots available' : 'Full'}</span>}
+  return (
+    <div className={styles.information}>
+      <dl className={styles.facts}>
+        {details.tournamentType ? <div><dt>Tournament type</dt><dd>{details.tournamentType}</dd></div> : null}
+        {prices.length > 0 ? <div><dt>Entry fee</dt><dd>From {formatMoney(Math.min(...prices))}</dd></div> : null}
+        {details.registrationCloseIso ? (
+          <div>
+            <dt>Registration deadline</dt>
+            <dd>
+              {formatTournamentDate(details.registrationCloseIso)}{details.registrationCloseTime ? ` at ${formatSquadTime(details.registrationCloseTime)}` : ''}
+              {details.timezone ? <span className={styles.meta}>{details.timezone.replaceAll('_', ' ')}</span> : null}
+            </dd>
           </div>
-          {!scheduleIsInName && (squad.dateIso || squad.startTime) && <p className={styles.informationSquadSchedule}>
-            {squad.dateIso ? formatTournamentDate(squad.dateIso) : ''}
-            {squad.dateIso && squad.startTime ? ' at ' : ''}
-            {squad.startTime ? formatSquadTime(squad.startTime) : ''}
-          </p>}
-          {availability ? <div className={styles.informationSquadCapacity}>
-            <p><strong>{availability.remaining}</strong> of {availability.capacity} bowler spots remaining</p>
-            <span>{`${availability.bowlers} ${availability.bowlers === 1 ? 'bowler' : 'bowlers'} registered`}</span>
-          </div> : <p className={styles.informationEmpty}>Contact the organizer for availability</p>}
-        </li>;
-      })}</ul>
-    </section> : <p className={styles.informationEmpty}>Squad times have not been announced.</p>}
-    {(organizerNames.length > 0 || details.supportEmail || details.supportPhone) && <section className={styles.informationSection}>
-      <h3>Organizer contact</h3>
-      <div className={styles.informationContact}>
-          {organizerNames.length > 0 && <strong>{organizerNames.join(' - ')}</strong>}
-          {details.supportEmail && <a href={`mailto:${details.supportEmail}`}>{details.supportEmail}</a>}
-          {details.supportPhone && <a href={`tel:${details.supportPhone}`}>{details.supportPhone}</a>}
-          {details.contactNote && <p>{details.contactNote}</p>}
-      </div>
-    </section>}
-    <TournamentRules rulesText={details.rulesText} documents={documents} />
-  </div>;
+        ) : null}
+      </dl>
+
+      <CardDivider />
+      <section className={styles.section}>
+        <h3 className={styles.heading}>Events and format</h3>
+        {events.length > 0 ? (
+          <ul className={styles.rows}>
+            {events.map((event) => (
+              <li key={event.id} className={styles.row}>
+                <div className={styles.rowText}>
+                  <span className={styles.rowTitle}>{event.name}</span>
+                  {event.scoring ? <span className={styles.meta}>{capitalizeFirstLetter(event.scoring.replaceAll('-', ' '))}</span> : null}
+                  {event.description ? <p className={styles.meta}>{event.description}</p> : null}
+                </div>
+                {typeof event.entryFeeCents === 'number' ? <span className={styles.amount}>{formatMoney(event.entryFeeCents)}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : <p className={styles.empty}>Event and format details have not been provided.</p>}
+      </section>
+
+      {divisions.length > 0 ? (
+        <>
+          <CardDivider />
+          <section className={styles.section}>
+            <h3 className={styles.heading}>Divisions</h3>
+            <ul className={styles.rows}>
+              {divisions.map((division) => (
+                <li key={division.id} className={styles.row}>
+                  <div className={styles.rowText}>
+                    <span className={styles.rowTitle}>{division.name}</span>
+                    {division.eligibilityNotes ? <p className={styles.meta}>{division.eligibilityNotes}</p> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      ) : null}
+
+      <CardDivider />
+      <section className={styles.section}>
+        <div className={styles.headingRow}>
+          <h3 className={styles.heading}>Squad times and availability</h3>
+          {squads.length > 0 ? <span className={styles.meta}>{`${squads.length} ${squads.length === 1 ? 'squad' : 'squads'}`}</span> : null}
+        </div>
+        {squads.length > 0 ? (
+          <ul className={styles.rows}>
+            {squads.map((squad) => {
+              const availability = typeof squad.capacity === 'number' && squad.capacity > 0 && typeof squad.registeredCount === 'number'
+                ? { capacity: squad.capacity, bowlers: squad.registeredCount, remaining: Math.max(0, squad.capacity - squad.registeredCount) }
+                : null;
+              const date = parseTournamentDate(squad.dateIso);
+              const fullDate = date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+              const scheduleIsInName = fullDate && squad.startTime && squad.name === `${fullDate} - ${formatSquadTime(squad.startTime)}`;
+              return (
+                <li key={squad.id} className={styles.row}>
+                  <div className={styles.rowText}>
+                    <span className={styles.rowTitle}>{squad.name}</span>
+                    {!scheduleIsInName && (squad.dateIso || squad.startTime) ? (
+                      <span className={styles.meta}>
+                        {squad.dateIso ? formatTournamentDate(squad.dateIso) : ''}
+                        {squad.dateIso && squad.startTime ? ' at ' : ''}
+                        {squad.startTime ? formatSquadTime(squad.startTime) : ''}
+                      </span>
+                    ) : null}
+                    {availability ? (
+                      <>
+                        <p className={styles.meta}><strong className={styles.strong}>{availability.remaining}</strong> of {availability.capacity} bowler spots remaining</p>
+                        <span className={styles.meta}>{`${availability.bowlers} ${availability.bowlers === 1 ? 'bowler' : 'bowlers'} registered`}</span>
+                      </>
+                    ) : <span className={styles.meta}>Contact the organizer for availability</span>}
+                  </div>
+                  {availability ? (
+                    <Badge tone={availability.remaining > 0 ? 'success' : 'danger'}>{availability.remaining > 0 ? 'Spots available' : 'Full'}</Badge>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : <p className={styles.empty}>Squad times have not been announced.</p>}
+      </section>
+
+      {organizerNames.length > 0 || details.supportEmail || details.supportPhone ? (
+        <>
+          <CardDivider />
+          <section className={styles.section}>
+            <h3 className={styles.heading}>Organizer contact</h3>
+            <div className={styles.contact}>
+              {organizerNames.length > 0 ? <span className={styles.rowTitle}>{organizerNames.join(' - ')}</span> : null}
+              {details.supportEmail ? <a href={`mailto:${details.supportEmail}`}>{details.supportEmail}</a> : null}
+              {details.supportPhone ? <a href={`tel:${details.supportPhone}`}>{details.supportPhone}</a> : null}
+              {details.contactNote ? <p className={styles.meta}>{details.contactNote}</p> : null}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      <CardDivider />
+      <TournamentRules rulesText={details.rulesText} documents={documents} />
+    </div>
+  );
 }

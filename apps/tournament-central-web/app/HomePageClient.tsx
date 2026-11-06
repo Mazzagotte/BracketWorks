@@ -5,32 +5,36 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { CalendarCheck2, CalendarDays, ChevronRight, Info, Link2, LocateFixed, MapPin, Plus, Search, ShieldCheck, Trophy, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Link2, LocateFixed, Minus, Plus } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
-import styles from './page.module.css';
+import styles from './home.module.css';
 import { formatTournamentDate, formatTournamentDateRange, parseTournamentDate } from '@/lib/tournamentDates';
 import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
-import { useModalFocus } from '@/lib/useModalFocus';
-import { ICON_SIZE, Notice } from '@bracketworks/ui';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  EmptyState,
+  ICON_SIZE,
+  Modal,
+  Notice,
+  Page,
+  SearchField,
+  SegmentedControl,
+  TopNav,
+  buttonClassName,
+  topNavBrandClassName,
+} from '@bracketworks/ui';
 
 const TournamentRegistrationForm = dynamic(() => import('@/components/public/TournamentRegistrationForm'));
 
 const TOURNAMENT_PAGE_SIZE = 24;
-
-function Brand() {
-  return (
-    <span className={`${styles.brand} bw-public-brand`}>
-      <Image src="/TC_logo_No_Text.svg" alt="Tournament Central" width={38} height={38} priority />
-      <span className="bw-public-brand-text">
-        <strong>TOURNAMENT <span>CENTRAL</span></strong>
-        <small>Bowling Tournament Management</small>
-      </span>
-    </span>
-  );
-}
 
 type TournamentStatus = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
 type StateTab = 'UPCOMING' | 'IN PROGRESS' | 'PAST RESULTS';
@@ -204,8 +208,8 @@ const tabOrder: StateTab[] = ['UPCOMING', 'IN PROGRESS', 'PAST RESULTS'];
 
 const statusLabel: Record<TournamentStatus, string> = {
   UPCOMING: 'Upcoming',
-  'IN PROGRESS': 'In Progress',
-  'PAST RESULTS': 'Past Results',
+  'IN PROGRESS': 'In progress',
+  'PAST RESULTS': 'Past results',
 };
 
 const mapGeographyStyle = {
@@ -213,18 +217,6 @@ const mapGeographyStyle = {
   hover: { outline: 'none' },
   pressed: { outline: 'none' },
 } as const;
-
-function getCardStatusClass(status: TournamentStatus): string {
-  if (status === 'UPCOMING') {
-    return styles.cardStatusUpcoming;
-  }
-
-  if (status === 'IN PROGRESS') {
-    return styles.cardStatusInProgress;
-  }
-
-  return styles.cardStatusPast;
-}
 
 function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTone {
   const tournaments = summary?.tournaments ?? [];
@@ -552,10 +544,6 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
     setShareMessage('');
     setShareError('');
   };
-  const detailModalRef = useModalFocus<HTMLElement>(
-    Boolean(detailTournamentId && !registrationTournamentId && allTournaments.some((entry) => entry.id === detailTournamentId)),
-    closeDetailModal,
-  );
   const lastSuccessfulHeartbeatRef = useRef(0);
 
   useEffect(() => {
@@ -1011,7 +999,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
 
   const openRegistrationModal = (tournament: Tournament, triggerElement?: HTMLElement | null) => {
     setRegistrationConfirmation(null);
-    if (triggerElement && !detailModalRef.current?.contains(triggerElement)) {
+    if (triggerElement && !triggerElement.closest('[role="dialog"]')) {
       lastTriggerRef.current = triggerElement;
     }
 
@@ -1373,635 +1361,417 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
     setMapViewport(DEFAULT_MAP_VIEWPORT);
   };
 
+  const discoveryOptions: Array<{ value: Exclude<DiscoveryFilter, 'near'>; label: string }> = [
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'weekend', label: 'This weekend' },
+    { value: 'in-progress', label: 'In progress' },
+    { value: 'past', label: 'Past results' },
+  ];
+  const selectDiscoveryFilter = (filter: DiscoveryFilter) => {
+    setDiscoveryFilter(filter);
+    setShowAllStatuses(filter === 'near' || filter === 'weekend');
+    if (filter === 'upcoming') setSelectedTab('UPCOMING');
+    if (filter === 'in-progress') setSelectedTab('IN PROGRESS');
+    if (filter === 'past') setSelectedTab('PAST RESULTS');
+  };
+  const statusTone = (status: TournamentStatus) => (status === 'UPCOMING' ? 'info' : status === 'IN PROGRESS' ? 'success' : 'neutral') as 'info' | 'success' | 'neutral';
+
   return (
-    <main id="main-content" className={styles.page}>
+    <div className={styles.shell}>
       <a className={styles.skipLink} href="#main-content">Skip to main content</a>
-      <header className={`${styles.header} bw-public-header`}>
-        <div className={`${styles.headerInner} bw-public-header-inner`}>
-          <Link href="/" aria-label="Tournament Central home" className="bw-public-brand-link"><Brand /></Link>
+      <TopNav
+        brand={(
+          <Link href="/" aria-label="Tournament Central home" className={topNavBrandClassName()}>
+            <Image src="/TC_logo_No_Text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
+            Tournament Central
+          </Link>
+        )}
+        actions={<PublicAccountNav />}
+      />
 
-          <PublicAccountNav />
-        </div>
-      </header>
-      {detailTournamentId && !allTournaments.some((entry) => entry.id === detailTournamentId) && (
-        <div className={styles.section}>
-          {detailLinkError ? <p role="alert">{detailLinkError}</p> : <p role="status">Loading tournament details...</p>}
-          <button type="button" className={styles.secondaryButton} onClick={closeDetailModal}>Back to tournaments</button>
-        </div>
-      )}
+      <main id="main-content">
+        <Page>
+          {detailTournamentId && !allTournaments.some((entry) => entry.id === detailTournamentId) ? (
+            <Notice
+              tone={detailLinkError ? 'danger' : 'info'}
+              role={detailLinkError ? 'alert' : 'status'}
+              action={<Button size="sm" variant="ghost" onClick={closeDetailModal}>Back to tournaments</Button>}
+            >
+              {detailLinkError || 'Loading tournament details...'}
+            </Notice>
+          ) : null}
 
-      <section id="tournament-directory" className={`${styles.section} ${styles.explore}`}>
-        <div className={styles.discoveryHeader}>
-          <div className={styles.discoveryIntro}>
-            <h1>Find a Tournament</h1>
-            <p>Search by tournament, bowling center, city, or state.</p>
-          </div>
-          <label className={styles.discoverySearch}>
-            <Search size={ICON_SIZE.lg} aria-hidden="true" />
-            <span className={styles.srOnly}>Search tournaments, bowling centers, cities, or states</span>
-            <input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search tournaments, bowling centers, cities, or states..."
-              type="search"
-            />
-            {searchQuery ? (
-              <button
-                type="button"
-                className={styles.discoverySearchClear}
-                aria-label="Clear tournament search"
-                onClick={() => setSearchQuery('')}
-              >
-                ×
-              </button>
-            ) : null}
-          </label>
-          <div className={styles.discoveryFilters} role="toolbar" aria-label="Tournament discovery filters">
-            {([
-              ['upcoming', 'Upcoming'],
-              ['weekend', 'This Weekend'],
-              ['near', 'Near Me'],
-              ['in-progress', 'In Progress'],
-              ['past', 'Past Results'],
-            ] as const).map(([filter, label]) => (
-              <button
-                key={filter}
-                type="button"
-                aria-pressed={discoveryFilter === filter}
-                className={discoveryFilter === filter ? styles.discoveryFilterActive : ''}
-                onClick={() => {
-                  setDiscoveryFilter(filter);
-                  setShowAllStatuses(filter === 'near' || filter === 'weekend');
-                  if (filter === 'upcoming') setSelectedTab('UPCOMING');
-                  if (filter === 'in-progress') setSelectedTab('IN PROGRESS');
-                  if (filter === 'past') setSelectedTab('PAST RESULTS');
-                }}
-              >
-                {filter === 'near' ? <LocateFixed size={ICON_SIZE.md} aria-hidden="true" /> : null}
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={styles.layoutGrid}>
-          <div
-            ref={mapShellRef}
-            id="state-map"
-            className={`${styles.mapShell} ${isMapInteracting ? styles.mapShellInteracting : ''}`}
-            role="group"
-            aria-label="United States tournament map"
-            onMouseLeave={() => setIsMapActive(false)}
-          >
-            <div className={styles.mapControls} role="toolbar" aria-label="Map zoom controls">
-              <button
-                type="button"
-                className={styles.mapControlButton}
-                onClick={() => handleZoomChange(0.45)}
-                aria-label="Zoom in on map"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                className={styles.mapControlButton}
-                onClick={() => handleZoomChange(-0.45)}
-                aria-label="Zoom out on map"
-              >
-                -
-              </button>
-              <button
-                type="button"
-                className={`${styles.mapControlButton} ${styles.mapControlReset}`}
-                onClick={handleZoomReset}
-                aria-label="Reset map zoom"
-              >
-                Reset
-              </button>
-            </div>
-            <p className={styles.mapHint}>
-              {isMapActive
-                ? 'Tip: Select a state, then use zoom controls, wheel, or pinch to inspect smaller states.'
-                : 'Click into the map to enable scroll and pan.'}
-            </p>
-            <div
-              className={styles.mapActivateOverlay}
-              data-active={isMapActive ? 'true' : 'false'}
-              onClick={() => setIsMapActive(true)}
-              aria-hidden="true"
-            />
-            <ComposableMap projection="geoAlbersUsa" className={styles.usMapSvg}>
-              <ZoomableGroup
-                center={mapViewport.center}
-                zoom={mapViewport.zoom}
-                minZoom={MIN_MAP_ZOOM}
-                maxZoom={MAX_MAP_ZOOM}
-                translateExtent={mapTranslateExtent}
-                filterZoomEvent={(event) => {
-                  const sourceEvent = event as unknown as MouseEvent;
-                  return sourceEvent.type !== 'dblclick' && !sourceEvent.ctrlKey && !sourceEvent.button;
-                }}
-                onMoveStart={() => {
-                  setIsMapInteracting(true);
-                }}
-                onMoveEnd={({ coordinates, zoom }) => {
-                  const nextZoom = clampZoom(zoom);
-                  if (nextZoom <= MIN_MAP_ZOOM + 0.0001) {
-                    setMapViewport(DEFAULT_MAP_VIEWPORT);
-                    setIsMapInteracting(false);
-                    return;
-                  }
-
-                  setMapViewport({
-                    center: [coordinates[0], coordinates[1]],
-                    zoom: nextZoom,
-                  });
-                  setIsMapInteracting(false);
-                }}
-              >
-                <Geographies geography={USA_STATES_GEO_URL}>
-                  {({ geographies }) => [...geographies].sort((left, right) => {
-                    const leftCode = STATE_FIPS_TO_CODE[String(left.id).padStart(2, '0')];
-                    const rightCode = STATE_FIPS_TO_CODE[String(right.id).padStart(2, '0')];
-
-                    return Number(leftCode === selectedStateCode) - Number(rightCode === selectedStateCode);
-                  }).map((geo) => {
-                    const fips = String(geo.id).padStart(2, '0');
-                    const stateCode = STATE_FIPS_TO_CODE[fips];
-                    const tone = stateCode ? (stateToneByCode.get(stateCode) ?? 'none') : 'none';
-                    const isSelected = stateCode === selectedStateCode;
-
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        className={styles.geographyBase}
-                        data-state-code={stateCode ?? ''}
-                        data-selected={isSelected ? 'true' : 'false'}
-                        data-tone={tone}
-                        onClick={(event) => {
-                          if (stateCode) {
-                            handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
-                          }
-                        }}
-                        style={mapGeographyStyle}
-                      />
-                    );
-                  })}
-                </Geographies>
-                {venueMapMarkers.map((marker) => {
-                  const tournamentCount = marker.tournaments.length;
-                  const isInSelectedState = marker.stateCode === selectedStateCode;
-                  const representativeTournament = marker.tournaments[0];
-                  const markerRadius = tournamentCount >= 4 ? 4.5 : tournamentCount >= 2 ? 3.25 : 2.25;
-                  const markerLabel = [
-                    representativeTournament.name,
-                    marker.venue,
-                    `${marker.city}${marker.stateCode ? `, ${marker.stateCode}` : ''}`,
-                    representativeTournament.date,
-                    tournamentCount > 1 ? `${tournamentCount} tournaments at this venue` : null,
-                  ].filter(Boolean).join('\n');
-
-                  return (
-                    <Marker key={marker.key} coordinates={marker.coordinates}>
-                      <g
-                        className={[
-                          styles.venueMarker,
-                          isInSelectedState ? styles.venueMarkerSelected : '',
-                          selectedStateCode && !isInSelectedState ? styles.venueMarkerMuted : '',
-                          tournamentCount >= 4 ? styles.venueMarkerHot : '',
-                        ].filter(Boolean).join(' ')}
-                        role="button"
-                        tabIndex={0}
-                        aria-label={markerLabel}
-                        onClick={() => {
-                          if (marker.stateCode) {
-                            hasUserSelectedStateRef.current = true;
-                            setSelectedStateCode(marker.stateCode);
-                          }
-                          openDetailModal(marker.tournaments[0].id);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            if (marker.stateCode) {
-                              hasUserSelectedStateRef.current = true;
-                              setSelectedStateCode(marker.stateCode);
-                            }
-                            openDetailModal(marker.tournaments[0].id);
-                          }
-                        }}
-                      >
-                        <title>{markerLabel}</title>
-                        <circle className={styles.venueMarkerDot} r={markerRadius} />
-                        {tournamentCount >= 4 ? <text className={styles.venueMarkerCount} y={0.5}>{tournamentCount}</text> : null}
-                      </g>
-                    </Marker>
-                  );
-                })}
-              </ZoomableGroup>
-            </ComposableMap>
-          </div>
-
-          <aside id="state-results" className={styles.statePanel}>
-            <div className={styles.stateHeader}>
-              <div className={styles.stateMeta}>
-                {selectedStateOutline ? (
-                  <svg
-                    className={styles.stateShape}
-                    viewBox={selectedStateOutline.viewBox}
-                    preserveAspectRatio="xMidYMid meet"
-                    role="presentation"
-                    focusable="false"
-                    aria-hidden="true"
-                  >
-                    <path d={selectedStateOutline.d} />
-                  </svg>
-                ) : (
-                  <span className={styles.stateFlagFallback} aria-hidden="true">{selectedState?.stateCode ?? '--'}</span>
-                )}
-                <div className={styles.stateTitleBlock}>
-                  <h3>{selectedState?.stateName ?? 'No State'}</h3>
-                  <p>{selectedStateSubtitle}</p>
-                </div>
+          <Card id="tournament-directory" aria-labelledby="find-a-tournament-title">
+            <div className={styles.discovery}>
+              <div className={styles.discoveryIntro}>
+                <h1 id="find-a-tournament-title" className={styles.pageTitle}>Find a tournament</h1>
+                <p className={styles.body}>Search by tournament, bowling center, city, or state.</p>
               </div>
-            </div>
-
-            <div className={styles.stateStatusSummary} aria-label="Tournament counts for selected state">
-              {tabOrder.map((tab) => (
-                <div key={tab} className={styles.stateStatusItem}>
-                  <span>{statusLabel[tab]}</span>
-                  <strong>{tabCounts[tab]}</strong>
-                </div>
-              ))}
-            </div>
-
-            {isLoading && (
-              <div className={styles.resultsSkeletonList} aria-label="Loading tournaments" role="status">
-                {[1, 2, 3].map((item) => <div key={item} className={styles.resultsSkeleton} />)}
-              </div>
-            )}
-
-            <div className={styles.cardList}>
-              {renderedTournaments.map((tournament) => (
-                <article key={tournament.id} className={`${styles.tournamentCard} ${getCardStatusClass(tournament.status)}`}>
-                  <div className={`${styles.tournamentMedia} ${tournament.logoUrl ? styles.tournamentMediaWithLogo : styles.tournamentMediaFallback}`} aria-hidden="true">
-                    {tournament.logoUrl ? (
-                      <img
-                        src={tournament.logoUrl}
-                        alt=""
-                        className={styles.tournamentMediaLogo}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={styles.tournamentMediaPlaceholder}>
-                        <Trophy size={ICON_SIZE['3xl']} aria-hidden="true" />
-                        <span>Tournament</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={styles.cardBody}>
-                    <div className={styles.cardHeaderRow}>
-                      <h4 className={styles.cardTitle} title={tournament.name}>{tournament.name}</h4>
-                      <span className={styles.statusMicroChip}>
-                        <span className={styles.statusMicroDot} aria-hidden="true" />
-                        {statusLabel[tournament.status]}
-                      </span>
-                    </div>
-                    <div className={styles.cardMetaBlock}>
-                      <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
-                        <CalendarDays size={ICON_SIZE.md} className={styles.cardMetaIcon} aria-hidden="true" />
-                        <span>{tournament.date}</span>
-                      </p>
-                      <span className={styles.cardMetaDivider} aria-hidden="true" />
-                      <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
-                        <MapPin size={ICON_SIZE.md} className={styles.cardMetaIcon} aria-hidden="true" />
-                        <span className={styles.cardMetaLocation}>{tournament.venue} • {tournament.city}, {tournament.stateLabel}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button
-                      type="button"
-                      className={`${styles.ghostBtn} ${styles.cardDetailButton}`}
-                      onClick={(event) => {
-                        lastTriggerRef.current = event.currentTarget;
-                        openDetailModal(tournament.id);
-                      }}
-                    >
-                      View Details
-                      <ChevronRight size={ICON_SIZE.xl} aria-hidden="true" />
-                    </button>
-                    {tournament.registrationUrl ? (
-                      <button
-                        type="button"
-                        className={styles.cardRegisterButton}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openRegistrationModal(tournament, event.currentTarget);
-                        }}
-                      >
-                        Register
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-              {hasMoreTournaments && (
-                <button
-                  type="button"
-                  className={styles.loadMoreButton}
-                  onClick={() => {
-                    setVisibleTournamentCount((prev) => prev + TOURNAMENT_PAGE_SIZE);
-                  }}
+              <SearchField
+                label="Search tournaments, bowling centers, cities, or states"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search tournaments, bowling centers, cities, or states"
+              />
+              <div className={styles.filters}>
+                <SegmentedControl
+                  label="Tournament discovery filters"
+                  value={discoveryFilter === 'near' ? ('' as Exclude<DiscoveryFilter, 'near'>) : discoveryFilter}
+                  onChange={selectDiscoveryFilter}
+                  options={discoveryOptions}
+                />
+                <Button
+                  variant={discoveryFilter === 'near' ? 'secondary' : 'ghost'}
+                  icon={<LocateFixed size={ICON_SIZE.md} aria-hidden="true" />}
+                  aria-pressed={discoveryFilter === 'near'}
+                  onClick={() => selectDiscoveryFilter('near')}
                 >
-                  Load more ({visibleTournaments.length - renderedTournaments.length} remaining)
-                </button>
-              )}
-              {!isLoading && visibleTournaments.length === 0 && (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyStateIcon} aria-hidden="true">
-                    <CalendarDays size={ICON_SIZE['3xl']} />
-                  </div>
-                  <h4>{searchQuery.trim() ? 'No matching tournaments' : showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
-                  <p>
-                    {searchQuery.trim()
-                      ? 'Try a different search or clear the current filters.'
-                      : !showAllStatuses && nextAvailableTab
-                      ? `Try ${statusLabel[nextAvailableTab]} for ${selectedState?.stateName ?? 'this state'}.`
-                      : 'There aren\'t any events listed yet.'}
-                  </p>
-                  {searchQuery.trim() ? (
-                    <button
-                      type="button"
-                      className={styles.emptyStatePrimaryAction}
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <Search size={ICON_SIZE.lg} />
-                      Clear Search
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className={searchQuery.trim() ? styles.emptyStateSecondaryAction : styles.emptyStatePrimaryAction}
-                    onClick={() => {
-                      if (showAllStatuses) {
+                  Near me
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <div className={styles.layoutGrid}>
+            <Card padding="flush" className={styles.mapCard} aria-label="United States tournament map">
+              <div
+                ref={mapShellRef}
+                id="state-map"
+                className={styles.map}
+                role="group"
+                aria-label="United States tournament map"
+                onMouseLeave={() => setIsMapActive(false)}
+              >
+                <div className={styles.mapControls} role="toolbar" aria-label="Map zoom controls">
+                  <Button size="sm" variant="secondary" iconOnly icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => handleZoomChange(0.45)} aria-label="Zoom in on map" />
+                  <Button size="sm" variant="secondary" iconOnly icon={<Minus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => handleZoomChange(-0.45)} aria-label="Zoom out on map" />
+                  <Button size="sm" variant="secondary" onClick={handleZoomReset} aria-label="Reset map zoom">Reset</Button>
+                </div>
+                <p className={styles.mapHint}>
+                  {isMapActive
+                    ? 'Select a state, then zoom with the buttons, scroll wheel, or pinch.'
+                    : 'Click the map to turn on scrolling and panning.'}
+                </p>
+                <div
+                  className={styles.mapActivate}
+                  data-active={isMapActive ? 'true' : 'false'}
+                  onClick={() => setIsMapActive(true)}
+                  aria-hidden="true"
+                />
+                <ComposableMap projection="geoAlbersUsa" className={styles.mapSvg}>
+                  <ZoomableGroup
+                    center={mapViewport.center}
+                    zoom={mapViewport.zoom}
+                    minZoom={MIN_MAP_ZOOM}
+                    maxZoom={MAX_MAP_ZOOM}
+                    translateExtent={mapTranslateExtent}
+                    filterZoomEvent={(event) => {
+                      const sourceEvent = event as unknown as MouseEvent;
+                      return sourceEvent.type !== 'dblclick' && !sourceEvent.ctrlKey && !sourceEvent.button;
+                    }}
+                    onMoveStart={() => setIsMapInteracting(true)}
+                    onMoveEnd={({ coordinates, zoom }) => {
+                      const nextZoom = clampZoom(zoom);
+                      if (nextZoom <= MIN_MAP_ZOOM + 0.0001) {
+                        setMapViewport(DEFAULT_MAP_VIEWPORT);
+                        setIsMapInteracting(false);
                         return;
                       }
-                      setShowAllStatuses(true);
+                      setMapViewport({ center: [coordinates[0], coordinates[1]], zoom: nextZoom });
+                      setIsMapInteracting(false);
                     }}
                   >
-                    <CalendarDays size={ICON_SIZE.lg} />
-                    Browse All Tournaments
-                  </button>
-                  {!searchQuery.trim() ? <button
-                    type="button"
-                    className={styles.emptyStateSecondaryAction}
-                    onClick={() => {
-                      setShowAllStatuses(true);
-                    }}
-                  >
-                    <Plus size={ICON_SIZE.lg} />
-                    {`List a Tournament in ${selectedState?.stateName ?? 'This State'}`}
-                  </button> : null}
-                </div>
-              )}
-            </div>
-
-            {!isLoading && visibleTournaments.length > 0 && (
-              <button
-                type="button"
-                className={styles.panelFooter}
-                disabled={!selectedState}
-                onClick={() => {
-                  setShowAllStatuses(true);
-                }}
-              >
-                {showAllStatuses
-                  ? `Showing All ${selectedState?.stateName ?? 'State'} Tournaments`
-                  : `View All ${selectedState?.stateName ?? 'State'} Tournaments`}
-              </button>
-            )}
-
-            {detailTournament && !registrationTournament && (
-              <div className={styles.detailsModalBackdrop} onClick={closeDetailModal}>
-                <section
-                  ref={detailModalRef}
-                  tabIndex={-1}
-                  className={styles.detailsModalCard}
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="tournament-details-title"
-                  aria-describedby="tournament-details-description"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <header className={styles.detailsModalHeader}>
-                    <div className={styles.detailsModalTitleGroup}>
-                      {detailTournament.logoUrl ? (
-                        <div className={styles.detailsModalLogoWrap}>
-                          <img src={detailTournament.logoUrl} alt="" className={styles.detailsModalLogo} />
-                        </div>
-                      ) : null}
-                      <div>
-                        <div className={styles.detailsModalHeadingMeta}>
-                          <span className={styles.detailsModalEyebrow}>Tournament Details</span>
-                          <span className={styles.detailsModalStatusValue}><span className={styles.detailsModalStatusDot} aria-hidden="true" />{statusLabel[detailTournament.status]}</span>
-                        </div>
-                        <h2 id="tournament-details-title">{detailTournament.name}</h2>
-                      </div>
-                    </div>
-                    <button type="button" className={styles.detailsModalClose} onClick={closeDetailModal} aria-label="Close tournament details">
-                      <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
-                    </button>
-                  </header>
-                  <div className={styles.detailsModalBody}>
-                    <p id="tournament-details-description">Review tournament information, availability, and documents before registering.</p>
-                    <div className={styles.detailsModalFacts}>
-                      <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><CalendarDays size={ICON_SIZE['3xl']} /></span>
-                        <strong>Date</strong>
-                        <span>{detailTournament.date}</span>
-                      </p>
-                      <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><MapPin size={ICON_SIZE['3xl']} /></span>
-                        <strong>Location</strong>
-                        <span>{detailTournament.locationText}</span>
-                      </p>
-                    </div>
-                    <TournamentInformation configUrl={getRegistrationConfigUrl(detailTournament)} />
-                    {shareMessage && <p role="status">{shareMessage}</p>}
-                    {shareError && <p role="alert">{shareError}</p>}
-                  </div>
-                  <footer className={styles.detailsModalFooter}>
-                    <span className={styles.detailsModalHint}>
-                      <Info size={ICON_SIZE['2xl']} aria-hidden="true" />
-                      Complete your bowler details and submit registration directly from this page.
-                    </span>
-                    <div className={styles.detailsModalActions}>
-                      <button type="button" className={`${styles.detailsModalSecondaryAction} ${styles.detailsModalShareAction}`} onClick={() => void copyDetailLink()}>
-                        Copy link
-                      </button>
-                      <button type="button" className={styles.detailsModalSecondaryAction} onClick={closeDetailModal}>
-                        Not Now
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.detailsModalPrimaryAction}
-                        disabled={!getRegistrationConfigUrl(detailTournament)}
-                        onClick={(event) => {
-                          if (!getRegistrationConfigUrl(detailTournament)) {
-                            return;
-                          }
-                          openRegistrationModal(detailTournament, event.currentTarget);
-                        }}
-                      >
-                        {getRegistrationConfigUrl(detailTournament) ? 'Sign Up' : 'Registration Closed'}
-                      </button>
-                    </div>
-                  </footer>
-                </section>
+                    <Geographies geography={USA_STATES_GEO_URL}>
+                      {({ geographies }) => [...geographies].sort((left, right) => {
+                        const leftCode = STATE_FIPS_TO_CODE[String(left.id).padStart(2, '0')];
+                        const rightCode = STATE_FIPS_TO_CODE[String(right.id).padStart(2, '0')];
+                        return Number(leftCode === selectedStateCode) - Number(rightCode === selectedStateCode);
+                      }).map((geo) => {
+                        const stateCode = STATE_FIPS_TO_CODE[String(geo.id).padStart(2, '0')];
+                        const tone = stateCode ? (stateToneByCode.get(stateCode) ?? 'none') : 'none';
+                        return (
+                          <Geography
+                            key={geo.rsmKey}
+                            geography={geo}
+                            className={styles.state}
+                            data-state-code={stateCode ?? ''}
+                            data-selected={stateCode === selectedStateCode ? 'true' : 'false'}
+                            data-tone={tone}
+                            onClick={(event) => {
+                              if (stateCode) handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
+                            }}
+                            style={mapGeographyStyle}
+                          />
+                        );
+                      })}
+                    </Geographies>
+                    {venueMapMarkers.map((marker) => {
+                      const tournamentCount = marker.tournaments.length;
+                      const representativeTournament = marker.tournaments[0];
+                      const markerLabel = [
+                        representativeTournament.name,
+                        marker.venue,
+                        `${marker.city}${marker.stateCode ? `, ${marker.stateCode}` : ''}`,
+                        representativeTournament.date,
+                        tournamentCount > 1 ? `${tournamentCount} tournaments at this venue` : null,
+                      ].filter(Boolean).join('\n');
+                      const selectMarker = () => {
+                        if (marker.stateCode) {
+                          hasUserSelectedStateRef.current = true;
+                          setSelectedStateCode(marker.stateCode);
+                        }
+                        openDetailModal(representativeTournament.id);
+                      };
+                      return (
+                        <Marker key={marker.key} coordinates={marker.coordinates}>
+                          <g
+                            className={styles.marker}
+                            data-muted={selectedStateCode && marker.stateCode !== selectedStateCode ? 'true' : 'false'}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={markerLabel}
+                            onClick={selectMarker}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                selectMarker();
+                              }
+                            }}
+                          >
+                            <title>{markerLabel}</title>
+                            <circle className={styles.markerDot} r={tournamentCount >= 4 ? 4.5 : tournamentCount >= 2 ? 3.25 : 2.25} />
+                            {tournamentCount >= 4 ? <text className={styles.markerCount} y={0.5}>{tournamentCount}</text> : null}
+                          </g>
+                        </Marker>
+                      );
+                    })}
+                  </ZoomableGroup>
+                </ComposableMap>
               </div>
-            )}
+            </Card>
 
-            {registrationTournament && (
-              <TournamentRegistrationForm
-                notice={isRegistrationConfigLoading
-                  ? <Notice tone="info" role="status">Loading tournament registration settings...</Notice>
-                  : registrationConfigError ? <Notice tone="danger" role="alert">{registrationConfigError}</Notice> : null}
-                tournamentName={registrationTournament.name}
-                tournamentDate={registrationTournament.date}
-                tournamentLocation={registrationTournament.locationText}
-                tournamentLogoUrl={registrationTournament.logoUrl}
-                rulesText={registrationConfig?.details?.rulesText}
-                documents={registrationConfig?.documents}
-                confirmation={registrationConfirmation}
-                squads={squadsForSelectedEvent}
-                events={eventsForSelectedSquad}
-                divisions={divisionsForSelectedEvent}
-                fields={registrationFields}
-                questions={registrationQuestions}
-                requiredBowlerCount={requiredBowlerCount}
-                formState={registrationForm}
-                setFormState={setRegistrationForm}
-                submitMessage={registrationSubmitMessage}
-                isSubmitting={isSubmittingRegistration}
-                onSubmit={handleRegistrationSubmit}
-                onClose={closeRegistrationModal}
-              />
-            )}
-          </aside>
-        </div>
-      </section>
+            <Card id="state-results" className={styles.statePanel} aria-label={`${selectedState?.stateName ?? 'State'} tournaments`}>
+              <div className={styles.stateHeader}>
+                {selectedStateOutline ? (
+                  <svg className={styles.stateShape} viewBox={selectedStateOutline.viewBox} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+                    <path d={selectedStateOutline.d} />
+                  </svg>
+                ) : null}
+                <div className={styles.stateTitle}>
+                  <h2 className={styles.sectionTitle}>{selectedState?.stateName ?? 'No state selected'}</h2>
+                  <p className={styles.helper}>{selectedStateSubtitle}</p>
+                </div>
+              </div>
 
-      <section className={`${styles.section} ${styles.featuredSection}`}>
-        <div className={styles.featuredLayout}>
-          <div className={styles.featuredStrip} aria-label="Featured tournaments">
-            <div className={styles.featuredHeader}>Featured Tournaments</div>
-            <div className={styles.featuredGrid}>
-              {featuredTournaments.map((tournament) => (
-                <article key={tournament.id} className={`${styles.featuredCard} ${styles[tournament.tone]}`}>
-                  <div className={styles.featuredCardContent}>
-                    <div className={styles.featuredIntro}>
-                      {tournament.logoUrl ? (
-                        <div className={styles.featuredLogoWrap}>
-                          <img src={tournament.logoUrl} alt="" className={styles.featuredLogo} loading="lazy" />
-                        </div>
-                      ) : (
-                        <div className={`${styles.featuredLogoWrap} ${styles.featuredLogoPlaceholder}`} aria-hidden="true">
-                          <Trophy size={ICON_SIZE['2xl']} />
-                        </div>
-                      )}
-                      <h3>{tournament.title}</h3>
-                    </div>
-
-                    <div className={styles.featuredDivider} aria-hidden="true" />
-
-                    <div className={styles.featuredInfoList}>
-                      <p className={styles.featuredVenueRow}>
-                        <span className={styles.featuredInfoIcon} aria-hidden="true"><MapPin size={ICON_SIZE.xl} /></span>
-                        <span>{tournament.venue}</span>
-                      </p>
-                      {tournament.city ? <p className={styles.featuredCityRow}>{tournament.city}</p> : null}
-
-                      <p className={styles.featuredFooterRow}>
-                        <span className={styles.featuredInfoIcon} aria-hidden="true"><CalendarDays size={ICON_SIZE.xl} /></span>
-                        <span>{tournament.dateLabel}</span>
-                      </p>
-                    </div>
-
-                    <div className={styles.featuredRegistrationBlock}>
-                      <span className={styles.featuredRegistrationIcon} aria-hidden="true">
-                        <CalendarCheck2 size={ICON_SIZE.lg} />
-                      </span>
-                      <div className={styles.featuredRegistrationText}>
-                        <div className={styles.featuredRegistrationLabel}>Registration Details</div>
-                        <div className={styles.featuredRegistrationDate}>{tournament.registrationDeadline ? `Closes ${formatTournamentDate(tournament.registrationDeadline)}` : 'View tournament for availability'}</div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className={styles.featuredCardPrimaryAction}
-                      onClick={(event) => {
-                        lastTriggerRef.current = event.currentTarget;
-                        openDetailModal(tournament.id);
-                      }}
-                    >
-                      View Tournament <span aria-hidden="true">→</span>
-                    </button>
+              <dl className={styles.counts} aria-label="Tournament counts for selected state">
+                {tabOrder.map((tab) => (
+                  <div key={tab}>
+                    <dt>{statusLabel[tab]}</dt>
+                    <dd>{tabCounts[tab]}</dd>
                   </div>
-                </article>
-              ))}
-            </div>
+                ))}
+              </dl>
+
+              <div className={styles.stateList}>
+                {isLoading ? <p className={styles.helper} role="status" aria-label="Loading tournaments">Loading tournaments...</p> : null}
+
+                {renderedTournaments.length > 0 ? (
+                  <ul className={styles.rows}>
+                    {renderedTournaments.map((tournament) => (
+                      <li key={tournament.id} className={styles.row}>
+                        <div className={styles.rowMain}>
+                          {tournament.logoUrl ? (
+                            <img src={tournament.logoUrl} alt="" className={styles.logo} loading="lazy" />
+                          ) : (
+                            <Avatar name={tournament.name} />
+                          )}
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>{tournament.name}</span>
+                            <span className={styles.rowMeta}>{tournament.date}</span>
+                            <span className={styles.rowMeta}>{tournament.venue} · {tournament.city}, {tournament.stateLabel}</span>
+                          </div>
+                          <Badge tone={statusTone(tournament.status)}>{statusLabel[tournament.status]}</Badge>
+                        </div>
+                        <div className={styles.rowActions}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(event) => {
+                              lastTriggerRef.current = event.currentTarget;
+                              openDetailModal(tournament.id);
+                            }}
+                          >
+                            View details
+                          </Button>
+                          {tournament.registrationUrl ? (
+                            <Button size="sm" variant="accent-outline" onClick={(event) => openRegistrationModal(tournament, event.currentTarget)}>
+                              Register
+                            </Button>
+                          ) : null}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {hasMoreTournaments ? (
+                  <Button variant="ghost" onClick={() => setVisibleTournamentCount((prev) => prev + TOURNAMENT_PAGE_SIZE)}>
+                    Load more ({visibleTournaments.length - renderedTournaments.length} remaining)
+                  </Button>
+                ) : null}
+
+                {!isLoading && visibleTournaments.length === 0 ? (
+                  <EmptyState
+                    icon={<CalendarDays size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                    title={searchQuery.trim() ? 'No matching tournaments' : showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}
+                    description={searchQuery.trim()
+                      ? 'Try a different search or clear the filters.'
+                      : !showAllStatuses && nextAvailableTab
+                        ? `Try ${statusLabel[nextAvailableTab].toLowerCase()} for ${selectedState?.stateName ?? 'this state'}.`
+                        : "There aren't any events listed yet."}
+                    action={searchQuery.trim() ? (
+                      <Button variant="secondary" onClick={() => setSearchQuery('')}>Clear search</Button>
+                    ) : !showAllStatuses ? (
+                      <Button variant="secondary" onClick={() => setShowAllStatuses(true)}>Browse all tournaments</Button>
+                    ) : undefined}
+                  />
+                ) : null}
+              </div>
+
+              {!isLoading && visibleTournaments.length > 0 ? (
+                <Button variant="secondary" fullWidth disabled={!selectedState || showAllStatuses} onClick={() => setShowAllStatuses(true)}>
+                  {showAllStatuses ? `Showing all ${selectedState?.stateName ?? 'state'} tournaments` : `View all ${selectedState?.stateName ?? 'state'} tournaments`}
+                </Button>
+              ) : null}
+            </Card>
           </div>
 
-          <aside className={styles.featuredBrandPanel} aria-label="BracketWorks and Tournament Central overview">
-            <h2 className={styles.featuredBrandTitle}>BracketWorks + Tournament Central</h2>
+          <div className={styles.featuredLayout}>
+            <Card aria-label="Featured tournaments">
+              <CardHeader title="Featured tournaments" />
+              {featuredTournaments.length === 0 ? (
+                <p className={styles.helper}>No upcoming tournaments are listed yet.</p>
+              ) : (
+                <ul className={styles.featuredGrid}>
+                  {featuredTournaments.map((tournament) => (
+                    <li key={tournament.id} className={styles.featuredItem}>
+                      <div className={styles.featuredIdentity}>
+                        {tournament.logoUrl ? <img src={tournament.logoUrl} alt="" className={styles.logo} loading="lazy" /> : <Avatar name={tournament.title} />}
+                        <h3 className={styles.featuredTitle}>{tournament.title}</h3>
+                      </div>
+                      <dl className={styles.featuredFacts}>
+                        <div><dt>Location</dt><dd>{tournament.venue}{tournament.city ? <span className={styles.rowMeta}>{tournament.city}</span> : null}</dd></div>
+                        <div><dt>Date</dt><dd>{tournament.dateLabel}</dd></div>
+                        <div>
+                          <dt>Registration</dt>
+                          <dd>{tournament.registrationDeadline ? `Closes ${formatTournamentDate(tournament.registrationDeadline)}` : 'See tournament for availability'}</dd>
+                        </div>
+                      </dl>
+                      <Button
+                        variant="secondary"
+                        fullWidth
+                        icon={<ArrowRight size={ICON_SIZE.md} aria-hidden="true" />}
+                        iconPosition="end"
+                        onClick={(event) => {
+                          lastTriggerRef.current = event.currentTarget;
+                          openDetailModal(tournament.id);
+                        }}
+                      >
+                        View tournament
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
 
-            <div className={styles.brandProductRow}>
-              <div className={styles.brandProductBlock}>
-                <div className={styles.brandWordmarkLogo}>
-                  <Image src="/logo_no_text.svg" alt="BracketWorks" width={78} height={78} priority />
+            <Card aria-label="BracketWorks and Tournament Central">
+              <CardHeader title="BracketWorks and Tournament Central" />
+              <div className={styles.brandBody}>
+                <div className={styles.brandMarks}>
+                  <Image src="/logo_no_text.svg" alt="BracketWorks" width={ICON_SIZE['3xl']} height={ICON_SIZE['3xl']} />
+                  <Image src="/TC_logo_No_Text.svg" alt="Tournament Central" width={ICON_SIZE['3xl']} height={ICON_SIZE['3xl']} />
                 </div>
+                <p className={styles.subsectionTitle}>One connected tournament workflow.</p>
+                <p className={styles.body}>
+                  Registration in Tournament Central. Brackets, scores, standings, and payouts in BracketWorks.
+                </p>
+                <a className={buttonClassName({ variant: 'secondary', fullWidth: true })} href="https://bracketworks.app">
+                  Explore BracketWorks
+                </a>
+                <p className={styles.helper}>Built for organizers. Trusted by players.</p>
               </div>
+            </Card>
+          </div>
+        </Page>
+      </main>
 
-              <div className={styles.brandMath} aria-hidden="true">
-                <Plus size={ICON_SIZE.xl} strokeWidth={3} />
-              </div>
-
-              <div className={styles.brandProductBlock}>
-                <div className={styles.brandWordmarkLogo}>
-                  <Image src="/TC_logo_No_Text.svg" alt="Tournament Central" width={78} height={78} priority />
-                </div>
-              </div>
+      <Modal
+        open={Boolean(detailTournament && !registrationTournament)}
+        onClose={closeDetailModal}
+        title={detailTournament?.name ?? 'Tournament'}
+        description="Review tournament information, availability, and documents before registering."
+        size="lg"
+        closeLabel="Close tournament details"
+        footer={detailTournament ? (
+          <>
+            <Button variant="secondary" icon={<Link2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => void copyDetailLink()}>Copy link</Button>
+            <Button
+              variant="primary"
+              disabled={!getRegistrationConfigUrl(detailTournament)}
+              onClick={(event) => {
+                if (getRegistrationConfigUrl(detailTournament)) openRegistrationModal(detailTournament, event.currentTarget);
+              }}
+            >
+              {getRegistrationConfigUrl(detailTournament) ? 'Register' : 'Registration closed'}
+            </Button>
+          </>
+        ) : undefined}
+      >
+        {detailTournament ? (
+          <div className={styles.details}>
+            <div className={styles.detailsSummary}>
+              {detailTournament.logoUrl ? <img src={detailTournament.logoUrl} alt="" className={styles.detailsLogo} /> : null}
+              <dl className={styles.detailsFacts}>
+                <div><dt>Status</dt><dd><Badge tone={statusTone(detailTournament.status)}>{statusLabel[detailTournament.status]}</Badge></dd></div>
+                <div><dt>Date</dt><dd>{detailTournament.date}</dd></div>
+                <div><dt>Location</dt><dd>{detailTournament.locationText}</dd></div>
+              </dl>
             </div>
+            {shareMessage ? <Notice tone="success" role="status">{shareMessage}</Notice> : null}
+            {shareError ? <Notice tone="danger" role="alert">{shareError}</Notice> : null}
+            <CardDivider />
+            <TournamentInformation configUrl={getRegistrationConfigUrl(detailTournament)} />
+          </div>
+        ) : null}
+      </Modal>
 
-            <div className={styles.brandDivider} aria-hidden="true" />
-
-            <div className={styles.brandWorkflowRow}>
-              <span className={styles.brandCheck} aria-hidden="true">
-                <Link2 size={ICON_SIZE.xs} strokeWidth={2.5} />
-              </span>
-              <p className={styles.featuredBrandSummary}>One connected tournament workflow.</p>
-            </div>
-
-            <p className={styles.featuredBrandText}>
-              Registration in Tournament Central.<br />
-              Brackets, scores, standings, and payouts in BracketWorks.
-            </p>
-
-            <button type="button" className={styles.featuredBrandCta}>
-              Explore BracketWorks <span aria-hidden="true">→</span>
-            </button>
-
-            <div className={styles.featuredBrandFooter}>
-              <span className={styles.brandFooterIcon} aria-hidden="true">
-                <ShieldCheck size={ICON_SIZE.sm} strokeWidth={2.5} />
-              </span>
-              <span>Built for organizers. Trusted by players.</span>
-            </div>
-          </aside>
-        </div>
-      </section>
-    </main>
+      {registrationTournament ? (
+        <TournamentRegistrationForm
+          notice={isRegistrationConfigLoading
+            ? <Notice tone="info" role="status">Loading tournament registration settings...</Notice>
+            : registrationConfigError ? <Notice tone="danger" role="alert">{registrationConfigError}</Notice> : null}
+          tournamentName={registrationTournament.name}
+          tournamentDate={registrationTournament.date}
+          tournamentLocation={registrationTournament.locationText}
+          tournamentLogoUrl={registrationTournament.logoUrl}
+          rulesText={registrationConfig?.details?.rulesText}
+          documents={registrationConfig?.documents}
+          confirmation={registrationConfirmation}
+          squads={squadsForSelectedEvent}
+          events={eventsForSelectedSquad}
+          divisions={divisionsForSelectedEvent}
+          fields={registrationFields}
+          questions={registrationQuestions}
+          requiredBowlerCount={requiredBowlerCount}
+          formState={registrationForm}
+          setFormState={setRegistrationForm}
+          submitMessage={registrationSubmitMessage}
+          isSubmitting={isSubmittingRegistration}
+          onSubmit={handleRegistrationSubmit}
+          onClose={closeRegistrationModal}
+        />
+      ) : null}
+    </div>
   );
 }

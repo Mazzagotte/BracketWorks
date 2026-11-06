@@ -23,35 +23,35 @@ describe('public account navigation', () => {
     const summary = screen.getByLabelText('Jamie account menu');
     expect(summary).toHaveAccessibleName('Jamie account menu');
     await user.click(summary);
-    const settings = screen.getByRole('link', { name: 'Account Settings' });
-    expect(settings).toHaveAccessibleName('Account Settings');
+    const settings = screen.getByRole('menuitem', { name: 'Account settings' });
+    expect(settings).toHaveAccessibleName('Account settings');
     expect(settings).toHaveAttribute('href', '/organizer/account');
-    for (const control of container.querySelectorAll('a, button, summary')) {
+    for (const control of container.querySelectorAll('a, button')) {
       expect(control).toHaveAccessibleName();
     }
     settings.focus();
     await user.keyboard('{Escape}');
     expect(summary).toHaveFocus();
-    expect(container.querySelector('details')).not.toHaveAttribute('open');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
 
   it('shows sign in and account creation to visitors', () => {
     render(<PublicAccountNav />);
-    expect(screen.getByRole('link', { name: 'Sign In' })).toHaveAttribute('href', '/login');
-    expect(screen.getByRole('link', { name: 'Create Account' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: 'Create account' })).toBeInTheDocument();
   });
 
   it('restores the organizer identity on refresh and reacts to session changes', () => {
     persistAuthSession({ accessToken: 'test-token', userId: 1, firstName: 'Jamie', isAdmin: false });
     const view = render(<PublicAccountNav />);
-    expect(screen.getByRole('link', { name: 'Organizer Dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Organizer dashboard' })).toBeInTheDocument();
     expect(screen.getByText('Jamie')).toBeInTheDocument();
-    expect(screen.queryByText('Sign In')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sign in')).not.toBeInTheDocument();
     view.unmount();
     render(<PublicAccountNav />);
     expect(screen.getByText('Jamie')).toBeInTheDocument();
     act(() => clearAuthSession());
-    expect(screen.getByRole('link', { name: 'Sign In' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
 
   it('revokes the session and immediately restores visitor navigation when signing out', async () => {
@@ -60,8 +60,8 @@ describe('public account navigation', () => {
     render(<PublicAccountNav />);
     const user = userEvent.setup();
     await user.click(screen.getByText('Jamie'));
-    await user.click(screen.getByRole('button', { name: 'Sign Out' }));
-    expect(screen.getByRole('link', { name: 'Sign In' })).toBeInTheDocument();
+    await user.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
     expect(sessionStorage.getItem('access_token')).toBeNull();
     expect(fetch).toHaveBeenCalledWith('/api/v1/users/logout', expect.objectContaining({ method: 'POST', credentials: 'include' }));
   });
@@ -70,7 +70,7 @@ describe('public account navigation', () => {
     localStorage.setItem('user_id', '1');
     localStorage.setItem('first_name', 'Jamie');
     render(<PublicAccountNav />);
-    expect(screen.getByRole('link', { name: 'Sign In' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
   });
 
   it('restores cookie-backed sessions after direct navigation in a fresh tab', async () => {
@@ -80,8 +80,8 @@ describe('public account navigation', () => {
       json: async () => ({ access_token: 'restored-token', user_id: 1, first_name: 'Jamie', is_admin: false }),
     }));
     render(<PublicAccountNav />);
-    expect(screen.queryByRole('link', { name: 'Sign In' })).not.toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Organizer Dashboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Organizer dashboard' })).toBeInTheDocument();
     expect(sessionStorage.getItem('access_token')).toBe('restored-token');
   });
 
@@ -90,6 +90,6 @@ describe('public account navigation', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Account service unavailable')));
     render(<PublicAccountNav />);
     expect(await screen.findByRole('alert')).toHaveTextContent('Account service unavailable');
-    expect(screen.queryByRole('link', { name: 'Sign In' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
   });
 });

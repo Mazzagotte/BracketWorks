@@ -47,7 +47,7 @@ describe('public tournament discovery', () => {
   it('updates the address bar and follows browser Back and Forward', async () => {
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
-    await user.click(screen.getAllByRole('button', { name: 'View Details' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'View details' })[0]);
     expect(window.location.search).toBe('?tournament=tc-1');
     window.history.back();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -97,7 +97,7 @@ describe('public tournament discovery', () => {
     window.history.replaceState(null, '', '/?tournament=tc-1');
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
-    await user.click(within(await screen.findByRole('dialog', { name: 'Fall Open' })).getByRole('button', { name: 'Sign Up' }));
+    await user.click(within(await screen.findByRole('dialog', { name: 'Fall Open' })).getByRole('button', { name: 'Register' }));
     expect(await screen.findByRole('dialog', { name: 'Register: Fall Open' })).toBeInTheDocument();
     expect(window.location.search).toBe('?tournament=tc-1');
     await user.click(await screen.findByRole('button', { name: 'Close tournament registration' }));
@@ -130,17 +130,17 @@ describe('public tournament discovery', () => {
   it('traps keyboard focus in details, closes on Escape, and restores the trigger', async () => {
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
-    const trigger = screen.getAllByRole('button', { name: 'View Details' })[0];
+    const trigger = screen.getAllByRole('button', { name: 'View details' })[0];
     await user.click(trigger);
     const dialog = screen.getByRole('dialog', { name: 'Fall Open' });
     expect(dialog).toHaveAccessibleDescription('Review tournament information, availability, and documents before registering.');
     expect(dialog).toHaveFocus();
     await user.tab({ shift: true });
-    expect(within(dialog).getByRole('button', { name: 'Sign Up' })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: 'Register' })).toHaveFocus();
     await user.tab();
     expect(within(dialog).getByRole('button', { name: 'Close tournament details' })).toHaveFocus();
     await user.tab({ shift: true });
-    expect(within(dialog).getByRole('button', { name: 'Sign Up' })).toHaveFocus();
+    expect(within(dialog).getByRole('button', { name: 'Register' })).toHaveFocus();
     expect(await within(dialog).findByText(/of 20 bowler spots remaining/)).toHaveTextContent('15 of 20 bowler spots remaining');
     expect(within(dialog).getByText('5 bowlers registered')).toBeInTheDocument();
     expect(within(dialog).getByRole('link', { name: 'Rules.pdf (rules)' })).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('public tournament discovery', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);
-    const filter = screen.getByRole('button', { name: /In Progress/ });
+    const filter = screen.getByRole('button', { name: /In progress/ });
     filter.focus();
     await user.keyboard('{Enter}');
     expect(filter).toHaveAttribute('aria-pressed', 'true');

@@ -1,0 +1,133 @@
+/* Public tournament information and rules (details dialog and registration form). */
+
+.information {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--space-40), 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+.facts dt {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.facts dd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heading {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.headingRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+
+.row:first-child {
+  padding-top: 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.rowTitle {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.meta {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.strong {
+  font-weight: var(--font-weight-semibold);
+  color: var(--bw-text-title);
+}
+
+.amount {
+  font: var(--type-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.empty {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font: var(--type-body);
+}
+
+.rulesText {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-panel);
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.documents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: var(--type-body);
+}
