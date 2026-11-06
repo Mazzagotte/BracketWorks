@@ -211,3 +211,64 @@
 .strongCell {
   font-weight: var(--font-weight-semibold);
 }
+
+/* Registration setup: content beside a live preview, draggable rows, compact selects. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: var(--bw-stack-gap);
+}
+
+.previewCard {
+  position: sticky;
+  top: calc(var(--space-16) + var(--space-4));
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.draggable {
+  flex-wrap: nowrap;
+  cursor: grab;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.dragging {
+  opacity: 0.5;
+}
+
+.dragTarget {
+  background: var(--bw-surface-panel);
+}
+
+.grip {
+  flex-shrink: 0;
+  color: var(--bw-text-body);
+}
+
+.compactSelect select {
+  height: var(--control-height-sm);
+}
+
+@media (max-width: 1279px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .previewCard {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .draggable {
+    flex-wrap: wrap;
+  }
+}

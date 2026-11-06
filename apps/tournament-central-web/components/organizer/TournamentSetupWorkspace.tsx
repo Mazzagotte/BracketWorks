@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Copy, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Copy, EyeOff, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -102,6 +102,7 @@ import {
   Badge,
   Button,
   Card,
+  CardDivider,
   CardHeader,
   DataTable,
   EmptyState,
@@ -239,6 +240,21 @@ function syncUrlState(params: { activeSection: SetupSectionKey; tournamentId: nu
   }
 
   window.history.replaceState(window.history.state, '', nextUrl);
+}
+
+const QUESTION_TYPE_LABELS: Record<string, string> = {
+  'short-text': 'Short text',
+  'long-text': 'Long text',
+  number: 'Number',
+  'yes-no': 'Yes or no',
+  dropdown: 'Dropdown',
+  'multiple-choice': 'Multiple choice',
+  checkbox: 'Checkboxes',
+  date: 'Date',
+};
+
+function questionTypeLabel(type: string): string {
+  return QUESTION_TYPE_LABELS[type] ?? type;
 }
 
 type TournamentSetupWorkspaceProps = {
@@ -2842,283 +2858,223 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           )}
 
           {activeSection === 'registration-setup' && (
-            <div className={`${styles.sectionStack} ${styles.registrationSetupSection}`}>
-              <div className={styles.registrationSetupLayout}>
-                <div className={styles.registrationSetupMain}>
-                <section className={`${styles.sectionCard} ${styles.registrationFieldsSection}`}>
-                  <div className={styles.sectionHeader}>
-                    <div>
-                      <h2 className={styles.registrationFieldsHeading}><span className={styles.registrationFieldsIcon}><ClipboardList size={ICON_SIZE.md} /></span>Registration Fields</h2>
-                      <p>Configure the built-in bowler information fields.</p>
-                    </div>
-                    <div className={styles.registrationHeaderActions}>
-                      <span className={styles.evDivCountPill}>{askedFields.length} active</span>
-                      <SetupStatusBadge status={statusBySection['registration-setup']} />
-                      <button type="button" className={styles.secondaryAction} onClick={() => setShowRegistrationPreview(true)}><Eye size={ICON_SIZE.sm} /> Preview Registration</button>
-                    </div>
-                  </div>
-
-                  <div className={styles.registrationFieldGroupCard}>
-                    <div className={styles.registrationGroupHeader}>
-                      <strong>Asked During Registration</strong>
-                      <span>{askedFields.length} field{askedFields.length === 1 ? '' : 's'}</span>
-                    </div>
-                    <div className={`${styles.listStack} ${styles.registrationFieldList} ${styles.registrationFieldGroupBody}`}>
-                      {askedFields.map((field) => (
-                        <article
-                          key={field.id}
-                          className={`${styles.configCard} ${styles.registrationFieldCard} ${styles.draggableCard} ${field.mode === 'dont-ask' ? styles.registrationFieldCardDisabled : ''} ${draggingFieldId === field.id ? styles.draggingCard : ''} ${dragOverFieldId === field.id && draggingFieldId && draggingFieldId !== field.id ? styles.dragTargetCard : ''}`}
-                          draggable
-                          onDragStart={(event) => handleFieldDragStart(field.id, event)}
-                          onDragOver={(event) => handleFieldDragOver(field.id, event)}
-                          onDrop={() => handleFieldDrop(field.id)}
-                          onDragEnd={handleFieldDragEnd}
-                        >
-                          <div className={styles.dragHandle} aria-hidden="true">
-                            <GripVertical size={ICON_SIZE.sm} />
-                          </div>
-                          <div className={styles.cardMain}>
-                            <div className={styles.registrationFieldTitleRow}>
-                              <div className={styles.registrationFieldNameWrap}>
-                                <strong>{field.customLabel || field.label}</strong>
-                              </div>
+            <>
+              <StepHeader
+                title="Registration setup"
+                description="Choose what bowlers are asked when they register. Drag rows to change the order."
+                status={statusBySection['registration-setup']}
+                actions={(
+                  <Button variant="secondary" icon={<Eye size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setShowRegistrationPreview(true)}>
+                    Preview registration
+                  </Button>
+                )}
+              />
+              <div className={layout.split}>
+                <div className={layout.content}>
+                  <Card aria-label="Registration fields">
+                    <CardHeader
+                      title="Registration fields"
+                      description={`${askedFields.length} field${askedFields.length === 1 ? '' : 's'} asked during registration.`}
+                      headingLevel="h3"
+                      actions={(
+                        <Button size="sm" variant="secondary" icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setDrawerState({ kind: 'field' })}>
+                          Add field
+                        </Button>
+                      )}
+                    />
+                    <ul className={layout.rows}>
+                      {askedFields.map((field) => {
+                        const name = field.customLabel || field.label;
+                        const canHide = !['first_name', 'last_name'].includes(field.key) && builtInRegistrationFieldKeys.has(field.key);
+                        const canDelete = !builtInRegistrationFieldKeys.has(field.key);
+                        return (
+                          <li
+                            key={field.id}
+                            className={`${layout.row} ${layout.draggable} ${draggingFieldId === field.id ? layout.dragging : ''} ${dragOverFieldId === field.id && draggingFieldId && draggingFieldId !== field.id ? layout.dragTarget : ''}`}
+                            draggable
+                            onDragStart={(event) => handleFieldDragStart(field.id, event)}
+                            onDragOver={(event) => handleFieldDragOver(field.id, event)}
+                            onDrop={() => handleFieldDrop(field.id)}
+                            onDragEnd={handleFieldDragEnd}
+                          >
+                            <GripVertical className={layout.grip} size={ICON_SIZE.md} aria-hidden="true" />
+                            <div className={layout.rowText}>
+                              <span className={layout.rowTitle}>{name}</span>
+                              <span className={layout.rowMeta}>{field.helpText || registrationFieldFallbackHelp(field)}</span>
                             </div>
-                            <p className={styles.registrationFieldHelpText}>{field.helpText || registrationFieldFallbackHelp(field)}</p>
-                          </div>
-                          <div className={styles.registrationFieldActions}>
-                              <div className={styles.registrationModeControl}>
-                                <select
-                                  className={`${styles.registrationModeSelect} ${field.mode === 'required' ? styles.registrationModeSelectRequired : styles.registrationModeSelectOptional}`}
-                                  value={field.mode}
-                                  onChange={(event) => handleSetFieldMode(field.id, event.target.value as RegistrationFieldConfig['mode'])}
-                                  aria-label={`Requirement setting for ${field.customLabel || field.label}`}
+                            <div className={layout.rowActions}>
+                              <SelectField
+                                label={`Requirement setting for ${name}`}
+                                hideLabel
+                                className={layout.compactSelect}
+                                value={field.mode}
+                                onChange={(event) => handleSetFieldMode(field.id, event.target.value as RegistrationFieldConfig['mode'])}
+                              >
+                                <option value="required">Required</option>
+                                <option value="optional">Optional</option>
+                                {!['first_name', 'last_name'].includes(field.key) ? <option value="dont-ask">Don&apos;t ask</option> : null}
+                              </SelectField>
+                              <Button size="sm" variant="secondary" onClick={() => setDrawerState({ kind: 'field', id: field.id })} aria-label={`Edit ${field.label}`}>Edit</Button>
+                              {canHide || canDelete ? (
+                                <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                                  {canHide ? (
+                                    <MenuItem icon={<EyeOff size={ICON_SIZE.md} />} onSelect={() => handleSetFieldMode(field.id, 'dont-ask')} aria-label={`Hide ${name}`}>
+                                      Stop asking
+                                    </MenuItem>
+                                  ) : (
+                                    <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => handleDeleteField(field.id)} aria-label={`Delete ${name}`}>
+                                      Delete field
+                                    </MenuItem>
+                                  )}
+                                </Menu>
+                              ) : null}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    {hiddenFields.length > 0 ? (
+                      <>
+                        <CardDivider />
+                        <div className={layout.groupHeader}>
+                          <h4 className={layout.subsectionTitle}>Not asked ({hiddenFields.length})</h4>
+                          <Button size="sm" variant="ghost" onClick={() => setShowHiddenRegistrationFields((current) => !current)} aria-expanded={showHiddenRegistrationFields}>
+                            {showHiddenRegistrationFields ? 'Hide list' : 'Show list'}
+                          </Button>
+                        </div>
+                        {showHiddenRegistrationFields ? (
+                          <ul className={layout.rows}>
+                            {hiddenFields.map((field) => {
+                              const name = field.customLabel || field.label;
+                              return (
+                                <li key={field.id} className={layout.row}>
+                                  <div className={layout.rowText}>
+                                    <span className={layout.rowTitle}>{name}</span>
+                                    <span className={layout.rowMeta}>Hidden from bowlers.</span>
+                                  </div>
+                                  <div className={layout.rowActions}>
+                                    <Button size="sm" variant="secondary" onClick={() => handleSetFieldMode(field.id, 'optional')} aria-label={`Ask ${name}`}>Ask</Button>
+                                    <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                                      <MenuItem onSelect={() => handleSetFieldMode(field.id, 'required')} aria-label={`Ask ${name} as required`}>Ask as required</MenuItem>
+                                      <MenuItem icon={<PencilLine size={ICON_SIZE.md} />} onSelect={() => setDrawerState({ kind: 'field', id: field.id })} aria-label={`Edit ${field.label}`}>Edit</MenuItem>
+                                    </Menu>
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </Card>
+
+                  <Card aria-label="Custom questions">
+                    <CardHeader
+                      title="Custom questions"
+                      description={`${enabledQuestions.length} question${enabledQuestions.length === 1 ? '' : 's'} asked. Collect only what this tournament needs.`}
+                      headingLevel="h3"
+                      actions={(
+                        <Button size="sm" variant="secondary" icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setDrawerState({ kind: 'question' })}>
+                          Add question
+                        </Button>
+                      )}
+                    />
+                    {enabledQuestions.length === 0 ? (
+                      <p className={layout.helper}>No custom questions. The standard registration fields may be all you need.</p>
+                    ) : (
+                      <ul className={layout.rows}>
+                        {enabledQuestions.map((question) => {
+                          const name = question.label || 'Untitled question';
+                          return (
+                            <li
+                              key={question.id}
+                              className={`${layout.row} ${layout.draggable} ${draggingQuestionId === question.id ? layout.dragging : ''} ${dragOverQuestionId === question.id && draggingQuestionId && draggingQuestionId !== question.id ? layout.dragTarget : ''}`}
+                              draggable
+                              onDragStart={(event) => handleQuestionDragStart(question.id, event)}
+                              onDragOver={(event) => handleQuestionDragOver(question.id, event)}
+                              onDrop={() => handleQuestionDrop(question.id)}
+                              onDragEnd={handleQuestionDragEnd}
+                            >
+                              <GripVertical className={layout.grip} size={ICON_SIZE.md} aria-hidden="true" />
+                              <div className={layout.rowText}>
+                                <span className={layout.rowTitle}>{name}</span>
+                                <span className={layout.rowMeta}>
+                                  {[questionTypeLabel(question.type), question.scope.all ? 'All registrations' : 'Scoped'].join(' · ')}
+                                </span>
+                              </div>
+                              <div className={layout.rowActions}>
+                                <SelectField
+                                  label={`Requirement setting for ${name}`}
+                                  hideLabel
+                                  className={layout.compactSelect}
+                                  value={question.required ? 'required' : 'optional'}
+                                  onChange={(event) => (event.target.value === 'dont-ask'
+                                    ? handleSetQuestionEnabled(question.id, false)
+                                    : handleSetQuestionRequired(question.id, event.target.value === 'required'))}
                                 >
                                   <option value="required">Required</option>
                                   <option value="optional">Optional</option>
-                                  {!['first_name', 'last_name'].includes(field.key) ? <option value="dont-ask">Don&apos;t Ask</option> : null}
-                                </select>
+                                  <option value="dont-ask">Don&apos;t ask</option>
+                                </SelectField>
+                                <Button size="sm" variant="secondary" onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label={`Edit ${name}`}>Edit</Button>
                               </div>
-                            <div className={styles.registrationFieldUtilityActions}>
-                              <button
-                                type="button"
-                                className={styles.inlineAction}
-                                onClick={() => setDrawerState({ kind: 'field', id: field.id })}
-                                aria-label={`Edit ${field.label}`}
-                              >
-                                Edit
-                              </button>
-                              {!['first_name', 'last_name'].includes(field.key) && builtInRegistrationFieldKeys.has(field.key) ? (
-                                <button
-                                  type="button"
-                                  className={`${styles.iconButton} ${styles.registrationFieldDelete}`}
-                                  onClick={() => handleSetFieldMode(field.id, 'dont-ask')}
-                                  aria-label={`Hide ${field.customLabel || field.label}`}
-                                  title="Hide field"
-                                >
-                                  <Trash2 size={ICON_SIZE.md} />
-                                </button>
-                              ) : !builtInRegistrationFieldKeys.has(field.key) ? (
-                                <button
-                                  type="button"
-                                  className={`${styles.iconButton} ${styles.registrationFieldDelete}`}
-                                  onClick={() => handleDeleteField(field.id)}
-                                  aria-label={`Delete ${field.customLabel || field.label}`}
-                                  title="Delete field"
-                                >
-                                  <Trash2 size={ICON_SIZE.md} />
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
 
-                  {hiddenFields.length > 0 ? (
-                    <div className={`${styles.registrationFieldGroupCard} ${styles.registrationFieldGroupCardMuted}`}>
-                      <div className={styles.registrationGroupHeader}>
-                        <strong>Don&apos;t Ask Right Now</strong>
-                        <button type="button" className={styles.inlineAction} onClick={() => setShowHiddenRegistrationFields((current) => !current)}>{hiddenFields.length} hidden field{hiddenFields.length === 1 ? '' : 's'} · {showHiddenRegistrationFields ? 'Collapse' : 'Expand'}</button>
-                      </div>
-                      {showHiddenRegistrationFields ? <div className={`${styles.listStack} ${styles.registrationFieldList} ${styles.registrationFieldGroupBody}`}>
-                        {hiddenFields.map((field) => (
-                          <article
-                            key={field.id}
-                            className={`${styles.configCard} ${styles.registrationFieldCard} ${styles.registrationFieldCardMuted}`}
-                          >
-                            <div className={styles.dragHandle} aria-hidden="true">
-                              <GripVertical size={ICON_SIZE.sm} />
-                            </div>
-                            <div className={styles.cardMain}>
-                              <div className={styles.registrationFieldTitleRow}>
-                                <div className={styles.registrationFieldNameWrap}>
-                                  <strong>{field.customLabel || field.label}</strong>
+                    {disabledQuestions.length > 0 ? (
+                      <>
+                        <CardDivider />
+                        <h4 className={layout.subsectionTitle}>Not asked ({disabledQuestions.length})</h4>
+                        <ul className={layout.rows}>
+                          {disabledQuestions.map((question) => {
+                            const name = question.label || 'Untitled question';
+                            return (
+                              <li key={question.id} className={layout.row}>
+                                <div className={layout.rowText}>
+                                  <span className={layout.rowTitle}>{name}</span>
+                                  <span className={layout.rowMeta}>{questionTypeLabel(question.type)} · {question.required ? 'Required when asked' : 'Optional when asked'}</span>
                                 </div>
-                              </div>
-                              <p className={styles.registrationFieldHelpText}>This field is currently hidden from bowlers.</p>
-                              <div className={styles.metaChips}>
-                                <span className={`${styles.chip} ${styles.registrationFieldModeChip} ${styles.registrationFieldModeDontAsk}`}>Don&apos;t Ask</span>
-                              </div>
-                            </div>
-                            <div className={styles.registrationFieldActions}>
-                              <div className={styles.registrationFieldUtilityActions}>
-                                <button
-                                  type="button"
-                                  className={styles.inlineAction}
-                                  onClick={() => handleSetFieldMode(field.id, 'optional')}
-                                  aria-label={`Ask ${field.customLabel || field.label}`}
-                                >
-                                  Ask Field
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`${styles.inlineAction} ${styles.requiredToggleButton}`}
-                                  onClick={() => handleSetFieldMode(field.id, 'required')}
-                                  aria-label={`Ask ${field.customLabel || field.label} as required`}
-                                >
-                                  Ask as Required
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.inlineAction}
-                                  onClick={() => setDrawerState({ kind: 'field', id: field.id })}
-                                  aria-label={`Edit ${field.label}`}
-                                >
-                                  <PencilLine size={ICON_SIZE.md} /> Edit
-                                </button>
-                              </div>
-                            </div>
-                          </article>
-                        ))}
-                      </div> : null}
-                    </div>
-                  ) : null}
-
-                  <div className={styles.registrationFieldFooterActions}>
-                    <button type="button" className={styles.registrationFieldFooterPrimary} onClick={() => setDrawerState({ kind: 'field' })}>
-                      <Plus size={ICON_SIZE.sm} /> Add Field
-                    </button>
-                  </div>
-                </section>
+                                <div className={layout.rowActions}>
+                                  <Button size="sm" variant="secondary" onClick={() => handleSetQuestionEnabled(question.id, true)}>Ask</Button>
+                                  <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                                    <MenuItem icon={<PencilLine size={ICON_SIZE.md} />} onSelect={() => setDrawerState({ kind: 'question', id: question.id })}>Edit</MenuItem>
+                                  </Menu>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </>
+                    ) : null}
+                  </Card>
                 </div>
 
-                <aside className={styles.registrationSetupPreviewRail}>
-                  <section className={styles.previewRegistrationShell}>
-                    <TournamentRegistrationForm
-                      tournamentName={details.name || 'Tournament Name'}
-                      squads={enabledSquads}
-                      events={eventsForSelectedPreviewSquad}
-                      divisions={enabledDivisions}
-                      fields={askedFields}
-                      questions={enabledQuestions}
-                      requiredBowlerCount={requiredPreviewBowlerCount}
-                      formState={signupPreviewForm}
-                      setFormState={setSignupPreviewForm}
-                      submitMessage={signupPreviewSubmitMessage}
-                      isSubmitting={isSubmittingSignupPreview}
-                      onSubmit={() => {
-                        void handleSignupPreviewSubmit();
-                      }}
-                      footerHint="Live preview updates as you configure fields and questions."
-                      presentation="inline"
-                    />
-                  </section>
-                </aside>
+                <Card aria-label="Live registration preview" className={layout.previewCard}>
+                  <TournamentRegistrationForm
+                    tournamentName={details.name || 'Tournament name'}
+                    squads={enabledSquads}
+                    events={eventsForSelectedPreviewSquad}
+                    divisions={enabledDivisions}
+                    fields={askedFields}
+                    questions={enabledQuestions}
+                    requiredBowlerCount={requiredPreviewBowlerCount}
+                    formState={signupPreviewForm}
+                    setFormState={setSignupPreviewForm}
+                    submitMessage={signupPreviewSubmitMessage}
+                    isSubmitting={isSubmittingSignupPreview}
+                    onSubmit={() => {
+                      void handleSignupPreviewSubmit();
+                    }}
+                    footerHint="Live preview. Changes appear as you edit."
+                    presentation="inline"
+                  />
+                </Card>
               </div>
-
-                <section className={styles.sectionCard}>
-                  <div className={styles.sectionHeader}>
-                    <div>
-                      <h2>Custom Questions</h2>
-                      <p>Collect only what this tournament needs.</p>
-                    </div>
-                    <div className={styles.registrationQuestionHeaderActions}>
-                      <span className={styles.evDivCountPill}>{enabledQuestions.length} active</span>
-                      <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}>
-                        <Plus size={ICON_SIZE.sm} /> Add Question
-                      </button>
-                    </div>
-                  </div>
-                  <div className={styles.registrationGroupHeader}>
-                    <strong>Asked During Registration</strong>
-                    <span>{enabledQuestions.length} question{enabledQuestions.length === 1 ? '' : 's'}</span>
-                  </div>
-                  <div className={styles.listStack}>
-                    {enabledQuestions.length === 0 ? (
-                      <div className={styles.registrationEmptyState}>
-                        <strong>No custom questions</strong>
-                        <p>The standard registration fields may be all you need.</p>
-                        <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}><Plus size={ICON_SIZE.sm} /> Add Custom Question</button>
-                      </div>
-                    ) : null}
-                    {enabledQuestions.map((question) => (
-                      <article
-                        key={question.id}
-                        className={`${styles.configCard} ${styles.registrationQuestionCard} ${styles.draggableCard} ${draggingQuestionId === question.id ? styles.draggingCard : ''} ${dragOverQuestionId === question.id && draggingQuestionId && draggingQuestionId !== question.id ? styles.dragTargetCard : ''}`}
-                        draggable
-                        onDragStart={(event) => handleQuestionDragStart(question.id, event)}
-                        onDragOver={(event) => handleQuestionDragOver(question.id, event)}
-                        onDrop={() => handleQuestionDrop(question.id)}
-                        onDragEnd={handleQuestionDragEnd}
-                      >
-                        <div className={styles.dragHandle} aria-hidden="true">
-                          <GripVertical size={ICON_SIZE.sm} />
-                        </div>
-                        <div className={styles.cardMain}>
-                          <strong>{question.label || 'Untitled question'}</strong>
-                          <div className={styles.metaChips}>
-                            <span className={styles.chip}>{question.type}</span>
-                            <span className={styles.chip}>{question.required ? 'Required' : 'Optional'}</span>
-                            <span className={styles.chip}>{question.scope.all ? 'All registrations' : 'Scoped'}</span>
-                            <span className={`${styles.chip} ${question.enabled ? styles.chipEnabled : styles.chipMuted}`}>{question.enabled ? 'Enabled' : 'Disabled'}</span>
-                          </div>
-                        </div>
-                        <div className={styles.questionCardActions}>
-                          <select className={styles.registrationModeSelect} value={question.required ? 'required' : 'optional'} onChange={(event) => event.target.value === 'dont-ask' ? handleSetQuestionEnabled(question.id, false) : handleSetQuestionRequired(question.id, event.target.value === 'required')} aria-label={`Requirement setting for ${question.label || 'Untitled question'}`}><option value="required">Required</option><option value="optional">Optional</option><option value="dont-ask">Don&apos;t Ask</option></select>
-                          <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
-                            <PencilLine size={ICON_SIZE.md} />
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-
-                  {disabledQuestions.length > 0 ? (
-                    <>
-                      <div className={styles.registrationGroupHeader}>
-                        <strong>Don&apos;t Ask Right Now</strong>
-                        <span>{disabledQuestions.length} hidden question{disabledQuestions.length === 1 ? '' : 's'}</span>
-                      </div>
-                      <div className={styles.listStack}>
-                        {disabledQuestions.map((question) => (
-                          <article key={question.id} className={`${styles.configCard} ${styles.registrationQuestionCard} ${styles.questionCardDisabled}`}>
-                            <div className={styles.dragHandle} aria-hidden="true">
-                              <GripVertical size={ICON_SIZE.sm} />
-                            </div>
-                            <div className={styles.cardMain}>
-                              <strong>{question.label || 'Untitled question'}</strong>
-                              <div className={styles.metaChips}>
-                                <span className={styles.chip}>{question.type}</span>
-                                <span className={styles.chip}>{question.required ? 'Required' : 'Optional'}</span>
-                                <span className={`${styles.chip} ${styles.chipMuted}`}>Don&apos;t Ask</span>
-                              </div>
-                            </div>
-                            <div className={styles.questionCardActions}>
-                              <button type="button" className={styles.inlineAction} onClick={() => handleSetQuestionEnabled(question.id, true)}>
-                                Ask Question
-                              </button>
-                              <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
-                                <PencilLine size={ICON_SIZE.md} />
-                              </button>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                    </>
-                  ) : null}
-                </section>
-            </div>
+            </>
           )}
 
           {activeSection === 'fees-payments-documents' && (
