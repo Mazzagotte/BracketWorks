@@ -1,15 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { Card, CardHeader, DataTable, EmptyState, ICON_SIZE, Notice, Page, PageHeader, SearchField, TableToolbar } from '@bracketworks/ui';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildParticipantRows } from '@/components/organizer/tournamentInsights';
-import styles from '../page.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import cells from '@/components/organizer/OrganizerTable.module.css';
 
 export default function OrganizerTournamentParticipantsPage() {
   const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
@@ -35,80 +33,71 @@ export default function OrganizerTournamentParticipantsPage() {
     });
   }, [participants, search]);
 
-  return (
-    <main className={styles.registrationPage}>
-      <header className={styles.registrationHeader}>
-        <div>
-          <h1>Participants</h1>
-          <p>{tournament?.name || 'Tournament'}</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+  const empty = '—';
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isRegistrationsLoading ? <section className={styles.registrationLoading}>Loading participants...</section> : null}
+  return (
+    <Page>
+      <PageHeader
+        title="Participants"
+        description={`Every bowler registered for ${tournament?.name || 'this tournament'}, with their events and payment status.`}
+      />
+
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+      {isRegistrationsLoading ? <Notice tone="info">Loading participants...</Notice> : null}
 
       {!error && !isRegistrationsLoading ? (
-        <section className={styles.registrationTableCard} aria-label="Participant list">
-          <div className={styles.registrationPanelHeading}>
-            <h2>Participant List</h2>
-          </div>
-          <div className={styles.registrationToolbar}>
-            <label className={styles.registrationSearch}>
-              <Search size={ICON_SIZE.sm} aria-hidden="true" />
-              <span className={styles.srOnly}>Search participants</span>
-              <input
+        <Card padding="flush" aria-label="Participant list">
+          <CardHeader title="Participant list" description={`${filteredParticipants.length} of ${participants.length} bowlers shown`} />
+          <TableToolbar
+            search={(
+              <SearchField
+                label="Search participants"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name, USBC number, or email..."
+                placeholder="Search by name, USBC number, or email"
               />
-            </label>
-          </div>
-
+            )}
+          />
           {filteredParticipants.length === 0 ? (
-            <p className={styles.emptyRegistrations}>
-              {search.trim() ? 'No participants match your search.' : 'No participants have registered yet.'}
-            </p>
+            <EmptyState
+              icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title={search.trim() ? 'No participants match your search' : 'No participants yet'}
+              description={search.trim() ? 'Try a different name, USBC number, or email.' : 'Bowlers appear here once they register.'}
+            />
           ) : (
-            <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Participants table, scroll horizontally for more columns">
-              <table className={styles.registrationTable}>
-                <thead>
-                  <tr>
-                    <th>Bowler</th>
-                    <th>USBC #</th>
-                    <th>Average</th>
-                    <th>Events</th>
-                    <th>Divisions</th>
-                    <th>Squads</th>
-                    <th>Entries</th>
-                    <th>Payment</th>
-                    <th>Contact</th>
+            <DataTable caption="Participants" className={cells.nowrap}>
+              <thead>
+                <tr>
+                  <th scope="col">Bowler</th>
+                  <th scope="col">USBC number</th>
+                  <th scope="col" data-align="right">Average</th>
+                  <th scope="col">Events</th>
+                  <th scope="col">Divisions</th>
+                  <th scope="col">Squads</th>
+                  <th scope="col" data-align="right">Entries</th>
+                  <th scope="col">Payment</th>
+                  <th scope="col">Contact</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredParticipants.map((participant) => (
+                  <tr key={participant.key}>
+                    <td className={cells.primaryText}>{`${participant.firstName} ${participant.lastName}`.trim()}</td>
+                    <td className={cells.code}>{participant.usbcNumber || empty}</td>
+                    <td data-align="right">{participant.average ?? empty}</td>
+                    <td>{participant.events.join(', ') || empty}</td>
+                    <td>{participant.divisions.join(', ') || empty}</td>
+                    <td>{participant.squads.join(', ') || empty}</td>
+                    <td data-align="right">{participant.entryCount}</td>
+                    <td><OrganizerStatusBadge status={participant.paymentStatus} /></td>
+                    <td data-tone="secondary">{participant.email || participant.phone || empty}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredParticipants.map((participant) => (
-                    <tr key={participant.key}>
-                      <td><strong>{`${participant.firstName} ${participant.lastName}`.trim()}</strong></td>
-                      <td>{participant.usbcNumber || '\u2014'}</td>
-                      <td>{participant.average ?? '\u2014'}</td>
-                      <td>{participant.events.join(', ') || '\u2014'}</td>
-                      <td>{participant.divisions.join(', ') || '\u2014'}</td>
-                      <td>{participant.squads.join(', ') || '\u2014'}</td>
-                      <td>{participant.entryCount}</td>
-                      <td>
-                        <OrganizerStatusBadge status={participant.paymentStatus} />
-                      </td>
-                      <td><span>{participant.email || participant.phone || '\u2014'}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </DataTable>
           )}
-        </section>
+        </Card>
       ) : null}
-    </main>
+    </Page>
   );
 }
