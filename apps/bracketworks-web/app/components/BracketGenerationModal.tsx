@@ -1,10 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Eye, Info, RefreshCw, TriangleAlert, Trophy, Users, X } from 'lucide-react'
+import { Eye, RefreshCw } from 'lucide-react'
+import { Button, ICON_SIZE, Modal, Notice } from '@bracketworks/ui'
 import { logger } from '../lib/logger'
-import { disableScroll, enableScroll } from '../utils/modalUtils'
-import buttonStyles from '../styles/buttons.module.css'
 import styles from './BracketGenerationModal.module.css'
 
 /**
@@ -47,27 +46,27 @@ interface BracketGenerationModalProps {
  */
 const ERROR_MESSAGES: { [key: string]: { friendly: string, suggestion: string } } = {
   'No players found': {
-    friendly: 'No Players Found',
+    friendly: 'No players found',
     suggestion: 'Please add players to this tournament or squad before generating brackets.'
   },
   'No scores found': {
-    friendly: 'No Qualifying Scores',
+    friendly: 'No qualifying scores',
     suggestion: 'Please add qualifying scores for players before generating brackets.'
   },
   'Bracket size not configured': {
-    friendly: 'Bracket Size Not Set',
+    friendly: 'Bracket size not set',
     suggestion: 'Please configure bracket settings in the tournament dashboard first.'
   },
   'Tournament not found': {
-    friendly: 'Tournament Not Found',
+    friendly: 'Tournament not found',
     suggestion: 'The selected tournament may have been deleted. Please refresh and try again.'
   },
   'Tournament ID must be a positive integer': {
-    friendly: 'Invalid Tournament Selection',
+    friendly: 'Invalid tournament selection',
     suggestion: 'Please select a valid tournament from the dashboard.'
   },
   'default': {
-    friendly: 'Generation Failed',
+    friendly: 'Generation failed',
     suggestion: 'An unexpected error occurred. Please try again or contact support if the problem persists.'
   }
 }
@@ -94,7 +93,6 @@ export default function BracketGenerationModal({
   const [errorMessage, setErrorMessage] = useState('')
   const [bracketResult, setBracketResult] = useState<BracketGenerationResult | null>(null)
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
   const isGenerating = currentPhase === 'loading'
 
   /**
@@ -106,37 +104,8 @@ export default function BracketGenerationModal({
       setErrorMessage('')
       setBracketResult(null)
       setShowTechnicalDetails(false)
-      setShowConfetti(false)
-      disableScroll()
-    }
-
-    return () => {
-      enableScroll()
     }
   }, [isOpen])
-
-  /**
-   * Handle Escape key to close modal
-   */
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (isGenerating) {
-          e.preventDefault()
-          e.stopPropagation()
-          return
-        }
-        onClose()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose, isGenerating])
 
   /**
    * Block navigation while generation is in progress.
@@ -213,12 +182,6 @@ export default function BracketGenerationModal({
           setBracketResult(result)
           
           setCurrentPhase('success')
-          setShowConfetti(true)
-          setTimeout(() => {
-            if (!cancelled) {
-              setShowConfetti(false)
-            }
-          }, 3000)
         })
         .catch((error) => {
           if (cancelled) {
@@ -339,199 +302,72 @@ export default function BracketGenerationModal({
     }
   }
 
-  /**
-   * Don't render if modal is closed
-   */
-  if (!isOpen) {
-    return null
-  }
+  const stats = currentPhase === 'success' ? getSuccessStats() : null
+  const parsedError = currentPhase === 'error' ? parseErrorMessage(errorMessage) : null
+  const context = [tournamentName, squadName, typeof playerCount === 'number' ? `${playerCount} entries` : null].filter(Boolean).join(' · ')
 
-  /**
-   * Render the modal based on current phase
-   */
+  const title = currentPhase === 'loading' ? 'Generating brackets' : currentPhase === 'success' ? 'Brackets generated' : parsedError?.friendly ?? 'Generation failed'
+  const description = currentPhase === 'loading'
+    ? `Creating brackets and assigning entries${context ? ` for ${context}` : ''}.`
+    : currentPhase === 'success'
+      ? 'Your brackets are ready to review.'
+      : parsedError?.suggestion
+
   return (
-    <div 
-      className={styles.modalOverlay} 
-      onClick={(e) => {
-        // Only close if clicking directly on the backdrop overlay, not the modal card
-        if (!isGenerating && e.target === e.currentTarget) {
-          handleCloseModal()
-        }
-      }}
+    <Modal
+      open={isOpen}
+      onClose={handleCloseModal}
+      dismissible={!isGenerating}
+      role={currentPhase === 'error' ? 'alertdialog' : 'dialog'}
+      closeLabel="Close bracket generation"
+      title={title}
+      description={description}
+      footer={currentPhase === 'loading' ? undefined : currentPhase === 'success' ? (
+        <>
+          <Button variant="secondary" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleRegenerateClick}>Regenerate</Button>
+          <Button variant="primary" icon={<Eye size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleCloseModal}>Review brackets</Button>
+        </>
+      ) : (
+        <>
+          <Button variant="secondary" onClick={handleCloseModal}>Close</Button>
+          <Button variant="primary" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleRegenerateClick}>Retry</Button>
+        </>
+      )}
     >
-      <div 
-        className={`${styles.modalCard} ${currentPhase === 'success' ? styles.successModalCard : ''}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        {/* CONFETTI CELEBRATION */}
-        {showConfetti && (
-          <div className={styles.confettiContainer}>
-            {Array.from({ length: 50 }).map((_, i) => (
-              <div
-                key={i}
-                className={styles.confetti}
-              />
-            ))}
-          </div>
-        )}
+      {currentPhase === 'loading' ? (
+        <div className={styles.loading} role="status">
+          <span className={styles.spinner} aria-hidden="true" />
+          <p className={styles.text}>Keep this window open until your brackets are ready.</p>
+        </div>
+      ) : null}
 
-        {/* LOADING PHASE */}
-        {currentPhase === 'loading' && (
-          <div className={styles.loadingContent}>
-            <div className={styles.phaseHeader}>
-              <h2 className={styles.mainMessage}>Generating Brackets</h2>
-              <p className={styles.generationNote}>
-                Creating brackets and assigning entries for:
-              </p>
-            </div>
-
-            {/* Tournament Context Info */}
-            {(tournamentName || squadName) && (
-              <div className={styles.contextInfo}>
-                {tournamentName && (
-                  <p className={styles.contextTournament}><Trophy aria-hidden="true" />{tournamentName}</p>
-                )}
-                {squadName && (
-                  <p className={styles.contextSquad}><Users aria-hidden="true" />{squadName}{typeof playerCount === 'number' ? ` • ${playerCount} entries` : ''}</p>
-                )}
+      {stats ? (
+        <div className={styles.body}>
+          <dl className={styles.rows}>
+            {stats.programSummaries.map(program => (
+              <div key={program.name}>
+                <dt>{program.name} bracket{program.brackets_count !== 1 ? 's' : ''}</dt>
+                <dd>{program.brackets_count}</dd>
               </div>
-            )}
+            ))}
+          </dl>
+          {stats.skippedPlayers > 0 ? (
+            <Notice tone="warning">
+              {stats.skippedPlayers} entr{stats.skippedPlayers !== 1 ? 'ies' : 'y'} could not be placed in a full bracket and need a refund ({stats.programSummaries.filter(program => program.refund_entries > 0).map(program => `${program.refund_entries} ${program.name}`).join(', ')}).
+            </Notice>
+          ) : null}
+          <p className={styles.meta}>Regenerating creates a new arrangement and may change the current matchups.</p>
+        </div>
+      ) : null}
 
-            <div className={styles.statusIndicator} aria-hidden="true">
-              <span className={styles.statusIndicatorBar} />
-            </div>
-
-            <div className={styles.generationWarning}>
-              <Info aria-hidden="true" />
-              <p>Please keep this window open while your brackets are generated.</p>
-            </div>
-
-          </div>
-        )}
-
-        {/* SUCCESS PHASE */}
-        {currentPhase === 'success' && (
-          <div className={styles.successContent}>
-            <button type="button" className={styles.closeButton} onClick={handleCloseModal} aria-label="Close bracket generation results"><X /></button>
-            {/* Success message */}
-            <div className={styles.successHeader}>
-              <h2 className={styles.successMessage}>Brackets Generated</h2>
-              <p className={styles.successSubtitle}>Your tournament brackets are ready for review.</p>
-            </div>
-
-            {/* Success Statistics */}
-            <div className={styles.statsContainer}>
-              {(() => {
-                const stats = getSuccessStats()
-                return (
-                  <>
-                    {stats.programSummaries.map((program, index) => (
-                        <div key={program.name} className={styles.statItem}>
-                          <div className={styles.statValueRow}>
-                            <span className={styles.statCount}>{program.brackets_count}</span>
-                          </div>
-                        <span className={styles.statLabel}>{program.name} Bracket{program.brackets_count !== 1 ? 's' : ''}</span>
-                      </div>
-                    ))}
-                    {stats.skippedPlayers > 0 && (
-                      <div className={styles.statItemRefund}>
-                        <div className={styles.refundIcon}><TriangleAlert aria-hidden="true" /></div>
-                        <div className={styles.refundContent}>
-                          <div className={styles.refundTitle}>{stats.skippedPlayers} Refund{stats.skippedPlayers !== 1 ? 's' : ''} Required</div>
-                          <div className={styles.refundDetail}>These entries could not be placed into complete brackets.</div>
-                          <div className={styles.refundChips}>
-                            {stats.programSummaries.filter(program => program.refund_entries > 0).map(program => (
-                              <span key={program.name}>{program.refund_entries} {program.name}</span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-            </div>
-
-            <div className={styles.regenerationNotice}>
-              <Info aria-hidden="true" />
-              <p>Regenerating will create a new bracket arrangement and may change the current matchups.</p>
-            </div>
-
-            {/* Action buttons */}
-            <div className={styles.buttonContainer}>
-              <button
-                onClick={handleRegenerateClick}
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
-              >
-                <RefreshCw aria-hidden="true" /> Regenerate Brackets
-              </button>
-              <button
-                onClick={handleCloseModal}
-                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium} ${styles.button} ${styles.secondaryButton}`}
-              >
-                <Eye aria-hidden="true" /> Review Brackets
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ERROR PHASE */}
-        {currentPhase === 'error' && (
-          <div className={styles.errorContent}>
-            <button type="button" className={styles.closeButton} onClick={handleCloseModal} aria-label="Close bracket generation error"><X /></button>
-            {/* Error Icon */}
-            <div className={styles.errorIcon}><TriangleAlert aria-hidden="true" /></div>
-
-            {(() => {
-              const parsedError = parseErrorMessage(errorMessage)
-              return (
-                <>
-                  {/* User-friendly error message */}
-                  <h2 className={styles.errorMessage}>
-                    {parsedError.friendly}
-                  </h2>
-                  
-                  {/* Suggestion */}
-                  <p className={styles.errorSuggestion}>
-                    {parsedError.suggestion}
-                  </p>
-
-                  {/* Technical Details (expandable) */}
-                  <div className={styles.technicalDetailsContainer}>
-                    <button
-                      onClick={() => setShowTechnicalDetails(!showTechnicalDetails)}
-                      className={styles.technicalDetailsToggle}
-                    >
-                      {showTechnicalDetails ? 'Hide Details' : 'View Details'}
-                    </button>
-                    {showTechnicalDetails && (
-                      <div className={styles.technicalDetails}>
-                        <code>{parsedError.technical}</code>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )
-            })()}
-
-            {/* Action buttons */}
-            <div className={styles.buttonContainer}>
-              <button
-                onClick={handleRegenerateClick}
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium} ${styles.button} ${styles.primaryButton}`}
-              >
-                <RefreshCw aria-hidden="true" /> Retry
-              </button>
-              <button
-                onClick={handleCloseModal}
-                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium} ${styles.button} ${styles.secondaryButton}`}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      {parsedError ? (
+        <div className={styles.body}>
+          <Button size="sm" variant="ghost" onClick={() => setShowTechnicalDetails(!showTechnicalDetails)} aria-expanded={showTechnicalDetails}>
+            {showTechnicalDetails ? 'Hide details' : 'Show details'}
+          </Button>
+          {showTechnicalDetails ? <code className={styles.code}>{parsedError.technical}</code> : null}
+        </div>
+      ) : null}
+    </Modal>
   )
 }
