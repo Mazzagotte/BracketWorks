@@ -52,7 +52,7 @@
 }
 
 .divider {
-  height: 1px;
+  height: var(--space-px);
   margin: var(--space-1) 0;
   background: var(--bw-border-subtle);
 }
