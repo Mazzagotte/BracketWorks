@@ -146,19 +146,6 @@
   color: var(--bw-text-body);
 }
 
-.choice {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font: var(--type-body);
-  color: var(--bw-text-title);
-  cursor: pointer;
-}
-
-.choice input {
-  accent-color: var(--color-accent-primary);
-}
-
 .footerHint {
   display: inline-flex;
   align-items: center;

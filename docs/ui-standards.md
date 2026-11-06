@@ -367,6 +367,7 @@ is replaced by these during the migration.
 | `Button` (`primary` / `accent-outline` / `secondary` / `ghost` / `ghost-danger` / `danger`, `size="sm"`, `icon`, `iconPosition`) | All buttons |
 | `ButtonLink`, `buttonClassName()` | A link that looks like a button; use `buttonClassName()` on Next.js `<Link>` |
 | `TextField`, `SelectField`, `TextAreaField` (`label`, `optional`, `helper`, `error`, `fullRow`, `hideLabel`), `FormGrid` | Form fields and their 2-column layout; `hideLabel` only in table toolbars |
+| `CheckboxField` (`label`, `helper`) | A checkbox with its label on the right, for agreements and on/off options |
 | `SearchField` | Search input with icon (label is screen-reader-only by default) |
 | `SegmentedControl` | Filters and exclusive choices |
 | `Badge` (`neutral` / `success` / `warning` / `danger` / `info` / `accent`) | All status pills |

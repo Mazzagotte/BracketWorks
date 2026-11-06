@@ -7,6 +7,7 @@ import {
   Badge,
   Button,
   ButtonLink,
+  CheckboxField,
   ConfirmDialog,
   Menu,
   MenuItem,
@@ -57,6 +58,15 @@ describe('shared UI: form fields', () => {
     const average = screen.getByLabelText('Average');
     expect(average).toHaveAttribute('aria-invalid', 'true');
     expect(average).toHaveAccessibleDescription('Average must be 300 or less.');
+  });
+
+  it('labels a checkbox, describes it with helper text, and toggles from the label', async () => {
+    const user = userEvent.setup();
+    render(<CheckboxField label="Also sign out this device" helper="Other devices are always signed out." />);
+    const checkbox = screen.getByRole('checkbox', { name: 'Also sign out this device' });
+    expect(checkbox).toHaveAccessibleDescription('Other devices are always signed out.');
+    await user.click(screen.getByText('Also sign out this device'));
+    expect(checkbox).toBeChecked();
   });
 });
 

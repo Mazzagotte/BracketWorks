@@ -128,6 +128,37 @@ export const TextAreaField = forwardRef<HTMLTextAreaElement, TextAreaFieldProps>
   );
 });
 
+export interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className' | 'type'> {
+  label: ReactNode;
+  /** One line under the label, for example what the option does. */
+  helper?: ReactNode;
+  className?: string;
+}
+
+/** A checkbox with its label to the right and optional helper text below the label. */
+export const CheckboxField = forwardRef<HTMLInputElement, CheckboxFieldProps>(function CheckboxField(
+  { label, helper, className, id, ...inputProps },
+  ref,
+) {
+  const { controlId, helperId } = useFieldIds(id);
+  return (
+    <div className={cx(styles.checkboxField, className)}>
+      <input
+        ref={ref}
+        id={controlId}
+        type="checkbox"
+        className={styles.checkbox}
+        aria-describedby={helper ? helperId : undefined}
+        {...inputProps}
+      />
+      <span className={styles.checkboxText}>
+        <label htmlFor={controlId} className={styles.checkboxLabel}>{label}</label>
+        {helper ? <span id={helperId} className={styles.helper}>{helper}</span> : null}
+      </span>
+    </div>
+  );
+});
+
 export interface SearchFieldProps extends Omit<TextFieldProps, 'type' | 'optional'> {}
 
 /** A search input with a leading icon. The label is screen-reader-only unless `hideLabel={false}`. */

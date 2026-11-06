@@ -150,3 +150,31 @@
     overflow-x: auto;
   }
 }
+
+/* Checkbox with its label on the right. */
+.checkboxField {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin: var(--space-0-5) 0 0;
+  accent-color: var(--color-accent-primary);
+  cursor: pointer;
+}
+
+.checkboxText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.checkboxLabel {
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  cursor: pointer;
+}

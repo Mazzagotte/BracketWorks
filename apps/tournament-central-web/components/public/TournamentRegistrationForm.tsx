@@ -6,6 +6,7 @@ import { ArrowRight, Check, Info } from 'lucide-react';
 import {
   Button,
   CardDivider,
+  CheckboxField,
   FormGrid,
   ICON_SIZE,
   Modal,
@@ -322,19 +323,14 @@ export default function TournamentRegistrationForm({
             {optional ? <span className={styles.optional}> (optional)</span> : null}
           </legend>
           {options.length > 0 ? options.map((option) => (
-            <label key={option} className={styles.choice}>
-              <input
-                type="checkbox"
-                checked={selected.includes(option)}
-                onChange={(event) => toggleAnswerOption(bowlerIndex, question.id, option, event.target.checked)}
-              />
-              {option}
-            </label>
+            <CheckboxField
+              key={option}
+              label={option}
+              checked={selected.includes(option)}
+              onChange={(event) => toggleAnswerOption(bowlerIndex, question.id, option, event.target.checked)}
+            />
           )) : (
-            <label className={styles.choice}>
-              <input type="checkbox" checked={answer === true} onChange={(event) => setAnswer(bowlerIndex, question.id, event.target.checked)} />
-              Yes
-            </label>
+            <CheckboxField label="Yes" checked={answer === true} onChange={(event) => setAnswer(bowlerIndex, question.id, event.target.checked)} />
           )}
         </fieldset>
       );
@@ -559,15 +555,12 @@ export default function TournamentRegistrationForm({
           <p className={styles.body}>
             By submitting this entry form, I certify that the information provided is accurate to the best of my knowledge. Information collected through this form will be used for tournament registration, eligibility verification, scheduling, results, awards, and tournament-related communications. Personal contact information will not be sold or shared with unrelated third parties.
           </p>
-          <label className={styles.choice}>
-            <input
-              ref={disclosureAgreementRef}
-              type="checkbox"
-              checked={formState.acceptTerms}
-              onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
-            />
-            I have read and agree to this disclosure.
-          </label>
+          <CheckboxField
+            ref={disclosureAgreementRef}
+            label="I have read and agree to this disclosure."
+            checked={formState.acceptTerms}
+            onChange={(event) => setFormState((prev) => ({ ...prev, acceptTerms: event.target.checked }))}
+          />
         </div>
       </Modal>
     </Modal>
