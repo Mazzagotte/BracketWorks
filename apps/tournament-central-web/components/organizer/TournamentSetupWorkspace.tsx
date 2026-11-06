@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Copy, EyeOff, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CircleDollarSign, Copy, EyeOff, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -3078,49 +3078,61 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           )}
 
           {activeSection === 'fees-payments-documents' && (
-            <div className={`${styles.sectionStack} ${styles.feesDocumentsSection}`}>
-              <section className={styles.sectionCard}>
-                <div className={styles.sectionHeader}>
-                  <div>
-                    <h2>Add-ons & Fee Adjustments</h2>
-                    <p>Base entry fees are managed in Events & Divisions. Use this section for optional extras.</p>
-                  </div>
-                  <div className={styles.feesHeaderActions}>
-                    <span className={styles.evDivCountPill}>{addOnFees.length} active</span>
-                    <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}>
-                      <Plus size={ICON_SIZE.sm} /> Add Add-on
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.addOnList}>
-                  {addOnFees.map((fee) => (
-                    <article key={fee.id} className={styles.addOnRow}>
-                      <div><strong>{fee.name || 'Untitled Add-on'}</strong><span>Optional during registration</span></div>
-                      <strong>{formatMoney(fee.amountCents)}</strong>
-                      <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee', id: fee.id })}><PencilLine size={ICON_SIZE.sm} /> Edit</button>
-                    </article>
-                  ))}
-                  {addOnFees.length === 0 ? <div className={styles.simpleOptionalEmpty}><strong>No add-ons configured</strong><p>Add-ons are optional and can be used for brackets, donations, merchandise, or other extras.</p><button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}><Plus size={ICON_SIZE.sm} /> Add First Add-on</button></div> : null}
-                </div>
-              </section>
+            <>
+              <StepHeader
+                title="Add-ons, payments, and documents"
+                description="Optional extras, how payment is collected, and the rules bowlers can read before registering."
+                status={statusBySection['fees-payments-documents']}
+              />
+              <div className={layout.cardGrid}>
+                <Card aria-label="Add-ons and fee adjustments">
+                  <CardHeader
+                    title="Add-ons and fee adjustments"
+                    description="Base entry fees are set in Events and divisions. Use add-ons for optional extras."
+                    headingLevel="h3"
+                    actions={(
+                      <Button size="sm" variant="secondary" icon={<Plus size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setDrawerState({ kind: 'fee' })}>
+                        Add add-on
+                      </Button>
+                    )}
+                  />
+                  {addOnFees.length === 0 ? (
+                    <EmptyState
+                      icon={<CircleDollarSign size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                      title="No add-ons"
+                      description="Add-ons are optional, for example brackets, donations, or merchandise."
+                    />
+                  ) : (
+                    <ul className={layout.rows}>
+                      {addOnFees.map((fee) => {
+                        const name = fee.name || 'Untitled add-on';
+                        return (
+                          <li key={fee.id} className={layout.row}>
+                            <div className={layout.rowText}>
+                              <span className={layout.rowTitle}>{name}</span>
+                              <span className={layout.rowMeta}>Optional during registration</span>
+                            </div>
+                            <div className={layout.rowActions}>
+                              <span className={layout.amount}>{formatMoney(fee.amountCents)}</span>
+                              <Button size="sm" variant="secondary" onClick={() => setDrawerState({ kind: 'fee', id: fee.id })} aria-label={`Edit ${name}`}>Edit</Button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Card>
 
-              <section className={styles.sectionCard}>
-                <div className={styles.sectionHeader}>
-                  <div>
-                    <h2>Payment Collection</h2>
-                    <p>Bowlers register without paying online. Tournament staff collect entry fees at the venue.</p>
-                  </div>
-                  <div className={styles.feesHeaderActions}>
-                    <span className={styles.evDivCountPill}>Cash only</span>
-                    <SetupStatusBadge status={statusBySection['fees-payments-documents']} />
-                  </div>
-                </div>
-                <div className={styles.paymentFacts}>
-                  <span><CircleCheck size={ICON_SIZE.md} /> No payment processor required</span>
-                  <span><CircleCheck size={ICON_SIZE.md} /> No online transaction fees</span>
-                  <span><CircleCheck size={ICON_SIZE.md} /> Payment is collected at check-in</span>
-                </div>
-              </section>
+                <Card aria-label="Payment collection">
+                  <CardHeader
+                    title="Payment collection"
+                    description="Bowlers register without paying online. Tournament staff collect entry fees at check-in."
+                    headingLevel="h3"
+                    actions={<Badge tone="neutral">Cash at the venue</Badge>}
+                  />
+                  <p className={layout.bodyText}>No payment processor is needed and there are no online transaction fees.</p>
+                </Card>
+              </div>
 
               <RulesDocumentsSection
                 key={persistedTournamentId ?? 'new'}
@@ -3129,7 +3141,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 onRulesTextChange={(rulesText) => setDetails((current) => ({ ...current, rulesText }))}
                 onHasRulesDocumentChange={setHasRulesDocument}
               />
-            </div>
+            </>
           )}
 
           {showRegistrationPreview ? (

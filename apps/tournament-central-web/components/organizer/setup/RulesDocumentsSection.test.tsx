@@ -51,7 +51,7 @@ describe('Rules & Documents setup', () => {
     expect(screen.getByLabelText('Write or paste rules')).toHaveValue(text);
     await user.click(screen.getByText('Preview pasted rules'));
     expect(screen.getByText(/1\. Check in early\./, { selector: 'div' }).textContent).toBe(text);
-    expect(screen.getByRole('button', { name: 'Upload Document' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Upload document' })).toBeDisabled();
     expect(listTournamentDocuments).not.toHaveBeenCalled();
   });
 
@@ -66,13 +66,13 @@ describe('Rules & Documents setup', () => {
   it('uploads the selected file as rules, then shows the persisted filename', async () => {
     const user = userEvent.setup();
     render(<Editor />);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload Document' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload document' })).toBeEnabled());
     const file = new File(['%PDF-1.4\nrules'], record.file_name, { type: 'application/pdf' });
     await user.upload(screen.getByLabelText('Rules document'), file);
     expect(screen.getByText(record.file_name)).toBeInTheDocument();
     expect(screen.getByText(/Ready to upload/)).toBeInTheDocument();
     expect(screen.getByText('Change file')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await user.click(screen.getByRole('button', { name: 'Upload document' }));
     expect(uploadTournamentDocument).toHaveBeenCalledWith('test-session', 42, file, 'rules');
     expect(await screen.findByText(record.file_name)).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(`Uploaded ${record.file_name}.`);
@@ -85,9 +85,9 @@ describe('Rules & Documents setup', () => {
     vi.mocked(uploadTournamentDocument).mockRejectedValue(new Error('Document content does not match its declared type'));
     const user = userEvent.setup();
     render(<Editor />);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload Document' })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload document' })).toBeEnabled());
     await user.upload(screen.getByLabelText('Rules document'), new File(['bad'], 'Bad.pdf', { type: 'application/pdf' }));
-    await user.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await user.click(screen.getByRole('button', { name: 'Upload document' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Document content does not match its declared type');
     expect(onHasRulesDocumentChange).not.toHaveBeenCalledWith(true);
     expect(screen.getByText('Bad.pdf')).toBeInTheDocument();
@@ -100,8 +100,9 @@ describe('Rules & Documents setup', () => {
     render(<Editor />);
     await user.click(await screen.findByRole('button', { name: `Download ${record.file_name}` }));
     expect(downloadTournamentDocument).toHaveBeenCalledWith('test-session', 42, record);
-    await waitFor(() => expect(screen.getByRole('button', { name: `Remove ${record.file_name}` })).toBeEnabled());
-    await user.click(screen.getByRole('button', { name: `Remove ${record.file_name}` }));
+    await user.click(screen.getByRole('button', { name: `More actions for ${record.file_name}` }));
+    await waitFor(() => expect(screen.getByRole('menuitem', { name: `Remove ${record.file_name}` })).toBeEnabled());
+    await user.click(screen.getByRole('menuitem', { name: `Remove ${record.file_name}` }));
     expect(screen.getByRole('alertdialog', { name: 'Remove rules document?' })).toHaveTextContent(record.file_name);
     expect(deleteTournamentDocument).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Remove document' }));
@@ -115,7 +116,8 @@ describe('Rules & Documents setup', () => {
     vi.mocked(deleteTournamentDocument).mockRejectedValue(new Error('Unable to remove document.'));
     const user = userEvent.setup();
     render(<Editor />);
-    await user.click(await screen.findByRole('button', { name: `Remove ${record.file_name}` }));
+    await user.click(await screen.findByRole('button', { name: `More actions for ${record.file_name}` }));
+    await user.click(screen.getByRole('menuitem', { name: `Remove ${record.file_name}` }));
     await user.click(screen.getByRole('button', { name: 'Remove document' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Unable to remove document.');
     expect(screen.getByText(record.file_name)).toBeInTheDocument();
@@ -143,11 +145,11 @@ describe('Rules & Documents setup', () => {
   it('requires a selected nonempty file before uploading', async () => {
     const user = userEvent.setup();
     render(<Editor />);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload Document' })).toBeEnabled());
-    await user.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Upload document' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: 'Upload document' }));
     expect(screen.getByRole('alert')).toHaveTextContent('Choose a rules document');
     await user.upload(screen.getByLabelText('Rules document'), new File([], 'Empty.pdf', { type: 'application/pdf' }));
-    await user.click(screen.getByRole('button', { name: 'Upload Document' }));
+    await user.click(screen.getByRole('button', { name: 'Upload document' }));
     expect(screen.getByRole('alert')).toHaveTextContent('The selected file is empty.');
     expect(uploadTournamentDocument).not.toHaveBeenCalled();
   });

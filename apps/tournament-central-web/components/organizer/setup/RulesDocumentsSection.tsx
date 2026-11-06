@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Upload } from 'lucide-react';
+import { Download, MoreHorizontal, Trash2, Upload } from 'lucide-react';
+import { Badge, Button, Card, CardDivider, CardHeader, ICON_SIZE, Menu, MenuItem, Notice, TextAreaField } from '@bracketworks/ui';
 import {
   deleteTournamentDocument,
   downloadTournamentDocument,
@@ -11,8 +12,8 @@ import {
 } from '../organizerApi';
 import { formatFileSize } from '../setupFormatting';
 import { useConfirmation } from '../useConfirmation';
-import styles from '../tournament-setup.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import layout from './setupLayout.module.css';
+import local from './RulesDocumentsSection.module.css';
 
 type Props = {
   tournamentId: number | null;
@@ -130,73 +131,118 @@ export default function RulesDocumentsSection({ tournamentId, rulesText, onRules
     void runDocumentAction(() => downloadTournamentDocument(accessToken(), tournamentId, document));
   };
 
-  return <section className={styles.sectionCard} aria-labelledby="rules-documents-heading">
-    {confirmationDialog}
-    <div className={styles.sectionHeader}>
-      <div>
-        <h2 id="rules-documents-heading">Rules & Documents</h2>
-        <p>Paste your rules, upload a document, or use both. Bowlers can review them before registering.</p>
-      </div>
-      <span className={`${styles.chip} ${rulesText.trim() || documents.length ? styles.chipEnabled : styles.chipMuted}`}>
-        {rulesText.trim() || documents.length ? 'Rules added' : 'Optional'}
-      </span>
-    </div>
-    <div className={styles.rulesDocumentsBody}>
-      <div className={styles.rulesEditorPanel}>
-        <label className={styles.detailFormField} htmlFor="tournament-rules-text">
-          Write or paste rules
-          <textarea id="tournament-rules-text" rows={10} value={rulesText} onChange={(event) => onRulesTextChange(event.target.value)}
-            placeholder={'Paste tournament rules here...\n\nInclude eligibility, format, check-in times, and policies.'}
-            aria-describedby="rules-text-help" />
-        </label>
-        <p id="rules-text-help" className={styles.rulesHelp}>Plain text; line breaks are preserved. Use Save Draft to save your rules, then Publish to make text changes public.</p>
-        {rulesText.trim() && <details className={styles.rulesTextPreview}>
-          <summary>Preview pasted rules</summary>
-          <div>{rulesText}</div>
-        </details>}
-      </div>
-      <div className={styles.rulesEditorPanel}>
-        <h3>Upload rules documents</h3>
-        <p className={styles.rulesHelp}>PDF, Word (DOC or DOCX), PNG, or JPG. Maximum 20 MB per file. Uploaded files are saved immediately and are available when the tournament is public and published.</p>
-        {!tournamentId && <p className={styles.rulesHelp}>Save Draft to create the tournament before uploading a document. You can paste rules above now.</p>}
-        {loadError && <p role="alert" className={styles.rulesError}>{loadError} <button type="button" className={styles.inlineAction} onClick={() => setLoadAttempt((value) => value + 1)}>Try again</button></p>}
-        {isLoading && <p role="status">Loading rules documents...</p>}
-        <div className={styles.rulesUploadControls}>
-          <label className={styles.rulesFilePicker}>
-            <input ref={fileInputRef} type="file" aria-label="Rules document"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-              onChange={(event) => {
-                setSelectedFile(event.target.files?.[0] ?? null);
-                setError('');
-                setMessage('');
-              }}
-              disabled={!tournamentId || busy || isLoading || Boolean(loadError)} />
-            <span className={styles.rulesFileIcon} aria-hidden="true">{selectedFile ? <FileText size={ICON_SIZE['2xl']} /> : <Upload size={ICON_SIZE['2xl']} />}</span>
-            <span className={styles.rulesFileCopy} aria-live="polite">
-              <strong>{selectedFile ? selectedFile.name : 'Choose a rules document'}</strong>
-              <span>{selectedFile ? `${formatFileSize(selectedFile.size)} - Ready to upload` : 'PDF, Word, or image - up to 20 MB'}</span>
-            </span>
-            <span className={styles.rulesFileBrowse} aria-hidden="true">{selectedFile ? 'Change file' : 'Browse files'}</span>
-          </label>
-          <button type="button" className={styles.secondaryAction} onClick={upload} disabled={!tournamentId || busy || isLoading || Boolean(loadError)}>
-            {busy ? 'Working...' : 'Upload Document'}
-          </button>
+  const hasRules = Boolean(rulesText.trim() || documents.length);
+  const controlsDisabled = !tournamentId || busy || isLoading || Boolean(loadError);
+
+  return (
+    <Card aria-labelledby="rules-documents-heading">
+      {confirmationDialog}
+      <CardHeader
+        title={<span id="rules-documents-heading">Rules and documents</span>}
+        description="Paste your rules, upload a document, or both. Bowlers can review them before registering."
+        headingLevel="h3"
+        actions={<Badge tone={hasRules ? 'success' : 'neutral'}>{hasRules ? 'Rules added' : 'Optional'}</Badge>}
+      />
+      <div className={layout.stack}>
+        <TextAreaField
+          id="tournament-rules-text"
+          label="Write or paste rules"
+          rows={10}
+          value={rulesText}
+          onChange={(event) => onRulesTextChange(event.target.value)}
+          placeholder={'Paste tournament rules here...\n\nInclude eligibility, format, check-in times, and policies.'}
+          helper="Plain text; line breaks are kept. Save to keep your rules, then publish to make text changes public."
+        />
+        {rulesText.trim() ? (
+          <details className={local.preview}>
+            <summary>Preview pasted rules</summary>
+            <div>{rulesText}</div>
+          </details>
+        ) : null}
+
+        <CardDivider />
+
+        <div className={layout.fieldGroup}>
+          <h4 className={layout.subsectionTitle}>Upload rules documents</h4>
+          <p className={layout.helper}>
+            PDF, Word (DOC or DOCX), PNG, or JPG, up to 20 MB each. Files are saved right away and shown once the tournament is public and published.
+          </p>
         </div>
-        {error && <p role="alert" className={styles.rulesError}>{error}</p>}
-        {message && <p role="status" className={styles.rulesHelp}>{message}</p>}
-        {!isLoading && !loadError && documents.length === 0 && <p className={styles.rulesHelp}>No rules documents uploaded.</p>}
-        <ul className={styles.rulesDocumentList}>{documents.map((document) => <li key={document.id} className={styles.documentFileCard}>
-          <div className={styles.documentFileMain}>
-            <strong>{document.file_name}</strong>
-            <p>{formatFileSize(document.file_size)}</p>
+        {!tournamentId ? <Notice tone="info">Save the draft to create the tournament before uploading a document. You can paste rules above now.</Notice> : null}
+        {loadError ? (
+          <Notice tone="danger" role="alert" action={<Button size="sm" variant="ghost" onClick={() => setLoadAttempt((value) => value + 1)}>Try again</Button>}>
+            {loadError}
+          </Notice>
+        ) : null}
+        {isLoading ? <p className={layout.helper} role="status">Loading rules documents...</p> : null}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="sr-only"
+          tabIndex={-1}
+          aria-label="Rules document"
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+          onChange={(event) => {
+            setSelectedFile(event.target.files?.[0] ?? null);
+            setError('');
+            setMessage('');
+          }}
+          disabled={controlsDisabled}
+        />
+        <div className={local.picker}>
+          <div className={local.pickerText} aria-live="polite">
+            <span className={local.pickerName}>{selectedFile ? selectedFile.name : 'Choose a rules document'}</span>
+            <span className={layout.helper}>{selectedFile ? `${formatFileSize(selectedFile.size)} - Ready to upload` : 'PDF, Word, or image, up to 20 MB'}</span>
           </div>
-          <div className={styles.documentActions}>
-            <button type="button" className={styles.secondaryAction} disabled={busy} aria-label={`Download ${document.file_name}`}
-              onClick={() => download(document)}>Download</button>
-            <button type="button" className={styles.inlineAction} disabled={busy} aria-label={`Remove ${document.file_name}`} onClick={() => remove(document)}>Remove</button>
+          <div className={local.pickerActions}>
+            <Button size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} disabled={controlsDisabled}>
+              {selectedFile ? 'Change file' : 'Browse files'}
+            </Button>
+            <Button size="sm" variant="secondary" icon={<Upload size={ICON_SIZE.md} aria-hidden="true" />} onClick={upload} disabled={controlsDisabled}>
+              {busy ? 'Working...' : 'Upload document'}
+            </Button>
           </div>
-        </li>)}</ul>
+        </div>
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+        {message ? <p role="status" className={layout.helper}>{message}</p> : null}
+        {!isLoading && !loadError && documents.length === 0 ? <p className={layout.helper}>No rules documents uploaded.</p> : null}
+        {documents.length > 0 ? (
+          <ul className={layout.rows}>
+            {documents.map((document) => (
+              <li key={document.id} className={layout.row}>
+                <div className={layout.rowText}>
+                  <span className={layout.rowTitle}>{document.file_name}</span>
+                  <span className={layout.rowMeta}>{formatFileSize(document.file_size)}</span>
+                </div>
+                <div className={layout.rowActions}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<Download size={ICON_SIZE.md} aria-hidden="true" />}
+                    disabled={busy}
+                    aria-label={`Download ${document.file_name}`}
+                    onClick={() => download(document)}
+                  >
+                    Download
+                  </Button>
+                  <Menu triggerLabel={`More actions for ${document.file_name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                    <MenuItem
+                      tone="danger"
+                      icon={<Trash2 size={ICON_SIZE.md} />}
+                      disabled={busy}
+                      aria-label={`Remove ${document.file_name}`}
+                      onSelect={() => { void remove(document); }}
+                    >
+                      Remove document
+                    </MenuItem>
+                  </Menu>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
-    </div>
-  </section>;
+    </Card>
+  );
 }

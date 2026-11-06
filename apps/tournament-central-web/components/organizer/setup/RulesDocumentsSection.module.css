@@ -1,0 +1,47 @@
+/* Rules and documents: pasted-rules preview and the file picker panel. */
+
+.preview summary {
+  font: var(--type-button);
+  color: var(--color-accent-primary);
+  cursor: pointer;
+}
+
+.preview > div {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-panel);
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  white-space: pre-wrap;
+}
+
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-panel);
+}
+
+.pickerText {
+  display: flex;
+  flex: 1 1 var(--space-56);
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.pickerName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+.pickerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
