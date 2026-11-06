@@ -10,7 +10,7 @@ export type { ButtonLinkProps, ButtonProps, ButtonSize, ButtonStyleOptions, Butt
 export { Card, CardDivider, CardHeader, Page, PageColumns, PageHeader, StatGroup } from './components/Layout';
 export type { CardHeaderProps, CardProps, PageHeaderProps, PageProps, StatGroupProps, StatItem } from './components/Layout';
 
-export { Menu, MenuDivider, MenuItem, MenuStatus, menuItemClassName } from './components/Menu';
+export { Menu, MenuDivider, MenuItem, MenuNote, MenuStatus, menuItemClassName } from './components/Menu';
 export type { MenuItemProps, MenuProps } from './components/Menu';
 
 export { ActivityList, Avatar, Badge, EmptyState, Notice, ProgressBar } from './components/Feedback';

@@ -1,5 +1,5 @@
-import { Avatar, Button, ICON_SIZE, buttonClassName } from '@bracketworks/ui';
-import { ArrowUpRight, Trash2 } from 'lucide-react';
+import { Avatar, ICON_SIZE, Menu, MenuItem, MenuNote, buttonClassName, menuItemClassName } from '@bracketworks/ui';
+import { ArrowUpRight, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -19,7 +19,7 @@ type TournamentCardProps = {
   onDelete: (tournament: OrganizerDashboardTournament) => void;
 };
 
-/** One tournament as a divider row in the "Your tournaments" card. */
+/** One tournament as a divider row: Manage is the one visible action; the rest live in the "More" menu. */
 export default function TournamentCard({ tournament, isDeleting, onDelete }: TournamentCardProps) {
   const hasRegistrations = (tournament.entryCount ?? 0) > 0;
   return (
@@ -48,28 +48,6 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
         <div><dt>Collected</dt><dd>{formatMoney(tournament.amountPaidCents)}</dd></div>
       </dl>
       <div className={styles.rowActions}>
-        {tournament.publicUrl ? (
-          <Link
-            href={tournament.publicUrl}
-            className={buttonClassName({ variant: 'ghost', size: 'sm' })}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`View public page for ${tournament.name} (opens in a new tab)`}
-          >
-            Public page
-          </Link>
-        ) : null}
-        <Button
-          variant="ghost-danger"
-          size="sm"
-          icon={<Trash2 size={ICON_SIZE.md} />}
-          onClick={() => onDelete(tournament)}
-          disabled={isDeleting || hasRegistrations}
-          aria-label={`Delete ${tournament.name}`}
-          title={hasRegistrations ? 'Tournaments with registrations cannot be deleted.' : 'Delete tournament'}
-        >
-          {isDeleting ? 'Deleting...' : 'Delete'}
-        </Button>
         <Link
           href={organizerRoutes.overview(tournament.id)}
           className={buttonClassName({ variant: 'accent-outline', size: 'sm' })}
@@ -78,6 +56,31 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
           Manage
           <ArrowUpRight size={ICON_SIZE.md} aria-hidden="true" />
         </Link>
+        <Menu triggerLabel={`More actions for ${tournament.name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+          {tournament.publicUrl ? (
+            <Link
+              href={tournament.publicUrl}
+              role="menuitem"
+              className={menuItemClassName()}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`View public page for ${tournament.name} (opens in a new tab)`}
+            >
+              <ExternalLink size={ICON_SIZE.md} aria-hidden="true" />
+              View public page
+            </Link>
+          ) : null}
+          <MenuItem
+            tone="danger"
+            icon={<Trash2 size={ICON_SIZE.md} />}
+            onSelect={() => onDelete(tournament)}
+            disabled={isDeleting || hasRegistrations}
+            aria-label={`Delete ${tournament.name}`}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete tournament'}
+          </MenuItem>
+          {hasRegistrations ? <MenuNote>Tournaments with registrations can&apos;t be deleted.</MenuNote> : null}
+        </Menu>
       </div>
     </article>
   );

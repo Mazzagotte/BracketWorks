@@ -98,7 +98,8 @@ export function Menu({ triggerLabel, trigger, header, children, align = 'end', c
           className={cx(styles.panel, align === 'start' && styles.alignStart)}
           onKeyDown={onPanelKeyDown}
           onClick={(event) => {
-            if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) close(false);
+            // Return focus to the trigger so a dialog opened by the item can restore it later.
+            if ((event.target as HTMLElement).closest(ITEM_SELECTOR)) close(true);
           }}
         >
           {header ? <div className={styles.header}>{header}</div> : null}
@@ -126,7 +127,7 @@ interface MenuItemBaseProps {
 export type MenuItemProps = MenuItemBaseProps &
   (
     | ({ href: string; onSelect?: never } & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'className' | 'children'>)
-    | { href?: never; onSelect: () => void; disabled?: boolean }
+    | { href?: never; onSelect: () => void; disabled?: boolean; 'aria-label'?: string }
   );
 
 export function MenuItem(props: MenuItemProps) {
@@ -146,7 +147,14 @@ export function MenuItem(props: MenuItemProps) {
     );
   }
   return (
-    <button type="button" role="menuitem" className={menuItemClassName(tone, className)} onClick={props.onSelect} disabled={props.disabled}>
+    <button
+      type="button"
+      role="menuitem"
+      className={menuItemClassName(tone, className)}
+      onClick={props.onSelect}
+      disabled={props.disabled}
+      aria-label={props['aria-label']}
+    >
       {content}
     </button>
   );
@@ -154,6 +162,11 @@ export function MenuItem(props: MenuItemProps) {
 
 export function MenuDivider() {
   return <div className={styles.divider} role="separator" />;
+}
+
+/** Explanatory text inside the menu, for example why an item is disabled. */
+export function MenuNote({ children }: { children: ReactNode }) {
+  return <p className={styles.note}>{children}</p>;
 }
 
 /** A short message inside the menu, for example a sign-out error. */

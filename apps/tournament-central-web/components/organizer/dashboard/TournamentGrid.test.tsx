@@ -20,15 +20,24 @@ const tournaments: OrganizerDashboardTournament[] = [
 afterEach(cleanup);
 
 describe('operations dashboard tournament list', () => {
-  it('shows compact metrics, named management links and registration deletion safeguards', () => {
+  it('shows compact metrics, one visible action, and secondary actions with deletion safeguards in a menu', async () => {
+    const user = userEvent.setup();
     render(<TournamentGrid tournaments={tournaments} deletingTournamentId={null} onDeleteTournament={vi.fn()} />);
     const row = screen.getByRole('article', { name: 'County Open' });
     expect(within(row).getByText('$40.50')).toBeInTheDocument();
     expect(within(row).getByText('Registrations')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: 'Manage County Open' })).toHaveAttribute('href', '/organizer/tournaments/58');
-    expect(within(row).getByRole('link', { name: /View public page for County Open/ })).toHaveAttribute('target', '_blank');
-    expect(within(row).getByRole('button', { name: 'Delete County Open' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Delete Spring Doubles' })).toBeEnabled();
+    expect(within(row).queryByRole('button', { name: 'Delete County Open' })).not.toBeInTheDocument();
+
+    await user.click(within(row).getByRole('button', { name: 'More actions for County Open' }));
+    expect(screen.getByRole('menuitem', { name: /View public page for County Open/ })).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('menuitem', { name: 'Delete County Open' })).toBeDisabled();
+    expect(screen.getByText("Tournaments with registrations can't be deleted.")).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    await user.click(screen.getByRole('button', { name: 'More actions for Spring Doubles' }));
+    expect(screen.getByRole('menuitem', { name: 'Delete Spring Doubles' })).toBeEnabled();
+    expect(screen.queryByRole('menuitem', { name: /View public page for Spring Doubles/ })).not.toBeInTheDocument();
   });
 
   it('combines name/location search with publication filtering and clears empty results', async () => {
@@ -50,11 +59,14 @@ describe('operations dashboard tournament list', () => {
     const onDelete = vi.fn();
     const user = userEvent.setup();
     const view = render(<TournamentGrid tournaments={tournaments} deletingTournamentId={null} onDeleteTournament={onDelete} />);
-    await user.click(screen.getByRole('button', { name: 'Delete Spring Doubles' }));
+    await user.click(screen.getByRole('button', { name: 'More actions for Spring Doubles' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Delete Spring Doubles' }));
     expect(onDelete).toHaveBeenCalledWith(tournaments[1]);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     view.rerender(<TournamentGrid tournaments={tournaments} deletingTournamentId={59} onDeleteTournament={onDelete} />);
-    expect(screen.getByRole('button', { name: 'Delete Spring Doubles' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Delete Spring Doubles' })).toHaveTextContent('Deleting...');
+    await user.click(screen.getByRole('button', { name: 'More actions for Spring Doubles' }));
+    expect(screen.getByRole('menuitem', { name: 'Delete Spring Doubles' })).toBeDisabled();
+    expect(screen.getByRole('menuitem', { name: 'Delete Spring Doubles' })).toHaveTextContent('Deleting...');
   });
 
   it('shows an explicit all-clear state or actionable attention items', () => {

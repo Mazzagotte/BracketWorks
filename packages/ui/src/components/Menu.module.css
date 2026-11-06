@@ -83,6 +83,23 @@
   color: var(--color-danger);
 }
 
+.item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.item:disabled:hover {
+  background: transparent;
+}
+
+.note {
+  max-width: var(--space-64);
+  margin: 0;
+  padding: var(--space-1) var(--space-2-5) var(--space-1-5);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
 .status {
   padding: var(--space-1) var(--space-2-5);
   font: var(--type-body-small);

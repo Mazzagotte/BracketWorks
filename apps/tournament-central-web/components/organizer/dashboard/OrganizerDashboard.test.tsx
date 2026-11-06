@@ -40,12 +40,15 @@ describe('operations dashboard', () => {
   it('keeps the deletion confirmation and cancellation workflow', async () => {
     const user = userEvent.setup();
     await act(async () => { render(<OrganizerDashboard />); });
-    await user.click(screen.getByRole('button', { name: 'Delete County Open' }));
+    const moreActions = screen.getByRole('button', { name: 'More actions for County Open' });
+    await user.click(moreActions);
+    await user.click(screen.getByRole('menuitem', { name: 'Delete County Open' }));
     const dialog = screen.getByRole('alertdialog', { name: 'Delete tournament?' });
     expect(dialog).toHaveTextContent('County Open');
     expect(dialog).toHaveFocus();
     await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(moreActions).toHaveFocus();
   });
 
   it('does not present successful or empty dashboard content after a load failure', async () => {
