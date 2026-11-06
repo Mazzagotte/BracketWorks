@@ -10,7 +10,7 @@ import { buildParticipantRows } from '@/components/organizer/tournamentInsights'
 import cells from '@/components/organizer/OrganizerTable.module.css';
 
 export default function OrganizerTournamentParticipantsPage() {
-  const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
+  const { tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
   const error = tournamentError || registrationsError;
   const [search, setSearch] = useState('');
 

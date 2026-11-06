@@ -1,10 +1,9 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, CircleDollarSign, Copy, EyeOff, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, CircleCheck, CircleDollarSign, Copy, EyeOff, Download, Eye, FileJson, GripVertical, Layers, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 import ConfigDrawer from './ConfigDrawer';
 import { useConfirmation } from './useConfirmation';
@@ -17,22 +16,16 @@ import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import RulesDocumentsSection from './setup/RulesDocumentsSection';
-import { initialRegistrationFields, setupSections } from './setupConfig';
-import SetupStatusBadge from './SetupStatusBadge';
+import { setupSections } from './setupConfig';
 import {
-  buildSquadDisplayName,
-  buildSquadTimesPayload,
   countTournamentSquads,
   formatDateLabel,
   formatDateShort,
-  formatEntryFeeInput,
   formatFileSize,
   formatMoney,
   formatSquadTimeLabel,
   formatTournamentCardDate,
   inferLogoFileLabel,
-  normalizeEntryFeeInput,
-  parseEntryFeeInputToCents,
 } from './setupFormatting';
 import {
   buildClientId,
@@ -43,14 +36,10 @@ import {
   emptyLocation,
   emptyQuestion,
   emptySquad,
-  normalizeSquadDefaults,
 } from './setupFactories';
 import {
-  getRegistrationFieldInputType,
   getRequiredBowlerCountFromEvent,
   isRegistrationQuestionAnswered,
-  isWideRegistrationField,
-  normalizeQuestionOptions,
   normalizeRegistrationFieldKey,
   registrationFieldFallbackHelp,
 } from './setupValidation';
@@ -59,14 +48,9 @@ import {
   buildOrganizerSetupPayload,
   buildTournamentPayload,
   builtInRegistrationFieldKeys,
-  loadDraftFromStorage,
   normalizeEventConfig,
-  normalizeEventList,
   normalizeOrganizerDraft,
-  normalizeRegistrationFieldsList,
   normalizeSquadConfig,
-  normalizeSquadList,
-  parseTournamentLocation,
   recommendTournamentStatus,
   reorderItemsByDropTarget,
   toDraftFromTournament,
@@ -85,14 +69,10 @@ import { FeeEditor, FieldEditor, InlineDivisionEditor, InlineEventEditor, Locati
 import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, LocationConfig, RegistrationFieldConfig, RegistrationQuestionAnswerValue, SetupSectionKey, SetupStatus, SquadConfig, ValidationIssue } from './types';
 import type {
   OrganizerDraft,
-  OrganizerSetupPayload,
-  OrganizerSetupStateResponse,
   OrganizerSetupStateSummary,
   PaymentMode,
-  PersistedTournament,
   TournamentDetails,
   TournamentTemplate,
-  TournamentWritePayload,
   UserTournamentSummary,
 } from './setupTypes';
 import layout from './setup/setupLayout.module.css';
