@@ -115,9 +115,11 @@ import {
   Page,
   PageHeader,
   ProgressBar,
+  SegmentedControl,
   SelectField,
   SideNav,
   StatGroup,
+  capitalizeFirstLetter,
 } from '@bracketworks/ui';
 
 type DrawerState =
@@ -3165,49 +3167,87 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           ) : null}
 
           {activeSection === 'review-publish' && (
-            <section className={`${styles.sectionCard} ${styles.reviewPublishSection}`}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Review & Publish</h2>
-                  <p>Run a final preflight check and resolve anything that could prevent registration.</p>
-                </div>
-                <div className={styles.reviewHeaderActions}><SetupStatusBadge status={statusBySection['review-publish']} /><button type="button" className={styles.secondaryAction} onClick={() => setLastPreflightRunAt(new Date().toISOString())}><RotateCcw size={ICON_SIZE.sm} /> Run Checks Again</button></div>
-              </div>
-              <div className={styles.preflightIntro}><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing is blocked' : 'Tournament is ready to publish'}</strong><span>{lastPreflightRunAt ? `Last checked ${new Date(lastPreflightRunAt).toLocaleTimeString()}` : 'Checks update automatically as setup changes.'}</span></div>
+            <>
+              <StepHeader
+                title="Review and publish"
+                description="Run a final check and resolve anything that could prevent registration."
+                status={statusBySection['review-publish']}
+                actions={(
+                  <Button variant="secondary" icon={<RotateCcw size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setLastPreflightRunAt(new Date().toISOString())}>
+                    Run checks again
+                  </Button>
+                )}
+              />
               <PublishValidationSummary
                 issues={validationIssues}
                 sections={setupSections}
                 onNavigate={(section) => setActiveSection(section)}
+                checkedAt={lastPreflightRunAt}
               />
-              <div className={styles.reviewStatusRecommendation}>
-                <div><strong>Visibility</strong><p>{visibilitySummary}</p></div>
-                <div className={styles.visibilityGroup}>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'public' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'public' }))}><Globe size={ICON_SIZE.md} /><span>Public</span></button>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'unlisted' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'unlisted' }))}><Link2 size={ICON_SIZE.md} /><span>Unlisted</span></button>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'private' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'private' }))}><Lock size={ICON_SIZE.md} /><span>Private</span></button>
-                </div>
+
+              <div className={layout.cardGrid}>
+                <Card aria-label="Visibility">
+                  <CardHeader title="Visibility" description={visibilitySummary} headingLevel="h3" />
+                  <SegmentedControl
+                    label="Tournament visibility"
+                    value={details.visibility}
+                    onChange={(visibility) => setDetails((prev) => ({ ...prev, visibility }))}
+                    options={[
+                      { value: 'public', label: 'Public' },
+                      { value: 'unlisted', label: 'Unlisted' },
+                      { value: 'private', label: 'Private' },
+                    ]}
+                  />
+                </Card>
+
+                <Card aria-label="Launch summary">
+                  <CardHeader
+                    title="Launch summary"
+                    description={recommendedTournamentStatus.reason}
+                    headingLevel="h3"
+                    actions={<Badge tone="neutral">{capitalizeFirstLetter(recommendedTournamentStatus.value.replace(/-/gu, ' '))}</Badge>}
+                  />
+                  <dl className={layout.summaryList}>
+                    {[
+                      ['Visibility', details.visibility.charAt(0).toUpperCase() + details.visibility.slice(1)],
+                      ['Tournament dates', formatTournamentDateRange(details.startDateIso, details.endDateIso)],
+                      ['Registration closes', formatDateShort(details.registrationCloseIso)],
+                      ['Events', String(enabledEvents.length)],
+                      ['Squads', squads.length ? String(squads.length) : 'Not used'],
+                      ['Divisions', enabledDivisions.length ? String(enabledDivisions.length) : 'Not used'],
+                      ['Payment', 'Cash at the venue'],
+                    ].map(([term, value]) => (
+                      <div key={term}><dt>{term}</dt><dd>{value}</dd></div>
+                    ))}
+                  </dl>
+                </Card>
               </div>
-              <section className={styles.launchSummaryCard}>
-                <div className={styles.preflightGroupHead}><strong>Public Launch Summary</strong><span>{recommendedTournamentStatus.value}</span></div>
-                <dl className={styles.launchSummaryGrid}>
-                  <div><dt>Visibility</dt><dd>{details.visibility}</dd></div>
-                  <div><dt>Tournament Dates</dt><dd>{formatTournamentDateRange(details.startDateIso, details.endDateIso)}</dd></div>
-                  <div><dt>Registration Closes</dt><dd>{formatDateShort(details.registrationCloseIso)}</dd></div>
-                  <div><dt>Events</dt><dd>{enabledEvents.length}</dd></div>
-                  <div><dt>Squads</dt><dd>{squads.length || 'Not Used'}</dd></div>
-                  <div><dt>Divisions</dt><dd>{enabledDivisions.length || 'Not Used'}</dd></div>
-                  <div><dt>Payment</dt><dd>Cash at venue</dd></div>
-                </dl>
-                <p>{recommendedTournamentStatus.reason}</p>
-              </section>
-              <div className={`${styles.publishDecisionCard} ${validationIssues.some((issue) => issue.severity === 'error') ? styles.publishDecisionBlocked : styles.publishDecisionReady}`}>
-                <div><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing Blocked' : 'Ready to Publish'}</strong><p>{validationIssues.some((issue) => issue.severity === 'error') ? `Resolve ${validationIssues.filter((issue) => issue.severity === 'error').length} required issue${validationIssues.filter((issue) => issue.severity === 'error').length === 1 ? '' : 's'} before publishing.` : 'Publishing will make this tournament available according to the selected visibility.'}</p></div>
-                <div className={styles.publishActionsRow}>
-                  <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>{isSavingDraft ? 'Saving...' : 'Save'}</button>
-                  <button type="button" className={styles.primaryAction} onClick={() => { void handlePublish(); }} disabled={validationIssues.some((issue) => issue.severity === 'error') || isSavingDraft || isPublishing}><CircleCheck size={ICON_SIZE.md} /> {isPublishing ? 'Publishing...' : 'Publish Tournament'}</button>
-                </div>
-              </div>
-            </section>
+
+              <Card aria-label="Publish">
+                <CardHeader
+                  title={blockingIssueCount > 0 ? 'Publishing is blocked' : 'Ready to publish'}
+                  description={blockingIssueCount > 0
+                    ? `Resolve ${blockingIssueCount} required issue${blockingIssueCount === 1 ? '' : 's'} before publishing.`
+                    : 'Publishing makes this tournament available according to the visibility you chose.'}
+                  headingLevel="h3"
+                  actions={(
+                    <>
+                      <Button variant="secondary" onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
+                        {isSavingDraft ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        icon={<CircleCheck size={ICON_SIZE.md} aria-hidden="true" />}
+                        onClick={() => { void handlePublish(); }}
+                        disabled={blockingIssueCount > 0 || isSavingDraft || isPublishing}
+                      >
+                        {isPublishing ? 'Publishing...' : 'Publish tournament'}
+                      </Button>
+                    </>
+                  )}
+                />
+              </Card>
+            </>
           )}
           <nav className={layout.stepFooter} aria-label="Setup step navigation">
             {previousSection ? (

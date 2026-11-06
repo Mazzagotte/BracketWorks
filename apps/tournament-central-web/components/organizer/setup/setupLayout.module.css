@@ -278,3 +278,21 @@
   font-variant-numeric: tabular-nums;
   color: var(--bw-text-title);
 }
+
+.summaryList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+}
+
+.summaryList dt {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.summaryList dd {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
