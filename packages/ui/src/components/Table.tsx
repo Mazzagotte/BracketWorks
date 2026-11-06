@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode, TableHTMLAttributes } from 'react';
+import { ICON_SIZE } from '../iconSize';
 import { cx } from './cx';
 import styles from './Table.module.css';
 
@@ -99,5 +100,52 @@ export function Pagination({ page, pageCount, onPageChange, summary, pageSizeCon
       </nav>
       {pageSizeControl}
     </div>
+  );
+}
+
+export type SortDirection = 'asc' | 'desc' | null;
+
+export interface SortConfig {
+  column: string | null;
+  direction: SortDirection;
+}
+
+export interface SortableHeaderProps {
+  column: string;
+  children: ReactNode;
+  sortConfig: SortConfig;
+  onSort: (column: string) => void;
+  /** Right-align numeric columns. */
+  align?: 'left' | 'center' | 'right';
+  className?: string;
+  rowSpan?: number;
+  colSpan?: number;
+  scope?: 'col' | 'colgroup' | 'row';
+}
+
+function SortIcon({ direction }: { direction: SortDirection }) {
+  const common = { width: ICON_SIZE.xs, height: ICON_SIZE.xs, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+  if (direction === 'asc') return <svg {...common}><path d="m5 12 7-7 7 7" /><path d="M12 19V5" /></svg>;
+  if (direction === 'desc') return <svg {...common}><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>;
+  return <svg {...common} className={styles.sortIdle}><path d="m21 16-4 4-4-4" /><path d="M17 20V4" /><path d="m3 8 4-4 4 4" /><path d="M7 4v16" /></svg>;
+}
+
+/** A table header cell that sorts its column: ascending, then descending, then off. */
+export function SortableHeader({ column, children, sortConfig, onSort, align = 'left', className, rowSpan, colSpan, scope = 'col' }: SortableHeaderProps) {
+  const direction = sortConfig.column === column ? sortConfig.direction : null;
+  return (
+    <th
+      className={className}
+      rowSpan={rowSpan}
+      colSpan={colSpan}
+      scope={scope}
+      data-align={align === 'left' ? undefined : align}
+      aria-sort={direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'}
+    >
+      <button type="button" className={cx(styles.sortButton, direction && styles.sortActive)} onClick={() => onSort(column)}>
+        {children}
+        <SortIcon direction={direction} />
+      </button>
+    </th>
   );
 }

@@ -227,3 +227,20 @@
   font: var(--type-badge);
   text-transform: uppercase;
 }
+
+/* Phones: the notice action moves under the message so the text keeps the full width. */
+@media (max-width: 640px) {
+  .notice {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .noticeMessage {
+    flex-basis: calc(100% - var(--space-4) - var(--space-2));
+  }
+
+  .noticeAction {
+    flex-basis: 100%;
+    padding-left: calc(var(--space-4) + var(--space-2));
+  }
+}

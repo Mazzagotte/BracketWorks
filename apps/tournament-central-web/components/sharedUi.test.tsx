@@ -20,6 +20,7 @@ import {
   Pagination,
   ProgressBar,
   SegmentedControl,
+  SortableHeader,
   SideNav,
   StatGroup,
   TextField,
@@ -139,6 +140,25 @@ describe('shared UI: modal and confirm dialog', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('shared UI: sortable header', () => {
+  it('announces the sort state and sorts from a keyboard-reachable button', async () => {
+    const user = userEvent.setup();
+    const onSort = vi.fn();
+    render(
+      <table>
+        <thead>
+          <tr>
+            <SortableHeader column="name" sortConfig={{ column: 'name', direction: 'asc' }} onSort={onSort}>Bowler</SortableHeader>
+          </tr>
+        </thead>
+      </table>,
+    );
+    expect(screen.getByRole('columnheader')).toHaveAttribute('aria-sort', 'ascending');
+    await user.click(screen.getByRole('button', { name: 'Bowler' }));
+    expect(onSort).toHaveBeenCalledWith('name');
   });
 });
 

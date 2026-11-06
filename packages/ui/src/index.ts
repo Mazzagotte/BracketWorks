@@ -19,8 +19,8 @@ export type { ActivityItem, BadgeProps, EmptyStateProps, NoticeProps, ProgressBa
 export { CheckboxField, FormGrid, PasswordField, SearchField, SegmentedControl, SelectField, TextAreaField, TextField } from './components/Form';
 export type { CheckboxFieldProps, PasswordFieldProps, SearchFieldProps, SegmentedControlProps, SegmentedOption, SelectFieldProps, TextAreaFieldProps, TextFieldProps } from './components/Form';
 
-export { DataTable, Pagination, TableToolbar } from './components/Table';
-export type { DataTableProps, PaginationProps, TableToolbarProps } from './components/Table';
+export { DataTable, Pagination, SortableHeader, TableToolbar } from './components/Table';
+export type { DataTableProps, PaginationProps, SortConfig, SortDirection, SortableHeaderProps, TableToolbarProps } from './components/Table';
 
 export { ConfirmDialog, Modal } from './components/Overlay';
 export type { ConfirmDialogProps, ModalProps } from './components/Overlay';

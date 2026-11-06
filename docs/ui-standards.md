@@ -374,7 +374,7 @@ is replaced by these during the migration.
 | `Badge` (`neutral` / `success` / `warning` / `danger` / `info` / `accent`) | All status pills |
 | `Notice` (`info` / `success` / `warning` / `danger`, `action`) | Page and inline messages |
 | `ProgressBar` (`value`, `max`, `label`, `valueText`) | Completion with a text value |
-| `DataTable`, `TableToolbar`, `Pagination` | Tables in cards: cells take `data-align="right"`, `data-tone="secondary"`, `data-emphasis="true"` |
+| `DataTable`, `TableToolbar`, `Pagination`, `SortableHeader` | Tables in cards: cells take `data-align="right"`, `data-tone="secondary"`, `data-emphasis="true"` |
 | `Modal` (`size`, `footer`, `role="alertdialog"`, `dismissible`), `ConfirmDialog` (`tone="danger"`, `busy`, `error`) | All overlays |
 | `Menu`, `MenuItem`, `MenuDivider`, `MenuStatus`, `menuItemClassName()` | Account and overflow menus |
 | `useModalFocus` | Focus, Escape, and scroll lock for any custom modal surface (drawers); one shared stack |

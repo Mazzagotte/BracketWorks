@@ -146,3 +146,31 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Sortable header button: keeps the header text style; the active column uses primary text. */
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.sortButton:hover,
+.sortActive {
+  color: var(--bw-text-title);
+}
+
+.sortIdle {
+  opacity: 0.6;
+}
+
+.table :is(th, td)[data-align='center'] {
+  text-align: center;
+}
