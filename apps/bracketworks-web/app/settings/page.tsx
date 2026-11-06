@@ -7,8 +7,27 @@ import { apiClient, apiFetch } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { calculatePasswordStrengthPercent, getPasswordRequirementChecks, hasStrongPassword } from '../lib/auth/validation';
 import PasswordStrengthPanel from '../components/PasswordStrengthPanel';
-import { Card, CardBody, CardHeader, QuickActions, SectionHeader } from '../components/primitives';
-import buttonStyles from '../styles/buttons.module.css';
+import { Download, Trash2 } from 'lucide-react';
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  CheckboxField,
+  ConfirmDialog,
+  FormGrid,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageHeader,
+  PasswordField,
+  SelectField,
+  SideNav,
+  TextAreaField,
+  TextField,
+  buttonClassName,
+} from '@bracketworks/ui';
 import styles from './settings.module.css';
 import Link from 'next/link';
 import { openOnboarding } from '../lib/onboarding';
@@ -44,6 +63,23 @@ type DeletionPreview = {
 
 const MAX_VISIBLE_SESSIONS = 5;
 
+const SETTINGS_SECTIONS = [
+  { id: 'account', label: 'Account' },
+  { id: 'security', label: 'Security' },
+  { id: 'sessions', label: 'Sessions' },
+  { id: 'data', label: 'Your data' },
+  { id: 'help', label: 'Help' },
+  { id: 'legal', label: 'Legal' },
+];
+
+const LEGAL_LINKS = [
+  { href: '/terms', title: 'Terms of service', text: 'Terms governing your BracketWorks account.' },
+  { href: '/privacy', title: 'Privacy policy', text: 'How account and tournament data is handled.' },
+  { href: '/acceptable-use', title: 'Acceptable use', text: 'Permitted and prohibited use of the service.' },
+];
+
+type SessionConfirm = { kind: 'one'; session: ActiveSession } | { kind: 'others' } | null;
+
 const emptyProfile: AccountProfile = {
   first_name: '',
   last_name: '',
@@ -77,11 +113,9 @@ export default function SettingsPage() {
   const [resendingVerification, setResendingVerification] = useState(false);
   const [profile, setProfile] = useState<AccountProfile>(emptyProfile);
   const [savedProfile, setSavedProfile] = useState<AccountProfile>(emptyProfile);
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    next: false,
-    confirm: false,
-  });
+  const [activeSection, setActiveSection] = useState('account');
+  const [sessionConfirm, setSessionConfirm] = useState<SessionConfirm>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [logoutAfterPasswordChange, setLogoutAfterPasswordChange] = useState(false);
   const [feedbackCategory, setFeedbackCategory] = useState<'problem' | 'feature' | 'other'>('problem');
   const [feedbackSubject, setFeedbackSubject] = useState('');
@@ -181,7 +215,6 @@ export default function SettingsPage() {
 
   const deleteAccount = async () => {
     if (!deletionPreview?.can_delete || deleteConfirmation !== deletionPreview.confirmation_phrase || !deletePassword) return;
-    if (!window.confirm('Permanently deactivate and anonymize this account? This cannot be undone.')) return;
     setDeletingAccount(true);
     try {
       await apiClient.post('/api/v1/users/account/delete', { current_password: deletePassword, confirmation: deleteConfirmation });
@@ -190,15 +223,15 @@ export default function SettingsPage() {
     } catch (err) {
       addToast({ type: 'error', message: err instanceof Error ? err.message : 'Failed to delete account', duration: 5000 });
       setDeletingAccount(false);
+      setDeleteConfirmOpen(false);
     }
   };
 
   const revokeSession = async (session: ActiveSession) => {
     if (session.is_current) {
-      if (window.confirm('Sign out this device now?')) logoutUser();
+      logoutUser();
       return;
     }
-    if (!window.confirm(`Sign out ${session.device_nickname || 'this session'}?`)) return;
     setSessionAction(session.session_id);
     try {
       await apiClient.post('/api/v1/users/sessions/revoke', { session_id: session.session_id });
@@ -212,7 +245,6 @@ export default function SettingsPage() {
   };
 
   const revokeOtherSessions = async () => {
-    if (!window.confirm('Sign out every other device? Your current session will remain active.')) return;
     setSessionAction('others');
     try {
       const result = await apiClient.post<{ revoked_sessions: number }>('/api/v1/users/sessions/revoke-others');
@@ -398,369 +430,299 @@ export default function SettingsPage() {
   };
 
   if (loading) {
-    return <div className={styles.loadingState} role="status">Loading account settings...</div>;
+    return <Page><p className={styles.status} role="status">Loading account settings...</p></Page>;
   }
 
+  const otherSessionCount = sessions.filter(session => !session.is_current).length;
+  const goToSection = (id: string) => {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.settingsIntro}>
-        <p className={styles.eyebrow}>Account preferences</p>
-        <h2>Account settings</h2>
-        <p>Manage your BracketWorks account, security, help resources, and legal information. Tournament configuration remains with each tournament.</p>
-      </header>
-      <div className={styles.settingsLayout}>
-        <nav className={styles.sectionNav} aria-label="Settings sections">
-          <a href="#account">Account</a><a href="#security">Security</a><a href="#sessions">Sessions</a><a href="#data">Security &amp; Data</a><a href="#help">Help</a><a href="#legal">Legal</a>
-        </nav>
-        <div className={styles.settingsContent}>
-      <section id="account" className={styles.settingsSection}>
-      <Card className={styles.card} variant="primary">
-        <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Account" subtitle="Profile, verification, and organization" className={styles.cardTitleSectionHeader} />
-        </CardHeader>
-        <CardBody>
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>First Name</div>
-          </div>
-          <input
-            className={styles.input}
-            aria-label="First name"
-            value={profile.first_name}
-            onChange={e => handleProfileChange('first_name', e.target.value)}
-            placeholder="First name"
-          />
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Last Name</div>
-          </div>
-          <input
-            className={styles.input}
-            aria-label="Last name"
-            value={profile.last_name}
-            onChange={e => handleProfileChange('last_name', e.target.value)}
-            placeholder="Last name"
-          />
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Username</div>
-          </div>
-          <input
-            className={styles.input}
-            aria-label="Username"
-            value={profile.username}
-            onChange={e => handleProfileChange('username', e.target.value)}
-            placeholder="Username"
-            aria-invalid={Boolean(profileErrors.username)}
-          />
-          {profileErrors.username && <span className={styles.fieldError}>{profileErrors.username}</span>}
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Email</div>
-          </div>
-          <input
-            className={styles.input}
-            aria-label="Email"
-            type="email"
-            value={profile.email}
-            onChange={e => handleProfileChange('email', e.target.value)}
-            placeholder="Email"
-            aria-invalid={Boolean(profileErrors.email)}
-          />
-          {profileErrors.email && <span className={styles.fieldError}>{profileErrors.email}</span>}
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Email Verification</div>
-            <div className={styles.optionHint}>
-              {profile.email_verified
-                ? verifiedOnLabel
-                  ? `Your account email is verified. Verified on ${verifiedOnLabel}.`
-                  : 'Your account email is verified.'
-                : 'Your account email is not verified yet. Some security actions may require verification.'}
-            </div>
-          </div>
-          <div className={styles.verificationPanel}>
-            <div className={profile.email_verified ? styles.verificationBadgeVerified : styles.verificationBadgePending}>
-              {profile.email_verified ? 'Verified' : 'Verification Required'}
-            </div>
-            {!profile.email_verified ? (
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}
-                onClick={resendVerificationEmail}
-                disabled={resendingVerification}
-              >
-                {resendingVerification ? 'Sending...' : 'Resend Verification Email'}
-              </button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Organization</div>
-          </div>
-          <input
-            className={styles.input}
-            aria-label="Organization"
-            value={profile.organization}
-            onChange={e => handleProfileChange('organization', e.target.value)}
-            placeholder="Organization"
-          />
-        </div>
-
-        <QuickActions
-          className={styles.actionRow}
-          left={<span className={styles.inlineMeta}>Update your profile details and verification settings.</span>}
-          right={(
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={saveProfile} disabled={savingProfile || !profileIsValid || !profileIsDirty}>
-              {savingProfile ? 'Saving...' : 'Save Profile'}
-            </button>
-          )}
+    <Page>
+      <PageHeader
+        title="Account settings"
+        description="Manage your BracketWorks account, security, help, and legal information. Tournament settings stay with each tournament."
+      />
+      <div className={styles.layout}>
+        <SideNav
+          label="Settings sections"
+          className={styles.sideNav}
+          activeId={activeSection}
+          onSelect={goToSection}
+          sections={[{ items: SETTINGS_SECTIONS.map(section => ({ id: section.id, label: section.label })) }]}
         />
-        </CardBody>
-      </Card>
-      </section>
-
-      <section id="security" className={styles.settingsSection}>
-      <Card className={styles.card} variant="primary">
-        <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Security" className={styles.cardTitleSectionHeader} />
-        </CardHeader>
-        <CardBody>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Current Password</div>
-          </div>
-          <div className={styles.passwordFieldWrap}>
-            <input
-              className={styles.input}
-              aria-label="Current password"
-              type={showPasswords.current ? 'text' : 'password'}
-              value={passwordForm.current_password}
-              onChange={e => setPasswordForm(prev => ({ ...prev, current_password: e.target.value }))}
-              placeholder="Current password"
-            />
-            <button
-              type="button"
-              className={styles.visibilityBtn}
-              aria-label={`${showPasswords.current ? 'Hide' : 'Show'} current password`}
-              onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
-            >
-              {showPasswords.current ? 'Hide' : 'Show'}
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>New Password</div>
-          </div>
-          <div className={styles.passwordFieldWrap}>
-            <input
-              className={styles.input}
-              aria-label="New password"
-              type={showPasswords.next ? 'text' : 'password'}
-              value={passwordForm.new_password}
-              onChange={e => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))}
-              placeholder="New password"
-            />
-            <button
-              type="button"
-              className={styles.visibilityBtn}
-              aria-label={`${showPasswords.next ? 'Hide' : 'Show'} new password`}
-              onClick={() => setShowPasswords(prev => ({ ...prev, next: !prev.next }))}
-            >
-              {showPasswords.next ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          {passwordForm.new_password.length > 0 && (
-            <PasswordStrengthPanel
-              strengthText={passwordStrengthText}
-              strengthPercent={passwordStrengthPercent}
-              tone={passwordStrengthTone}
-              requirements={requirementItems}
-            />
-          )}
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>Confirm New Password</div>
-          </div>
-          <div className={styles.passwordFieldWrap}>
-            <input
-              className={styles.input}
-              aria-label="Confirm new password"
-              aria-invalid={!passwordsMatch}
-              type={showPasswords.confirm ? 'text' : 'password'}
-              value={passwordForm.confirm_password}
-              onChange={e => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value }))}
-              placeholder="Confirm new password"
-            />
-            <button
-              type="button"
-              className={styles.visibilityBtn}
-              aria-label={`${showPasswords.confirm ? 'Hide' : 'Show'} password confirmation`}
-              onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
-            >
-              {showPasswords.confirm ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          {!passwordsMatch && <span className={styles.fieldError}>New password and confirmation do not match.</span>}
-        </div>
-
-        <div className={styles.optionRow}>
-          <div className={styles.optionText}>
-            <div className={styles.optionTitle}>After Password Change</div>
-          </div>
-          <label className={styles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={logoutAfterPasswordChange}
-              onChange={e => setLogoutAfterPasswordChange(e.target.checked)}
-            />
-            Sign out this device
-          </label>
-        </div>
-
-        <QuickActions
-          className={styles.actionRow}
-          left={<span className={styles.inlineMeta}>Use a strong password and optional device sign-out.</span>}
-          right={(
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={updatePassword} disabled={savingPassword || !passwordCanSubmit}>
-              {savingPassword ? 'Updating...' : 'Update Password'}
-            </button>
-          )}
-        />
-        </CardBody>
-      </Card>
-      </section>
-
-      <section id="sessions" className={styles.settingsSection}>
-      <Card className={styles.card} variant="primary">
-        <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Active Sessions" subtitle="Devices currently signed in to your account" className={styles.cardTitleSectionHeader} />
-        </CardHeader>
-        <CardBody>
-          {sessionsLoading ? <div className={styles.sessionsEmpty} role="status">Loading active sessions...</div> : sessions.length === 0 ? <div className={styles.sessionsEmpty}>No active sessions found.</div> : (
-            <div className={styles.sessionList}>
-              {/* Backend caps concurrent sessions at MAX_ACTIVE_SESSIONS_PER_USER; slice is just a defensive guard. */}
-              {sessions.slice(0, MAX_VISIBLE_SESSIONS).map(session => (
-                <div className={styles.sessionRow} key={session.session_id}>
-                  <div className={styles.sessionIdentity}>
-                    <div className={styles.sessionTitle}>{session.device_nickname || 'Browser session'} {session.is_current && <span className={styles.currentBadge}>Current</span>}</div>
-                    <div className={styles.optionHint}>{session.region_hint || 'Approximate location unavailable'}</div>
-                    <div className={styles.optionHint}>Last active {new Date(session.last_seen_at).toLocaleString()} · Signed in {new Date(session.issued_at).toLocaleDateString()}</div>
-                  </div>
-                  <button type="button" className={`${buttonStyles.button} ${session.is_current ? buttonStyles.secondary : buttonStyles.outline} ${buttonStyles.small}`} disabled={sessionAction !== null} onClick={() => void revokeSession(session)}>
-                    {sessionAction === session.session_id ? 'Signing out...' : session.is_current ? 'Sign Out This Device' : 'Sign Out'}
-                  </button>
+        <div className={styles.content}>
+          <Card id="account" aria-labelledby="account-title">
+            <CardHeader title={<span id="account-title">Account</span>} description="Profile, verification, and organization" />
+            <div className={styles.cardBody}>
+              <FormGrid>
+                <TextField label="First name" value={profile.first_name} onChange={e => handleProfileChange('first_name', e.target.value)} autoComplete="given-name" />
+                <TextField label="Last name" value={profile.last_name} onChange={e => handleProfileChange('last_name', e.target.value)} autoComplete="family-name" />
+                <TextField label="Username" value={profile.username} onChange={e => handleProfileChange('username', e.target.value)} error={profileErrors.username || undefined} autoComplete="username" />
+                <TextField label="Email" type="email" value={profile.email} onChange={e => handleProfileChange('email', e.target.value)} error={profileErrors.email || undefined} autoComplete="email" />
+                <TextField label="Organization" optional value={profile.organization} onChange={e => handleProfileChange('organization', e.target.value)} autoComplete="organization" />
+              </FormGrid>
+              <CardDivider />
+              <div className={styles.row}>
+                <div className={styles.rowText}>
+                  <h3 className={styles.subsectionTitle}>
+                    Email verification
+                    <Badge tone={profile.email_verified ? 'success' : 'warning'}>{profile.email_verified ? 'Verified' : 'Not verified'}</Badge>
+                  </h3>
+                  <p className={styles.meta}>
+                    {profile.email_verified
+                      ? verifiedOnLabel ? `Verified on ${verifiedOnLabel}.` : 'Your account email is verified.'
+                      : 'Some security actions need a verified email.'}
+                  </p>
                 </div>
-              ))}
+                {!profile.email_verified ? (
+                  <Button size="sm" variant="secondary" onClick={resendVerificationEmail} disabled={resendingVerification}>
+                    {resendingVerification ? 'Sending...' : 'Resend verification email'}
+                  </Button>
+                ) : null}
+              </div>
+              <div className={styles.footer}>
+                <Button variant="primary" onClick={saveProfile} disabled={savingProfile || !profileIsValid || !profileIsDirty}>
+                  {savingProfile ? 'Saving...' : 'Save profile'}
+                </Button>
+              </div>
             </div>
-          )}
-          <QuickActions
-            className={styles.actionRow}
-            left={<span className={styles.inlineMeta}>Revoked devices must sign in again before accessing BracketWorks.</span>}
-            right={<button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} disabled={sessionAction !== null || sessions.filter(session => !session.is_current).length === 0} onClick={() => void revokeOtherSessions()}>{sessionAction === 'others' ? 'Signing out...' : 'Sign Out All Other Devices'}</button>}
-          />
-        </CardBody>
-      </Card>
-      </section>
+          </Card>
 
-      <section id="data" className={styles.settingsSection}>
-      <Card className={styles.card} variant="primary">
-        <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Security & Data" subtitle="Export your information or permanently close your account" className={styles.cardTitleSectionHeader} />
-        </CardHeader>
-        <CardBody>
-          <div className={styles.dataActionBlock}>
-            <div className={styles.optionText}><div className={styles.optionTitle}>Download My Data</div><div className={styles.optionHint}>Download a portable JSON file containing your profile, owned tournaments, tournament records, and activity history.</div></div>
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} disabled={exportingData} onClick={() => void downloadAccountData()}>{exportingData ? 'Preparing...' : 'Download JSON'}</button>
-          </div>
-          <div className={styles.deleteAccountBlock}>
-            <div className={styles.optionText}><div className={styles.optionTitle}>Delete Account</div><div className={styles.optionHint}>Deletion deactivates your account, signs out all devices, and anonymizes personal profile information.</div></div>
-            {deletionPreview && (
-              <>
-                <div className={styles.retentionGrid}>
-                  <div><strong>Deleted or anonymized</strong><ul>{deletionPreview.deleted.map(item => <li key={item}>{item}</li>)}</ul></div>
-                  <div><strong>Retained for integrity or legal records</strong><ul>{deletionPreview.retained.map(item => <li key={item}>{item}</li>)}</ul></div>
+          <Card id="security" aria-labelledby="security-title">
+            <CardHeader title={<span id="security-title">Security</span>} description="Change your password. Use at least 8 characters with mixed case, a number, and a symbol." />
+            <div className={styles.cardBody}>
+              <FormGrid>
+                <PasswordField label="Current password" fullRow value={passwordForm.current_password} onChange={e => setPasswordForm(prev => ({ ...prev, current_password: e.target.value }))} autoComplete="current-password" />
+                <div className={styles.fullRow}>
+                  <PasswordField label="New password" value={passwordForm.new_password} onChange={e => setPasswordForm(prev => ({ ...prev, new_password: e.target.value }))} autoComplete="new-password" />
+                  {passwordForm.new_password.length > 0 ? (
+                    <PasswordStrengthPanel
+                      strengthText={passwordStrengthText}
+                      strengthPercent={passwordStrengthPercent}
+                      tone={passwordStrengthTone}
+                      requirements={requirementItems}
+                    />
+                  ) : null}
                 </div>
-                {deletionPreview.owned_tournaments.length > 0 ? (
-                  <div className={styles.ownershipBlocker} role="alert">
-                    <strong>Ownership must be resolved first.</strong>
-                    <span>Transfer or remove ownership of these tournaments before deleting your account:</span>
-                    <ul>{deletionPreview.owned_tournaments.map(item => <li key={item.id}>{item.name} ({item.lifecycle_status})</li>)}</ul>
-                  </div>
-                ) : (
-                  <div className={styles.deleteConfirmFields}>
-                    <label>Current password<input className={styles.input} type="password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} autoComplete="current-password" /></label>
-                    <label>Type <strong>{deletionPreview.confirmation_phrase}</strong><input className={styles.input} value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)} autoComplete="off" /></label>
-                    <button type="button" className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`} disabled={deletingAccount || !deletePassword || deleteConfirmation !== deletionPreview.confirmation_phrase} onClick={() => void deleteAccount()}>{deletingAccount ? 'Deleting...' : 'Permanently Delete Account'}</button>
-                  </div>
-                )}
-              </>
+                <PasswordField
+                  label="Confirm new password"
+                  fullRow
+                  value={passwordForm.confirm_password}
+                  onChange={e => setPasswordForm(prev => ({ ...prev, confirm_password: e.target.value }))}
+                  error={passwordsMatch ? undefined : 'New password and confirmation do not match.'}
+                  autoComplete="new-password"
+                />
+              </FormGrid>
+              <CheckboxField
+                label="Sign out this device after changing the password"
+                checked={logoutAfterPasswordChange}
+                onChange={e => setLogoutAfterPasswordChange(e.target.checked)}
+              />
+              <div className={styles.footer}>
+                <Button variant="primary" onClick={updatePassword} disabled={savingPassword || !passwordCanSubmit}>
+                  {savingPassword ? 'Updating...' : 'Update password'}
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card id="sessions" padding="flush" aria-labelledby="sessions-title">
+            <CardHeader
+              title={<span id="sessions-title">Active sessions</span>}
+              description="Devices signed in to your account. Signed-out devices must sign in again."
+              actions={(
+                <Button size="sm" variant="secondary" disabled={sessionAction !== null || otherSessionCount === 0} onClick={() => setSessionConfirm({ kind: 'others' })}>
+                  {sessionAction === 'others' ? 'Signing out...' : 'Sign out other devices'}
+                </Button>
+              )}
+            />
+            {sessionsLoading ? (
+              <p className={styles.flushStatus} role="status">Loading active sessions...</p>
+            ) : sessions.length === 0 ? (
+              <p className={styles.flushStatus}>No active sessions found.</p>
+            ) : (
+              <ul className={styles.list}>
+                {/* Backend caps concurrent sessions at MAX_ACTIVE_SESSIONS_PER_USER; slice is just a defensive guard. */}
+                {sessions.slice(0, MAX_VISIBLE_SESSIONS).map(session => (
+                  <li className={styles.listRow} key={session.session_id}>
+                    <div className={styles.rowText}>
+                      <span className={styles.rowTitle}>
+                        {session.device_nickname || 'Browser session'}
+                        {session.is_current ? <Badge tone="neutral">Current</Badge> : null}
+                      </span>
+                      <span className={styles.meta}>
+                        {[session.region_hint || 'Location unavailable', `Last active ${new Date(session.last_seen_at).toLocaleString()}`, `Signed in ${new Date(session.issued_at).toLocaleDateString()}`].join(' · ')}
+                      </span>
+                    </div>
+                    <Button size="sm" variant="ghost" disabled={sessionAction !== null} onClick={() => setSessionConfirm({ kind: 'one', session })}>
+                      {sessionAction === session.session_id ? 'Signing out...' : 'Sign out'}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
-        </CardBody>
-      </Card>
-      </section>
+          </Card>
 
-      <section id="help" className={styles.settingsSection}>
-      <Card className={styles.card} variant="primary">
-        <CardHeader className={styles.cardTitleWrap}>
-          <SectionHeader title="Help and Onboarding" className={styles.cardTitleSectionHeader} />
-        </CardHeader>
-        <CardBody>
-          <div className={styles.helpBlock}>
-            <div><div className={styles.optionTitle}>Getting Started</div><div className={styles.optionHint}>Review the complete tournament workflow or reopen the welcome message at any time.</div></div>
-            <div className={styles.helpActions}>
-              <Link href="/help/getting-started" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}>Open Guide</Link>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={openOnboarding}>Show Welcome Message</button>
+          <Card id="data" aria-labelledby="data-title">
+            <CardHeader title={<span id="data-title">Your data</span>} description="Export your information or permanently close your account." />
+            <div className={styles.cardBody}>
+              <div className={styles.row}>
+                <div className={styles.rowText}>
+                  <h3 className={styles.subsectionTitle}>Download my data</h3>
+                  <p className={styles.meta}>A JSON file with your profile, owned tournaments, tournament records, and activity history.</p>
+                </div>
+                <Button size="sm" variant="secondary" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} disabled={exportingData} onClick={() => void downloadAccountData()}>
+                  {exportingData ? 'Preparing...' : 'Download JSON'}
+                </Button>
+              </div>
+              <CardDivider />
+              <div className={styles.rowText}>
+                <h3 className={styles.subsectionTitle}>Delete account</h3>
+                <p className={styles.meta}>Deletion deactivates your account, signs out all devices, and anonymizes your personal profile information.</p>
+              </div>
+              {deletionPreview ? (
+                <>
+                  <div className={styles.retention}>
+                    <div>
+                      <p className={styles.label}>Deleted or anonymized</p>
+                      <ul className={styles.bullets}>{deletionPreview.deleted.map(item => <li key={item}>{item}</li>)}</ul>
+                    </div>
+                    <div>
+                      <p className={styles.label}>Kept for integrity or legal records</p>
+                      <ul className={styles.bullets}>{deletionPreview.retained.map(item => <li key={item}>{item}</li>)}</ul>
+                    </div>
+                  </div>
+                  {deletionPreview.owned_tournaments.length > 0 ? (
+                    <Notice tone="warning" role="alert">
+                      Transfer or remove ownership of these tournaments before deleting your account:{' '}
+                      {deletionPreview.owned_tournaments.map(item => `${item.name} (${item.lifecycle_status})`).join(', ')}.
+                    </Notice>
+                  ) : (
+                    <>
+                      <FormGrid>
+                        <PasswordField label="Current password" value={deletePassword} onChange={event => setDeletePassword(event.target.value)} autoComplete="current-password" />
+                        <TextField
+                          label={`Type ${deletionPreview.confirmation_phrase} to confirm`}
+                          value={deleteConfirmation}
+                          onChange={event => setDeleteConfirmation(event.target.value)}
+                          autoComplete="off"
+                        />
+                      </FormGrid>
+                      <div className={styles.footer}>
+                        <Button
+                          variant="ghost-danger"
+                          icon={<Trash2 size={ICON_SIZE.md} aria-hidden="true" />}
+                          disabled={deletingAccount || !deletePassword || deleteConfirmation !== deletionPreview.confirmation_phrase}
+                          onClick={() => setDeleteConfirmOpen(true)}
+                        >
+                          Delete account
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : null}
             </div>
-          </div>
-          <div id="feedback-form" className={styles.feedbackForm}>
-            <div className={styles.optionText}><div className={styles.optionTitle}>Report a problem or request a feature</div><div className={styles.optionHint}>Send a message to the BracketWorks administrators. Include steps to reproduce a problem when possible.</div></div>
-            <div className={styles.feedbackFormGrid}>
-              <select className={styles.input} aria-label="Message type" value={feedbackCategory} onChange={event => setFeedbackCategory(event.target.value as 'problem' | 'feature' | 'other')}><option value="problem">Report a problem</option><option value="feature">Request a feature</option><option value="other">Other</option></select>
-              <input className={styles.input} aria-label="Message subject" value={feedbackSubject} onChange={event => setFeedbackSubject(event.target.value)} placeholder="Subject" maxLength={160} />
-            </div>
-            <textarea className={styles.feedbackTextarea} aria-label="Message" value={feedbackMessage} onChange={event => setFeedbackMessage(event.target.value)} placeholder="Describe the problem or idea" maxLength={5000} rows={5} />
-            <div className={styles.feedbackFormFooter}><span className={styles.inlineMeta}>{feedbackMessage.length}/5000</span><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={submitFeedback} disabled={sendingFeedback || !feedbackSubject.trim() || !feedbackMessage.trim()}>{sendingFeedback ? 'Sending...' : 'Send Message'}</button></div>
-          </div>
-        </CardBody>
-      </Card>
-      </section>
+          </Card>
 
-      <section id="legal" className={styles.settingsSection}>
-        <Card className={styles.card} variant="primary">
-          <CardHeader className={styles.cardTitleWrap}>
-            <SectionHeader title="Legal" subtitle="BracketWorks policies and acceptable use" className={styles.cardTitleSectionHeader} />
-          </CardHeader>
-          <CardBody>
-            <div className={styles.legalLinks}>
-              <button type="button" onClick={openLegalDisclosure}>Periodic Use Disclosure<span>Review the disclosure and your current acceptance period.</span></button>
-              <Link href="/terms">Terms of Service<span>Terms governing your BracketWorks account.</span></Link>
-              <Link href="/privacy">Privacy Policy<span>How account and tournament data is handled.</span></Link>
-              <Link href="/acceptable-use">Acceptable Use<span>Permitted and prohibited use of the service.</span></Link>
+          <Card id="help" aria-labelledby="help-title">
+            <CardHeader title={<span id="help-title">Help and onboarding</span>} />
+            <div className={styles.cardBody}>
+              <div className={styles.row}>
+                <div className={styles.rowText}>
+                  <h3 className={styles.subsectionTitle}>Getting started</h3>
+                  <p className={styles.meta}>Review the full tournament workflow or reopen the welcome message.</p>
+                </div>
+                <div className={styles.buttons}>
+                  <Link href="/help/getting-started" className={buttonClassName({ variant: 'secondary', size: 'sm' })}>Open guide</Link>
+                  <Button size="sm" variant="secondary" onClick={openOnboarding}>Show welcome message</Button>
+                </div>
+              </div>
+              <CardDivider />
+              <div id="feedback-form" className={styles.group}>
+                <div className={styles.rowText}>
+                  <h3 className={styles.subsectionTitle}>Report a problem or request a feature</h3>
+                  <p className={styles.meta}>Send a message to the BracketWorks team. Include steps to reproduce a problem when you can.</p>
+                </div>
+                <FormGrid>
+                  <SelectField label="Message type" value={feedbackCategory} onChange={event => setFeedbackCategory(event.target.value as 'problem' | 'feature' | 'other')}>
+                    <option value="problem">Report a problem</option>
+                    <option value="feature">Request a feature</option>
+                    <option value="other">Other</option>
+                  </SelectField>
+                  <TextField label="Subject" value={feedbackSubject} onChange={event => setFeedbackSubject(event.target.value)} maxLength={160} />
+                  <TextAreaField
+                    label="Message"
+                    fullRow
+                    value={feedbackMessage}
+                    onChange={event => setFeedbackMessage(event.target.value)}
+                    maxLength={5000}
+                    rows={5}
+                    helper={`${feedbackMessage.length} of 5000 characters`}
+                  />
+                </FormGrid>
+                <div className={styles.footer}>
+                  <Button variant="primary" onClick={submitFeedback} disabled={sendingFeedback || !feedbackSubject.trim() || !feedbackMessage.trim()}>
+                    {sendingFeedback ? 'Sending...' : 'Send message'}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </CardBody>
-        </Card>
-      </section>
+          </Card>
 
+          <Card id="legal" padding="flush" aria-labelledby="legal-title">
+            <CardHeader title={<span id="legal-title">Legal</span>} description="BracketWorks policies and acceptable use" />
+            <ul className={styles.list}>
+              <li>
+                <button type="button" className={styles.linkRow} onClick={openLegalDisclosure}>
+                  <span className={styles.rowTitle}>Periodic use disclosure</span>
+                  <span className={styles.meta}>Review the disclosure and your current acceptance period.</span>
+                </button>
+              </li>
+              {LEGAL_LINKS.map(link => (
+                <li key={link.href}>
+                  <Link href={link.href} className={styles.linkRow}>
+                    <span className={styles.rowTitle}>{link.title}</span>
+                    <span className={styles.meta}>{link.text}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       </div>
 
-    </div>
+      <ConfirmDialog
+        open={sessionConfirm !== null}
+        title={sessionConfirm?.kind === 'others'
+          ? 'Sign out every other device?'
+          : sessionConfirm?.session.is_current ? 'Sign out this device?' : `Sign out ${sessionConfirm?.session.device_nickname || 'this session'}?`}
+        description={sessionConfirm?.kind === 'others' ? 'Your current session stays signed in.' : 'That device must sign in again to use BracketWorks.'}
+        confirmLabel="Sign out"
+        onCancel={() => setSessionConfirm(null)}
+        onConfirm={() => {
+          const pending = sessionConfirm;
+          setSessionConfirm(null);
+          if (!pending) return;
+          if (pending.kind === 'others') void revokeOtherSessions();
+          else void revokeSession(pending.session);
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        tone="danger"
+        title="Permanently delete your account?"
+        description="Your account is deactivated and your profile is anonymized. This cannot be undone."
+        confirmLabel="Delete account"
+        busy={deletingAccount}
+        busyLabel="Deleting..."
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={() => { void deleteAccount(); }}
+      />
+    </Page>
   );
 }
