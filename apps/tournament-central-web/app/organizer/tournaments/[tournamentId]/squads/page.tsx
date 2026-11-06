@@ -1,17 +1,15 @@
 'use client';
 
-import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { ArrowLeft, X } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
+import { Button, Card, CardHeader, DataTable, EmptyState, ICON_SIZE, Modal, Notice, Page, PageHeader } from '@bracketworks/ui';
 
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import { formatSquadTime, formatTournamentDate } from '@/components/organizer/organizerFormatting';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import type { OrganizerRegistrationRecord } from '@/components/organizer/organizerApi';
-import styles from './page.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import cells from '@/components/organizer/OrganizerTable.module.css';
 
 function registrantName(registration: OrganizerRegistrationRecord): string {
   const name = `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim();
@@ -20,7 +18,7 @@ function registrantName(registration: OrganizerRegistrationRecord): string {
 
 export default function OrganizerTournamentSquadsPage() {
   const {
-    tournamentId, tournament, squads, registrations,
+    tournament, squads, registrations,
     isSetupLoading, isRegistrationsLoading,
     tournamentError, setupError, registrationsError,
   } = useTournamentContext();
@@ -47,106 +45,103 @@ export default function OrganizerTournamentSquadsPage() {
     });
   }, [registrations, selectedSummary]);
 
-  return (
-    <main className={styles.shell}>
-      <header className={styles.header}>
-        <div>
-          <h1>Squads</h1>
-          <p>{tournament?.name || 'Tournament'}</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+  const empty = '—';
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {isLoading ? <section className={styles.loading}>Loading squads...</section> : null}
+  return (
+    <Page>
+      <PageHeader
+        title="Squads"
+        description={`Registrations and bowlers for each squad of ${tournament?.name || 'this tournament'}. Capacity and availability are measured in bowler spots.`}
+      />
+
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+      {isLoading ? <Notice tone="info">Loading squads...</Notice> : null}
 
       {!error && !isLoading ? (
-        <section className={styles.tableCard} aria-label="Squad list">
+        <Card padding="flush" aria-label="Squad list">
+          <CardHeader title="Squad list" description={`${squadSummaries.length} squad${squadSummaries.length === 1 ? '' : 's'}`} />
           {squadSummaries.length === 0 ? (
-            <p className={styles.empty}>No squads are configured for this tournament yet.</p>
+            <EmptyState
+              icon={<CalendarDays size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title="No squads yet"
+              description="Add squads in tournament setup to start taking registrations."
+            />
           ) : (
-            <div className={styles.tableWrap} tabIndex={0} role="region" aria-label="Squads table, scroll horizontally for more columns">
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Squad</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Location</th>
-                    <th>Registrations</th>
-                    <th>Bowlers</th>
-                    <th>Bowler capacity</th>
-                    <th>Bowler spots available</th>
-                    <th>Waitlisted registrations</th>
-                    <th>Waitlisted bowlers</th>
-                    <th>Status</th>
+            <DataTable caption="Squads" className={cells.nowrap}>
+              <thead>
+                <tr>
+                  <th scope="col">Squad</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Time</th>
+                  <th scope="col">Location</th>
+                  <th scope="col" data-align="right">Registrations</th>
+                  <th scope="col" data-align="right">Bowlers</th>
+                  <th scope="col" data-align="right">Bowler capacity</th>
+                  <th scope="col" data-align="right">Bowler spots available</th>
+                  <th scope="col" data-align="right">Waitlisted registrations</th>
+                  <th scope="col" data-align="right">Waitlisted bowlers</th>
+                  <th scope="col">Status</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
+                  <tr key={squad.id}>
+                    <td className={cells.primaryText}>{squad.name}</td>
+                    <td>{formatTournamentDate(squad.dateIso)}</td>
+                    <td>{formatSquadTime(squad.startTime)}</td>
+                    <td data-tone="secondary">{squad.locationName || 'Not set'}</td>
+                    <td data-align="right">{registrationCount}</td>
+                    <td data-align="right">{bowlerCount}</td>
+                    <td data-align="right">{squad.capacity > 0 ? squad.capacity : empty}</td>
+                    <td data-align="right">{availableBowlerSpots === null ? empty : availableBowlerSpots}</td>
+                    <td data-align="right">{waitlistedRegistrationCount}</td>
+                    <td data-align="right">{waitlistedBowlerCount}</td>
+                    <td><OrganizerStatusBadge status={status} /></td>
+                    <td data-align="right">
+                      <Button size="sm" variant="secondary" onClick={() => setSelectedSquadId(squad.id)} aria-label={`View roster for ${squad.name}`}>
+                        View roster
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
-                    <tr
-                      key={squad.id}
-                      onClick={() => setSelectedSquadId(squad.id)}
-                      tabIndex={0}
-                      role="button"
-                      aria-label={`View roster for ${squad.name}`}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          setSelectedSquadId(squad.id);
-                        }
-                      }}
-                    >
-                      <td>{squad.name}</td>
-                      <td>{formatTournamentDate(squad.dateIso)}</td>
-                      <td>{formatSquadTime(squad.startTime)}</td>
-                      <td>{squad.locationName || 'Not set'}</td>
-                      <td>{registrationCount}</td>
-                      <td>{bowlerCount}</td>
-                      <td>{squad.capacity > 0 ? squad.capacity : '\u2014'}</td>
-                      <td>{availableBowlerSpots === null ? '\u2014' : availableBowlerSpots}</td>
-                      <td>{waitlistedRegistrationCount}</td>
-                      <td>{waitlistedBowlerCount}</td>
-                      <td><OrganizerStatusBadge status={status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </DataTable>
           )}
-        </section>
+        </Card>
       ) : null}
 
-      {selectedSummary ? (
-        <div className={styles.rosterBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedSquadId(null); }}>
-          <section className={styles.rosterModal} role="dialog" aria-modal="true" aria-label={`${selectedSummary.squad.name} roster`}>
-            <header>
-              <div>
-                <span>Squad Roster</span>
-                <h2>{selectedSummary.squad.name}</h2>
-              </div>
-              <button type="button" className={styles.rosterModalClose} onClick={() => setSelectedSquadId(null)} aria-label="Close roster">
-                <X size={ICON_SIZE.lg} aria-hidden="true" />
-              </button>
-            </header>
-            <div className={styles.rosterList}>
-              {selectedRoster.length === 0 ? (
-                <p className={styles.rosterEmpty}>No registrations are assigned to this squad yet.</p>
-              ) : (
-                selectedRoster.map((registration) => (
-                  <div key={registration.id} className={styles.rosterRow}>
-                    <strong>{registrantName(registration)}</strong>
-                    <span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span>
-                    <span>{registration.payment_status === 'paid' ? 'Paid' : 'Unpaid'}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-        </div>
-      ) : null}
-    </main>
+      <Modal
+        open={Boolean(selectedSummary)}
+        onClose={() => setSelectedSquadId(null)}
+        title={selectedSummary ? `${selectedSummary.squad.name} roster` : 'Squad roster'}
+        description={selectedSummary ? `${selectedRoster.length} registration${selectedRoster.length === 1 ? '' : 's'} in this squad` : undefined}
+        size="lg"
+        closeLabel="Close roster"
+      >
+        {selectedRoster.length === 0 ? (
+          <p className={cells.secondaryText}>No registrations are assigned to this squad yet.</p>
+        ) : (
+          <DataTable caption="Squad roster" className={cells.nowrap}>
+            <thead>
+              <tr>
+                <th scope="col">Registrant</th>
+                <th scope="col">Email</th>
+                <th scope="col">Payment</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedRoster.map((registration) => (
+                <tr key={registration.id}>
+                  <td className={cells.primaryText}>{registrantName(registration)}</td>
+                  <td data-tone="secondary">{registration.contact_email ?? registration.form?.email ?? 'No email'}</td>
+                  <td><OrganizerStatusBadge status={registration.payment_status === 'paid' ? 'paid' : 'unpaid'} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </DataTable>
+        )}
+      </Modal>
+    </Page>
   );
 }
