@@ -1,12 +1,6 @@
 'use client'
 
-import React, { useRef } from 'react'
-import { createPortal } from 'react-dom'
-import CloseControl from '../../components/CloseControl'
-import styles from '../brackets/styles/explain-brackets-modal.module.css'
-import modalStyles from '../styles/modals.module.css'
-import { useModalBehavior } from '../hooks/useModalBehavior'
-import HelpGuideFooter from '../components/HelpGuideFooter'
+import HelpGuideModal from '../components/HelpGuideModal'
 
 interface ExplainPayoutsModalProps {
   isOpen: boolean
@@ -14,66 +8,37 @@ interface ExplainPayoutsModalProps {
 }
 
 export default function ExplainPayoutsModal({ isOpen, onClose }: ExplainPayoutsModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const { onOverlayClick } = useModalBehavior({ open: isOpen, onClose, dialogRef })
-
-  if (!isOpen) return null
-
-  const modalContent = (
-    <div className={modalStyles.overlay} onClick={onOverlayClick}>
-      <div ref={dialogRef} className={modalStyles.modal} role="dialog" aria-modal="true" aria-label="Payouts overview" tabIndex={-1}>
-        <div className={modalStyles.header}>
-          <div><p className={modalStyles.kicker}>BracketWorks Help</p><h2>Payouts Overview</h2></div>
-          <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
-        </div>
-
-        <div className={`${modalStyles.content} ${styles.content}`}>
-
-          <section className={styles.section}>
-            <h3>How Payouts Are Configured</h3>
-            <p>
-              Payout values are set on the Dashboard under Bracket Settings.
-              You define fixed amounts for 1st and 2nd place,
-              and the house fee is whatever remains from total collected entry fees.
-            </p>
-          </section>
-          <section className={styles.section}>
-            <h3>Tied Finals (Split Pot)</h3>
-            <p>
-              If two bowlers stay tied through the finals, the pot is split evenly.
-              Each bowler gets half of the combined 1st and 2nd place payouts.
-              Example: if 1st is $8 and 2nd is $6, each bowler gets $7.
-            </p>
-          </section>
-
-          <section className={styles.section}>
-            <h3>Marking Winners as Paid</h3>
-            <p>
-              Each winner row includes a Paid button.
-              Click it to mark that bowler as paid and dim the row.
-              Paid status and the time it was marked are saved locally in this browser for the tournament.
-              Click Paid again to undo it. Marking it paid again records a new time.
-            </p>
-          </section>
-
-          <section className={styles.section}>
-            <h3>Exporting Results</h3>
-            <p>
-              Use Export to Excel for a spreadsheet of winners and payout amounts.
-              Use Export to PDF for a print-ready payout sheet you can hand out or post at the desk.
-              Paid rows show their saved payment time and timezone in the signature column;
-              unpaid rows keep a blank signature line. Older paid records without a timestamp
-              show &quot;Time not recorded&quot;. Payment records are not synced to other devices.
-            </p>
-          </section>
-          <HelpGuideFooter section="payouts" />
-
-        </div>
-
-      </div>
-    </div>
+  return (
+    <HelpGuideModal open={isOpen} onClose={onClose} title="Payouts guide" section="payouts">
+      <section>
+        <h3>How payouts are set</h3>
+        <p>
+          Payout amounts are set in tournament settings under Bracket settings.
+          You choose fixed amounts for 1st and 2nd place, and the house take is whatever remains of the entry fees collected.
+        </p>
+      </section>
+      <section>
+        <h3>Tied finals (split pot)</h3>
+        <p>
+          If two bowlers stay tied through the final, the pot is split evenly: each gets half of the 1st and 2nd place payouts combined.
+          For example, if 1st is $8 and 2nd is $6, each bowler gets $7.
+        </p>
+      </section>
+      <section>
+        <h3>Marking winners as paid</h3>
+        <p>
+          Each winner has a Mark paid button. Once paid, the row shows a Paid badge; select it to undo.
+          Paid status and the time it was marked are saved in this browser for the tournament.
+        </p>
+      </section>
+      <section>
+        <h3>Exporting results</h3>
+        <p>
+          Export to Excel gives a spreadsheet of winners and payout amounts. Export to PDF gives a print-ready payout sheet for the desk.
+          Paid rows show their saved payment time in the signature column, and unpaid rows keep a blank signature line.
+          Older paid records without a time show &quot;Time not recorded&quot;. Payment records are not synced to other devices.
+        </p>
+      </section>
+    </HelpGuideModal>
   )
-
-  if (typeof document === 'undefined') return null
-  return createPortal(modalContent, document.body)
 }

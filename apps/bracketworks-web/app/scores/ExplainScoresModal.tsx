@@ -1,12 +1,6 @@
 'use client'
 
-import React, { useRef } from 'react'
-import { createPortal } from 'react-dom'
-import CloseControl from '../../components/CloseControl'
-import styles from '../brackets/styles/explain-brackets-modal.module.css'
-import modalStyles from '../styles/modals.module.css'
-import { useModalBehavior } from '../hooks/useModalBehavior'
-import HelpGuideFooter from '../components/HelpGuideFooter'
+import HelpGuideModal from '../components/HelpGuideModal'
 
 interface ExplainScoresModalProps {
   isOpen: boolean
@@ -14,78 +8,46 @@ interface ExplainScoresModalProps {
 }
 
 export default function ExplainScoresModal({ isOpen, onClose }: ExplainScoresModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null)
-  const { onOverlayClick } = useModalBehavior({ open: isOpen, onClose, dialogRef })
-
-  if (!isOpen) return null
-
-  const modalContent = (
-    <div className={modalStyles.overlay} onClick={onOverlayClick}>
-      <div ref={dialogRef} className={modalStyles.modal} role="dialog" aria-modal="true" aria-label="Scores overview" tabIndex={-1}>
-        <div className={modalStyles.header}>
-          <div><p className={modalStyles.kicker}>BracketWorks Help</p><h2>Scores Overview</h2></div>
-          <CloseControl onClick={onClose} position="absolute" label="Close modal" className={modalStyles.closeButton} />
-        </div>
-
-        <div className={`${modalStyles.content} ${styles.content}`}>
-
-          <section className={styles.section}>
-            <h3>Entering Scores</h3>
-            <p>
-              Click any score cell to enter a scratch score.
-              Scores save automatically shortly after you stop typing.
-              You can also use arrow keys to move across cells quickly.
-            </p>
-            <p>
-              You only enter scratch scores by hand.
-              Handicap totals are calculated automatically from each bowler&apos;s handicap pins.
-            </p>
-          </section>
-          <section className={styles.section}>
-            <h3>Score Columns</h3>
-            <p>Each row shows these columns for each bowler:</p>
-            <ul>
-              <li><strong>G1 / G2 / G3</strong> - Scratch score for each game</li>
-              <li><strong>+H columns</strong> - Scratch plus handicap pins for each game</li>
-              <li><strong>Scratch Total</strong> - Sum of all three scratch games</li>
-              <li><strong>Handicap Total</strong> - Sum of all three handicap-adjusted games</li>
-            </ul>
-          </section>
-
-          <section className={styles.section}>
-            <h3>Locking Scores</h3>
-            <p>
-              When you click Calculate Payouts, the scores table locks to prevent accidental edits.
-              If you need to make a correction later, click Unlock Scores.
-              Unlocking does not erase payout data.
-            </p>
-          </section>
-
-          <section className={styles.section}>
-            <h3>Excel Export and Import</h3>
-            <p>
-              Use Export to Excel to download a sheet with bowler names and any existing scores.
-              Update scores in the file, then import it back into BracketWorks.
-              Import matches rows by bowler name, so column order can vary as long as headers are still present.
-            </p>
-          </section>
-
-          <section className={styles.section}>
-            <h3>Offline Support</h3>
-            <p>
-              If your connection drops while entering scores, changes are kept in a pending queue.
-              You will see a Sync Offline Scores button with a count of unsent saves.
-              Click it once you are online again to send everything at once.
-            </p>
-          </section>
-          <HelpGuideFooter section="scores" />
-
-        </div>
-
-      </div>
-    </div>
+  return (
+    <HelpGuideModal open={isOpen} onClose={onClose} title="Scores guide" section="scores">
+      <section>
+        <h3>Entering scores</h3>
+        <p>
+          Click any score cell to enter a scratch score. Scores save shortly after you stop typing,
+          and the arrow keys move between cells.
+        </p>
+        <p>You only enter scratch scores. Handicap totals are calculated from each bowler&apos;s handicap pins.</p>
+      </section>
+      <section>
+        <h3>Score columns</h3>
+        <ul>
+          <li><strong>Scratch</strong>: the scratch score for each game</li>
+          <li><strong>Total</strong>: scratch plus handicap pins for each game</li>
+          <li><strong>Scratch total</strong>: the three scratch games added together</li>
+          <li><strong>Final total</strong>: the three handicap totals added together</li>
+        </ul>
+      </section>
+      <section>
+        <h3>Locking scores</h3>
+        <p>
+          Calculate payouts locks the scores so they are not changed by accident.
+          To make a correction later, choose Unlock scores and give a reason. Unlocking does not erase payout data.
+        </p>
+      </section>
+      <section>
+        <h3>Excel export and import</h3>
+        <p>
+          Export to Excel downloads a sheet with bowler names and any existing scores.
+          Update scores in the file, then import it back. Rows are matched by bowler name, so column order can change as long as the headers stay.
+        </p>
+      </section>
+      <section>
+        <h3>Working offline</h3>
+        <p>
+          If your connection drops while you enter scores, changes wait in a queue on this device.
+          Sync offline scores shows how many are waiting. Choose it once you are back online to send them all.
+        </p>
+      </section>
+    </HelpGuideModal>
   )
-
-  if (typeof document === 'undefined') return null
-  return createPortal(modalContent, document.body)
 }

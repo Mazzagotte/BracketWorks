@@ -1,0 +1,55 @@
+/* Help guide content: subsections split by dividers, no boxes. */
+
+.guide {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.guide section:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.guide section:last-child {
+  padding-bottom: 0;
+}
+
+.guide h3 {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.guide h4 {
+  margin: var(--space-2) 0 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.guide p,
+.guide li {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.guide ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.guide strong {
+  font-weight: 600;
+  color: var(--bw-text-title);
+}
