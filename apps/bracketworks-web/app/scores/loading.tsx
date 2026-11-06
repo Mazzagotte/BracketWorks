@@ -1,10 +1,5 @@
-import { DelayedRouteFallback } from '../components/DelayedRouteFallback'
-import { ScoresSkeleton } from '../components/LoadingComponents'
+import RouteLoading from '../components/RouteLoading'
 
 export default function ScoresLoading() {
-  return (
-    <DelayedRouteFallback>
-      <ScoresSkeleton />
-    </DelayedRouteFallback>
-  )
+  return <RouteLoading label="Loading scores..." />
 }

@@ -1,10 +1,5 @@
-import { DelayedRouteFallback } from '../components/DelayedRouteFallback'
-import { DashboardSkeleton } from '../components/LoadingComponents'
+import RouteLoading from '../components/RouteLoading'
 
 export default function DashboardLoading() {
-  return (
-    <DelayedRouteFallback>
-      <DashboardSkeleton />
-    </DelayedRouteFallback>
-  )
+  return <RouteLoading label="Loading dashboard..." />
 }

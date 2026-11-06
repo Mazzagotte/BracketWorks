@@ -1,10 +1,5 @@
-import { DelayedRouteFallback } from '../components/DelayedRouteFallback'
-import { PlayersSkeleton } from '../components/LoadingComponents'
+import RouteLoading from '../components/RouteLoading'
 
-export default function PlayersLoading() {
-  return (
-    <DelayedRouteFallback>
-      <PlayersSkeleton />
-    </DelayedRouteFallback>
-  )
+export default function EntriesLoading() {
+  return <RouteLoading label="Loading entries..." />
 }

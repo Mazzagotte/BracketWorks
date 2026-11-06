@@ -1,10 +1,5 @@
-import { DelayedRouteFallback } from '../components/DelayedRouteFallback'
-import { PayoutsSkeleton } from '../components/LoadingComponents'
+import RouteLoading from '../components/RouteLoading'
 
 export default function PayoutsLoading() {
-  return (
-    <DelayedRouteFallback>
-      <PayoutsSkeleton />
-    </DelayedRouteFallback>
-  )
+  return <RouteLoading label="Loading payouts..." />
 }

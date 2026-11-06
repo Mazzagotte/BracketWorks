@@ -1,10 +1,5 @@
-import { DelayedRouteFallback } from '../components/DelayedRouteFallback'
-import { BracketSkeleton } from '../components/LoadingComponents'
+import RouteLoading from '../components/RouteLoading'
 
 export default function BracketsLoading() {
-  return (
-    <DelayedRouteFallback>
-      <BracketSkeleton />
-    </DelayedRouteFallback>
-  )
+  return <RouteLoading label="Loading brackets..." />
 }
