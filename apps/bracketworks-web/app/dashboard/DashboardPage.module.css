@@ -1,0 +1,7 @@
+/* Dashboard page wrapper: loading and signed-out states. */
+
+.status {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}

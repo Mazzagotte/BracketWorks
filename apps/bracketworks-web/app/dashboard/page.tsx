@@ -23,18 +23,15 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { getErrorMessage, getErrorContext } from '../lib/error-utils';
 import { storage } from '../lib/storage';
 import { BRACKET_SETTINGS_AUTOSAVE_DELAY_MS, getSidePotsStorageKey } from '../lib/dashboard-settings';
-import mobileStyles from './dashboard.module.css';
-import shellStyles from '../styles/page-shell.module.css';
+import styles from './DashboardPage.module.css';
 import { ConfirmationDialog } from '../components/LazyComponents';
 import { API, apiClient, apiFetch, getMemoryAccessToken } from '../lib/api';
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { logger } from '../lib/logger';
 import { defaultBracketPrograms, normalizeBracketPrograms, summarizeEntries } from '../lib/bracketPrograms';
-import EnhancedButton from '../components/EnhancedButton';
 import { useToast } from '../components/Toast';
 import { usePagination } from '../components/Performance';
-import { Select } from '../components/UI';
 import ShareQRModal from '../components/ShareQRModal';
 import ActionConfirmDialog from '../components/ActionConfirmDialog';
 import NoTournamentState from '../components/NoTournamentState';
@@ -46,7 +43,7 @@ import {
   setSelectedSquad,
   setSelectedTournament,
 } from '../lib/selection-session';
-import { Button, Modal } from '@bracketworks/ui';
+import { Button, Modal, Page } from '@bracketworks/ui';
 import ExplainDashboardModal from './ExplainDashboardModal';
 import { TournamentSettingsContent } from './settings/TournamentSettingsContent';
 import { setBodyInteractionState } from '../utils/modalUtils';
@@ -1207,25 +1204,19 @@ export default function TournamentDashboard() {
   // All hooks are declared above — conditional returns are safe below this line
   if (!isDemoDashboard && !isAuthInitialized && !showDashboard) {
     return (
-      <div className={mobileStyles.loadingScreen}>
-        <div className={mobileStyles.loadingContent} role="status">Loading dashboard...</div>
-      </div>
+      <Page><p className={styles.status} role="status">Loading dashboard...</p></Page>
     );
   }
 
   if (!isDemoDashboard && !isUserAuthenticated && !hasStoredAuthTokens) {
     return (
-      <div className={mobileStyles.loadingScreen}>
-        <div className={mobileStyles.loadingContent}>Please log in to access the tournament dashboard</div>
-      </div>
+      <Page><p className={styles.status}>Please log in to see the tournament dashboard.</p></Page>
     );
   }
 
   if (!isDemoDashboard && !isUserAuthenticated && hasStoredAuthTokens) {
     return (
-      <div className={mobileStyles.loadingScreen}>
-        <div className={mobileStyles.loadingContent} role="status">Loading dashboard...</div>
-      </div>
+      <Page><p className={styles.status} role="status">Loading dashboard...</p></Page>
     );
   }
 
@@ -1279,7 +1270,7 @@ export default function TournamentDashboard() {
           isOpen={isExplainModalOpen}
           onClose={() => setIsExplainModalOpen(false)}
         />
-        <div className={tournament ? undefined : 'page-main'}>
+        <div>
           {tournament ? (
             <>
                 <DashboardBoard
@@ -1312,8 +1303,7 @@ export default function TournamentDashboard() {
                 />
             </>
           ) : (
-          <div className={`${shellStyles.content} ${mobileStyles.contentContainer}`}>
-            <div className={mobileStyles.cardsContainer}>
+          <>
 
             {/* Empty State - No Tournament Loaded */}
             {!tournament && (
@@ -1326,10 +1316,7 @@ export default function TournamentDashboard() {
                 ]}
               />
             )}
-
-
-          </div>
-          </div>
+          </>
           )}
 
           {/* Tournament Settings Modal */}
