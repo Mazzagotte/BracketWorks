@@ -10,7 +10,8 @@ export interface PageProps extends HTMLAttributes<HTMLElement> {
 
 /** Page content area: centered, max width, page gutters, and the standard gap between cards. */
 export function Page({ width = 'default', as: Tag = 'div', className, ...rest }: PageProps) {
-  return <Tag className={cx(styles.page, width === 'narrow' && styles.pageNarrow, className)} {...rest} />;
+  // `bw-page` is a stable global hook that keeps legacy global button rules off standard pages.
+  return <Tag className={cx('bw-page', styles.page, width === 'narrow' && styles.pageNarrow, className)} {...rest} />;
 }
 
 /** Main column (2/3) and side column (1/3) on desktop; stacked below 1024px. */
