@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ActivityList,
   Badge,
+  BracketMatch,
+  BracketTree,
   Button,
   ButtonLink,
   CheckboxField,
@@ -27,6 +29,7 @@ import {
   TopNav,
   TopNavBrand,
 } from '@bracketworks/ui';
+import type { BracketRoundData } from '@bracketworks/ui';
 
 describe('shared UI: buttons', () => {
   it('renders a typed button that can be disabled', async () => {
@@ -252,5 +255,52 @@ describe('shared UI: menu and top bar', () => {
     render(<PageColumns main={<p>Main column</p>} side={<p>Side column</p>} />);
     expect(screen.getByText('Main column')).toBeInTheDocument();
     expect(screen.getByText('Side column')).toBeInTheDocument();
+  });
+});
+
+describe('shared UI: brackets', () => {
+  it('marks the winner with a check, shows the margin, and highlights a clicked bowler', async () => {
+    const onPlayerClick = vi.fn();
+    render(
+      <BracketMatch
+        label="Semifinal 1"
+        players={[{ name: 'Pat Lee', score: 214, winner: true }, { name: 'Sam Roe', score: 179 }]}
+        onPlayerClick={onPlayerClick}
+      />,
+    );
+    const match = screen.getByRole('group', { name: 'Semifinal 1' });
+    expect(match).toHaveTextContent('+35');
+    expect(screen.getByRole('img', { name: 'Winner' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Sam Roe/ }));
+    expect(onPlayerClick).toHaveBeenCalledWith('Sam Roe');
+  });
+
+  it('shows open slots and a note instead of a margin', () => {
+    render(<BracketMatch label="Final" players={[{ name: 'Pat Lee' }, {}]} note="Split pot" />);
+    expect(screen.getByText('To be decided')).toBeInTheDocument();
+    expect(screen.getByText('Split pot')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Winner' })).not.toBeInTheDocument();
+  });
+
+  const rounds: BracketRoundData[] = [
+    { title: 'Semifinals', matches: [
+      { label: 'Semifinal 1', players: [{ name: 'Pat Lee', score: 220, winner: true }, { name: 'Sam Roe', score: 190 }] },
+      { label: 'Semifinal 2', players: [{ name: 'Ada Fox', score: 205, winner: true }, { name: 'Lou Kim', score: 201 }] },
+    ] },
+    { title: 'Final', matches: [{ label: 'Final', players: [{ name: 'Pat Lee', score: 214, winner: true }, { name: 'Ada Fox', score: 191 }] }] },
+  ];
+
+  it('lays rounds out as a tree with a champion column', () => {
+    render(<BracketTree label="Handicap bracket 1" rounds={rounds} champion={{ name: 'Pat Lee', detail: 'Won the final 214 to 191' }} />);
+    const sections = screen.getAllByRole('region', { name: /./ });
+    expect(sections[0]).toHaveAccessibleName('Handicap bracket 1');
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['Semifinals', 'Final', 'Champion']);
+    expect(screen.getByText('Won the final 214 to 191')).toBeInTheDocument();
+  });
+
+  it('stacks the champion first and the final before earlier rounds on phones', () => {
+    render(<BracketTree layout="stacked" rounds={rounds} champion={null} />);
+    expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['Champion', 'Final', 'Semifinals']);
+    expect(screen.getByText('Decided after the final')).toBeInTheDocument();
   });
 });

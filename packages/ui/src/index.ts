@@ -36,3 +36,6 @@ export function capitalizeFirstLetter(value: string): string {
 
   return `${value.slice(0, firstLetterIndex)}${value.charAt(firstLetterIndex).toLocaleUpperCase()}${value.slice(firstLetterIndex + 1)}`;
 }
+
+export { BracketMatch, BracketTree, bracketWinningMargin } from './components/Bracket';
+export type { BracketChampionData, BracketMatchData, BracketMatchProps, BracketPlayerData, BracketRoundData, BracketTreeProps } from './components/Bracket';

@@ -382,7 +382,7 @@ is replaced by these during the migration.
 | `ActivityList` | History and audit rows |
 | `TopNav`, `TopNavBrand`, `topNavBrandClassName()`, `NavItem`, `navItemClassName()`, `SideNav`, `sideNavItemClassName()` | App navigation |
 | `Avatar` | User initials |
-| `BracketMatch`, `BracketTree` (to build in the migration) | Bracket boxes and tree for the Brackets page and Live View (§7a) |
+| `BracketMatch`, `BracketTree` (`layout="tree"` or `"stacked"`, `champion`, `onPlayerClick`) | Bracket boxes and tree for the Brackets page and Live View (§7a) |
 | `ICON_SIZE` | Every icon size |
 
 If a screen needs something this list does not cover, add it to `packages/ui` first, with a test,

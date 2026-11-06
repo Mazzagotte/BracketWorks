@@ -1,0 +1,240 @@
+/* Bracket match and tree: docs/ui-standards.md section 7a. */
+
+.match {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-card);
+  overflow: hidden;
+  transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+.dimmed {
+  opacity: 0.5;
+}
+
+.matchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.matchLabel {
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.matchAside {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-height-sm);
+  padding: var(--space-1-5) var(--space-3);
+  border: 0;
+  background: transparent;
+  font: var(--type-table);
+  color: var(--bw-text-title);
+  text-align: left;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.player + .player {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.playerButton {
+  cursor: pointer;
+}
+
+.playerButton:hover,
+.playerHighlighted {
+  background: var(--bw-surface-panel);
+}
+
+.playerWinner {
+  font-weight: 700;
+}
+
+.playerOther,
+.playerPending {
+  color: var(--bw-text-body);
+}
+
+.playerName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-width: 0;
+}
+
+.playerNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.winnerIcon {
+  flex-shrink: 0;
+  color: var(--color-success);
+}
+
+.playerScore {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Tree: rounds left to right, 1px connectors between pairs. */
+.treeScroll {
+  overflow-x: auto;
+}
+
+.tree {
+  display: flex;
+  gap: var(--space-8);
+  min-width: min-content;
+}
+
+.round {
+  display: flex;
+  flex: 1 0 calc(var(--space-20) * 2.5);
+  flex-direction: column;
+  min-width: calc(var(--space-20) * 2.5);
+}
+
+.roundTitle {
+  margin: 0 0 var(--space-3);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.roundBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.pair {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  padding: var(--space-2) 0;
+}
+
+/* Line out of every match except in the champion column. */
+.round:not(.championRound) .slot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+/* Vertical join between the two matches of a pair. */
+.round:not(.championRound) .pairJoined::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: calc(100% + var(--space-4));
+  border-left: 1px solid var(--bw-border-subtle);
+}
+
+/* Line into every match after the first round. */
+.slotIncoming::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.championRound .slot {
+  padding-left: var(--space-4);
+}
+
+.championRound .slotIncoming::before {
+  right: calc(100% - var(--space-4));
+  width: var(--space-8);
+}
+
+.champion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.trophyIcon {
+  margin-bottom: var(--space-1);
+  color: var(--color-success);
+}
+
+.championName {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.championMeta,
+.championPending {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+/* Stacked (phone): champion first, then Final, Semifinals, Quarterfinals. */
+.stacked {
+  display: flex;
+  flex-direction: column;
+}
+
+.stackedSection {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.stackedSection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.stackedMatches {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match,
+  .player {
+    transition: none;
+  }
+}
