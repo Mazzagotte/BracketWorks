@@ -60,17 +60,17 @@ describe('Payments page recording', () => {
     expect(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' })).toHaveTextContent('Paid');
     expect(screen.queryByRole('button', { name: 'Mark OPEN-0007 as paid' })).not.toBeInTheDocument();
     const summary = screen.getByLabelText('Payment summary');
-    const paidLabel = within(summary).getByText('Total Paid');
+    const paidLabel = within(summary).getByText('Paid', { selector: 'span' });
     expect(paidLabel.parentElement).toHaveTextContent('$80.00');
-    expect(within(summary).getByText('Total Unpaid').parentElement).toHaveTextContent('$0.00');
+    expect(within(summary).getByText('Unpaid', { selector: 'span' }).parentElement).toHaveTextContent('$0.00');
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as paid.');
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent('does not issue a refund');
     await user.click(screen.getByRole('button', { name: 'Mark unpaid' }));
     expect(updateTournamentRegistrationPaymentStatus).toHaveBeenLastCalledWith('session', 42, 7, 'unpaid');
     expect(await screen.findByRole('button', { name: 'Mark OPEN-0007 as paid' })).toBeInTheDocument();
-    expect(within(summary).getByText('Total Paid').parentElement).toHaveTextContent('$0.00');
-    expect(within(summary).getByText('Total Unpaid').parentElement).toHaveTextContent('$80.00');
+    expect(within(summary).getByText('Paid', { selector: 'span' }).parentElement).toHaveTextContent('$0.00');
+    expect(within(summary).getByText('Unpaid', { selector: 'span' }).parentElement).toHaveTextContent('$80.00');
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as unpaid.');
   });
 

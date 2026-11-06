@@ -1,27 +1,4 @@
-/* Registrations page: table cell layouts, the selection bar, and the edit entry form. */
-
-.table td {
-  white-space: nowrap;
-}
-
-.code {
-  font-family: var(--font-family-code);
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-0-5);
-}
-
-.primaryText {
-  font-weight: var(--font-weight-semibold);
-}
-
-.secondaryText {
-  font: var(--type-body-small);
-  color: var(--bw-text-body);
-}
+/* Registrations page: the selection bar and the edit entry form. */
 
 .selectionBar {
   display: flex;

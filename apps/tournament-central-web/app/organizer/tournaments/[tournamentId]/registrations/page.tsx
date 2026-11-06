@@ -41,6 +41,7 @@ import { formatMoney } from '@/components/organizer/organizerFormatting';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
 import styles from './registrations.module.css';
+import cells from '@/components/organizer/OrganizerTable.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
 
@@ -644,7 +645,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                 description={metrics.total === 0 ? 'Registrations appear here as bowlers sign up.' : 'Try a different search or clear the filters.'}
               />
             ) : (
-              <DataTable caption="Registrations" className={styles.table}>
+              <DataTable caption="Registrations" className={cells.nowrap}>
                 <thead>
                   <tr>
                     <th scope="col">
@@ -695,11 +696,11 @@ export default function OrganizerTournamentRegistrationsPage() {
                             />
                           ) : null}
                         </td>
-                        <td className={styles.code}>{registration.confirmation_code ?? registration.id}</td>
+                        <td className={cells.code}>{registration.confirmation_code ?? registration.id}</td>
                         <td>
-                          <span className={styles.stack}>
-                            <span className={styles.primaryText}>{name}</span>
-                            <span className={styles.secondaryText}>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span>
+                          <span className={cells.stack}>
+                            <span className={cells.primaryText}>{name}</span>
+                            <span className={cells.secondaryText}>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span>
                           </span>
                         </td>
                         <td>{entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
@@ -708,9 +709,9 @@ export default function OrganizerTournamentRegistrationsPage() {
                         <td><OrganizerStatusBadge status={payment} /></td>
                         <td data-align="right">{formatMoney(registration.total_cents, registration.currency)}</td>
                         <td>
-                          <span className={styles.stack}>
+                          <span className={cells.stack}>
                             <span>{submitted.date}</span>
-                            <span className={styles.secondaryText}>{submitted.time}</span>
+                            <span className={cells.secondaryText}>{submitted.time}</span>
                           </span>
                         </td>
                         <td data-align="right">
