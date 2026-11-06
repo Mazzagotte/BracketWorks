@@ -3,7 +3,23 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, Calendar, CalendarDays, Globe2, MapPin, Radio, RefreshCw, Search, Trophy, Users, Zap } from 'lucide-react'
+import { ChevronRight, RefreshCw, Search, Trophy } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageHeader,
+  SearchField,
+  SegmentedControl,
+  StatGroup,
+  TableToolbar,
+  TopNav,
+  topNavBrandClassName,
+} from '@bracketworks/ui'
 import { buildApiUrl } from '../lib/api'
 import styles from './tournament-directory.module.css'
 
@@ -74,7 +90,7 @@ export default function TournamentDirectory({
   const [error, setError] = useState<string | null>(null)
   const [tournaments, setTournaments] = useState<PublicTournamentSummary[]>([])
   const [isPolling, setIsPolling] = useState(false)
-  const [heartbeatActive, setHeartbeatActive] = useState(false)
+  const [, setHeartbeatActive] = useState(false)
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null)
   const [recentUpdates, setRecentUpdates] = useState<Record<number, number>>({})
   const [query, setQuery] = useState('')
@@ -230,28 +246,28 @@ export default function TournamentDirectory({
   }, [filter, grouped, query])
 
   const renderTournamentList = (items: PublicTournamentSummary[]) => (
-    <ul className={styles.grid}>
+    <ul className={styles.list}>
       {items.map((tournament) => {
         const href = tournament.public_url || `/view/${tournament.slug || tournament.id}`
         const dateRange = formatDateRange(tournament.start_date, tournament.end_date)
         const recentlyUpdated = typeof recentUpdates[tournament.id] === 'number'
+        const meta = [
+          tournament.location || 'Location to be announced',
+          typeof tournament.squad_count === 'number' ? `${tournament.squad_count} ${tournament.squad_count === 1 ? 'squad' : 'squads'}` : null,
+          dateRange,
+        ].filter(Boolean).join(' · ')
 
         return (
-          <li key={tournament.id} className={styles.card}>
-            <Link href={href} className={styles.cardLink}>
-              <span className={styles.cardIcon} aria-hidden="true"><Trophy /></span>
-              <div className={styles.cardContent}>
-                <div className={styles.cardTop}>
-                  <div className={styles.cardTitle}>{tournament.name}</div>
-                  {recentlyUpdated ? <div className={styles.updatedPill}><Radio aria-hidden="true" />Live update</div> : null}
-                </div>
-                <div className={styles.metaRow}>
-                  <span><MapPin aria-hidden="true" />{tournament.location || 'Location TBD'}</span>
-                  {typeof tournament.squad_count === 'number' ? <span><Users aria-hidden="true" />{tournament.squad_count} squads</span> : null}
-                </div>
-                {dateRange ? <div className={styles.metaDate}><Calendar aria-hidden="true" />{dateRange}</div> : null}
-              </div>
-              <div className={styles.openHint}>Open Live View <ArrowRight aria-hidden="true" /></div>
+          <li key={tournament.id}>
+            <Link href={href} className={styles.row}>
+              <span className={styles.rowText}>
+                <span className={styles.rowTitle}>
+                  {tournament.name}
+                  {recentlyUpdated ? <Badge tone="success">Just updated</Badge> : null}
+                </span>
+                <span className={styles.meta}>{meta}</span>
+              </span>
+              <span className={styles.open}>Open live view<ChevronRight size={ICON_SIZE.md} aria-hidden="true" /></span>
             </Link>
           </li>
         )
@@ -259,95 +275,81 @@ export default function TournamentDirectory({
     </ul>
   )
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.wrap}>
-        <div className={styles.heroShell}>
-          <div className={styles.heroContent}>
-            <div className={styles.brandLockup}>
-              <Image src="/logo_no_text.svg" alt="BracketWorks" width={46} height={46} className={styles.brandLogo} priority />
-              <div>
-                <p className={styles.brandName}>BracketWorks</p>
-                <h1 className={styles.heroEyebrow}>Public Tournament Directory</h1>
-              </div>
-            </div>
-            <p className={styles.heroSubtitle}>{subtitle}</p>
-            <p className={styles.heroBody}>Use this directory to jump into any active public tournament page. Share a direct link with bowlers so they can follow results live from the concourse or their phone.</p>
-          </div>
-          <div className={styles.heroStats}>
-            <div className={styles.statCard}>
-              <span className={styles.statIcon}><Globe2 aria-hidden="true" /></span>
-              <span className={styles.statValue}>{totalTournamentCount}</span>
-              <span className={styles.statLabel}>Public tournaments</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statIcon}><Zap aria-hidden="true" /></span>
-              <span className={styles.statValue}>{grouped.current.length}</span>
-              <span className={styles.statLabel}>Current</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statIcon}><CalendarDays aria-hidden="true" /></span>
-              <span className={styles.statValue}>{grouped.upcoming.length}</span>
-              <span className={styles.statLabel}>Upcoming</span>
-            </div>
-          </div>
-        </div>
+  const filterOptions = [
+    { value: 'all' as const, label: 'All', count: totalTournamentCount },
+    { value: 'current' as const, label: 'Current', count: grouped.current.length },
+    { value: 'upcoming' as const, label: 'Upcoming', count: grouped.upcoming.length },
+  ]
+  const sections = [
+    { key: 'current', title: 'Current tournaments', items: filteredGrouped.current, hidden: filter === 'upcoming', empty: 'No current tournaments' },
+    { key: 'upcoming', title: 'Upcoming tournaments', items: filteredGrouped.upcoming, hidden: filter === 'current', empty: 'No upcoming tournaments' },
+  ].filter(section => !section.hidden)
 
-        <div className={styles.toolbar}>
-          <label className={styles.searchBox}>
-            <Search aria-hidden="true" />
-            <span className={styles.srOnly}>Search tournaments</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tournaments..." />
-          </label>
-          <div className={styles.filters} aria-label="Filter tournaments">
-            {(['all', 'current', 'upcoming'] as const).map((value) => (
-              <button key={value} type="button" className={filter === value ? styles.filterActive : ''} onClick={() => setFilter(value)}>
-                {value.charAt(0).toUpperCase() + value.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+  return (
+    <div className={styles.shell}>
+      <TopNav
+        brand={(
+          <Link href="/" className={topNavBrandClassName()}>
+            <Image src="/logo_no_text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
+            BracketWorks
+          </Link>
+        )}
+      />
+      <Page>
+        <PageHeader
+          title="Find a tournament"
+          description={subtitle}
+          actions={lastCheckedAt ? (
+            <div className={styles.refresh}>
+              <span className={styles.meta} role="status">Updated {lastCheckedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+              <Button size="sm" variant="ghost" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => void loadDirectory(true)} disabled={isPolling}>
+                {isPolling ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
+          ) : undefined}
+        />
 
         {attemptedLabel ? (
-          <p className={styles.notFoundBanner}>
-            We could not find a public tournament for &quot;{attemptedLabel}&quot;.
-          </p>
+          <Notice tone="warning">{`We could not find a public tournament for "${attemptedLabel}".`}</Notice>
         ) : null}
 
-        {loading ? (
-          <p className={styles.stateText}>Loading tournaments...</p>
-        ) : error ? (
-          <p className={styles.stateError}>{error}</p>
-        ) : (
-          <>
-            <div className={`${styles.section} ${filter === 'upcoming' ? styles.sectionHidden : ''}`}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}><span className={styles.sectionIcon}><Trophy /></span>Current Tournaments</h2>
-                <span className={styles.sectionCount}>{filteredGrouped.current.length}</span>
-              </div>
-              {filteredGrouped.current.length > 0 ? renderTournamentList(filteredGrouped.current) : (
-                <p className={styles.emptySection}><Trophy aria-hidden="true" />No current tournaments found.</p>
-              )}
-            </div>
+        <StatGroup
+          label="Public tournaments"
+          items={[
+            { label: 'Public tournaments', value: String(totalTournamentCount) },
+            { label: 'Current', value: String(grouped.current.length) },
+            { label: 'Upcoming', value: String(grouped.upcoming.length) },
+          ]}
+        />
 
-            <div className={`${styles.section} ${filter === 'current' ? styles.sectionHidden : ''}`}>
-              <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}><span className={styles.sectionIcon}><CalendarDays /></span>Upcoming Tournaments</h2>
-                <span className={styles.sectionCount}>{filteredGrouped.upcoming.length}</span>
-              </div>
-              {filteredGrouped.upcoming.length > 0 ? renderTournamentList(filteredGrouped.upcoming) : (
-                <p className={styles.emptySection}><CalendarDays aria-hidden="true" />No upcoming tournaments.</p>
-              )}
-            </div>
-          </>
-        )}
-        {lastCheckedAt ? (
-          <button className={styles.lastChecked} type="button" onClick={() => void loadDirectory(true)} disabled={isPolling}>
-            <RefreshCw aria-hidden="true" className={isPolling ? styles.spinning : heartbeatActive ? styles.heartbeatDotActive : ''} />
-            Last refreshed {lastCheckedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-          </button>
-        ) : null}
-      </div>
+        <Card padding="flush" aria-label="Tournaments">
+          <TableToolbar search={<SearchField label="Search tournaments" placeholder="Search by name or place" value={query} onChange={(event) => setQuery(event.target.value)} />}>
+            <SegmentedControl label="Filter tournaments" options={filterOptions} value={filter} onChange={setFilter} />
+          </TableToolbar>
+          {loading ? (
+            <p className={styles.status} role="status">Loading tournaments...</p>
+          ) : error ? (
+            <div className={styles.status}><Notice tone="danger" role="alert">{error}</Notice></div>
+          ) : (
+            sections.map(section => (
+              <section key={section.key} className={styles.section} aria-labelledby={`directory-${section.key}`}>
+                <h2 id={`directory-${section.key}`} className={styles.sectionTitle}>
+                  {section.title} <span className={styles.meta}>{section.items.length}</span>
+                </h2>
+                {section.items.length > 0 ? renderTournamentList(section.items) : (
+                  <EmptyState
+                    icon={query ? <Search size={ICON_SIZE['2xl']} aria-hidden="true" /> : <Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                    title={query ? 'No matching tournaments' : section.empty}
+                    description={query ? 'Try a different name or place.' : 'Check back soon.'}
+                  />
+                )}
+              </section>
+            ))
+          )}
+        </Card>
+
+        <p className={styles.footer}>Powered by BracketWorks</p>
+      </Page>
     </div>
   )
 }

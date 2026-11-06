@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import styles from './view-layout.module.css'
 
 export const metadata: Metadata = {
   title: 'Public Tournaments | BracketWorks',
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function PublicViewLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className={styles.shell}>
-      <div className={styles.inner}>{children}</div>
-    </div>
-  )
+  return children
 }

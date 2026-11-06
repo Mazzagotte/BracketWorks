@@ -2,20 +2,41 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo, Fragment, useLayoutEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Award, CalendarDays, Info, RefreshCw, Search, Share2, Trophy, UserRound } from 'lucide-react'
+import Image from 'next/image'
+import { Check, ChevronLeft, ChevronRight, ListOrdered, Network, RefreshCw, Search, Share2, Trophy } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  DataTable,
+  EmptyState,
+  ICON_SIZE,
+  NavItem,
+  Page,
+  PageHeader,
+  SearchField,
+  SegmentedControl,
+  SelectField,
+  StatGroup,
+  TableToolbar,
+  TopNav,
+  topNavBrandClassName,
+} from '@bracketworks/ui'
 import { buildApiUrl } from '../../lib/api'
 import { subscribeToDataChanges } from '../../lib/api/dataChanges'
 import { formatIsoDateShortWithWeekday } from '../../lib/formatters'
 import { MOBILE_VIEWPORT_QUERY } from '../../lib/responsive'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { getSidePotsStorageKey } from '../../lib/dashboard-settings'
-import { DataTableToolbar } from '../../components/primitives'
-import buttonStyles from '../../styles/buttons.module.css'
+import BracketTreeView, { matchesSearch } from '../../brackets/components/BracketTreeView'
+import type { BracketRound } from '../../lib/types'
 import TournamentDirectory from '../TournamentDirectory'
-import styles from './view.module.css'
+import styles from './LiveView.module.css'
 import { SAMPLE_BOWLER_NAMES, SAMPLE_TOURNAMENT } from '../../demo/sample-tournament'
 
-// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Types
 
 interface Squad {
   id: number
@@ -234,7 +255,7 @@ const DEMO_SCORES: PublicScoreRow[] = SAMPLE_BOWLER_NAMES.map((playerName, index
   }
 })
 
-// ΓöÇΓöÇΓöÇ Helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Helpers
 
 function computeAlive(bracketGroups: BracketGroup[]): AliveRow[] {
   const data: Record<string, { afterG1: number; afterG2: number; won: number }> = {}
@@ -324,653 +345,319 @@ function formatSquad(s: Squad) {
   return `${date} ${s.time}`.trim()
 }
 
-// ΓöÇΓöÇΓöÇ Sub-components ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// Sub-components
 
-function AliveView({
-  bracketGroups,
-  lastRefresh,
-  isRefreshing,
-  canRefresh,
-  onRefreshNow,
-}: {
-  bracketGroups: BracketGroup[]
-  lastRefresh: Date
-  isRefreshing: boolean
-  canRefresh: boolean
-  onRefreshNow: () => void
-}) {
+function StandingsView({ bracketGroups, isPhone }: { bracketGroups: BracketGroup[]; isPhone: boolean }) {
   const rows = useMemo(() => computeAlive(bracketGroups), [bracketGroups])
   const [searchQuery, setSearchQuery] = useState('')
-
   const hasBrackets = bracketGroups.some((group) => group.brackets.length > 0)
   const hasRounds = bracketGroups.some((group) => group.brackets.some((bracket) => (bracket.rounds?.length ?? 0) > 0))
-
   const normalizedSearch = searchQuery.trim().toLowerCase()
-  const filteredRows = useMemo(() => {
-    if (!normalizedSearch) return rows
-    return rows.filter((row) => row.name.toLowerCase().includes(normalizedSearch))
-  }, [rows, normalizedSearch])
-
-  // Always sorted: 1st/2nd desc, then G2 desc, then G1 desc, then name asc
-  const sortedRows = useMemo(() => {
-    return [...filteredRows].sort((a, b) => {
-      if (b.won !== a.won) return b.won - a.won
-      if (b.afterG2 !== a.afterG2) return b.afterG2 - a.afterG2
-      if (b.afterG1 !== a.afterG1) return b.afterG1 - a.afterG1
-      return a.name.localeCompare(b.name)
-    })
-  }, [filteredRows])
-
-  if (rows.length === 0) {
-    if (!hasBrackets) {
-      return <p className={styles.emptyNote}>No brackets generated yet. Waiting for the first bracket draw.</p>
-    }
-    if (!hasRounds) {
-      return <p className={styles.emptyNote}>Brackets exist, but round matchups are not available yet.</p>
-    }
-    return <p className={styles.emptyNote}>Bracket data is live, but no progression has been recorded yet.</p>
-  }
-
-  return (
-    <>
-      <div className={styles.aliveControls}>
-        <DataTableToolbar
-          className={styles.aliveToolbar}
-          left={(
-            <div className={styles.searchRow}>
-              <label className={styles.searchField}>
-                <Search aria-hidden="true" />
-                <input
-                  className={styles.searchInput}
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find bowler..."
-                  aria-label="Find bowler"
-                />
-              </label>
-              <span className={styles.countBadge}>{sortedRows.length} bowlers shown</span>
-            </div>
-          )}
-          right={(
-            <LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />
-          )}
-        />
-      </div>
-
-      {sortedRows.length === 0 ? (
-        <p className={styles.emptyNote}>No bowlers match this search for the selected squad.</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.rankColumn}>#</th>
-                <th>Bowler</th>
-                <th className={styles.thCenter}>
-                  <span className={styles.thFull}>After Game 1</span>
-                  <span className={styles.thShort}>G1</span>
-                </th>
-                <th className={styles.thCenter}>
-                  <span className={styles.thFull}>After Game 2</span>
-                  <span className={styles.thShort}>G2</span>
-                </th>
-                <th className={styles.thCenter}>
-                  <span className={styles.finalHeading}>1st/2nd <Info aria-hidden="true" /></span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRows.map((row, index) => (
-                <tr key={row.name} className={styles.tableRow}>
-                  <td className={styles.rankColumn}>{index + 1}</td>
-                  <td className={styles.tdName}>{row.name}</td>
-                  <td className={styles.tdCenter}>
-                    <span className={row.afterG1 > 0 ? styles.aliveNum : styles.elimNum}>{row.afterG1}</span>
-                  </td>
-                  <td className={styles.tdCenter}>
-                    <span className={row.afterG2 > 0 ? styles.aliveNum : styles.elimNum}>{row.afterG2}</span>
-                  </td>
-                  <td className={styles.tdCenter}>
-                    <span className={row.won > 0 ? styles.wonNum : styles.elimNum}>{row.won}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </>
+  const filteredRows = useMemo(
+    () => (normalizedSearch ? rows.filter((row) => row.name.toLowerCase().includes(normalizedSearch)) : rows),
+    [rows, normalizedSearch],
   )
-}
 
-function LiveRefreshControls({
-  lastRefresh,
-  isRefreshing,
-  canRefresh,
-  onRefreshNow,
-}: {
-  lastRefresh: Date
-  isRefreshing: boolean
-  canRefresh: boolean
-  onRefreshNow: () => void
-}) {
-  return (
-    <div className={styles.refreshRow}>
-      <span className={styles.refreshMeta}>
-        Last updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}
-      </span>
-      <span className={styles.liveStatus}>
-        <RefreshCw className={isRefreshing ? styles.refreshSpin : ''} aria-hidden="true" />
-        <span className={styles.liveStatusText}>Auto-refresh on</span>
-      </span>
-      <div className={styles.refreshActions}>
-        <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.refreshBtn}`} onClick={onRefreshNow} disabled={!canRefresh || isRefreshing} type="button">
-          <RefreshCw aria-hidden="true" />
-          {isRefreshing ? 'Refreshing...' : 'Refresh Now'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function MatchCard({
-  match,
-  label = 'Match',
-  className = '',
-  highlightName,
-  onNameClick,
-}: {
-  match: MatchData
-  label?: string
-  className?: string
-  highlightName?: string
-  onNameClick?: (name: string) => void
-}) {
-  const isComplete = match.winner || match.both_advance || match.split_pot
-  const playerAWon = match.winner === 'A'
-  const playerBWon = match.winner === 'B'
-  const isBye = match.playerB === 'BYE' || match.playerA === 'BYE'
-  const isLive = match.status === 'in_progress'
-  const statusClass = isLive
-    ? styles.matchInProgress
-    : match.status === 'completed'
-      ? styles.matchCompleted
-      : match.status === 'next_up'
-        ? styles.matchNextUp
-        : styles.matchPending
-
-  const margin =
-    isComplete && !match.both_advance && !match.split_pot &&
-    match.scoreA != null && match.scoreB != null && match.playerB !== 'BYE' && match.playerA !== 'BYE'
-      ? Math.abs(match.scoreA - match.scoreB)
-      : null
-
-  const hlA = highlightName ? match.playerA === highlightName : false
-  const hlB = highlightName ? match.playerB === highlightName : false
-  const dimA = highlightName && !hlA
-  const dimB = highlightName && !hlB
+  const emptyMessage = !hasBrackets
+    ? 'No brackets yet. Standings appear after the first bracket draw.'
+    : !hasRounds
+      ? 'Brackets exist, but matchups are not available yet.'
+      : 'No results have been recorded yet.'
 
   return (
-    <div
-      className={`${styles.matchCard} ${statusClass} ${isComplete ? styles.matchComplete : ''} ${isBye ? styles.matchBye : ''} ${isLive ? styles.matchLive : ''} ${className}`}
-    >
-      <div className={styles.matchLabelRow}>
-        <span className={styles.matchLabel}>{label}</span>
-        {margin !== null && <span className={styles.matchMargin}>+{margin}</span>}
-      </div>
-
-      <div data-highlighted={hlA ? 'true' : undefined} className={`${styles.matchSlot} ${playerAWon ? styles.winner : ''} ${match.playerB === 'BYE' ? styles.autoWin : ''} ${hlA ? styles.matchSlotHighlight : ''} ${dimA ? styles.matchSlotDim : ''}`}>
-        <span
-          className={`${styles.matchName} ${onNameClick && match.playerA && match.playerA !== 'BYE' ? styles.matchNameClickable : ''}`}
-          onClick={() => match.playerA && match.playerA !== 'BYE' && onNameClick?.(match.playerA)}
-        >{match.playerA || ''}</span>
-        {match.scoreA != null && <span className={styles.matchScore}>{match.scoreA}</span>}
-      </div>
-      <div className={styles.vsRow}>vs</div>
-      <div data-highlighted={hlB ? 'true' : undefined} className={`${styles.matchSlot} ${playerBWon ? styles.winner : ''} ${match.playerA === 'BYE' ? styles.autoWin : ''} ${hlB ? styles.matchSlotHighlight : ''} ${dimB ? styles.matchSlotDim : ''}`}>
-        <span
-          className={`${styles.matchName} ${onNameClick && match.playerB && match.playerB !== 'BYE' ? styles.matchNameClickable : ''}`}
-          onClick={() => match.playerB && match.playerB !== 'BYE' && onNameClick?.(match.playerB)}
-        >{match.playerB === 'BYE' ? 'BYE' : (match.playerB || '')}</span>
-        {match.scoreB != null && match.playerB !== 'BYE' && <span className={styles.matchScore}>{match.scoreB}</span>}
-      </div>
-      {match.split_pot && <div className={styles.matchBadge}>Split</div>}
-      {match.both_advance && <div className={styles.matchBadge}>Both Advance</div>}
-    </div>
-  )
-}
-
-function bracketWinner(bracket: BracketData): string | null {
-  const rounds = bracket.rounds ?? []
-  if (rounds.length < 2) return null
-  const lastRound = rounds[rounds.length - 1]
-  if (!lastRound) return null
-  for (const m of lastRound.matches) {
-    if (m.winner === 'A' && m.playerA && m.playerA !== 'BYE') return m.playerA
-    if (m.winner === 'B' && m.playerB && m.playerB !== 'BYE') return m.playerB
-  }
-  return null
-}
-
-function BracketView({ group, highlightName, onNameClick }: {
-  group: BracketGroup
-  highlightName: string
-  onNameClick: (name: string) => void
-}) {
-  const isMobileViewport = useMediaQuery(MOBILE_VIEWPORT_QUERY)
-  const [activeBracket, setActiveBracket] = useState(0)
-  const treeWrapRef = useRef<HTMLDivElement>(null)
-  const treeGridRef = useRef<HTMLDivElement>(null)
-  const bracket = group.brackets[activeBracket]
-  const totalBrackets = group.brackets.length
-  const rounds = bracket?.rounds ?? []
-  const treeRounds = rounds.slice(0, 3)
-  const totalRows = (treeRounds[0]?.matches.length ?? 0) * 2
-  const canRenderTree = treeRounds.length > 0 && totalRows > 0
-  const treeColumns = treeRounds.length === 1 ? 1 : treeRounds.length === 2 ? 4 : 7
-  const winner = bracketWinner(bracket ?? { rounds: [] })
-
-  useEffect(() => {
-    const treeGridScaledClass = styles.bracketTreeGridScaled
-    const treeWrapScaledClass = styles.bracketTreeWrapScaled
-
-    const resetTreeScale = () => {
-      if (treeGridRef.current) {
-        if (treeGridScaledClass) treeGridRef.current.classList.remove(treeGridScaledClass)
-        treeGridRef.current.style.removeProperty('--bw-view-tree-scale')
-      }
-      if (treeWrapRef.current) {
-        if (treeWrapScaledClass) treeWrapRef.current.classList.remove(treeWrapScaledClass)
-        treeWrapRef.current.style.removeProperty('--bw-view-tree-height')
-      }
-    }
-
-    if (!canRenderTree) {
-      resetTreeScale()
-      return
-    }
-
-    const recalcTreeFit = () => {
-      const wrap = treeWrapRef.current
-      const grid = treeGridRef.current
-      if (!wrap || !grid) return
-
-      if (!isMobileViewport) {
-        resetTreeScale()
-        return
-      }
-
-      const availableWidth = wrap.clientWidth
-      const naturalWidth = grid.scrollWidth
-      const naturalHeight = grid.scrollHeight
-      if (!availableWidth || !naturalWidth || !naturalHeight) return
-
-      const nextScale = Math.min(1, availableWidth / naturalWidth)
-      if (nextScale < 1) {
-        if (treeGridScaledClass) grid.classList.add(treeGridScaledClass)
-        if (treeWrapScaledClass) wrap.classList.add(treeWrapScaledClass)
-        grid.style.setProperty('--bw-view-tree-scale', String(nextScale))
-        wrap.style.setProperty('--bw-view-tree-height', `${Math.ceil(naturalHeight * nextScale)}px`)
-      } else {
-        resetTreeScale()
-      }
-    }
-
-    const raf = window.requestAnimationFrame(recalcTreeFit)
-    window.addEventListener('resize', recalcTreeFit)
-
-    return () => {
-      window.cancelAnimationFrame(raf)
-      window.removeEventListener('resize', recalcTreeFit)
-      resetTreeScale()
-    }
-  }, [canRenderTree, activeBracket, isMobileViewport, treeColumns, totalRows])
-
-
-  // Jump to the bracket containing the highlighted bowler
-  useEffect(() => {
-    if (!highlightName) return
-    const nameL = highlightName.toLowerCase()
-    for (let bi = 0; bi < group.brackets.length; bi++) {
-      const b = group.brackets[bi]
-      if (!b) continue
-      for (const r of (b.rounds ?? [])) {
-        for (const m of r.matches) {
-          if (
-            (m.playerA && m.playerA.toLowerCase() === nameL) ||
-            (m.playerB && m.playerB.toLowerCase() === nameL)
-          ) {
-            setActiveBracket(bi)
-            return
-          }
-        }
-      }
-    }
-  }, [highlightName, group.brackets])
-
-  // Scroll highlighted match into view after bracket navigation settles
-  useLayoutEffect(() => {
-    if (!highlightName) return
-    const id = setTimeout(() => {
-      const el = treeWrapRef.current?.querySelector('[data-highlighted="true"]') as HTMLElement | null
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 150)
-    return () => clearTimeout(id)
-  }, [highlightName, activeBracket])
-
-  const labelForRound = (roundIndex: number) => {
-    if (roundIndex === 2) return 'Final'
-    if (roundIndex === 1) return 'Semifinal'
-    return 'Match'
-  }
-
-  const hl = highlightName || undefined
-
-  const pillIndices = useMemo(() => {
-    const w = typeof window !== 'undefined'
-      ? window.innerWidth >= 900 ? 11 : window.innerWidth >= 600 ? 9 : window.innerWidth >= 400 ? 7 : 5
-      : 7
-    if (totalBrackets <= w) {
-      return Array.from({ length: totalBrackets }, (_, i) => i)
-    }
-    const half = Math.floor(w / 2)
-    let start = activeBracket - half
-    let end = activeBracket + half
-    if (start < 0) { end -= start; start = 0 }
-    if (end >= totalBrackets) { start -= (end - totalBrackets + 1); end = totalBrackets - 1 }
-    start = Math.max(0, start)
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-  }, [totalBrackets, activeBracket])
-
-  const firstPillIndex = pillIndices[0] ?? 0
-  const lastPillIndex = pillIndices[pillIndices.length - 1] ?? 0
-
-  return (
-    <div className={styles.bracketView}>
-      {/* Pill carousel */}
-      {totalBrackets > 1 && (
-        <div className={styles.bracketPillsNav}>
-          <button
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPillsArrow}`}
-            disabled={activeBracket === 0}
-            onClick={() => setActiveBracket((prev) => Math.max(0, prev - 1))}
-            aria-label="Previous bracket"
-          >Prev</button>
-          <div className={styles.bracketPills}>
-            {firstPillIndex > 0 && (
-              <>
-                <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill}`} onClick={() => setActiveBracket(0)} aria-label="Bracket 1">1</button>
-                {firstPillIndex > 1 && <span className={styles.bracketPillEllipsis}>...</span>}
-              </>
-            )}
-            {pillIndices.map((i) => (
-              <button
-                key={i}
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill} ${activeBracket === i ? styles.bracketPillActive : ''}`}
-                onClick={() => setActiveBracket(i)}
-                aria-label={`Bracket ${i + 1}`}
-              >{i + 1}</button>
-            ))}
-            {lastPillIndex < totalBrackets - 1 && (
-              <>
-                {lastPillIndex < totalBrackets - 2 && <span className={styles.bracketPillEllipsis}>...</span>}
-                <button type="button" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPill}`} onClick={() => setActiveBracket(totalBrackets - 1)} aria-label={`Bracket ${totalBrackets}`}>{totalBrackets}</button>
-              </>
-            )}
-          </div>
-          <button
-            type="button"
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.bracketPillsArrow}`}
-            disabled={activeBracket === totalBrackets - 1}
-            onClick={() => setActiveBracket((prev) => Math.min(totalBrackets - 1, prev + 1))}
-            aria-label="Next bracket"
-          >Next</button>
-        </div>
-      )}
-
-      {/* Winner callout */}
-      {winner && (
-        <div className={styles.bracketWinnerBanner}>
-          <span className={styles.bracketWinnerLabel}>Winner</span>
-          <span className={styles.bracketWinnerName}>{winner}</span>
-        </div>
-      )}
-
-      {rounds.length === 0 ? (
-        <p className={styles.emptyNote}>No rounds yet.</p>
+    <Card padding="flush" aria-label="Standings">
+      <CardHeader title="Standings" description="How many brackets each bowler is still alive in after each game." />
+      {rows.length === 0 ? (
+        <EmptyState icon={<ListOrdered size={ICON_SIZE['2xl']} aria-hidden="true" />} title="No standings yet" description={emptyMessage} />
       ) : (
         <>
-          {canRenderTree ? (
-            <>
-              <div
-                className={styles.bracketTreeWrap}
-                ref={treeWrapRef}
-              >
-                <div
-                  className={`${styles.bracketTreeGrid} ${treeRounds.length === 1 ? styles.treeGrid1Col : treeRounds.length === 2 ? styles.treeGrid4Col : styles.treeGrid7Col}`}
-                  ref={treeGridRef}
-                >
-                  {treeRounds[0]?.matches.map((match, mi) => (
-                    <MatchCard
-                      key={`r0-m${mi}`}
-                      match={match}
-                      label={labelForRound(0)}
-                      highlightName={hl}
-                      onNameClick={onNameClick}
-                      className={[styles.r1m1, styles.r1m2, styles.r1m3, styles.r1m4][mi] ?? ''}
-                    />
-                  ))}
-
-                  {treeRounds[1]?.matches.map((match, mi) => (
-                    <MatchCard
-                      key={`r1-m${mi}`}
-                      match={match}
-                      label={labelForRound(1)}
-                      highlightName={hl}
-                      onNameClick={onNameClick}
-                      className={[styles.r2m1, styles.r2m2][mi] ?? ''}
-                    />
-                  ))}
-
-                  {treeRounds[2]?.matches.map((match, mi) => (
-                    <MatchCard
-                      key={`r2-m${mi}`}
-                      match={match}
-                      label={labelForRound(2)}
-                      className={`${styles.finalsCard} ${styles.r3m1}`}
-                      highlightName={hl}
-                      onNameClick={onNameClick}
-                    />
-                  ))}
-
-                  {treeRounds[1]?.matches.map((_, i) => (
-                    <Fragment key={`c-r1-wrap-${i}`}>
-                      <div className={`${styles.connectorBracket} ${i === 0 ? styles.connR1R2Bracket1 : styles.connR1R2Bracket2}`} />
-                      <div className={`${styles.connectorArm} ${i === 0 ? styles.connR1R2Arm1 : styles.connR1R2Arm2}`} />
-                    </Fragment>
-                  ))}
-
-                  {treeRounds[2]?.matches.map((_, i) => (
-                    <Fragment key={`c-r2-wrap-${i}`}>
-                      <div className={`${styles.connectorBracket} ${styles.connR2R3Bracket}`} />
-                      <div className={`${styles.connectorArm} ${styles.connR2R3Arm}`} />
-                    </Fragment>
-                  ))}
-                </div>
-              </div>
-
-              {rounds.length > 3 && (
-                <div className={styles.bracketRoundsExtra}>
-                  {rounds.slice(3).map((round, ri) => (
-                    <div key={`extra-${ri}`} className={styles.bracketRound}>
-                      <div className={styles.roundLabel}>{round.name || `Round ${ri + 4}`}</div>
-                      <div className={styles.roundMatches}>
-                        {round.matches.map((match, mi) => (
-                          <MatchCard key={mi} match={match} highlightName={hl} onNameClick={onNameClick} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+          <TableToolbar
+            search={<SearchField label="Find a bowler" placeholder="Find a bowler" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />}
+          />
+          {filteredRows.length === 0 ? (
+            <EmptyState
+              icon={<Search size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title="No matching bowlers"
+              description="Try a different name."
+              action={<Button variant="secondary" onClick={() => setSearchQuery('')}>Clear search</Button>}
+            />
           ) : (
-            <div className={styles.bracketRounds}>
-              {rounds.map((round, ri) => (
-                <div key={ri} className={styles.bracketRound}>
-                  <div className={styles.roundLabel}>{round.name || `Round ${ri + 1}`}</div>
-                  <div className={styles.roundMatches}>
-                    {round.matches.map((match, mi) => (
-                      <MatchCard key={mi} match={match} highlightName={hl} onNameClick={onNameClick} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DataTable caption="Standings">
+              <thead>
+                <tr>
+                  <th data-align="right">#</th>
+                  <th>Bowler</th>
+                  <th data-align="right">{isPhone ? 'G1' : 'After game 1'}</th>
+                  <th data-align="right">{isPhone ? 'G2' : 'After game 2'}</th>
+                  <th data-align="right">{isPhone ? 'Top 2' : '1st or 2nd'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRows.map((row) => (
+                  <tr key={row.name}>
+                    <td data-align="right" data-tone="secondary">{rows.indexOf(row) + 1}</td>
+                    <td>{row.name}</td>
+                    <td data-align="right" data-tone={row.afterG1 > 0 ? undefined : 'secondary'}>{row.afterG1}</td>
+                    <td data-align="right" data-tone={row.afterG2 > 0 ? undefined : 'secondary'}>{row.afterG2}</td>
+                    <td data-align="right" data-emphasis={row.won > 0 ? 'true' : undefined} data-tone={row.won > 0 ? undefined : 'secondary'}>{row.won}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </DataTable>
           )}
         </>
       )}
-    </div>
+    </Card>
   )
 }
 
-function BracketsTabView({
-  bracketGroups,
-  lastRefresh,
-  isRefreshing,
-  canRefresh,
-  onRefreshNow,
-}: {
-  bracketGroups: BracketGroup[]
-  lastRefresh: Date
-  isRefreshing: boolean
-  canRefresh: boolean
-  onRefreshNow: () => void
-}) {
-  const [activeGroup, setActiveGroup] = useState(0)
-  const [bracketSearch, setBracketSearch] = useState('')
-  const [highlightName, setHighlightName] = useState('')
+function bracketHasName(bracket: BracketData, term: string): boolean {
+  return (bracket.rounds ?? []).some((round) => round.matches.some((match) =>
+    matchesSearch(match.playerA ?? null, term) || matchesSearch(match.playerB ?? null, term)))
+}
 
-  const handleNameClick = useCallback((name: string) => {
-    setHighlightName((prev) => (prev === name ? '' : name))
-  }, [])
+function BracketsView({ bracketGroups, isPhone }: { bracketGroups: BracketGroup[]; isPhone: boolean }) {
+  const [activeGroupKey, setActiveGroupKey] = useState(bracketGroups[0]?.key ?? '')
+  const [activeBracket, setActiveBracket] = useState(0)
+  const [search, setSearch] = useState('')
+  const group = bracketGroups.find((item) => item.key === activeGroupKey) ?? bracketGroups[0]
+  const term = search.trim()
 
-  // Auto-navigate to the group containing the highlighted bowler
+  // Jump to the first program and bracket that contain the searched bowler.
   useEffect(() => {
-    if (!highlightName) return
-    const nameL = highlightName.toLowerCase()
-    for (let gi = 0; gi < bracketGroups.length; gi++) {
-      const grp = bracketGroups[gi]
-      if (!grp) continue
-      for (const b of grp.brackets) {
-        for (const r of (b.rounds ?? [])) {
-          for (const m of r.matches) {
-            if (
-              (m.playerA && m.playerA.toLowerCase() === nameL) ||
-              (m.playerB && m.playerB.toLowerCase() === nameL)
-            ) {
-              setActiveGroup(gi)
-              return
-            }
-          }
-        }
+    if (!term) return
+    for (const candidate of bracketGroups) {
+      const index = candidate.brackets.findIndex((bracket) => bracketHasName(bracket, term))
+      if (index >= 0) {
+        setActiveGroupKey(candidate.key)
+        setActiveBracket(index)
+        return
       }
     }
-  }, [highlightName, bracketGroups])
+  }, [term, bracketGroups])
 
-  if (bracketGroups.length === 0) {
+  if (!group || bracketGroups.every((item) => item.brackets.length === 0)) {
     return (
-      <div className={styles.section}>
-        <p className={styles.emptyNote}>No brackets generated yet.</p>
-      </div>
+      <Card aria-label="Brackets">
+        <EmptyState icon={<Network size={ICON_SIZE['2xl']} aria-hidden="true" />} title="No brackets yet" description="Brackets appear here once they are generated." />
+      </Card>
     )
   }
 
-  const group = bracketGroups[activeGroup] ?? bracketGroups[0]
-  if (!group) {
-    return (
-      <div className={styles.section}>
-        <p className={styles.emptyNote}>No brackets generated yet.</p>
-      </div>
-    )
+  const total = group.brackets.length
+  const safeIndex = Math.min(activeBracket, Math.max(0, total - 1))
+  const bracket = group.brackets[safeIndex]
+  const changeGroup = (key: string) => {
+    setActiveGroupKey(key)
+    setActiveBracket(0)
   }
+  const programOptions = bracketGroups.map((item) => ({ value: item.key, label: item.name, count: item.brackets.length }))
 
   return (
-    <div className={styles.section}>
-      <div className={styles.bracketControlsPanel}>
-      {/* Group tabs */}
-      {bracketGroups.length > 1 && (
-        <div className={styles.bracketGroupTabs}>
-          {bracketGroups.map((g, i) => (
-            <button
-              key={g.key}
-              type="button"
-              className={`${styles.bracketGroupTab} ${activeGroup === i ? styles.bracketGroupTabActive : ''}`}
-              onClick={() => setActiveGroup(i)}
-            >{g.name}</button>
+    <Card aria-label="Brackets">
+      <div className={styles.controls}>
+        {programOptions.length > 1 ? (
+          isPhone || programOptions.length > 5 ? (
+            <SelectField label="Program" value={group.key} onChange={(e) => changeGroup(e.target.value)}>
+              {programOptions.map((option) => <option key={option.value} value={option.value}>{`${option.label} (${option.count})`}</option>)}
+            </SelectField>
+          ) : (
+            <SegmentedControl label="Program" options={programOptions} value={group.key} onChange={changeGroup} />
+          )
+        ) : null}
+        <div className={styles.pickerRow}>
+          <div className={styles.picker}>
+            <Button
+              size={isPhone ? undefined : 'sm'}
+              variant="secondary"
+              icon={<ChevronLeft size={ICON_SIZE.md} aria-hidden="true" />}
+              aria-label="Previous bracket"
+              onClick={() => setActiveBracket(Math.max(0, safeIndex - 1))}
+              disabled={safeIndex === 0}
+            />
+            <SelectField label="Bracket" hideLabel value={safeIndex} onChange={(e) => setActiveBracket(Number(e.target.value))}>
+              {group.brackets.map((_, index) => <option key={index} value={index}>{`${group.name} ${index + 1} of ${total}`}</option>)}
+            </SelectField>
+            <Button
+              size={isPhone ? undefined : 'sm'}
+              variant="secondary"
+              icon={<ChevronRight size={ICON_SIZE.md} aria-hidden="true" />}
+              aria-label="Next bracket"
+              onClick={() => setActiveBracket(Math.min(total - 1, safeIndex + 1))}
+              disabled={safeIndex >= total - 1}
+            />
+          </div>
+          <SearchField label="Highlight a bowler" placeholder="Highlight a bowler" value={search} onChange={(e) => setSearch(e.target.value)} className={styles.search} />
+        </div>
+      </div>
+      <CardDivider />
+      {bracket && (bracket.rounds?.length ?? 0) > 0 ? (
+        <BracketTreeView
+          rounds={(bracket.rounds ?? []) as unknown as BracketRound[]}
+          isMobile={isPhone}
+          searchTerm={term}
+          label={`${group.name} bracket ${safeIndex + 1} of ${total}`}
+        />
+      ) : (
+        <p className={styles.status}>This bracket has no matchups yet.</p>
+      )}
+    </Card>
+  )
+}
+
+function placeLabel(index: number): string {
+  return index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'
+}
+
+function LeaderRows({ leaders, tie, metric }: { leaders: Array<{ name: string; score: number | string | null }>; tie?: boolean; metric?: number | string | null }) {
+  return (
+    <ol className={styles.leaders}>
+      {leaders.map((leader, index) => (
+        <li key={`${leader.name}-${index}`} className={styles.leaderRow}>
+          <Badge tone="neutral">{tie ? 'Tie' : placeLabel(index)}</Badge>
+          <span className={styles.leaderName}>{leader.name}</span>
+          <span className={styles.leaderScore}>{leader.score ?? metric ?? '-'}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function SidePotsView({ scoreRows, sidePotSummaries, sidePotsLoaded, tournamentId }: {
+  scoreRows: PublicScoreRow[]
+  sidePotSummaries: PublicSidePotSummary[]
+  sidePotsLoaded: boolean
+  tournamentId: number | null
+}) {
+  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
+  const [enabledSidePotKeys, setEnabledSidePotKeys] = useState<Set<string>>(new Set())
+  const [sidePotEntriesMap, setSidePotEntriesMap] = useState<SidePotEntriesByPlayer>({})
+  const [hasSidePotSettings, setHasSidePotSettings] = useState(false)
+  const [hasSidePotEntriesMap, setHasSidePotEntriesMap] = useState(false)
+  const [activeSidePotMode, setActiveSidePotMode] = useState<'scratch' | 'handicap'>('scratch')
+
+  useEffect(() => {
+    const handleSettingsChanged = () => setSettingsRefreshKey(prev => prev + 1)
+    window.addEventListener('settings-changed', handleSettingsChanged)
+    return () => window.removeEventListener('settings-changed', handleSettingsChanged)
+  }, [])
+
+  useEffect(() => {
+    if (!tournamentId) {
+      setEnabledSidePotKeys(new Set())
+      setSidePotEntriesMap({})
+      setHasSidePotSettings(false)
+      setHasSidePotEntriesMap(false)
+      return
+    }
+    const rawSettings = localStorage.getItem(getSidePotsStorageKey(tournamentId))
+    const rawEntries = localStorage.getItem(`sidePotEntries_${tournamentId}`)
+    setHasSidePotSettings(rawSettings !== null)
+    setHasSidePotEntriesMap(rawEntries !== null)
+    try {
+      const parsed = rawSettings ? JSON.parse(rawSettings) as StoredSidePotsSettings : null
+      setEnabledSidePotKeys(new Set((parsed?.pots ?? []).filter(pot => Boolean(pot.enabled)).map(pot => pot.key)))
+    } catch {
+      setEnabledSidePotKeys(new Set())
+    }
+    try {
+      setSidePotEntriesMap(rawEntries ? JSON.parse(rawEntries) as SidePotEntriesByPlayer : {})
+    } catch {
+      setSidePotEntriesMap({})
+    }
+  }, [tournamentId, settingsRefreshKey])
+
+  const getEligiblePlayerIds = useCallback((potKey: string): Set<number> | null => {
+    // Only enforce opt-in filtering when this browser has both settings and entries data.
+    if (!hasSidePotSettings || !hasSidePotEntriesMap || !enabledSidePotKeys.has(potKey)) return null
+    const eligible = new Set<number>()
+    for (const row of scoreRows) {
+      if (sidePotEntriesMap[String(row.player_id)]?.[potKey]) eligible.add(row.player_id)
+    }
+    return eligible
+  }, [enabledSidePotKeys, hasSidePotEntriesMap, hasSidePotSettings, scoreRows, sidePotEntriesMap])
+
+  const emptyCard = (title: string, description: string) => (
+    <Card aria-label="Side pots">
+      <EmptyState icon={<Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />} title={title} description={description} />
+    </Card>
+  )
+
+  if (sidePotsLoaded) {
+    if (!tournamentId) return emptyCard('No tournament selected', 'Choose a tournament to see its side pots.')
+    if (sidePotSummaries.length === 0) return emptyCard('No side pots', 'This tournament does not offer side pots.')
+    return (
+      <Card aria-label="Side pots">
+        <CardHeader title="Side pots" />
+        <div className={styles.pots}>
+          {sidePotSummaries.map((summary) => (
+            <section key={summary.key} className={styles.pot} aria-labelledby={`pot-${summary.key}`}>
+              <h3 id={`pot-${summary.key}`} className={styles.potTitle}>{summary.name}</h3>
+              {summary.status === 'empty' ? (
+                <p className={styles.status}>No entries yet</p>
+              ) : (summary.winners?.length ?? 0) > 0 && summary.status !== 'pending' ? (
+                <LeaderRows
+                  leaders={summary.winners.map((winner) => ({ name: winner.player_name, score: summary.winning_metric }))}
+                  tie={summary.status === 'tied'}
+                />
+              ) : (
+                <p className={styles.status}>Pending</p>
+              )}
+              <p className={styles.meta}>{summary.entry_count} {summary.entry_count === 1 ? 'entry' : 'entries'} · ${summary.pool.toFixed(2)} pool</p>
+            </section>
           ))}
         </div>
-      )}
+      </Card>
+    )
+  }
 
-      <div className={styles.bracketLiveControls}>
-        <DataTableToolbar
-          className={styles.aliveToolbar}
-          left={<span className={styles.countBadge}>{group.brackets.length} {group.brackets.length === 1 ? 'bracket' : 'brackets'} in this program</span>}
-          right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
-        />
-      </div>
+  if (scoreRows.length === 0) return emptyCard('No scores yet', 'Check back during the tournament.')
+  if (hasSidePotSettings && enabledSidePotKeys.size === 0) return emptyCard('No side pots', 'This tournament does not offer side pots.')
 
-      {/* Bowler search / jump */}
-      <div className={styles.bracketSearchRow}>
-        <input
-          type="search"
-          className={styles.bracketSearchInput}
-          placeholder="Highlight a bowler..."
-          value={bracketSearch}
-          onChange={(e) => {
-            const val = e.target.value
-            setBracketSearch(val)
-            if (!val.trim()) { setHighlightName(''); return }
-            // Auto-highlight when query matches exactly one name in any bracket
-            const allNames = new Set<string>()
-            for (const b of group.brackets) {
-              for (const r of (b.rounds ?? [])) {
-                for (const m of r.matches) {
-                  if (m.playerA && m.playerA !== 'BYE') allNames.add(m.playerA)
-                  if (m.playerB && m.playerB !== 'BYE') allNames.add(m.playerB)
-                }
-              }
-            }
-            const q = val.trim().toLowerCase()
-            const matches = [...allNames].filter((n) => n.toLowerCase().includes(q))
-            setHighlightName(matches.length === 1 ? (matches[0] ?? val.trim()) : val.trim())
-          }}
-        />
-        {highlightName && (
-          <button
-            type="button"
-            className={styles.bracketSearchClear}
-            onClick={() => { setBracketSearch(''); setHighlightName('') }}
-            aria-label="Clear highlight"
-          >Γ£ò</button>
-        )}
-      </div>
-      </div>
+  const hasScratchData = scoreRows.some(row => row.game1_scratch != null || row.game2_scratch != null || row.game3_scratch != null)
+  const hasHandicapData = scoreRows.some(row => row.game1_with_handicap != null || row.game2_with_handicap != null || row.game3_with_handicap != null)
+  const show = {
+    gameScratch: hasSidePotSettings ? enabledSidePotKeys.has('high_game_scratch') : hasScratchData,
+    seriesScratch: hasSidePotSettings ? enabledSidePotKeys.has('high_series_scratch') : hasScratchData,
+    gameHandicap: hasSidePotSettings ? enabledSidePotKeys.has('high_game_handicap') : hasHandicapData,
+    seriesHandicap: hasSidePotSettings ? enabledSidePotKeys.has('high_series_handicap') : hasHandicapData,
+  }
+  const modes = [
+    ...(show.gameScratch || show.seriesScratch ? [{ value: 'scratch' as const, label: 'Scratch' }] : []),
+    ...(show.gameHandicap || show.seriesHandicap ? [{ value: 'handicap' as const, label: 'Handicap' }] : []),
+  ]
+  if (modes.length === 0) return emptyCard('No side pots yet', 'Side pot leaders appear once scores are entered.')
+  const mode = modes.some(item => item.value === activeSidePotMode) ? activeSidePotMode : modes[0]!.value
+  const games = [
+    { label: 'Game 1', scratch: 'game1_scratch' as const, handicap: 'game1_with_handicap' as const },
+    { label: 'Game 2', scratch: 'game2_scratch' as const, handicap: 'game2_with_handicap' as const },
+    { label: 'Game 3', scratch: 'game3_scratch' as const, handicap: 'game3_with_handicap' as const },
+  ]
+  const showGames = mode === 'scratch' ? show.gameScratch : show.gameHandicap
+  const showSeries = mode === 'scratch' ? show.seriesScratch : show.seriesHandicap
+  const gameEligible = getEligiblePlayerIds(mode === 'scratch' ? 'high_game_scratch' : 'high_game_handicap')
+  const seriesEligible = getEligiblePlayerIds(mode === 'scratch' ? 'high_series_scratch' : 'high_series_handicap')
+  const sections = [
+    ...(showGames ? games.map(game => ({ label: `High ${game.label.toLowerCase()}`, leaders: getTopN(scoreRows, mode === 'scratch' ? game.scratch : game.handicap, 3, gameEligible) })) : []),
+    ...(showSeries ? [{ label: 'High series', leaders: getSeriesTopN(scoreRows, mode, 3, seriesEligible) }] : []),
+  ]
 
-      {group.brackets.length === 0 ? (
-        <p className={styles.emptyNote}>No brackets in this group.</p>
-      ) : (
-        <div className={styles.groupSection}>
-          {bracketGroups.length === 1 && (
-            <h2 className={styles.groupTitle}>{group.name}</h2>
-          )}
-          <BracketView group={group} highlightName={highlightName} onNameClick={handleNameClick} />
-        </div>
-      )}
-    </div>
+  return (
+    <Card aria-label="Side pots">
+      <CardHeader
+        title="Side pots"
+        description="Top three in each side pot so far."
+        actions={modes.length > 1 ? <SegmentedControl label="Side pot type" options={modes} value={mode} onChange={setActiveSidePotMode} /> : undefined}
+      />
+      <div className={styles.pots}>
+        {sections.map(section => (
+          <section key={section.label} className={styles.pot} aria-label={section.label}>
+            <h3 className={styles.potTitle}>{section.label}</h3>
+            {section.leaders.length === 0 ? <p className={styles.status}>Pending</p> : <LeaderRows leaders={section.leaders} />}
+          </section>
+        ))}
+      </div>
+    </Card>
   )
 }
 
@@ -1030,320 +717,6 @@ function getSeriesTopN(rows: PublicScoreRow[], mode: 'scratch' | 'handicap', n: 
   return candidates.slice(0, n)
 }
 
-function SidePotsLeaderboard({ scoreRows, sidePotSummaries, sidePotsLoaded, tournamentId, lastRefresh, isRefreshing, canRefresh, onRefreshNow }: {
-  scoreRows: PublicScoreRow[]
-  sidePotSummaries: PublicSidePotSummary[]
-  sidePotsLoaded: boolean
-  tournamentId: number | null
-  lastRefresh: Date
-  isRefreshing: boolean
-  canRefresh: boolean
-  onRefreshNow: () => void
-}) {
-  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0)
-  const [enabledSidePotKeys, setEnabledSidePotKeys] = useState<Set<string>>(new Set())
-  const [sidePotEntriesMap, setSidePotEntriesMap] = useState<SidePotEntriesByPlayer>({})
-  const [hasSidePotSettings, setHasSidePotSettings] = useState(false)
-  const [hasSidePotEntriesMap, setHasSidePotEntriesMap] = useState(false)
-  const [activeSidePotMode, setActiveSidePotMode] = useState<'scratch' | 'handicap'>('scratch')
-
-  useEffect(() => {
-    const handleSettingsChanged = () => {
-      setSettingsRefreshKey(prev => prev + 1)
-    }
-    window.addEventListener('settings-changed', handleSettingsChanged)
-    return () => window.removeEventListener('settings-changed', handleSettingsChanged)
-  }, [])
-
-  useEffect(() => {
-    if (!tournamentId) {
-      setEnabledSidePotKeys(new Set())
-      setSidePotEntriesMap({})
-      setHasSidePotSettings(false)
-      setHasSidePotEntriesMap(false)
-      return
-    }
-
-    const settingsKey = getSidePotsStorageKey(tournamentId)
-    const entriesKey = `sidePotEntries_${tournamentId}`
-    const rawSettings = localStorage.getItem(settingsKey)
-    const rawEntries = localStorage.getItem(entriesKey)
-
-    setHasSidePotSettings(rawSettings !== null)
-    setHasSidePotEntriesMap(rawEntries !== null)
-
-    try {
-      if (!rawSettings) {
-        setEnabledSidePotKeys(new Set())
-      } else {
-        const parsed = JSON.parse(rawSettings) as StoredSidePotsSettings
-        const enabledKeys = new Set(
-          (parsed.pots ?? [])
-            .filter(pot => Boolean(pot.enabled))
-            .map(pot => pot.key),
-        )
-        setEnabledSidePotKeys(enabledKeys)
-      }
-    } catch {
-      setEnabledSidePotKeys(new Set())
-    }
-
-    try {
-      if (!rawEntries) {
-        setSidePotEntriesMap({})
-      } else {
-        setSidePotEntriesMap(JSON.parse(rawEntries) as SidePotEntriesByPlayer)
-      }
-    } catch {
-      setSidePotEntriesMap({})
-    }
-  }, [tournamentId, settingsRefreshKey])
-
-  const getEligiblePlayerIds = useCallback((potKey: string): Set<number> | null => {
-    // Only enforce opt-in filtering when this browser has both settings and entries data.
-    if (!hasSidePotSettings || !hasSidePotEntriesMap) return null
-    if (!enabledSidePotKeys.has(potKey)) return null
-
-    const eligible = new Set<number>()
-    for (const row of scoreRows) {
-      const byPlayer = sidePotEntriesMap[String(row.player_id)]
-      if (byPlayer?.[potKey]) {
-        eligible.add(row.player_id)
-      }
-    }
-    return eligible
-  }, [enabledSidePotKeys, hasSidePotEntriesMap, hasSidePotSettings, scoreRows, sidePotEntriesMap])
-
-  const highGameScratchEligible = useMemo(() => getEligiblePlayerIds('high_game_scratch'), [getEligiblePlayerIds])
-  const highGameHandicapEligible = useMemo(() => getEligiblePlayerIds('high_game_handicap'), [getEligiblePlayerIds])
-  const highSeriesScratchEligible = useMemo(() => getEligiblePlayerIds('high_series_scratch'), [getEligiblePlayerIds])
-  const highSeriesHandicapEligible = useMemo(() => getEligiblePlayerIds('high_series_handicap'), [getEligiblePlayerIds])
-
-  if (sidePotsLoaded) {
-    if (!tournamentId) {
-      return <p className={styles.emptyNote}>No tournament selected.</p>
-    }
-
-    if (sidePotSummaries.length === 0) {
-      return <p className={styles.emptyNote}>No side pots are enabled for this tournament.</p>
-    }
-
-    return (
-      <div className={styles.sidePotLeaderboard}>
-        <div className={styles.sidePotLiveControls}>
-          <DataTableToolbar
-            className={styles.aliveToolbar}
-            left={<span className={styles.countBadge}>{sidePotSummaries.length} {sidePotSummaries.length === 1 ? 'program' : 'programs'} available</span>}
-            right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
-          />
-        </div>
-
-        <div className={styles.sidePotSection}>
-          <div className={styles.sidePotGrid}>
-            {sidePotSummaries.map((summary) => (
-              <div key={summary.key} className={styles.sidePotCard}>
-                <div className={styles.sidePotCardLabel}><Trophy aria-hidden="true" /><span>{summary.name}</span></div>
-                {summary.status === 'empty' ? (
-                  <div className={styles.sidePotPending}>No Entries</div>
-                ) : summary.status === 'pending' ? (
-                  <div className={styles.sidePotPending}>Pending</div>
-                ) : summary.status === 'tied' ? (
-                  <ol className={styles.sidePotPodium}>
-                    {(summary.winners ?? []).map((winner) => (
-                      <li key={winner.player_id} className={`${styles.sidePotPodiumRow} ${styles.sidePotPodiumFirst}`}>
-                        <span className={styles.sidePotPodiumPlace}>Tie</span>
-                        <span className={styles.sidePotPodiumName}>{winner.player_name}</span>
-                        <span className={styles.sidePotPodiumScore}>{summary.winning_metric ?? '-'}</span>
-                      </li>
-                    ))}
-                  </ol>
-                ) : (summary.winners?.length ?? 0) > 0 ? (
-                  <ol className={styles.sidePotPodium}>
-                    {summary.winners.map((winner, index) => (
-                      <li key={winner.player_id} className={`${styles.sidePotPodiumRow} ${index === 0 ? styles.sidePotPodiumFirst : ''}`}>
-                        <span className={styles.sidePotPodiumPlace}>{index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'}</span>
-                        <span className={styles.sidePotPodiumName}>{winner.player_name}</span>
-                        <span className={styles.sidePotPodiumScore}>{summary.winning_metric ?? '-'}</span>
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <div className={styles.sidePotPending}>Pending</div>
-                )}
-                <div className={styles.sidePotCardFooter}>
-                  {summary.entry_count} entries <span>•</span> Pool ${summary.pool.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (scoreRows.length === 0) {
-    return <p className={styles.emptyNote}>No scores yet. Check back during the tournament.</p>
-  }
-
-  if (hasSidePotSettings && enabledSidePotKeys.size === 0) {
-    return <p className={styles.emptyNote}>No side pots are enabled for this tournament.</p>
-  }
-
-  const hasScratchData = scoreRows.some(row =>
-    row.game1_scratch != null || row.game2_scratch != null || row.game3_scratch != null
-  )
-  const hasHandicapData = scoreRows.some(row =>
-    row.game1_with_handicap != null || row.game2_with_handicap != null || row.game3_with_handicap != null
-  )
-
-  const showHighGameScratch = hasSidePotSettings
-    ? enabledSidePotKeys.has('high_game_scratch')
-    : hasScratchData
-  const showHighSeriesScratch = hasSidePotSettings
-    ? enabledSidePotKeys.has('high_series_scratch')
-    : hasScratchData
-  const showHighGameHandicap = hasSidePotSettings
-    ? enabledSidePotKeys.has('high_game_handicap')
-    : hasHandicapData
-  const showHighSeriesHandicap = hasSidePotSettings
-    ? enabledSidePotKeys.has('high_series_handicap')
-    : hasHandicapData
-
-  const showScratchSection = showHighGameScratch || showHighSeriesScratch
-  const showHandicapSection = showHighGameHandicap || showHighSeriesHandicap
-  const availableSidePotModes = [
-    ...(showScratchSection ? [{ key: 'scratch' as const, label: 'Scratch' }] : []),
-    ...(showHandicapSection ? [{ key: 'handicap' as const, label: 'Handicap' }] : []),
-  ]
-
-  if (availableSidePotModes.length === 0) {
-    return <p className={styles.emptyNote}>No side-pot score programs are available for this squad yet.</p>
-  }
-
-  const displayedSidePotMode = activeSidePotMode === 'scratch' && !showScratchSection
-    ? 'handicap'
-    : activeSidePotMode === 'handicap' && !showHandicapSection
-      ? 'scratch'
-      : activeSidePotMode
-
-  const placeLabel = (i: number) => i === 0 ? '1st' : i === 1 ? '2nd' : '3rd'
-
-  const renderCard = (label: string, leaders: Leader[], modeLabel: string) => (
-    <div key={label} className={styles.sidePotCard}>
-      <div className={styles.sidePotCardLabel}><Trophy aria-hidden="true" /><span>{label}</span></div>
-      {leaders.length === 0 ? (
-        <div className={styles.sidePotPending}>Pending</div>
-      ) : (
-        <ol className={styles.sidePotPodium}>
-          {leaders.map((l, i) => (
-            <li key={i} className={`${styles.sidePotPodiumRow} ${i === 0 ? styles.sidePotPodiumFirst : ''}`}>
-              <span className={styles.sidePotPodiumPlace}>{placeLabel(i)}</span>
-              <span className={styles.sidePotPodiumName}>{l.name}</span>
-              <span className={styles.sidePotPodiumScore}>{l.score}</span>
-            </li>
-          ))}
-        </ol>
-      )}
-      <div className={styles.sidePotCardFooter}>Top 3 scores <span>-</span> {modeLabel}</div>
-    </div>
-  )
-
-  const gameCategories = [
-    { label: 'Game 1', scratchField: 'game1_scratch' as const, handicapField: 'game1_with_handicap' as const },
-    { label: 'Game 2', scratchField: 'game2_scratch' as const, handicapField: 'game2_with_handicap' as const },
-    { label: 'Game 3', scratchField: 'game3_scratch' as const, handicapField: 'game3_with_handicap' as const },
-  ]
-
-  return (
-    <div className={styles.sidePotLeaderboard}>
-      <div className={styles.sidePotLiveControls}>
-        <DataTableToolbar
-          className={styles.aliveToolbar}
-          left={<span className={styles.countBadge}>{availableSidePotModes.length} {availableSidePotModes.length === 1 ? 'program' : 'programs'} available</span>}
-          right={<LiveRefreshControls lastRefresh={lastRefresh} isRefreshing={isRefreshing} canRefresh={canRefresh} onRefreshNow={onRefreshNow} />}
-        />
-      </div>
-
-      <div className={styles.sidePotSection}>
-        <div className={styles.sidePotModeTabs} role="tablist" aria-label="Side pot program">
-          {availableSidePotModes.map(mode => (
-            <button
-              key={mode.key}
-              type="button"
-              role="tab"
-              aria-selected={displayedSidePotMode === mode.key}
-              className={`${styles.sidePotModeTab} ${displayedSidePotMode === mode.key ? styles.sidePotModeTabActive : ''}`}
-              onClick={() => setActiveSidePotMode(mode.key)}
-            >
-              {mode.key === 'scratch' ? <Award aria-hidden="true" /> : <UserRound aria-hidden="true" />}
-              {mode.label}
-            </button>
-          ))}
-        </div>
-
-        {displayedSidePotMode === 'scratch' && showScratchSection && (
-          <div className={styles.sidePotGrid}>
-            {showHighGameScratch && gameCategories.map(c =>
-              renderCard(c.label, getTopN(scoreRows, c.scratchField, 3, highGameScratchEligible), 'Scratch')
-            )}
-            {showHighSeriesScratch && renderCard('Series', getSeriesTopN(scoreRows, 'scratch', 3, highSeriesScratchEligible), 'Scratch')}
-          </div>
-        )}
-        {displayedSidePotMode === 'handicap' && showHandicapSection && (
-          <div className={styles.sidePotGrid}>
-            {showHighGameHandicap && gameCategories.map(c =>
-              renderCard(c.label, getTopN(scoreRows, c.handicapField, 3, highGameHandicapEligible), 'Handicap')
-            )}
-            {showHighSeriesHandicap && renderCard('Series', getSeriesTopN(scoreRows, 'handicap', 3, highSeriesHandicapEligible), 'Handicap')}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function WinnersView({ winners }: { winners: Winner[] }) {
-  if (winners.length === 0) {
-    return <p className={styles.emptyNote}>No winners recorded yet. Brackets in progress.</p>
-  }
-
-  // Group by bracket name
-  const byBracket: Record<string, Winner[]> = {}
-  for (const w of winners) {
-    const key = w.bracket_name || 'Unknown'
-    if (!byBracket[key]) byBracket[key] = []
-    byBracket[key].push(w)
-  }
-
-  const placeLabel = (place?: number) => {
-    if (!place) return ''
-    if (place === 1) return '1st'
-    if (place === 2) return '2nd'
-    if (place === 3) return '3rd'
-    return `${place}th`
-  }
-
-  return (
-    <div className={styles.winnersGrid}>
-      {Object.entries(byBracket).map(([bracketName, ws]) => (
-        <div key={bracketName} className={styles.winnerCard}>
-          <div className={styles.winnerCardTitle}>{bracketName}</div>
-          {ws
-            .sort((a, b) => (a.place ?? 9) - (b.place ?? 9))
-            .map((w, i) => (
-              <div key={i} className={styles.winnerRow}>
-                <span className={styles.winnerPlace}>{placeLabel(w.place)}</span>
-                <span className={styles.winnerName}>{w.player_name || w.name || ''}</span>
-              </div>
-            ))}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ΓöÇΓöÇΓöÇ Page ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
-
 export default function TournamentViewPage() {
   const params = useParams()
   const tournamentRef = params?.tournamentId as string
@@ -1390,11 +763,12 @@ export default function TournamentViewPage() {
 
   // Persist tab preference to localStorage across sessions
   const [copied, setCopied] = useState(false)
+  const isPhone = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   useEffect(() => {
     try { localStorage.setItem('bw-view-tab', tab) } catch {}
   }, [tab])
 
-  // ΓöÇΓöÇ Fetch helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Fetch helpers
 
   const looksNumeric = /^\d+$/.test((tournamentRef ?? '').trim())
 
@@ -1486,7 +860,7 @@ export default function TournamentViewPage() {
     }
   }, [])
 
-  // ΓöÇΓöÇ Session cache hydration/persistence ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Session cache hydration/persistence ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   useEffect(() => {
     if (!tournamentRef) return
@@ -1558,7 +932,7 @@ export default function TournamentViewPage() {
     tab,
   ])
 
-  // ΓöÇΓöÇ Initial load ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Initial load
 
   useEffect(() => {
     if (!tournamentRef) return
@@ -1580,7 +954,7 @@ export default function TournamentViewPage() {
     setSelectedSquadId(getPreferredPublicSquadId(tournament.squads))
   }, [tournament, selectedSquadId])
 
-  // ΓöÇΓöÇ Data refresh (bowlers + brackets + winners) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Data refresh(bowlers + brackets + winners) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
   const refresh = useCallback(async () => {
     if (!resolvedTournamentId || refreshInFlightRef.current) return
@@ -1625,7 +999,7 @@ export default function TournamentViewPage() {
     void refresh()
   }), [refresh])
 
-  // ΓöÇΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  // Render
 
   if (error && !tournament) {
     let attemptedRef = (tournamentRef ?? '').trim()
@@ -1643,142 +1017,112 @@ export default function TournamentViewPage() {
     )
   }
 
+  const VIEWS: Array<{ value: Tab; label: string }> = [
+    { value: 'alive', label: 'Standings' },
+    { value: 'brackets', label: 'Brackets' },
+    { value: 'sidePots', label: 'Side pots' },
+  ]
+  const bracketCount = bracketGroups.reduce((sum, group) => sum + group.brackets.length, 0)
+  const bowlerCount = scoreRows.length || computeAlive(bracketGroups).length
+  const highGame = scoreRows.reduce((best, row) => Math.max(best, row.game1_scratch ?? 0, row.game2_scratch ?? 0, row.game3_scratch ?? 0), 0)
+  const selectedSquad = tournament?.squads.find((s) => s.id === selectedSquadId)
+  const facts = [selectedSquad ? formatSquad(selectedSquad) : null, tournament?.location, bowlerCount ? `${bowlerCount} bowlers` : null].filter(Boolean).join(' · ')
+
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerInner}>
-          <div className={styles.headerTop}>
-            {/* Left: logo + brand */}
-            <div className={styles.brandCol}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- static branding mark is intentionally rendered as plain img in the public header */}
-              <img
-                src="/logo_no_text.svg"
-                alt="BracketWorks"
-                className={styles.brandLogo}
-              />
-              <div className={styles.brandText}>
-                <p className={styles.brandEyebrow}>
-                  BracketWorks <span className={styles.brandSep}>&middot;</span> Public Tournament View
-                </p>
-                <p className={styles.brandSubline}>
-                  {tournament?.name ?? ''}{tournament?.location ? ` ┬╖ ${tournament.location}` : ''}
-                </p>
-              </div>
+    <div className={styles.shell}>
+      <TopNav
+        className={styles.topNav}
+        navLabel="Live view sections"
+        brand={(
+          <span className={topNavBrandClassName()}>
+            <Image src="/logo_no_text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
+            BracketWorks
+          </span>
+        )}
+        actions={(
+          <Button
+            size="sm"
+            variant="secondary"
+            iconOnly={isPhone}
+            icon={copied ? <Check size={ICON_SIZE.md} aria-hidden="true" /> : <Share2 size={ICON_SIZE.md} aria-hidden="true" />}
+            aria-label={isPhone ? (copied ? 'Link copied' : 'Share live view') : undefined}
+            onClick={handleShare}
+            className={styles.share}
+          >
+            {isPhone ? null : copied ? 'Link copied' : 'Share'}
+          </Button>
+        )}
+      >
+        {isPhone ? null : VIEWS.map((view) => (
+          <NavItem
+            key={view.value}
+            href={`#${view.value}`}
+            active={tab === view.value}
+            onClick={(event) => { event.preventDefault(); setTab(view.value) }}
+          >
+            {view.label}
+          </NavItem>
+        ))}
+      </TopNav>
+
+      <Page>
+        {isPhone ? (
+          <SegmentedControl label="Live view sections" options={VIEWS} value={tab} onChange={setTab} className={styles.phoneViews} />
+        ) : null}
+
+        <PageHeader
+          title={tournament?.name ?? 'Live view'}
+          description={facts || undefined}
+          actions={(
+            <div className={styles.headerActions}>
+              {tournament && tournament.squads.length > 1 ? (
+                <SelectField label="Squad" hideLabel value={selectedSquadId ?? ''} onChange={(e) => setSelectedSquadId(Number(e.target.value))}>
+                  {tournament.squads.map((s) => <option key={s.id} value={s.id}>{formatSquad(s)}</option>)}
+                </SelectField>
+              ) : null}
+              <span className={styles.meta} role="status">
+                Updated {lastRefresh.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · auto-refresh on
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />}
+                onClick={() => { void refresh() }}
+                disabled={!resolvedTournamentId || isRefreshing}
+              >
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
             </div>
-
-            {/* Centre: squad selector + tabs */}
-            <div className={styles.controlsPanel}>
-              <div className={styles.controlsTopRow}>
-                {tournament && tournament.squads.length > 1 && (
-                  <div className={styles.squadSelector}>
-                    <label className={styles.squadLabel}>Squad</label>
-                    <span className={styles.squadSelectWrap}>
-                      <CalendarDays aria-hidden="true" />
-                      <select
-                        className={styles.squadSelect}
-                        value={selectedSquadId ?? ''}
-                        onChange={(e) => setSelectedSquadId(Number(e.target.value))}
-                      >
-                        {tournament.squads.map((s) => (
-                          <option key={s.id} value={s.id}>{formatSquad(s)}</option>
-                        ))}
-                      </select>
-                    </span>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className={`${styles.shareBtn} ${copied ? styles.shareBtnCopied : ''}`}
-                  onClick={handleShare}
-                  title="Copy link to share with bowlers"
-                >
-                  <span className={styles.shareBtnIcon} aria-hidden="true">Γåù</span>
-                  <Share2 className={styles.shareBtnSvg} aria-hidden="true" />
-                  <span>{copied ? 'Link Copied' : 'Share Live View'}</span>
-                </button>
-              </div>
-
-              <nav className={styles.tabs} aria-label="View sections">
-                <div className={styles.tabsTrack}>
-                  {(['alive', 'brackets', 'sidePots'] as Tab[]).map((t) => (
-                    <button
-                      key={t}
-                      className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
-                      onClick={() => setTab(t)}
-                    >
-                      {t === 'alive' && <><span className={styles.thFull}>Bracket Summary</span><span className={styles.thShort}>Summary</span></>}
-                      {t === 'brackets' && <span>Brackets</span>}
-                      {t === 'sidePots' && <span>Side Pots</span>}
-                    </button>
-                  ))}
-                </div>
-              </nav>
-            </div>
-
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <div className={styles.main}>
-        <div className={styles.contentShell}>
-          {loading && !resolvedTournamentId ? (
-            <div className={styles.section}>
-              <div className={styles.loadingScreen}>
-                <div className={styles.spinner} />
-                <p>Loading tournament...</p>
-              </div>
-            </div>
-          ) : (
-
-            <>
-              {/* ΓöÇΓöÇ Alive tab ΓöÇΓöÇ */}
-              {tab === 'alive' && (
-                <div className={styles.section}>
-                  <AliveView
-                    bracketGroups={bracketGroups}
-                    lastRefresh={lastRefresh}
-                    isRefreshing={isRefreshing}
-                    canRefresh={Boolean(resolvedTournamentId)}
-                    onRefreshNow={() => { void refresh() }}
-                  />
-                </div>
-              )}
-
-              {/* ΓöÇΓöÇ Brackets tab ΓöÇΓöÇ */}
-              {tab === 'brackets' && (
-                <BracketsTabView
-                  bracketGroups={bracketGroups}
-                  lastRefresh={lastRefresh}
-                  isRefreshing={isRefreshing}
-                  canRefresh={Boolean(resolvedTournamentId)}
-                  onRefreshNow={() => { void refresh() }}
-                />
-              )}
-
-              {/* ΓöÇΓöÇ Side Pots tab ΓöÇΓöÇ */}
-              {tab === 'sidePots' && (
-                <div className={styles.section}>
-                  <SidePotsLeaderboard
-                    scoreRows={scoreRows}
-                    sidePotSummaries={sidePotSummaries}
-                    sidePotsLoaded={sidePotsLoaded}
-                    tournamentId={resolvedTournamentId}
-                    lastRefresh={lastRefresh}
-                    isRefreshing={isRefreshing}
-                    canRefresh={Boolean(resolvedTournamentId)}
-                    onRefreshNow={() => { void refresh() }}
-                  />
-                </div>
-              )}
-            </>
           )}
-        </div>
+        />
 
-      </div>
+        {loading && !resolvedTournamentId ? (
+          <Card><p className={styles.status} role="status">Loading tournament...</p></Card>
+        ) : (
+          <>
+            <StatGroup
+              label="Tournament totals"
+              items={[
+                { label: 'Bowlers', value: String(bowlerCount) },
+                { label: 'Brackets', value: String(bracketCount) },
+                { label: 'High game', value: highGame > 0 ? String(highGame) : '-', detail: highGame > 0 ? 'Scratch' : 'No scores yet' },
+              ]}
+            />
+            {tab === 'alive' ? <StandingsView bracketGroups={bracketGroups} isPhone={isPhone} /> : null}
+            {tab === 'brackets' ? <BracketsView bracketGroups={bracketGroups} isPhone={isPhone} /> : null}
+            {tab === 'sidePots' ? (
+              <SidePotsView
+                scoreRows={scoreRows}
+                sidePotSummaries={sidePotSummaries}
+                sidePotsLoaded={sidePotsLoaded}
+                tournamentId={resolvedTournamentId}
+              />
+            ) : null}
+          </>
+        )}
 
+        <p className={styles.footer}>Powered by BracketWorks</p>
+      </Page>
     </div>
   )
 }

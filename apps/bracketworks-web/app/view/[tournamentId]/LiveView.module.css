@@ -1,0 +1,144 @@
+/* Live View (docs/ui-standards.md section 7a): shell, controls, side pots, footer. */
+
+.shell {
+  min-height: 100dvh;
+  background: var(--bw-page);
+}
+
+.phoneViews {
+  display: flex;
+  width: 100%;
+}
+
+.phoneViews > * {
+  flex: 1;
+  min-height: var(--space-10);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.status,
+.meta,
+.footer {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.status {
+  font: var(--type-body);
+}
+
+.footer {
+  padding: var(--space-4) 0 var(--space-6);
+  text-align: center;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.search {
+  flex: 0 1 calc(var(--space-20) * 3.5);
+}
+
+.pots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.pot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.potTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.leaders {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leaderRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.leaderName {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-table);
+  color: var(--bw-text-title);
+}
+
+.leaderScore {
+  font: var(--type-table);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+@media (max-width: 767px) {
+  .topNav {
+    height: var(--space-14);
+  }
+
+  .share {
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+  }
+
+  .picker {
+    width: 100%;
+  }
+
+  .picker > :nth-child(2) {
+    flex: 1;
+  }
+
+  .search {
+    flex-basis: 100%;
+  }
+
+  .pots {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -38,6 +38,7 @@ function scoreOf(match: Match, side: 'A' | 'B'): number | null {
 
 function cleanName(name?: string | null): string | null {
   if (!name || name === 'TBD') return null
+  if (name === 'BYE') return 'Bye'
   return name
 }
 
