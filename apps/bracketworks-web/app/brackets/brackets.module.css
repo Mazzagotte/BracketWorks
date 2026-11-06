@@ -3,9 +3,9 @@
    ======================================== */
 
 .pageContainer {
-  max-width: 1200px;
+  max-width: var(--size-8xl);
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
 
 /* ========================================
@@ -16,12 +16,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .mismatchBannerText {
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   font-weight: 600;
   line-height: 1.42;
 }
@@ -29,10 +29,10 @@
 .mismatchBannerText::before {
   content: 'Important';
   display: inline-block;
-  margin-right: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
+  margin-right: var(--space-2-5);
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -43,10 +43,10 @@
 
 .mismatchBannerButton {
   border: none;
-  border-radius: 10px;
-  min-height: 42px;
-  padding: 0 18px;
-  font-size: 0.86rem;
+  border-radius: var(--radius-lg);
+  min-height: var(--space-11);
+  padding: 0 var(--space-5);
+  font-size: var(--font-size-md);
   font-weight: 700;
   white-space: nowrap;
   color: var(--color-white);
@@ -68,11 +68,11 @@
   .mismatchBanner {
     align-items: stretch;
     flex-direction: column;
-    padding: 0.9rem;
+    padding: var(--space-3-5);
   }
 
   .mismatchBannerText::before {
-    margin-bottom: 6px;
+    margin-bottom: var(--space-1-5);
   }
 
   .mismatchBannerButton {
@@ -85,20 +85,20 @@
    ======================================== */
 
 .controlPanel {
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
   overflow: hidden;
 }
 
 .controlDivider {
-  height: 1px;
+  height: var(--space-px);
   background: color-mix(in srgb, var(--bw-border-subtle) 68%, transparent);
   margin: 0;
 }
 
 .bracketsQuickActionsRow {
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 @media (max-width: 640px) {
@@ -106,14 +106,14 @@
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
-    gap: 0.44rem;
+    gap: var(--space-2);
   }
 
   .bracketsQuickActionsGroupLeft {
     display: grid;
     grid-column: 1 / span 2;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.44rem;
+    gap: var(--space-2);
     width: 100%;
   }
 
@@ -121,17 +121,17 @@
     display: grid;
     grid-column: 3;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.44rem;
+    gap: var(--space-2);
     width: 100%;
     justify-content: stretch;
   }
 
   .bracketsQuickActionsRow :where(button, a) {
     width: 100%;
-    min-height: 32px;
+    min-height: var(--space-8);
     justify-content: center;
-    padding: 0.34rem 0.46rem;
-    font-size: 0.72rem;
+    padding: var(--space-1-5) var(--space-2);
+    font-size: var(--font-size-sm);
     line-height: 1.1;
     text-align: center;
   }
@@ -142,10 +142,10 @@
    ======================================== */
 
 .devButton {
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 6px;
+  padding: var(--space-1-5) var(--space-3-5);
+  border-radius: var(--radius-md);
   border: 1.5px dashed var(--opacity-white-35);
   background: var(--opacity-white-08);
   color: var(--opacity-white-60);
@@ -176,15 +176,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: var(--space-52);
   font-family: var(--font-family-primary);
   text-align: center;
 }
 
 .authRequired {
-  padding: 2rem;
+  padding: var(--space-8);
   text-align: center;
-  min-height: 200px;
+  min-height: var(--space-52);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,8 +202,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-5);
   background: transparent;
   max-width: 100%;
   margin: 0;
@@ -212,14 +212,14 @@
 .navMeta {
   display: flex;
   align-items: center;
-  gap: 0.52rem;
+  gap: var(--space-2);
   flex-wrap: wrap;
   min-width: 0;
 }
 
 .navMetaPrimary {
   color: var(--bw-text-title);
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
   font-weight: 760;
   line-height: 1.15;
 }
@@ -228,13 +228,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 22px;
-  padding: 0 0.5rem;
-  border-radius: 999px;
+  min-height: var(--space-6);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
   border: 1px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
   background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--bw-text-accent);
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 760;
   letter-spacing: 0;
   white-space: nowrap;
@@ -243,20 +243,20 @@
 .navBtns {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
 .navBtn {
-  padding: 0.75rem 1.25rem;
+  padding: var(--space-3) var(--space-5);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-lg);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: var(--space-2);
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navBtn:not(:disabled) {
@@ -284,7 +284,7 @@
   height: 100%;
   appearance: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: transparent;
 }
@@ -297,22 +297,22 @@
   .pageContainer {
     max-width: none;
     margin: 0;
-    padding: 0.8rem 0.5rem 1rem;
+    padding: var(--space-3) var(--space-2) var(--space-4);
   }
 }
 
 @media (max-width: 640px) {
   .pageContainer {
-    padding: 0.46rem 0.18rem 0.82rem;
+    padding: var(--space-2) var(--space-0-5) var(--space-3-5);
   }
 
   .controlPanel {
-    margin-bottom: 0.78rem;
-    border-radius: 12px;
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-lg);
   }
 
   .bracketNav {
-    padding: 0.42rem 0.58rem;
+    padding: var(--space-1-5) var(--space-2-5);
     justify-content: space-between;
   }
 
@@ -322,44 +322,44 @@
   }
 
   .navMetaPrimary {
-    font-size: 0.72rem;
+    font-size: var(--font-size-sm);
   }
 
   .navMetaSecondary {
-    min-height: 20px;
-    padding: 0 0.42rem;
-    font-size: 0.62rem;
+    min-height: var(--space-5);
+    padding: 0 var(--space-1-5);
+    font-size: var(--font-size-2xs);
   }
 
   .navBtn {
-    min-height: 30px;
-    padding: 0.32rem 0.62rem;
-    font-size: 0.72rem;
+    min-height: var(--space-8);
+    padding: var(--space-1-5) var(--space-2-5);
+    font-size: var(--font-size-sm);
   }
 }
 
 @media (max-width: 390px) {
   .pageContainer {
-    padding: 0.5rem 0.2rem 0.8rem;
+    padding: var(--space-2) var(--space-1) var(--space-3);
   }
 
   .mismatchBannerText {
-    font-size: 0.78rem;
+    font-size: var(--font-size-sm);
     line-height: 1.35;
   }
 
   .mismatchBannerButton {
-    min-height: 40px;
-    padding: 0 12px;
-    font-size: 0.78rem;
+    min-height: var(--space-10);
+    padding: 0 var(--space-3);
+    font-size: var(--font-size-sm);
   }
 }
 
 /* Entries, Scores, and Dashboard alignment */
 .pageContainer {
   width: 100%;
-  max-width: min(1600px, 100%);
-  padding: 8px;
+  max-width: min(var(--size-11xl), 100%);
+  padding: var(--space-2);
 }
 
 .bracketsHeroCard,
@@ -367,46 +367,46 @@
 .bracketStatsCard,
 .controlPanel {
   border: 1px solid var(--bw-border-card);
-  border-radius: 18px;
+  border-radius: var(--radius-2xl);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
   box-shadow: var(--bw-shadow-card);
 }
 
 .bracketsHeroCard {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
 }
 
 .bracketsHeroTitle {
-  font-size: clamp(24px, 2.4vw, 34px);
+  font-size: clamp(var(--font-size-4xl), 2.4vw, var(--font-size-6xl));
 }
 
 .bracketsHeroSubtitle {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
 }
 
 .bracketsHeroActions :where(button, a) {
-  min-height: 38px;
-  gap: 8px;
-  border-radius: 8px;
+  min-height: var(--control-height);
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
 }
 
 .bracketsHeroActions svg {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .bracketsTopRow {
-  grid-template-columns: minmax(0, 1.2fr) minmax(420px, 1fr);
-  gap: 14px;
-  margin-bottom: 14px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(var(--size-md), 1fr);
+  gap: var(--space-3-5);
+  margin-bottom: var(--space-3-5);
 }
 
 .bracketsQuickActionsTitle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 14px 16px 4px;
+  gap: var(--space-2);
+  padding: var(--space-3-5) var(--space-4) var(--space-1);
   border: 0;
   background: transparent;
   color: var(--bw-text-title);
@@ -414,19 +414,19 @@
 }
 
 .bracketsQuickActionsTitle svg {
-  width: 18px;
-  height: 18px;
+  width: var(--space-5);
+  height: var(--space-5);
   color: var(--bw-text-accent);
 }
 
 .bracketsQuickActionsCard > :last-child {
-  padding: 6px 16px 14px;
+  padding: var(--space-1-5) var(--space-4) var(--space-3-5);
 }
 
 .bracketsQuickActionsRow,
 .bracketsQuickActionsGroupLeft,
 .bracketsQuickActionsGroupRight {
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .bracketsQuickActionsGroupLeft {
@@ -437,18 +437,18 @@
 
 .bracketsQuickActionsRow :where(button, a) {
   width: 100%;
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
   justify-content: center;
-  gap: 8px;
-  border-radius: 8px;
-  font-size: 12px;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .bracketsQuickActionsRow svg {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .bracketsQuickActionsGroupLeft > :first-child {
@@ -466,7 +466,7 @@
 }
 
 .bracketStatsCard {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   display: flex;
   align-items: center;
 }
@@ -478,10 +478,10 @@
 }
 
 .bracketStatsGrid > div {
-  min-height: 52px;
-  padding: 4px 16px;
+  min-height: var(--space-14);
+  padding: var(--space-1) var(--space-4);
   justify-content: center;
-  gap: 5px;
+  gap: var(--space-1-5);
   border: 0;
   border-right: 1px solid var(--bw-border-subtle);
   border-radius: 0;
@@ -493,22 +493,22 @@
 }
 
 .bracketStatsGrid span {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   text-transform: none;
 }
 
 .bracketStatsGrid strong {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .bracketStatusGood {
   width: fit-content;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid var(--color-success-border);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   color: var(--bw-text-success);
   background: var(--color-success-soft);
-  font-size: 11px !important;
+  font-size: var(--font-size-xs) !important;
 }
 
 .bracketSearchWrap {
@@ -517,16 +517,16 @@
 
 .controlPanel {
   width: 100%;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-3-5);
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(420px, 1fr);
+  grid-template-columns: minmax(0, auto) minmax(var(--size-md), 1fr);
   align-items: center;
   overflow: hidden;
 }
 
 .bracketNav {
   justify-content: flex-end;
-  padding: 10px 16px;
+  padding: var(--space-2-5) var(--space-4);
 }
 
 .navMeta {
@@ -534,29 +534,29 @@
 }
 
 .bracketSelectControl {
-  min-width: 240px;
-  min-height: 38px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  min-width: var(--space-60);
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
 }
 
 .navBtns {
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .navBtn {
-  min-height: 38px;
-  padding: 8px 14px;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3-5);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 8px;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
 }
 
 .navBtn svg {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .navBtns .navBtn:last-child:not(:disabled) {
@@ -581,11 +581,11 @@
 
 @media (max-width: 700px) {
   .pageContainer {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .bracketsHeroCard {
-    padding: 14px 16px;
+    padding: var(--space-3-5) var(--space-4);
   }
 
   .bracketsQuickActionsGroupLeft {
@@ -609,7 +609,7 @@
   }
 
   .bracketStatsGrid > div {
-    padding-block: 8px;
+    padding-block: var(--space-2);
   }
 
   .bracketNav {
@@ -669,34 +669,34 @@
 
 .bracketsQuickActionsGroupRight {
   width: 100%;
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 10px;
+  gap: var(--space-2) var(--space-2-5);
 }
 
 .quickActionAdminLabel {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   color: var(--bw-text-body);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
 }
 
 .quickActionAdminLabel::after {
   content: '';
-  height: 1px;
+  height: var(--space-px);
   flex: 1;
   background: var(--bw-border-subtle);
 }
 
 .bracketsQuickActionsGroupRight .quickActionDangerBtn {
   width: auto;
-  min-height: 36px;
-  padding: 7px 10px;
+  min-height: var(--space-9);
+  padding: var(--space-2) var(--space-2-5);
 }
 
 .bracketWorkspaceCard {
@@ -704,7 +704,7 @@
   width: 100%;
   overflow: visible;
   border: 1px solid var(--bw-border-card);
-  border-radius: 18px;
+  border-radius: var(--radius-2xl);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
   box-shadow: var(--bw-shadow-card);
 }
@@ -720,12 +720,12 @@
 
 .bracketSearchRow {
   grid-column: 1 / -1;
-  padding: 0.62rem 0.78rem;
+  padding: var(--space-2-5) var(--space-3);
   border-top: 1px solid var(--bw-border-subtle);
 }
 
 .bracketWorkspaceStage {
-  padding: 14px 16px 0;
+  padding: var(--space-3-5) var(--space-4) 0;
 }
 
 .bracketWorkspaceStage > :first-child {
@@ -733,14 +733,14 @@
 }
 
 .bracketWorkspaceFooter {
-  min-height: 54px;
-  padding: 10px 16px;
+  min-height: var(--space-14);
+  padding: var(--space-2-5) var(--space-4);
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3-5);
   color: var(--bw-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 .bracketWorkspaceFooter > :nth-child(2) {
@@ -754,13 +754,13 @@
 }
 
 .viewOptions summary {
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-3);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--bw-text-body);
   background: color-mix(in srgb, var(--bw-surface-panel) 82%, transparent);
   cursor: pointer;
@@ -773,8 +773,8 @@
 }
 
 .viewOptions summary svg {
-  width: 15px;
-  height: 15px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .viewOptions[open] summary {
@@ -785,9 +785,9 @@
 .viewOptionsPanel {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + var(--space-2));
   z-index: 20;
-  width: min(520px, calc(100vw - 48px));
+  width: min(var(--size-lg), calc(100vw - var(--space-12)));
 }
 
 .viewOptionsPanel > div {
@@ -796,7 +796,7 @@
 
 @media (max-width: 900px) {
   .bracketWorkspaceStage {
-    padding: 10px 10px 0;
+    padding: var(--space-2-5) var(--space-2-5) 0;
   }
 
   .bracketWorkspaceFooter {
@@ -832,9 +832,9 @@
 
 @media (max-width: 360px) {
   .navBtn {
-    min-height: 36px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.78rem;
+    min-height: var(--space-9);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 }
 
@@ -864,7 +864,7 @@
 
 .noMatches {
   text-align: center;
-  padding: 3rem;
+  padding: var(--space-12);
   color: var(--color-text-secondary);
 }
 
@@ -875,18 +875,18 @@
 .mobileBracketList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .mobileBracketSection {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mobileBracketSectionTitle {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -896,16 +896,16 @@
 .mobileBracketSectionList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mobileBracketListItem {
   width: 100%;
   border: 1px solid var(--color-border-light);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--color-brand-ivory-light);
   box-shadow: var(--shadow-soft);
-  padding: 12px;
+  padding: var(--space-3);
   text-align: left;
 }
 
@@ -913,57 +913,57 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mobileBracketListTitle {
-  font-size: 0.95rem;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .mobileBracketListMode {
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--color-primary);
   background: var(--color-warning-tint);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
-  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-2);
   white-space: nowrap;
 }
 
 .mobileBracketListMeta {
-  margin-top: 6px;
-  font-size: 0.78rem;
+  margin-top: var(--space-1-5);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
 
 .mobileTreeViewWrap {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .mobileTreeHeader {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .mobileTreeBackBtn {
   width: fit-content;
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-white);
   color: var(--color-text-primary);
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
   font-weight: 700;
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
 }
 
 .mobileTreeTitle {
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 700;
   color: var(--color-text-primary);
 }
@@ -973,8 +973,8 @@
    ======================================== */
 
 .pageContainer {
-  max-width: 1280px;
-  padding: 0.75rem 1rem;
+  max-width: var(--size-9xl);
+  padding: var(--space-3) var(--space-4);
   color: var(--bw-text-body);
 }
 
@@ -982,7 +982,7 @@
 .emptyState,
 .loadingState,
 .authRequired {
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
 }
 
 .quickActionDangerBtn {
@@ -999,7 +999,7 @@
 }
 
 .controlPanel {
-  margin-bottom: 0.95rem;
+  margin-bottom: var(--space-4);
   overflow: hidden;
   background: var(--bw-surface-panel-strong);
 }
@@ -1009,20 +1009,20 @@
 }
 
 .bracketNav {
-  padding: 0.52rem 0.72rem;
+  padding: var(--space-2) var(--space-3);
   align-items: center;
   border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 58%, transparent);
 }
 
 .navMeta {
   align-items: center;
-  gap: 0.62rem;
+  gap: var(--space-2-5);
 }
 
 .bracketPicker {
   display: flex;
   align-items: center;
-  gap: 0.42rem;
+  gap: var(--space-1-5);
   min-width: 0;
 }
 
@@ -1030,17 +1030,17 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.25rem;
-  min-width: 94px;
+  gap: var(--space-1);
+  min-width: var(--space-24);
 }
 
 .bracketProgressMeter {
   width: 100%;
-  height: 3px;
+  height: var(--space-1);
   appearance: none;
   overflow: hidden;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--bw-border-subtle);
 }
 
@@ -1057,12 +1057,12 @@
 }
 
 .navBtn {
-  min-width: 112px;
-  min-height: 38px;
-  padding: 0.36rem 0.68rem;
+  min-width: var(--space-28);
+  min-height: var(--control-height);
+  padding: var(--space-1-5) var(--space-2-5);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
-  font-size: 0.74rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
   font-weight: 750;
   letter-spacing: 0;
 }
@@ -1088,12 +1088,12 @@
 }
 
 .mismatchBanner {
-  margin-bottom: 0.95rem;
+  margin-bottom: var(--space-4);
   box-shadow: none;
 }
 
 .mismatchBannerText {
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   color: var(--bw-text-title);
 }
 
@@ -1105,8 +1105,8 @@
 }
 
 .mismatchBannerButton {
-  min-height: 34px;
-  border-radius: 10px;
+  min-height: var(--space-9);
+  border-radius: var(--radius-lg);
   color: var(--bw-text-title);
   background: color-mix(in srgb, var(--color-error) 28%, transparent);
   box-shadow: none;
@@ -1130,25 +1130,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
-  padding: 2rem 1.25rem;
+  min-height: var(--space-56);
+  padding: var(--space-8) var(--space-5);
   text-align: center;
 }
 
 .emptyTitle {
-  margin: 0 0 0.45rem;
+  margin: 0 0 var(--space-2);
   color: var(--bw-text-title);
-  font-size: 1.05rem;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   font-weight: 800;
   letter-spacing: 0;
 }
 
 .emptyMessage {
-  max-width: 520px;
+  max-width: var(--size-lg);
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 0.86rem;
+  font-size: var(--font-size-md);
   line-height: 1.5;
 }
 
@@ -1158,7 +1158,7 @@
 }
 
 .mobileBracketListItem {
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   box-shadow: none;
 }
 
@@ -1178,44 +1178,44 @@
 }
 
 .bracketsHeroCard {
-  margin-bottom: 0.74rem;
-  padding: 0.84rem 0.92rem;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3-5) var(--space-3-5);
 }
 
 .bracketsHeroTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.72rem;
+  gap: var(--space-3);
 }
 
 .bracketsHeroTitle {
   margin: 0;
-  font-size: clamp(1.22rem, 2vw, 1.62rem);
+  font-size: clamp(var(--font-size-3xl), 2vw, var(--font-size-4xl));
   font-weight: 850;
   line-height: 1.06;
 }
 
 .bracketsHeroSubtitle {
-  margin: 0.22rem 0 0;
-  font-size: 0.78rem;
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
   color: var(--bw-text-muted);
 }
 
 .bracketsHeroActions {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .bracketsTopRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(500px, 0.72fr);
+  grid-template-columns: minmax(0, 1fr) minmax(var(--size-lg), 0.72fr);
   align-items: start;
-  gap: 0.74rem;
-  margin-bottom: 0.74rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .bracketsTopRow :where(.quickActionsCard),
@@ -1226,14 +1226,14 @@
 
 .bracketsQuickActionsRow {
   align-items: center;
-  gap: 0.42rem;
+  gap: var(--space-1-5);
 }
 
 .bracketsQuickActionsRow .bracketsQuickActionsGroupLeft {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 0.42rem;
+  gap: var(--space-1-5);
   width: 100%;
 }
 
@@ -1244,10 +1244,10 @@
 }
 
 .bracketsQuickActionsRow :where(button, a) {
-  min-height: 31px;
-  border-radius: 9px;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.72rem;
+  min-height: var(--space-8);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--font-size-sm);
   font-weight: 760;
 }
 
@@ -1266,37 +1266,37 @@
 .bracketStatsTitle {
   display: flex;
   align-items: center;
-  gap: 0.48rem;
+  gap: var(--space-2);
   margin: 0;
-  padding: 0.64rem 0.78rem;
+  padding: var(--space-2-5) var(--space-3);
   border-bottom: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-title);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   line-height: 1.1;
 }
 
 .bracketStatsTitle svg {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   color: var(--bw-text-accent);
 }
 
 .bracketStatsGrid {
   display: grid;
-  grid-template-columns: minmax(130px, 1.45fr) repeat(3, minmax(82px, 1fr));
+  grid-template-columns: minmax(var(--space-32), 1.45fr) repeat(3, minmax(var(--space-20), 1fr));
   align-items: start;
-  padding: 0.64rem 0.78rem;
+  padding: var(--space-2-5) var(--space-3);
 }
 
 .bracketStatsGrid > div {
   min-width: 0;
   min-height: 0;
-  padding: 0.1rem 0.72rem;
+  padding: var(--space-0-5) var(--space-3);
   border-left: 1px solid var(--bw-border-subtle);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.24rem;
+  gap: var(--space-1);
 }
 
 .bracketStatsGrid > div:first-child {
@@ -1306,7 +1306,7 @@
 
 .bracketStatsGrid span {
   color: var(--bw-text-muted);
-  font-size: 0.6rem;
+  font-size: var(--font-size-2xs);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1314,35 +1314,35 @@
 
 .bracketStatsGrid strong {
   color: var(--bw-text-title);
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   line-height: 1.15;
 }
 
 .bracketStatusGood {
   width: fit-content;
-  padding: 0.22rem 0.48rem;
+  padding: var(--space-1) var(--space-2);
   border: 1px solid color-mix(in srgb, var(--color-success) 35%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--color-success);
   background: color-mix(in srgb, var(--color-success) 10%, transparent);
-  font-size: 0.7rem !important;
+  font-size: var(--font-size-xs) !important;
 }
 
 .bracketSelectLabel {
   color: var(--bw-text-muted);
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
   font-weight: 760;
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .bracketSelectControl {
-  min-width: 206px;
-  min-height: 38px;
-  border-radius: 9px;
+  min-width: var(--space-52);
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-subtle);
-  padding: 0.26rem 0.56rem;
-  font-size: 0.72rem;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
   font-weight: 720;
   color: var(--bw-text-title);
   background: var(--bw-surface-panel);
@@ -1361,22 +1361,22 @@
 
 @media (max-width: 900px) {
   .pageContainer {
-    padding: 0.65rem 0.75rem;
+    padding: var(--space-2-5) var(--space-3);
   }
 
   .bracketsHeroCard {
-    margin-bottom: 0.72rem;
-    padding: 0.72rem 0.72rem;
+    margin-bottom: var(--space-3);
+    padding: var(--space-3) var(--space-3);
   }
 
   .bracketsHeroTop {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.58rem;
+    gap: var(--space-2-5);
   }
 
   .bracketsHeroSubtitle {
-    font-size: 0.78rem;
+    font-size: var(--font-size-sm);
   }
 
   .bracketsHeroActions {
@@ -1385,8 +1385,8 @@
 
   .bracketsTopRow {
     grid-template-columns: 1fr;
-    gap: 0.6rem;
-    margin-bottom: 0.6rem;
+    gap: var(--space-2-5);
+    margin-bottom: var(--space-2-5);
   }
 
   .bracketStatsCard {
@@ -1399,84 +1399,84 @@
   }
 
   .bracketStatsGrid > div {
-    padding: 0.42rem 0.6rem;
+    padding: var(--space-1-5) var(--space-2-5);
   }
 
   .bracketSelectControl {
     min-width: 0;
-    width: min(100%, 250px);
+    width: min(100%, var(--space-64));
   }
 
   .bracketsQuickActionsRow {
-    gap: 0.34rem;
+    gap: var(--space-1-5);
   }
 
   .bracketsQuickActionsGroupLeft {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.34rem;
+    gap: var(--space-1-5);
   }
 
   .bracketsQuickActionsRow :where(button, a) {
-    min-height: 30px;
-    padding: 0.26rem 0.54rem;
-    font-size: 0.68rem;
+    min-height: var(--space-8);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .mobileBracketList {
-    gap: 0.72rem;
+    gap: var(--space-3);
   }
 
   .mobileBracketSection {
-    gap: 0.44rem;
+    gap: var(--space-2);
   }
 
   .mobileBracketSectionTitle {
-    padding-inline: 0.16rem;
-    font-size: 0.72rem;
+    padding-inline: var(--space-0-5);
+    font-size: var(--font-size-sm);
   }
 
   .mobileBracketSectionList {
-    gap: 0.44rem;
+    gap: var(--space-2);
   }
 
   .mobileBracketListItem {
-    padding: 0.62rem 0.68rem;
-    border-radius: 16px;
+    padding: var(--space-2-5) var(--space-2-5);
+    border-radius: var(--radius-xl);
   }
 
   .mobileBracketListTitle {
-    font-size: 0.82rem;
+    font-size: var(--font-size-base);
     line-height: 1.15;
   }
 
   .mobileBracketListMode {
-    padding: 0.2rem 0.45rem;
-    font-size: 0.64rem;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-2xs);
   }
 
   .mobileBracketListMeta {
-    margin-top: 0.24rem;
-    font-size: 0.68rem;
+    margin-top: var(--space-1);
+    font-size: var(--font-size-xs);
     line-height: 1.3;
   }
 
   .mobileTreeViewWrap {
-    gap: 0.55rem;
+    gap: var(--space-2);
   }
 
   .mobileTreeHeader {
-    gap: 0.35rem;
-    padding-inline: 0.12rem;
+    gap: var(--space-1-5);
+    padding-inline: var(--space-0-5);
   }
 
   .mobileTreeBackBtn {
-    min-height: 32px;
-    padding: 0.32rem 0.7rem;
-    font-size: 0.72rem;
+    min-height: var(--space-8);
+    padding: var(--space-1-5) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 
   .mobileTreeTitle {
-    font-size: 0.74rem;
+    font-size: var(--font-size-sm);
     line-height: 1.25;
   }
 
@@ -1521,20 +1521,20 @@
   .mobileBracketSectionList {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.44rem;
+    gap: var(--space-2);
   }
 
   .mobileBracketListItem {
-    padding: 0.52rem;
+    padding: var(--space-2);
   }
 
   .mobileBracketListTitle {
-    font-size: 0.84rem;
+    font-size: var(--font-size-base);
   }
 
   .mobileBracketListMeta {
-    margin-top: 0.28rem;
-    font-size: 0.7rem;
+    margin-top: var(--space-1);
+    font-size: var(--font-size-xs);
   }
 }
 
@@ -1555,7 +1555,7 @@
 
   .bracketsQuickActionsGroupLeft > :where(button, a) {
     min-width: 0;
-    padding-inline: 0.35rem;
+    padding-inline: var(--space-1-5);
     white-space: normal;
     line-height: 1.15;
   }
@@ -1565,23 +1565,23 @@
   }
 
   .bracketsHeroCard {
-    padding: 0.64rem 0.64rem;
+    padding: var(--space-2-5) var(--space-2-5);
   }
 
   .bracketsHeroTitle {
-    font-size: 1.16rem;
+    font-size: var(--font-size-2xl);
   }
 
   .bracketsHeroSubtitle {
-    margin-top: 0.26rem;
-    font-size: 0.74rem;
+    margin-top: var(--space-1);
+    font-size: var(--font-size-sm);
   }
 
   .bracketsHeroActions {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.36rem;
+    gap: var(--space-1-5);
   }
 
   .bracketsHeroActions :where(button, a) {
@@ -1595,42 +1595,42 @@
 
   .bracketSelectControl {
     width: 100%;
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
   }
 
   .navBtn {
-    min-height: 30px;
-    padding: 0.3rem 0.56rem;
-    font-size: 0.68rem;
+    min-height: var(--space-8);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .pageContainer {
-    padding: 0.56rem 0.45rem 0.9rem;
+    padding: var(--space-2) var(--space-2) var(--space-3-5);
   }
 
   .controlPanel {
-    margin-bottom: 0.72rem;
-    border-radius: 14px;
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-xl);
   }
 
   .mobileBracketList {
-    gap: 0.62rem;
+    gap: var(--space-2-5);
   }
 
   .mobileBracketListItem {
-    padding: 0.58rem 0.62rem;
+    padding: var(--space-2-5) var(--space-2-5);
   }
 
   .mobileBracketListTitleRow {
-    gap: 0.5rem;
+    gap: var(--space-2);
   }
 
   .mobileBracketListTitle {
-    font-size: 0.8rem;
+    font-size: var(--font-size-base);
   }
 
   .mobileBracketListMeta {
-    font-size: 0.66rem;
+    font-size: var(--font-size-xs);
   }
 
   .mobileTreeBackBtn {
@@ -1641,11 +1641,11 @@
 
 @media (max-width: 390px) {
   .pageContainer {
-    padding: 0.48rem 0.35rem 0.82rem;
+    padding: var(--space-2) var(--space-1-5) var(--space-3-5);
   }
 
   .bracketsHeroTitle {
-    font-size: 1.06rem;
+    font-size: var(--font-size-xl);
   }
 
   .bracketsHeroActions {
@@ -1657,43 +1657,43 @@
   }
 
   .mobileBracketSectionTitle {
-    font-size: 0.68rem;
+    font-size: var(--font-size-xs);
   }
 
   .mobileBracketListItem {
-    padding: 0.52rem 0.56rem;
-    border-radius: 14px;
+    padding: var(--space-2) var(--space-2);
+    border-radius: var(--radius-xl);
   }
 
   .mobileBracketListTitle {
-    font-size: 0.76rem;
+    font-size: var(--font-size-sm);
   }
 
   .mobileBracketListMode {
-    padding: 0.18rem 0.4rem;
-    font-size: 0.6rem;
+    padding: var(--space-0-5) var(--space-1-5);
+    font-size: var(--font-size-2xs);
   }
 
   .mobileBracketListMeta,
   .mobileTreeTitle {
-    font-size: 0.64rem;
+    font-size: var(--font-size-2xs);
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .bracketsTopRow { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .bracketStatsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .bracketsTopRow { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .bracketStatsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 }
 
 @media (max-width: 767px) {
-  .pageContainer { padding: 12px; gap: 12px; }
+  .pageContainer { padding: var(--space-3); gap: var(--space-3); }
   .bracketsTopRow,
-  .bracketStatsGrid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .bracketStatsGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
   .bracketsQuickActionsRow,
   .bracketsQuickActionsGroupLeft,
   .bracketsQuickActionsGroupRight,
-  .bracketSearchRow { width: 100%; align-items: stretch; flex-direction: column; gap: 12px; }
+  .bracketSearchRow { width: 100%; align-items: stretch; flex-direction: column; gap: var(--space-3); }
   .bracketsQuickActionsRow :where(button, a),
-  .bracketSearchRow :where(button, input) { width: 100%; min-height: 40px; }
+  .bracketSearchRow :where(button, input) { width: 100%; min-height: var(--space-10); }
   .mobileTreeViewWrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
 }

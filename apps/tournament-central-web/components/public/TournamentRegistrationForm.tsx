@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, KeyboardEvent as ReactKeyboardEvent, SetStateAction } from 'react';
 import { CalendarDays, Check, Info, MapPin, Trophy, X } from 'lucide-react';
-import { capitalizeFirstLetter } from '@bracketworks/ui';
+import { capitalizeFirstLetter, ICON_SIZE } from '@bracketworks/ui';
 
 import styles from '../../app/page.module.css';
 import TournamentRules, { type PublicTournamentDocument } from './TournamentRules';
@@ -270,7 +270,7 @@ export default function TournamentRegistrationForm({
       className={index < current ? styles.registrationStepComplete : undefined}
       aria-label={`${label}${index < current ? ', completed' : ''}`}
       aria-current={index === current ? 'step' : undefined}>
-      <span className={styles.registrationStepNumber} aria-hidden="true">{index < current ? <Check size={16} strokeWidth={3} /> : index + 1}</span>
+      <span className={styles.registrationStepNumber} aria-hidden="true">{index < current ? <Check size={ICON_SIZE.md} strokeWidth={3} /> : index + 1}</span>
       <span className={styles.registrationStepLabel}>{label}</span>
     </li>)}
   </ol>;
@@ -296,7 +296,7 @@ export default function TournamentRegistrationForm({
         <h4>Register: {tournamentName}</h4>
         {onClose ? (
           <button type="button" className={styles.detailsModalClose} onClick={onClose} aria-label="Close tournament registration">
-            <X size={18} strokeWidth={2.25} aria-hidden="true" />
+            <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
           </button>
         ) : null}
       </header>
@@ -314,7 +314,7 @@ export default function TournamentRegistrationForm({
 
         <div className={styles.registrationSummary}>
           <span className={styles.registrationSummaryIcon} aria-hidden="true">
-            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.registrationSummaryLogo} /> : <Trophy size={22} />}
+            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.registrationSummaryLogo} /> : <Trophy size={ICON_SIZE['2xl']} />}
           </span>
           <div className={styles.registrationSummaryItem}>
             <span>Event</span>
@@ -374,13 +374,13 @@ export default function TournamentRegistrationForm({
           )}
 
           <p className={styles.registrationBowlerCountInfo}>
-            <Info size={19} aria-hidden="true" />
+            <Info size={ICON_SIZE.xl} aria-hidden="true" />
             {`This event requires ${requiredBowlerCount} bowler ${requiredBowlerCount === 1 ? 'form' : 'forms'}.`}
           </p>
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
             <div key={`bowler-${bowlerIndex}`} className={styles.registrationBowlerSection}>
-              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={16} /></span>{`Bowler ${bowlerIndex + 1}`}</h5>
+              <h5><span className={styles.registrationBowlerIcon} aria-hidden="true"><Trophy size={ICON_SIZE.md} /></span>{`Bowler ${bowlerIndex + 1}`}</h5>
               {bowlerIndex === 0 && isSignedIn && <div className={styles.registrationConvenience}>
                 <button type="button" className={styles.detailsModalSecondaryAction} disabled={isLoadingProfile} onClick={() => void fillAccountInformation()}>
                   {isLoadingProfile ? 'Loading account...' : 'Use my account information'}
@@ -694,7 +694,7 @@ export default function TournamentRegistrationForm({
         {submitMessage && <p className={styles.registrationSubmitMessage}>{submitMessage}</p>}
       </div>
       <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
-        <span className={styles.detailsModalHint}><Info size={20} aria-hidden="true" />{footerHint}</span>
+        <span className={styles.detailsModalHint}><Info size={ICON_SIZE.xl} aria-hidden="true" />{footerHint}</span>
         <button
           ref={disclosureTriggerRef}
           type="button"

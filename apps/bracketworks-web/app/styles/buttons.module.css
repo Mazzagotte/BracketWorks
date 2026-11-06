@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   min-height: var(--btn-height);
   padding: 0 var(--btn-padding-x);
   border-radius: var(--radius-md);
@@ -18,9 +18,9 @@
 }
 
 .button > svg {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: var(--space-4);
+  height: var(--space-4);
+  flex: 0 0 var(--space-4);
 }
 
 .button:hover {
@@ -102,12 +102,6 @@
   color: var(--color-text-primary);
 }
 
-.iconOnly {
-  width: var(--btn-height);
-  min-width: var(--btn-height);
-  padding: 0;
-}
-
 .success {
   background: var(--color-success);
   border-color: var(--color-success-border);
@@ -116,16 +110,6 @@
 
 .success:hover:not(:disabled) {
   background: var(--color-green-dark);
-}
-
-.info {
-  background: var(--color-blue-primary);
-  border-color: var(--color-blue-accent-border);
-  color: var(--color-white);
-}
-
-.info:hover:not(:disabled) {
-  background: var(--color-blue-dark);
 }
 
 .small {
@@ -176,23 +160,23 @@
 
 @media (max-width: 767px) {
   .button {
-    min-height: 44px;
-    padding: 0 12px;
-    font-size: 0.82rem;
+    min-height: var(--space-11);
+    padding: 0 var(--space-3);
+    font-size: var(--font-size-base);
   }
 
   .small {
-    min-height: 44px;
-    height: 44px;
-    padding: 0 10px;
-    font-size: 0.75rem;
+    min-height: var(--space-11);
+    height: var(--space-11);
+    padding: 0 var(--space-2-5);
+    font-size: var(--font-size-sm);
   }
 }
 
 @media (max-width: 360px) {
   .button {
-    min-height: 44px;
-    padding: 0 10px;
-    font-size: 0.78rem;
+    min-height: var(--space-11);
+    padding: 0 var(--space-2-5);
+    font-size: var(--font-size-sm);
   }
 }

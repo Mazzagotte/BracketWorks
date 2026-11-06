@@ -16,7 +16,8 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import styles from '../page.module.css';
-import localStyles from './team.module.css';
+import localStyles from './team.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 const roleLabels: Record<StaffRole, string> = {
   tournament_admin: 'Tournament Admin',
@@ -151,7 +152,7 @@ export default function OrganizerTournamentTeamPage() {
           <p>Invite co-organizers and manage staff access for {tournamentName}.</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
@@ -213,7 +214,7 @@ export default function OrganizerTournamentTeamPage() {
           {canManageStaff ? <section className={styles.registrationTableCard} aria-label="Invite a team member">
             <div className={styles.registrationPanelHeading}>
               <div>
-                <h2><span className={localStyles.headingIcon}><Mail size={15} aria-hidden="true" /></span>Invite Staff</h2>
+                <h2><span className={localStyles.headingIcon}><Mail size={ICON_SIZE.md} aria-hidden="true" /></span>Invite Staff</h2>
                 <p>Invitations expire after 7 days.</p>
               </div>
             </div>
@@ -241,7 +242,7 @@ export default function OrganizerTournamentTeamPage() {
               </label>
               <div className={localStyles.inviteActions}>
                 <button type="submit" className={`${styles.manualRegistrationButton} ${localStyles.inviteButton}`} disabled={isInviting}>
-                  <UserPlus size={14} aria-hidden="true" /> {isInviting ? 'Sending...' : 'Send Invitation'}
+                  <UserPlus size={ICON_SIZE.sm} aria-hidden="true" /> {isInviting ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>
             </form>
@@ -254,9 +255,9 @@ export default function OrganizerTournamentTeamPage() {
           <section className={styles.registrationTableCard} aria-label="Team members">
             <div className={styles.registrationPanelHeading}>
               <div>
-                <h2><span className={localStyles.headingIcon}><UsersRound size={15} aria-hidden="true" /></span>Team Members</h2>
+                <h2><span className={localStyles.headingIcon}><UsersRound size={ICON_SIZE.md} aria-hidden="true" /></span>Team Members</h2>
                 <p className={localStyles.memberCount}>
-                  <UsersRound size={13} aria-hidden="true" />
+                  <UsersRound size={ICON_SIZE.sm} aria-hidden="true" />
                   {staff.length} {staff.length === 1 ? 'member' : 'members'}
                 </p>
               </div>
@@ -284,7 +285,7 @@ export default function OrganizerTournamentTeamPage() {
                         <td><span className={localStyles.memberEmail}>{member.email ?? '\u2014'}</span></td>
                         <td>
                           {isOwner || member.id === null ? (
-                            <span className={`${localStyles.roleBadge} ${localStyles.ownerRole}`}><Shield size={12} aria-hidden="true" />Owner</span>
+                            <span className={`${localStyles.roleBadge} ${localStyles.ownerRole}`}><Shield size={ICON_SIZE.xs} aria-hidden="true" />Owner</span>
                           ) : canManageStaff ? (
                             <select
                               value={member.role}
@@ -311,7 +312,7 @@ export default function OrganizerTournamentTeamPage() {
                                 disabled={isMutating}
                                 aria-label={`Remove ${member.display_name} from team`}
                               >
-                                <UserMinus size={14} aria-hidden="true" /> Remove
+                                <UserMinus size={ICON_SIZE.sm} aria-hidden="true" /> Remove
                               </button>
                             ) : <span className={localStyles.noAction}>—</span>}
                           </td>

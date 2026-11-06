@@ -12,9 +12,9 @@
 
 @media (min-width: 769px) {
   .contentShell {
-    padding: 16px;
+    padding: var(--space-4);
     border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-    border-radius: 24px;
+    border-radius: var(--radius-3xl);
     background: var(--bw-app-bg);
     box-shadow: 0 22px 54px color-mix(in srgb, var(--color-black) 24%, transparent);
   }
@@ -25,48 +25,48 @@
     background: transparent;
     border-bottom: none;
     box-shadow: none;
-    padding: 24px 0 0;
+    padding: var(--space-6) 0 0;
     backdrop-filter: none;
   }
 
   .headerInner {
-    max-width: 1040px;
-    padding: 0 24px;
+    max-width: var(--size-7xl);
+    padding: 0 var(--space-6);
   }
 
   .headerTop {
     min-height: 0;
-    padding: 18px 22px;
+    padding: var(--space-5) var(--space-6);
     border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-    border-radius: 22px;
+    border-radius: var(--radius-3xl);
     background: var(--bw-app-bg);
     box-shadow: 0 18px 42px color-mix(in srgb, var(--color-black) 22%, transparent);
   }
 
   .brandCol {
-    padding: 8px 20px 8px 0;
+    padding: var(--space-2) var(--space-5) var(--space-2) 0;
   }
 
   .brandLogo {
-    height: 62px;
-    max-height: 62px;
+    height: var(--space-16);
+    max-height: var(--space-16);
   }
 
   .brandSubline {
-    font-size: 1rem;
+    font-size: var(--font-size-xl);
   }
 
   .controlsPanel {
-    padding: 8px 0;
+    padding: var(--space-2) 0;
   }
 
   .tabsTrack {
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
   }
 
   .main {
-    max-width: 1040px;
-    padding: 18px 24px 36px;
+    max-width: var(--size-7xl);
+    padding: var(--space-5) var(--space-6) var(--space-9);
   }
 
   .aliveControls,
@@ -75,12 +75,12 @@
   .tableWrap,
   .winnerCard,
   .bracketSearchRow {
-    border-radius: 18px;
+    border-radius: var(--radius-2xl);
   }
 
   .aliveControls {
-    margin-bottom: 18px;
-    padding: 14px;
+    margin-bottom: var(--space-5);
+    padding: var(--space-3-5);
   }
 
   .tableWrap {
@@ -121,16 +121,16 @@
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 /* Left column: logo + brand name */
 .brandCol {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   flex-shrink: 0;
-  padding: 0 18px 0 0;
+  padding: 0 var(--space-5) 0 0;
   border-right: 1px solid var(--opacity-white-12);
 }
 
@@ -138,7 +138,7 @@
   /* fill the full header height */
   height: 100%;
   width: auto;
-  max-height: 90px;
+  max-height: var(--space-24);
   flex-shrink: 0;
   object-fit: contain;
   display: block;
@@ -147,13 +147,13 @@
 .brandText {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--space-px);
   min-width: 0;
 }
 
 .brandEyebrow {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -164,12 +164,12 @@
 .brandSep {
   opacity: 0.5;
   font-weight: var(--font-weight-normal);
-  margin: 0 4px;
+  margin: 0 var(--space-1);
 }
 
 .brandSubline {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--color-gray-300);
   white-space: nowrap;
   overflow: hidden;
@@ -184,23 +184,23 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   min-width: 0;
-  padding: 12px 0;
+  padding: var(--space-3) 0;
 }
 
 .controlsTopRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .squadSelector {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   margin-bottom: 0;
   padding: 0;
 }
@@ -217,9 +217,9 @@
 .squadSelect {
   flex: 0 0 auto;
   width: auto;
-  min-height: 36px;
-  padding: 0 12px;
-  border-radius: 8px;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border-hover);
   background: var(--opacity-white-08);
   color: var(--color-white);
@@ -253,9 +253,9 @@
 
 .tabsTrack {
   display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 14px;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-text-primary) 6%, transparent);
   box-sizing: border-box;
@@ -265,14 +265,14 @@
   appearance: none;
   -webkit-appearance: none;
   flex: 1;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   border: 1px solid transparent;
   box-sizing: border-box;
   margin: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--opacity-white-60);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
@@ -299,15 +299,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
+  gap: var(--space-2);
+  min-height: var(--space-9);
+  padding: 0 var(--space-3-5);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-hover);
   background: var(--color-border-hover);
   box-shadow: inset 0 1px 0 var(--opacity-white-08), 0 8px 18px var(--opacity-black-16);
   color: var(--color-brand-ivory-soft);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -334,7 +334,7 @@
 }
 
 .shareBtnIcon {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1;
   opacity: 0.95;
 }
@@ -363,14 +363,14 @@
   Bowlers (Summary) Tab
   ============================================================ */
 .aliveControls {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-3-5);
 }
 
 .searchRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-3-5);
 }
 
 .searchInput {
@@ -401,9 +401,9 @@
 .refreshRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .refreshMeta {
@@ -414,11 +414,11 @@
 .liveStatus {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  padding: 3px 9px;
-  border-radius: 999px;
+  padding: var(--space-1) var(--space-2-5);
+  border-radius: var(--radius-full);
   border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   background: color-mix(in srgb, var(--color-text-primary) 3%, transparent);
 }
@@ -432,7 +432,7 @@
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .tableWrap {
@@ -453,7 +453,7 @@
 
 .table thead th {
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 3.5%, transparent), color-mix(in srgb, var(--color-text-primary) 1.5%, transparent));
-  padding: 12px 10px;
+  padding: var(--space-3) var(--space-2-5);
   text-align: left;
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xs);
@@ -473,33 +473,33 @@
 .tableRow:hover { background: color-mix(in srgb, var(--color-primary) 4.5%, transparent); }
 
 .table td {
-  padding: 12px 10px;
+  padding: var(--space-3) var(--space-2-5);
   vertical-align: middle;
 }
 
 .tdName {
   font-weight: var(--font-weight-medium);
-  min-width: 130px;
+  min-width: var(--space-32);
 }
 
 /* ============================================================
   Brackets Tab
   ============================================================ */
 .groupSection {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
   background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   box-shadow: none;
   overflow: hidden;
 }
 
 .groupTitle {
-  font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+  font-size: clamp(var(--font-size-3xl), 1.7vw, var(--font-size-4xl));
   font-weight: var(--font-weight-bold);
   color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
   margin: 0;
-  padding: 0.95rem 1rem 0.8rem;
+  padding: var(--space-4) var(--space-4) var(--space-3);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 3.5%, transparent), color-mix(in srgb, var(--color-text-primary) 1.5%, transparent));
   border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
   letter-spacing: -0.02em;
@@ -510,29 +510,29 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
-  padding: 0.65rem 0.85rem 0.9rem;
+  padding: var(--space-2-5) var(--space-3-5) var(--space-3-5);
 }
 
 
 .bracketPillsNav {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-2-5);
   width: 100%;
   min-width: 0;
   overflow: hidden;
 }
 
 .bracketPillsArrow {
-  min-width: 3.5rem;
-  height: 30px;
-  padding: 0 0.625rem;
+  min-width: var(--space-14);
+  height: var(--space-8);
+  padding: 0 var(--space-2-5);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -558,8 +558,8 @@
 
 .bracketPills {
   display: flex;
-  gap: 5px;
-  padding: 4px 0;
+  gap: var(--space-1-5);
+  padding: var(--space-1) 0;
   border-radius: 0;
   border: none;
   background: transparent;
@@ -577,11 +577,11 @@
 }
 
 .bracketPill {
-  min-height: 34px;
-  min-width: 36px;
-  padding: 0 8px;
+  min-height: var(--space-9);
+  min-width: var(--space-9);
+  padding: 0 var(--space-2);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-surface);
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -614,25 +614,25 @@
   align-items: center;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  padding: 0 2px;
+  padding: 0 var(--space-0-5);
   user-select: none;
 }
 
 .bracketRounds {
   display: flex;
-  gap: 14px;
+  gap: var(--space-3-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 0 var(--spacing-xs);
+  padding: var(--space-0-5) 0 var(--spacing-xs);
 }
 
 .bracketRoundsExtra {
   display: flex;
-  gap: 14px;
+  gap: var(--space-3-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 0 var(--spacing-xs);
-  margin-top: 8px;
+  padding: var(--space-3) 0 var(--spacing-xs);
+  margin-top: var(--space-2);
   border-top: 1px dashed var(--color-border-light);
 }
 
@@ -640,7 +640,7 @@
   position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 0 10px;
+  padding: var(--space-1) 0 var(--space-2-5);
   border: none;
   border-radius: 0;
   background: transparent;
@@ -655,7 +655,7 @@
 .bracketTreeGrid {
   display: grid;
   column-gap: 0;
-  row-gap: 8px;
+  row-gap: var(--space-2);
   align-items: center;
   width: 100%;
   padding: 0;
@@ -668,28 +668,28 @@
 }
 
 .bracketRound {
-  min-width: 220px;
+  min-width: var(--space-56);
   flex-shrink: 0;
   background: var(--color-warning-tint);
   border: 1px solid var(--color-border-light);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px var(--opacity-black-08);
-  padding: 0.75rem 0.75rem 0.8rem;
+  padding: var(--space-3) var(--space-3) var(--space-3);
 }
 
 .roundLabel {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  font-size: 0.75rem;
+  min-height: var(--space-9);
+  font-size: var(--font-size-sm);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--color-primary);
-  margin-bottom: 0.7rem;
+  margin-bottom: var(--space-3);
   text-align: center;
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border-light);
   background: var(--opacity-white-65);
 }
@@ -697,18 +697,18 @@
 .roundMatches {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 /* Match card */
 .matchCard {
   border: 1.5px solid var(--color-border-light);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--color-brand-ivory-soft);
   position: relative;
   width: 100%;
-  min-width: 180px;
+  min-width: var(--space-44);
   font-size: var(--font-size-sm);
   box-shadow:
     0 2px 10px var(--opacity-black-08),
@@ -751,14 +751,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  min-height: 30px;
-  padding: 6px 11px;
+  min-height: var(--space-8);
+  padding: var(--space-1-5) var(--space-3);
   border-bottom: 1px solid var(--color-border-light);
   background: linear-gradient(180deg, var(--opacity-white-08) 0%, var(--color-warning-tint) 100%);
 }
 
 .matchLabel {
-  font-size: 0.66rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -769,9 +769,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 9px 11px;
-  gap: 8px;
-  min-height: 40px;
+  padding: var(--space-2-5) var(--space-3);
+  gap: var(--space-2);
+  min-height: var(--space-10);
 }
 
 .winner {
@@ -779,7 +779,7 @@
   font-weight: 700;
   color: var(--color-green-dark);
   border-left: 4px solid var(--color-success);
-  padding-left: 7px;
+  padding-left: var(--space-2);
 }
 
 .autoWin {
@@ -787,12 +787,12 @@
   font-weight: 700;
   color: var(--color-green-dark);
   border-left: 4px solid var(--color-success);
-  padding-left: 7px;
+  padding-left: var(--space-2);
 }
 
 .matchName {
   flex: 1;
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
@@ -804,10 +804,10 @@
 .matchScore {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   color: var(--color-dark-lighter);
   white-space: nowrap;
-  min-width: 34px;
+  min-width: var(--space-9);
   text-align: right;
 }
 
@@ -815,11 +815,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 17px;
+  min-height: var(--space-4);
   border-top: 1px solid var(--color-border-light);
   border-bottom: 1px solid var(--color-border-light);
   background: var(--color-warning-tint);
-  font-size: 0.48rem;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -829,33 +829,33 @@
 .connectorBracket {
   justify-self: center;
   align-self: stretch;
-  width: 22px;
+  width: var(--space-6);
   border-right: 2px solid var(--color-border-hover);
   border-top: 2px solid var(--color-border-hover);
   border-bottom: 2px solid var(--color-border-hover);
-  border-top-right-radius: 11px;
-  border-bottom-right-radius: 11px;
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   filter: drop-shadow(0 1px 0 var(--opacity-white-70));
 }
 
 .connectorArm {
   justify-self: stretch;
   align-self: center;
-  min-width: 44px;
+  min-width: var(--space-11);
   border-top: 2px solid var(--color-border-hover);
   filter: drop-shadow(0 1px 0 var(--opacity-white-70));
 }
 
 .matchBadge {
   position: absolute;
-  right: 7px;
-  top: 6px;
+  right: var(--space-2);
+  top: var(--space-1-5);
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   color: var(--color-white);
-  font-size: 0.52rem;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 999px;
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-full);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -863,15 +863,15 @@
 /* Winners tab */
 .winnersGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--space-56), 1fr));
+  gap: var(--space-3-5);
 }
 
 .winnerCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 14px var(--spacing-md);
+  padding: var(--space-3-5) var(--spacing-md);
   box-shadow: var(--shadow-soft);
 }
 
@@ -879,7 +879,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
-  margin-bottom: 10px;
+  margin-bottom: var(--space-2-5);
   letter-spacing: 0.02em;
 }
 
@@ -896,7 +896,7 @@
 
 .winnerPlace {
   font-weight: var(--font-weight-bold);
-  min-width: 48px;
+  min-width: var(--space-12);
   font-size: var(--font-size-base);
 }
 
@@ -909,24 +909,24 @@
 .sidePotLeaderboard {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .sidePotSection {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-soft);
 }
 
 .sidePotGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--space-32), 1fr));
 }
 
 .sidePotCard {
-  padding: 16px 14px;
+  padding: var(--space-4) var(--space-3-5);
   text-align: left;
   border-right: 1px solid var(--color-border);
 }
@@ -936,13 +936,13 @@
 }
 
 .sidePotCardLabel {
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--color-text-secondary);
-  margin-bottom: 10px;
-  padding-bottom: 7px;
+  margin-bottom: var(--space-2-5);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -952,16 +952,16 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .sidePotPodiumRow {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   font-size: var(--font-size-sm);
-  padding: 3px 4px;
-  border-radius: 5px;
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--radius-sm);
 }
 
 .sidePotPodiumFirst {
@@ -970,12 +970,12 @@
 }
 
 .sidePotPodiumPlace {
-  font-size: 0.65rem;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-secondary);
-  min-width: 26px;
+  min-width: var(--space-7);
   flex-shrink: 0;
 }
 
@@ -1004,7 +1004,7 @@
 .sidePotPodiumScore {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   color: var(--color-primary);
   white-space: nowrap;
   flex-shrink: 0;
@@ -1026,7 +1026,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -1061,8 +1061,8 @@
 }
 
 .spinner {
-  width: 36px;
-  height: 36px;
+  width: var(--space-9);
+  height: var(--space-9);
   border: 3px solid var(--color-border);
   border-top-color: var(--color-primary);
   border-radius: var(--radius-full);
@@ -1081,7 +1081,7 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
-  width: 90px;
+  width: var(--space-24);
 }
 
 .aliveNum {
@@ -1105,25 +1105,25 @@
 
 /* ── Tablet: 481px – 768px ─────────────────────────────────────────────────── */
 @media (min-width: 481px) and (max-width: 767px) {
-  .headerInner { padding: 0 16px; }
-  .brandEyebrow { font-size: 11px; }
+  .headerInner { padding: 0 var(--space-4); }
+  .brandEyebrow { font-size: var(--font-size-xs); }
   .squadSelect {
-    min-height: 32px;
-    height: 32px;
+    min-height: var(--space-8);
+    height: var(--space-8);
   }
-  .tabsTrack { gap: 2px; padding: 2px; }
+  .tabsTrack { gap: var(--space-0-5); padding: var(--space-0-5); }
   .tab {
-    min-height: 32px;
-    height: 32px;
-    padding: 0 8px;
-    font-size: 12px;
+    min-height: var(--space-8);
+    height: var(--space-8);
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-sm);
   }
   .groupTitle {
-    font-size: 1.45rem;
-    padding: 0.8rem 0.9rem 0.7rem;
+    font-size: var(--font-size-4xl);
+    padding: var(--space-3) var(--space-3-5) var(--space-3);
   }
-  .main { padding: 16px 14px; }
-  .winnersGrid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .main { padding: var(--space-4) var(--space-3-5); }
+  .winnersGrid { grid-template-columns: repeat(auto-fill, minmax(var(--space-52), 1fr)); }
 }
 
 @media (max-width: 640px) {
@@ -1133,36 +1133,36 @@
   }
 
   .headerInner {
-    padding: 0 12px;
+    padding: 0 var(--space-3);
   }
 
   .headerTop {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
-    column-gap: 8px;
-    row-gap: 5px;
+    column-gap: var(--space-2);
+    row-gap: var(--space-1-5);
     align-items: start;
-    padding: 8px 0 7px;
+    padding: var(--space-2) 0 var(--space-2);
   }
 
   .brandCol {
     grid-column: 1 / -1;
     grid-row: 1;
     min-width: 0;
-    gap: 8px;
+    gap: var(--space-2);
     padding-right: 0;
     border-right: none;
     align-items: center;
   }
 
   .brandLogo {
-    height: 30px;
-    max-height: 30px;
+    height: var(--space-8);
+    max-height: var(--space-8);
   }
 
   .brandText {
-    gap: 1px;
+    gap: var(--space-px);
   }
 
   .brandEyebrow {
@@ -1170,7 +1170,7 @@
   }
 
   .brandSubline {
-    font-size: 0.82rem;
+    font-size: var(--font-size-base);
     font-weight: 700;
     line-height: 1.16;
     color: var(--color-white);
@@ -1190,25 +1190,25 @@
     grid-row: 2;
     justify-self: start;
     align-self: center;
-    gap: 6px;
-    padding: 0.18rem 0.42rem;
+    gap: var(--space-1-5);
+    padding: var(--space-0-5) var(--space-1-5);
     border: 1px solid var(--opacity-white-08);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     background: var(--opacity-white-04);
   }
 
   .squadLabel {
-    font-size: 9px;
+    font-size: var(--font-size-3xs);
     letter-spacing: 0.04em;
   }
 
   .squadSelect {
-    max-width: min(64vw, 240px);
-    min-height: 28px;
-    height: 28px;
-    padding: 0 8px;
-    font-size: 10px;
-    border-radius: 999px;
+    max-width: min(64vw, var(--space-60));
+    min-height: var(--space-7);
+    height: var(--space-7);
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-2xs);
+    border-radius: var(--radius-full);
   }
 
   .shareBtn {
@@ -1216,11 +1216,11 @@
     grid-row: 2;
     align-self: center;
     justify-self: end;
-    min-height: 28px;
-    padding: 0 8px;
-    border-radius: 999px;
-    gap: 3px;
-    font-size: 0.58rem;
+    min-height: var(--space-7);
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-full);
+    gap: var(--space-1);
+    font-size: var(--font-size-3xs);
     background: var(--opacity-white-06);
     border-color: var(--opacity-white-10);
     color: var(--color-white);
@@ -1233,50 +1233,50 @@
   }
 
   .shareBtnIcon {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .tabs {
     grid-column: 1 / -1;
     grid-row: 3;
     width: 100%;
-    margin-top: 1px;
+    margin-top: var(--space-px);
   }
 
   .tabsTrack {
-    gap: 2px;
-    padding: 2px;
-    min-height: 30px;
-    border-radius: 10px;
+    gap: var(--space-0-5);
+    padding: var(--space-0-5);
+    min-height: var(--space-8);
+    border-radius: var(--radius-lg);
   }
 
   .tab,
   .tabActive {
-    min-height: 26px;
-    height: 26px;
-    padding: 0 6px;
-    font-size: 9px;
-    border-radius: 8px;
+    min-height: var(--space-7);
+    height: var(--space-7);
+    padding: 0 var(--space-1-5);
+    font-size: var(--font-size-3xs);
+    border-radius: var(--radius-md);
   }
 
   .main {
-    max-width: calc(100vw - 24px);
-    padding: 8px 0 28px;
+    max-width: calc(100vw - var(--space-6));
+    padding: var(--space-2) 0 var(--space-7);
   }
 
   .aliveControls,
   .bracketSearchRow,
   .bracketView {
-    padding: 10px;
+    padding: var(--space-2-5);
   }
 
   .groupTitle {
-    padding: 10px 12px;
-    font-size: 0.86rem;
+    padding: var(--space-2-5) var(--space-3);
+    font-size: var(--font-size-md);
   }
 
   .sidePotLeaderboard {
-    gap: 10px;
+    gap: var(--space-2-5);
   }
 
   .sidePotGrid {
@@ -1284,8 +1284,8 @@
   }
 
   .sidePotCard {
-    min-height: 112px;
-    padding: 10px 10px 9px;
+    min-height: var(--space-28);
+    padding: var(--space-2-5) var(--space-2-5) var(--space-2-5);
   }
 
   .sidePotCard:nth-child(2n) {
@@ -1293,40 +1293,40 @@
   }
 
   .sidePotCardLabel {
-    margin-bottom: 7px;
-    padding-bottom: 5px;
-    font-size: 0.62rem;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-1-5);
+    font-size: var(--font-size-2xs);
     line-height: 1;
     color: color-mix(in srgb, var(--public-muted) 82%, var(--color-white) 18%);
   }
 
   .sidePotPodium {
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .sidePotPodiumRow {
-    gap: 5px;
-    padding: 2px 2px;
-    font-size: 0.72rem;
+    gap: var(--space-1-5);
+    padding: var(--space-0-5) var(--space-0-5);
+    font-size: var(--font-size-sm);
   }
 
   .sidePotPodiumPlace {
-    min-width: 22px;
-    font-size: 0.56rem;
+    min-width: var(--space-6);
+    font-size: var(--font-size-3xs);
   }
 
   .sidePotPodiumName {
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
     line-height: 1.2;
   }
 
   .sidePotPodiumScore {
-    font-size: 0.8rem;
+    font-size: var(--font-size-base);
     line-height: 1;
   }
 
   .sidePotPodiumRow:not(.sidePotPodiumFirst) .sidePotPodiumScore {
-    font-size: 0.68rem;
+    font-size: var(--font-size-xs);
   }
 }
 
@@ -1334,16 +1334,16 @@
 @media (max-width: 480px) {
   /* Header — logo spans 2 rows; title row + squad row; tabs below */
   .headerInner {
-    padding: 0 12px;
+    padding: 0 var(--space-3);
   }
   .headerTop {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto auto;
-    column-gap: 8px;
-    row-gap: 6px;
+    column-gap: var(--space-2);
+    row-gap: var(--space-1-5);
     align-items: start;
-    padding: 10px 0 8px;
+    padding: var(--space-2-5) 0 var(--space-2);
   }
   .controlsPanel {
     display: contents;
@@ -1363,12 +1363,12 @@
     grid-row: 1 / 3;
     width: auto;
     height: 100%;
-    max-height: 72px;
+    max-height: var(--space-18);
     align-self: stretch;
   }
   /* Promote tournament name to act as the visible title */
   .brandSubline {
-    font-size: 15px;
+    font-size: var(--font-size-lg);
     font-weight: 700;
     color: var(--color-white);
     letter-spacing: -0.01em;
@@ -1384,17 +1384,17 @@
     align-self: center;
     flex-direction: row;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-1-5);
   }
-  .squadLabel { font-size: 10px; letter-spacing: 0.04em; }
+  .squadLabel { font-size: var(--font-size-2xs); letter-spacing: 0.04em; }
   .squadSelect {
     flex: 0 1 auto;
     width: fit-content;
-    max-width: min(52vw, 240px);
-    min-height: 30px;
-    height: 30px;
-    padding: 0 10px;
-    font-size: 12px;
+    max-width: min(52vw, var(--space-60));
+    min-height: var(--space-8);
+    height: var(--space-8);
+    padding: 0 var(--space-2-5);
+    font-size: var(--font-size-sm);
   }
   /* Tabs: full-width row 3 */
   .tabs {
@@ -1403,23 +1403,23 @@
     width: 100%;
   }
   .tabsTrack {
-    gap: 1px;
-    padding: 1px;
+    gap: var(--space-px);
+    padding: var(--space-px);
     width: 100%;
-    height: 30px;
-    border-radius: 10px;
+    height: var(--space-8);
+    border-radius: var(--radius-lg);
     align-items: stretch;
     box-sizing: border-box;
     overflow: hidden;
   }
   .tab,
   .tabActive {
-    font-size: 9px;
+    font-size: var(--font-size-3xs);
     line-height: 1;
-    padding: 0 2px !important;
-    min-height: 28px !important;
-    height: 28px !important;
-    border-radius: 6px;
+    padding: 0 var(--space-0-5) !important;
+    min-height: var(--space-7) !important;
+    height: var(--space-7) !important;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1428,25 +1428,25 @@
   }
 
   /* Main content area */
-  .main { padding: 12px 10px; }
+  .main { padding: var(--space-3) var(--space-2-5); }
 
   .searchRow {
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: var(--space-1-5);
+    margin-bottom: var(--space-2-5);
   }
 
   .countBadge {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
 
   .refreshRow {
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: var(--space-1-5);
+    margin-bottom: var(--space-1-5);
   }
 
   .refreshMeta,
   .liveStatus {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .refreshActions {
@@ -1456,14 +1456,14 @@
 
   .refreshBtn {
     flex: 1;
-    font-size: 15px;
+    font-size: var(--font-size-lg);
     font-weight: 700;
-    padding: 13px 8px;
-    min-height: 50px;
+    padding: var(--space-3-5) var(--space-2);
+    min-height: var(--space-12);
     background: var(--color-primary);
     border-color: var(--color-primary);
     color: var(--color-white);
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
   }
   .refreshBtn:hover:not(:disabled) {
     background: var(--color-primary-hover);
@@ -1475,21 +1475,21 @@
   }
 
   .groupTitle {
-    font-size: 1.2rem;
-    padding: 0.72rem 0.8rem 0.62rem;
+    font-size: var(--font-size-3xl);
+    padding: var(--space-3) var(--space-3) var(--space-2-5);
   }
 
   /* Alive table — shorter header text */
   .thFull  { display: none; }
   .thShort { display: inline; }
-  .table thead th { padding: 10px 8px; }
-  .table td { padding: 15px 8px; font-size: 0.95rem; }
-  .tdName { font-size: 1.05rem; font-weight: 700; min-width: 0; }
-  .aliveNum { font-size: 1.2rem; }
-  .wonNum { font-size: 1.2rem; }
-  .elimNum { font-size: 1.1rem; }
-  .tdCenter { width: 64px; }
-  .searchInput { min-height: 46px; font-size: 16px; border-radius: 10px; }
+  .table thead th { padding: var(--space-2-5) var(--space-2); }
+  .table td { padding: var(--space-4) var(--space-2); font-size: var(--font-size-lg); }
+  .tdName { font-size: var(--font-size-xl); font-weight: 700; min-width: 0; }
+  .aliveNum { font-size: var(--font-size-3xl); }
+  .wonNum { font-size: var(--font-size-3xl); }
+  .elimNum { font-size: var(--font-size-2xl); }
+  .tdCenter { width: var(--space-16); }
+  .searchInput { min-height: var(--space-12); font-size: var(--font-size-xl); border-radius: var(--radius-lg); }
 
   /* Share button — icon-only in top-right corner on mobile */
   .controlsTopRow {
@@ -1499,21 +1499,21 @@
     justify-self: end;
   }
   .shareBtn {
-    width: 34px;
-    min-height: 34px;
+    width: var(--space-9);
+    min-height: var(--space-9);
     padding: 0;
     border-radius: 50%;
     gap: 0;
     font-size: 0;
   }
-  .shareBtnIcon { font-size: 16px; }
+  .shareBtnIcon { font-size: var(--font-size-xl); }
   .shareBtn span:not(.shareBtnIcon) { display: none; }
 
   /* Bracket navigation */
 
   /* Bracket pill nav */
-  .bracketPillsArrow { min-width: 3rem; height: 30px; font-size: 10px; }
-  .bracketPill { min-width: 44px; min-height: 34px; }
+  .bracketPillsArrow { min-width: var(--space-12); height: var(--space-8); font-size: var(--font-size-2xs); }
+  .bracketPill { min-width: var(--space-11); min-height: var(--space-9); }
 
   /* Bracket tree: narrower match cards on phones */
   .bracketTreeWrap {
@@ -1527,14 +1527,14 @@
   .bracketRound {
     min-width: 100%;
   }
-  .matchSlot { padding: 7px 8px; }
-  .bracketRounds { gap: 10px; }
+  .matchSlot { padding: var(--space-2) var(--space-2); }
+  .bracketRounds { gap: var(--space-2-5); }
 
   /* Winners */
   .winnersGrid { grid-template-columns: 1fr; }
 
   /* Side Pots leaderboard — stack cards vertically so names aren't truncated */
-  .sidePotCard { padding: 12px 14px; border-right: none; border-bottom: 1px solid var(--color-border); }
+  .sidePotCard { padding: var(--space-3) var(--space-3-5); border-right: none; border-bottom: 1px solid var(--color-border); }
 
   /* Footer */
   .refreshBtn { width: 100%; }
@@ -1543,15 +1543,15 @@
 /* ── Bracket group tabs ─────────────────────────────────────────────────────── */
 .bracketGroupTabs {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-3-5);
 }
 
 .bracketGroupTab {
-  padding: 7px 16px;
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -1576,17 +1576,17 @@
 .bracketSearchRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3-5);
 }
 
 .bracketSearchInput {
   flex: 1;
-  max-width: 280px;
-  height: 36px;
-  padding: 0 12px;
+  max-width: var(--space-72);
+  height: var(--space-9);
+  padding: 0 var(--space-3);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-surface);
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
@@ -1599,13 +1599,13 @@
 }
 
 .bracketSearchClear {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   border: 1px solid var(--color-border-light);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1622,12 +1622,12 @@
 .bracketWinnerBanner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
+  gap: var(--space-2-5);
+  padding: var(--space-2-5) var(--space-4);
+  margin-bottom: var(--space-3);
   background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-brand-ivory-soft) 100%);
   border: 1px solid var(--color-success);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 1px 6px var(--color-success-border);
 }
 
@@ -1652,13 +1652,13 @@
 
 /* ── Match card: score margin badge ────────────────────────────────────────── */
 .matchMargin {
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--color-success);
   background: var(--color-success-soft);
-  border-radius: 999px;
-  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  padding: var(--space-px) var(--space-1-5);
   margin-left: auto;
   white-space: nowrap;
 }
@@ -1749,7 +1749,7 @@
 }
 
 .main {
-  padding-top: 0.95rem;
+  padding-top: var(--space-4);
 }
 
 .squadSelect,
@@ -1810,7 +1810,7 @@
 .tableWrap,
 .groupSection,
 .sidePotSection {
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   overflow: hidden;
 }
 
@@ -1823,7 +1823,7 @@
 
 .groupTitle {
   color: color-mix(in srgb, var(--color-text-primary) 96%, transparent);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   font-weight: 800;
 }
@@ -2017,37 +2017,37 @@
 }
 
 .headerInner {
-  max-width: min(1720px, calc(100vw - 48px));
+  max-width: min(var(--size-12xl), calc(100vw - var(--space-12)));
   padding: 0;
 }
 
 .headerTop {
   align-items: center;
-  gap: 22px;
-  min-height: 92px;
+  gap: var(--space-6);
+  min-height: var(--space-24);
 }
 
 .brandCol {
   min-width: 0;
   flex: 1 1 42%;
   align-items: center;
-  gap: 14px;
-  padding: 12px 22px 12px 0;
+  gap: var(--space-3-5);
+  padding: var(--space-3) var(--space-6) var(--space-3) 0;
   border-right: 1px solid var(--public-border);
 }
 
 .brandLogo {
-  height: 70px;
-  max-height: 70px;
+  height: var(--space-18);
+  max-height: var(--space-18);
 }
 
 .brandText {
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .brandEyebrow {
   color: var(--public-muted);
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
   line-height: 1;
   letter-spacing: 0.02em;
 }
@@ -2059,40 +2059,40 @@
 
 .brandSubline {
   color: var(--public-text);
-  font-size: 0.92rem;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   line-height: 1.25;
 }
 
 .controlsPanel {
   flex: 1 1 58%;
-  gap: 9px;
-  padding: 12px 0;
+  gap: var(--space-2-5);
+  padding: var(--space-3) 0;
 }
 
 .controlsTopRow {
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .squadSelector {
-  gap: 9px;
+  gap: var(--space-2-5);
 }
 
 .squadLabel {
   color: var(--public-muted);
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.02em;
 }
 
 .squadSelect {
-  height: 38px;
-  min-height: 38px;
-  border-radius: 8px;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-black) 72%, transparent);
   color: var(--public-text);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
 }
 
@@ -2103,19 +2103,19 @@
 }
 
 .tabsTrack {
-  height: 38px;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 8px;
+  height: var(--control-height);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-black) 72%, transparent);
 }
 
 .tab {
-  min-height: 30px;
-  border-radius: 6px;
+  min-height: var(--space-8);
+  border-radius: var(--radius-md);
   color: var(--public-muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
 }
 
@@ -2137,13 +2137,13 @@
 .bracketPillsArrow,
 .bracketPill,
 .bracketSearchClear {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 800;
 }
 
 .shareBtn {
-  height: 38px;
-  min-height: 38px;
+  height: var(--control-height);
+  min-height: var(--control-height);
   border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 95%, transparent));
   box-shadow: none;
@@ -2162,8 +2162,8 @@
 }
 
 .main {
-  max-width: min(1720px, calc(100vw - 48px));
-  padding: 20px 0 40px;
+  max-width: min(var(--size-12xl), calc(100vw - var(--space-12)));
+  padding: var(--space-5) 0 var(--space-10);
 }
 
 .section {
@@ -2172,10 +2172,10 @@
 
 .aliveControls,
 .bracketSearchRow {
-  margin-bottom: 12px;
-  padding: 12px;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--public-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--public-surface);
   box-shadow: 0 16px 36px color-mix(in srgb, var(--color-black) 18%, transparent);
 }
@@ -2195,13 +2195,13 @@
 
 .searchInput,
 .bracketSearchInput {
-  height: 38px;
-  min-height: 38px;
-  border-radius: 8px;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-black) 72%, transparent);
   color: var(--public-text);
-  font-size: 0.86rem;
+  font-size: var(--font-size-md);
   font-weight: 700;
 }
 
@@ -2220,12 +2220,12 @@
 .refreshMeta,
 .liveStatus {
   color: var(--public-muted);
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
 }
 
 .refreshBtn {
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-text);
@@ -2242,7 +2242,7 @@
 .sidePotSection,
 .winnerCard {
   border: 1px solid var(--public-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--public-surface);
   box-shadow: 0 18px 44px color-mix(in srgb, var(--color-black) 20%, transparent);
 }
@@ -2257,7 +2257,7 @@
 }
 
 .table thead th {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
   color: color-mix(in srgb, var(--color-text-secondary) 88%, transparent);
   border-bottom-color: var(--public-border);
@@ -2266,7 +2266,7 @@
 }
 
 .table td {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 5.5%, transparent);
 }
 
@@ -2284,7 +2284,7 @@
 
 .tdName {
   color: var(--public-text);
-  font-size: 0.88rem;
+  font-size: var(--font-size-md);
   font-weight: 800;
 }
 
@@ -2307,18 +2307,18 @@
 
 .bracketGroupTabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding: 4px;
+  gap: var(--space-1-5);
+  margin-bottom: var(--space-3);
+  padding: var(--space-1);
   border: 1px solid var(--public-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-black) 68%, transparent);
   overflow-x: auto;
 }
 
 .bracketGroupTab {
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
   border: 1px solid transparent;
   background: transparent;
   color: var(--public-muted);
@@ -2340,17 +2340,17 @@
 .bracketSearchRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .bracketSearchInput {
   flex: 1;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 
 .bracketSearchClear {
-  width: 38px;
-  height: 38px;
+  width: var(--space-10);
+  height: var(--control-height);
   border: 1px solid var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-muted);
@@ -2367,27 +2367,27 @@
 }
 
 .groupTitle {
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-3-5);
   border-bottom: 1px solid var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
   color: var(--public-text);
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   letter-spacing: 0;
 }
 
 .bracketView {
-  padding: 12px;
+  padding: var(--space-3);
 }
 
 .bracketPillsNav {
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
 .bracketPillsArrow,
 .bracketPill {
-  height: 32px;
-  min-height: 32px;
+  height: var(--space-8);
+  min-height: var(--space-8);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--public-muted);
@@ -2409,11 +2409,11 @@
 .bracketWinnerBanner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 10px 12px;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-success) 32%, transparent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-success) 9.5%, transparent);
 }
 
@@ -2427,11 +2427,11 @@
 }
 
 .bracketTreeWrap {
-  padding: 4px 0 8px;
+  padding: var(--space-1) 0 var(--space-2);
 }
 
 .bracketRound {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border-color: var(--public-border);
   border-top-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
   background: var(--public-surface-soft);
@@ -2439,15 +2439,15 @@
 }
 
 .roundLabel {
-  min-height: 32px;
-  border-radius: 6px;
+  min-height: var(--space-8);
+  border-radius: var(--radius-md);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 4.5%, transparent);
   color: var(--color-text-secondary);
 }
 
 .matchCard {
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--public-border);
   background: color-mix(in srgb, var(--color-black) 78%, transparent);
   box-shadow: none;
@@ -2459,35 +2459,35 @@
 }
 
 .matchLabelRow {
-  min-height: 28px;
-  padding: 6px 10px;
+  min-height: var(--space-7);
+  padding: var(--space-1-5) var(--space-2-5);
   border-bottom-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 3.5%, transparent);
 }
 
 .matchLabel {
   color: var(--public-muted);
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
   letter-spacing: 0.04em;
 }
 
 .matchSlot {
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: var(--control-height);
+  padding: var(--space-2) var(--space-2-5);
 }
 
 .matchName {
   color: var(--public-text);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
 }
 
 .matchScore {
   color: var(--public-text);
-  font-size: 0.88rem;
+  font-size: var(--font-size-md);
 }
 
 .vsRow {
-  min-height: 16px;
+  min-height: var(--space-4);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 2.5%, transparent);
   color: var(--public-dim);
@@ -2530,7 +2530,7 @@
 }
 
 .sidePotLeaderboard {
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .sidePotSection {
@@ -2542,8 +2542,8 @@
 }
 
 .sidePotCard {
-  min-height: 132px;
-  padding: 14px;
+  min-height: var(--space-32);
+  padding: var(--space-3-5);
   border-color: var(--public-border);
   background: color-mix(in srgb, var(--color-text-primary) 1.8%, transparent);
 }
@@ -2555,7 +2555,7 @@
 }
 
 .sidePotPodiumRow {
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   color: var(--public-muted);
 }
 
@@ -2578,9 +2578,9 @@
 
 .emptyNote {
   margin: 0;
-  padding: 54px 20px;
+  padding: var(--space-14) var(--space-5);
   border: 1px solid var(--public-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--public-surface);
   box-shadow: 0 18px 44px color-mix(in srgb, var(--color-black) 18%, transparent);
   text-align: center;
@@ -2599,84 +2599,84 @@
 @media (max-width: 900px) {
   .headerInner,
   .main {
-    max-width: calc(100vw - 28px);
+    max-width: calc(100vw - var(--space-7));
   }
 
   .headerTop {
     min-height: auto;
-    padding: 10px 0;
+    padding: var(--space-2-5) 0;
     align-items: stretch;
   }
 
   .brandCol {
-    padding-right: 14px;
+    padding-right: var(--space-3-5);
   }
 
   .brandLogo {
-    height: 58px;
-    max-height: 58px;
+    height: var(--space-14);
+    max-height: var(--space-14);
   }
 }
 
 @media (max-width: 480px) {
   .headerInner,
   .main {
-    max-width: calc(100vw - 20px);
+    max-width: calc(100vw - var(--space-5));
   }
 
   .headerTop {
-    padding: 10px 0 8px;
+    padding: var(--space-2-5) 0 var(--space-2);
   }
 
   .brandSubline {
     color: var(--public-text);
-    font-size: 0.9rem;
+    font-size: var(--font-size-md);
   }
 
   .tabsTrack {
-    height: 34px;
-    border-radius: 8px;
+    height: var(--space-9);
+    border-radius: var(--radius-md);
   }
 
   .tab,
   .tabActive {
-    min-height: 28px !important;
-    height: 28px !important;
-    border-radius: 6px;
-    font-size: 0.67rem;
+    min-height: var(--space-7) !important;
+    height: var(--space-7) !important;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
   }
 
   .main {
-    padding-top: 12px;
+    padding-top: var(--space-3);
   }
 
   .aliveControls {
-    padding: 10px;
+    padding: var(--space-2-5);
   }
 
   .refreshBtn {
-    min-height: 40px;
-    border-radius: 8px;
+    min-height: var(--space-10);
+    border-radius: var(--radius-md);
   }
 
   .table td,
   .table thead th {
-    padding: 9px 8px;
+    padding: var(--space-2-5) var(--space-2);
   }
 
   .tdName {
-    font-size: 0.88rem;
+    font-size: var(--font-size-md);
   }
 
   .bracketView {
-    padding: 10px;
+    padding: var(--space-2-5);
   }
 
   .bracketPillsArrow,
   .bracketPill {
-    min-height: 30px;
-    height: 30px;
-    border-radius: 7px;
+    min-height: var(--space-8);
+    height: var(--space-8);
+    border-radius: var(--radius-md);
   }
 
   .sidePotGrid {
@@ -2873,8 +2873,8 @@
   color: var(--public-muted);
   border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
   background: color-mix(in srgb, var(--public-card-utility) 88%, transparent);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-3-5);
 }
 
 /* Final canonical shell background: single color across public live view */
@@ -2889,48 +2889,48 @@
 /* Live public workspace theme */
 @media (min-width: 769px) {
   .header {
-    padding-top: 30px;
+    padding-top: var(--space-8);
   }
 
   .headerInner {
-    max-width: 1320px;
-    padding: 0 28px;
+    max-width: var(--size-9xl);
+    padding: 0 var(--space-7);
   }
 
   .headerTop {
-    gap: 26px;
-    padding: 24px 28px;
+    gap: var(--space-7);
+    padding: var(--space-6) var(--space-7);
     border: 1px solid var(--bw-border-card);
-    border-radius: 24px;
+    border-radius: var(--radius-3xl);
     background: var(--bw-surface-card);
     box-shadow: none;
   }
 
   .brandCol {
-    padding-right: 26px;
+    padding-right: var(--space-7);
   }
 
   .main {
-    max-width: 1320px;
-    padding: 22px 28px 50px;
+    max-width: var(--size-9xl);
+    padding: var(--space-6) var(--space-7) var(--space-12);
   }
 
   .contentShell {
-    padding: 22px;
+    padding: var(--space-6);
     border: 1px solid var(--bw-border-card);
-    border-radius: 24px;
+    border-radius: var(--radius-3xl);
     background: var(--bw-surface-card);
     box-shadow: none;
   }
 }
 
 .brandLogo {
-  max-height: 68px;
+  max-height: var(--space-18);
 }
 
 .brandEyebrow {
   color: var(--bw-text-accent);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .brandSubline {
@@ -2938,30 +2938,30 @@
 }
 
 .controlsPanel {
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .squadSelect {
-  min-height: 44px;
-  padding-inline: 15px;
-  border-radius: 11px;
+  min-height: var(--space-11);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel);
 }
 
 .tabsTrack {
-  height: 44px;
-  gap: 6px;
-  padding: 4px;
+  height: var(--space-11);
+  gap: var(--space-1-5);
+  padding: var(--space-1);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel);
 }
 
 .tab {
-  min-height: 34px;
-  padding-inline: 18px;
-  border-radius: 9px;
-  font-size: 13px;
+  min-height: var(--space-9);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
 }
 
 .tabActive {
@@ -2971,10 +2971,10 @@
 }
 
 .shareBtn {
-  min-height: 44px;
-  padding-inline: 18px;
+  min-height: var(--space-11);
+  padding-inline: var(--space-5);
   border: 1px solid var(--bw-border-accent);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--bw-text-accent);
 }
@@ -2986,24 +2986,24 @@
 
 .aliveControls,
 .bracketSearchRow {
-  padding: 16px;
+  padding: var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-panel);
 }
 
 .searchInput,
 .bracketSearchInput {
-  min-height: 46px;
-  padding-inline: 16px;
-  border-radius: 11px;
+  min-height: var(--space-12);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-lg);
 }
 
 .refreshBtn,
 .bracketSearchClear {
-  min-height: 42px;
+  min-height: var(--space-11);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card-strong);
 }
 
@@ -3012,42 +3012,42 @@
 .sidePotSection,
 .winnerCard {
   border-color: var(--bw-border-subtle);
-  border-radius: 18px;
+  border-radius: var(--radius-2xl);
   background: var(--bw-surface-panel);
   box-shadow: none;
 }
 
 .table thead th {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   background: var(--bw-surface-card-strong);
 }
 
 .table td {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
 }
 
 .groupTitle {
-  padding: 18px 20px;
+  padding: var(--space-5) var(--space-5);
   background: var(--bw-surface-card-strong);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .bracketView {
-  padding: 18px;
+  padding: var(--space-5);
 }
 
 .bracketGroupTabs {
-  gap: 8px;
-  padding: 5px;
-  border-radius: 12px;
+  gap: var(--space-2);
+  padding: var(--space-1-5);
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel);
 }
 
 .bracketGroupTab,
 .bracketPill,
 .bracketPillsArrow {
-  min-height: 38px;
-  border-radius: 9px;
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
 }
 
 .bracketGroupTabActive,
@@ -3060,7 +3060,7 @@
 .bracketRound,
 .matchCard,
 .roundLabel {
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .matchCard {
@@ -3068,14 +3068,14 @@
 }
 
 .sidePotCard {
-  padding: 20px;
+  padding: var(--space-5);
   background: var(--bw-surface-card-strong);
 }
 
 .emptyNote {
-  padding: 48px 24px;
+  padding: var(--space-12) var(--space-6);
   border-style: solid;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-panel);
 }
 
@@ -3086,15 +3086,15 @@
   }
 
   .headerTop {
-    padding: 14px 0;
+    padding: var(--space-3-5) 0;
   }
 
   .tabsTrack {
-    height: 40px;
+    height: var(--space-10);
   }
 
   .main {
-    padding: 14px 10px 34px;
+    padding: var(--space-3-5) var(--space-2-5) var(--space-9);
   }
 
   .contentShell {
@@ -3105,7 +3105,7 @@
   .groupSection,
   .sidePotSection,
   .winnerCard {
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
   }
 }
 
@@ -3113,11 +3113,11 @@
    reintroduce pre-standard spacing or shrink-to-fit behavior. */
 
 @media (max-width: 767px) {
-  .page { --live-space-md: 12px; --live-space-lg: 12px; border: 0; border-radius: 0; }
+  .page { --live-space-md: var(--space-3); --live-space-lg: var(--space-3); border: 0; border-radius: 0; }
   .tableWrap,
   .bracketPills,
   .bracketGroupTabs { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-  .sidePotModeTab { flex: 1 0 140px; min-width: 140px; min-height: 38px; }
+  .sidePotModeTab { flex: 1 0 var(--space-36); min-width: var(--space-36); min-height: var(--control-height); }
 
 }
 
@@ -3135,12 +3135,12 @@
   }
 
   .section .rankColumn {
-    width: 38px;
+    width: var(--space-10);
   }
 
   .section .thCenter,
   .section .tdCenter {
-    width: 58px;
+    width: var(--space-14);
   }
 
   .section .tdName {
@@ -3160,64 +3160,64 @@
 
   .headerTop {
     min-height: 0 !important;
-    gap: 7px !important;
-    padding: 8px 10px !important;
+    gap: var(--space-2) !important;
+    padding: var(--space-2) var(--space-2-5) !important;
     background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 72%, transparent), transparent) !important;
   }
 
   .brandCol {
     display: grid !important;
-    grid-template-columns: 44px minmax(0, 1fr) !important;
+    grid-template-columns: var(--space-11) minmax(0, 1fr) !important;
     align-items: center !important;
-    gap: 9px !important;
-    padding: 0 0 8px !important;
+    gap: var(--space-2-5) !important;
+    padding: 0 0 var(--space-2) !important;
     border-bottom: 1px solid var(--bw-border-subtle) !important;
   }
 
-  .brandLogo { width: 44px !important; height: 44px !important; }
+  .brandLogo { width: var(--space-11) !important; height: var(--space-11) !important; }
   .brandText { min-width: 0; }
-  .brandEyebrow::before { font-size: 17px !important; line-height: 1; }
-  .brandEyebrow::after { margin-top: 2px; font-size: 9px !important; letter-spacing: .05em; }
+  .brandEyebrow::before { font-size: var(--font-size-2xl) !important; line-height: 1; }
+  .brandEyebrow::after { margin-top: var(--space-0-5); font-size: var(--font-size-3xs) !important; letter-spacing: .05em; }
   .brandSubline {
-    margin-top: 5px !important;
+    margin-top: var(--space-1-5) !important;
     overflow: visible !important;
     color: var(--bw-text-title);
-    font-size: 13px !important;
+    font-size: var(--font-size-base) !important;
     line-height: 1.2;
     text-overflow: clip;
     white-space: normal !important;
   }
 
-  .controlsPanel { gap: 7px !important; }
+  .controlsPanel { gap: var(--space-2) !important; }
   .controlsTopRow {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
     align-items: end !important;
-    gap: 6px !important;
+    gap: var(--space-1-5) !important;
   }
 
   .squadSelector { display: block !important; min-width: 0; }
   .squadLabel { display: none; }
-  .squadSelect { min-height: 36px !important; padding-right: 28px; }
+  .squadSelect { min-height: var(--space-9) !important; padding-right: var(--space-7); }
   .shareBtn {
     width: auto !important;
-    min-height: 36px !important;
-    padding: 0 12px !important;
-    gap: 7px;
-    border-radius: 9px;
-    font-size: 11px;
+    min-height: var(--space-9) !important;
+    padding: 0 var(--space-3) !important;
+    gap: var(--space-2);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
     white-space: nowrap;
   }
 
-  .tabsTrack { min-height: 36px !important; border-radius: 8px !important; }
+  .tabsTrack { min-height: var(--space-9) !important; border-radius: var(--radius-md) !important; }
   .tab,
-  .tabActive { min-height: 36px !important; font-size: 10px; }
+  .tabActive { min-height: var(--space-9) !important; font-size: var(--font-size-2xs); }
 
-  .aliveControls { padding: 8px !important; }
+  .aliveControls { padding: var(--space-2) !important; }
   .aliveToolbar {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 7px 10px !important;
+    gap: var(--space-2) var(--space-2-5) !important;
     padding: 0 !important;
   }
   .aliveToolbar :global(.dataTableToolbarLeft),
@@ -3225,20 +3225,20 @@
   .aliveToolbar .searchRow,
   .aliveToolbar .refreshRow { display: contents !important; }
   .aliveToolbar .searchField { grid-row: 1; grid-column: 1 / -1; }
-  .aliveToolbar .searchInput { min-height: 40px; padding-left: 42px; }
-  .aliveToolbar .searchField > svg { left: 13px; width: 18px; height: 18px; }
+  .aliveToolbar .searchInput { min-height: var(--space-10); padding-left: var(--space-11); }
+  .aliveToolbar .searchField > svg { left: var(--space-3-5); width: var(--space-5); height: var(--space-5); }
   .aliveToolbar .countBadge,
   .aliveToolbar .refreshMeta { display: none; }
-  .aliveToolbar .liveStatus { grid-row: 2; grid-column: 1; min-height: 34px; padding-inline: 10px; }
+  .aliveToolbar .liveStatus { grid-row: 2; grid-column: 1; min-height: var(--space-9); padding-inline: var(--space-2-5); }
   .aliveToolbar .refreshActions { grid-row: 2; grid-column: 2; }
-  .aliveToolbar .refreshBtn { min-height: 34px; padding-inline: 12px; font-size: 11px; }
-  .aliveToolbar .refreshBtn > svg { width: 15px; height: 15px; }
+  .aliveToolbar .refreshBtn { min-height: var(--space-9); padding-inline: var(--space-3); font-size: var(--font-size-xs); }
+  .aliveToolbar .refreshBtn > svg { width: var(--space-4); height: var(--space-4); }
 
   .aliveControls .aliveToolbar {
     display: grid !important;
     width: 100%;
     grid-template-columns: minmax(0, 1fr);
-    gap: 8px !important;
+    gap: var(--space-2) !important;
   }
   .aliveControls .aliveToolbar :global(.dataTableToolbarLeft),
   .aliveControls .aliveToolbar :global(.dataTableToolbarRight) {
@@ -3252,7 +3252,7 @@
     width: 100%;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center !important;
-    gap: 8px !important;
+    gap: var(--space-2) !important;
   }
   .aliveControls .aliveToolbar .liveStatus { width: 100%; grid-row: 1; grid-column: 1; }
   .aliveControls .aliveToolbar .refreshActions { grid-row: 1; grid-column: 2; }
@@ -3261,7 +3261,7 @@
   .bracketControlsPanel .bracketGroupTabs { grid-row: 1 !important; grid-column: 1 !important; }
   .bracketControlsPanel .bracketSearchRow { width: 100%; grid-row: 2 !important; grid-column: 1 !important; }
   .bracketControlsPanel .bracketLiveControls { width: 100%; grid-row: 3 !important; grid-column: 1 !important; }
-  .bracketSearchInput { width: 100% !important; min-height: 40px !important; }
+  .bracketSearchInput { width: 100% !important; min-height: var(--space-10) !important; }
 
   .bracketLiveControls .aliveToolbar,
   .sidePotLiveControls .aliveToolbar { display: block !important; width: 100%; }
@@ -3275,7 +3275,7 @@
     width: 100%;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center !important;
-    gap: 8px !important;
+    gap: var(--space-2) !important;
   }
   .bracketLiveControls .liveStatus,
   .sidePotLiveControls .liveStatus { width: 100%; grid-row: 1; grid-column: 1; }
@@ -3284,25 +3284,25 @@
 }
 
 @media (max-width: 420px) {
-  .brandCol { grid-template-columns: 40px minmax(0, 1fr) !important; gap: 8px !important; }
-  .brandLogo { width: 40px !important; height: 40px !important; }
-  .brandEyebrow::before { font-size: 16px !important; }
-  .brandSubline { font-size: 12px !important; }
-  .shareBtn { width: 36px !important; padding: 0 !important; }
+  .brandCol { grid-template-columns: var(--space-10) minmax(0, 1fr) !important; gap: var(--space-2) !important; }
+  .brandLogo { width: var(--space-10) !important; height: var(--space-10) !important; }
+  .brandEyebrow::before { font-size: var(--font-size-xl) !important; }
+  .brandSubline { font-size: var(--font-size-sm) !important; }
+  .shareBtn { width: var(--space-9) !important; padding: 0 !important; }
   .shareBtn span:last-child { display: none !important; }
 }
 
 /* Canonical live-view responsive system: mobile <768, tablet 768-1023,
    desktop 1024-1279, large desktop 1280+, XL refinement 1440+. */
 .page {
-  --live-page-padding: 24px;
-  --live-card-gap: 16px;
+  --live-page-padding: var(--space-6);
+  --live-card-gap: var(--space-4);
 }
 
 .contentShell,
 .headerInner {
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--size-10xl);
   margin-inline: auto;
 }
 
@@ -3313,7 +3313,7 @@
 .sidePotModeTab,
 .bracketPill,
 .bracketPillsArrow {
-  min-height: 38px;
+  min-height: var(--control-height);
 }
 
 .tableWrap,
@@ -3329,51 +3329,51 @@
 @media (min-width: 1440px) {
   .contentShell,
   .headerInner {
-    max-width: 1440px;
+    max-width: var(--size-10xl);
   }
 }
 
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .page { --live-page-padding: 24px; }
-  .main { padding: 24px; }
+  .page { --live-page-padding: var(--space-6); }
+  .main { padding: var(--space-6); }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .page {
-    --live-page-padding: 20px;
-    --live-card-gap: 16px;
+    --live-page-padding: var(--space-5);
+    --live-card-gap: var(--space-4);
   }
 
   .headerTop {
     grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 20px;
+    gap: var(--space-4);
+    padding: var(--space-5);
   }
 
   .controlsPanel { width: 100%; }
   .controlsTopRow { justify-content: space-between; }
-  .main { padding: 20px; }
+  .main { padding: var(--space-5); }
 
   .bracketControlsPanel { grid-template-columns: 1fr; }
   .bracketControlsPanel .bracketGroupTabs,
   .bracketControlsPanel .bracketSearchRow,
   .bracketControlsPanel .bracketLiveControls { grid-column: 1; grid-row: auto; }
 
-  .sidePotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .sidePotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 }
 
 @media (max-width: 767px) {
   .page {
-    --live-page-padding: 12px;
-    --live-card-gap: 12px;
-    --live-space-md: 12px;
-    --live-space-lg: 12px;
+    --live-page-padding: var(--space-3);
+    --live-card-gap: var(--space-3);
+    --live-space-md: var(--space-3);
+    --live-space-lg: var(--space-3);
     border: 0;
     border-radius: 0;
   }
 
   .brandCol { min-width: 0; }
-  .brandEyebrow { font-size: 13px; }
+  .brandEyebrow { font-size: var(--font-size-base); }
   .brandSep { display: none; }
 
   .controlsPanel,
@@ -3387,32 +3387,32 @@
 
   .shareBtn { justify-content: center; }
   .tab,
-  .tabActive { min-width: 0; min-height: 40px; padding-inline: 8px; }
+  .tabActive { min-width: 0; min-height: var(--space-10); padding-inline: var(--space-2); }
   .section { min-width: 0; }
   .aliveControls,
   .bracketControlsPanel,
   .bracketView,
   .sidePotSection,
-  .sidePotCard { padding: 12px; }
+  .sidePotCard { padding: var(--space-3); }
 
-  .bracketControlsPanel { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .bracketControlsPanel { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
   .bracketControlsPanel .bracketGroupTabs,
   .bracketControlsPanel .bracketSearchRow,
   .bracketControlsPanel .bracketLiveControls { grid-column: 1; grid-row: auto; }
   .bracketTreeGrid,
-  .bracketTreeGridScaled { min-width: 760px; transform: none !important; transform-origin: top left; }
+  .bracketTreeGridScaled { min-width: var(--size-4xl); transform: none !important; transform-origin: top left; }
 
   .bracketPillsNav { min-width: 0; }
   .bracketPills { justify-content: flex-start; }
   .sidePotModeTabs { display: flex; width: 100%; overflow-x: auto; }
-  .sidePotModeTab { flex: 1 0 140px; min-width: 140px; }
+  .sidePotModeTab { flex: 1 0 var(--space-36); min-width: var(--space-36); }
 }
 
 /* Reference-aligned public tournament view */
 .page {
   min-height: 100dvh;
   border: 1px solid var(--bw-border-card);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   overflow: hidden;
   background: var(--bw-page);
 }
@@ -3431,10 +3431,10 @@
 
 .headerTop {
   display: grid;
-  grid-template-columns: minmax(420px, 1fr) minmax(560px, 1.25fr);
-  gap: 30px;
-  min-height: 186px;
-  padding: 28px 34px 0;
+  grid-template-columns: minmax(var(--size-md), 1fr) minmax(var(--size-xl), 1.25fr);
+  gap: var(--space-8);
+  min-height: var(--space-48);
+  padding: var(--space-7) var(--space-9) 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -3442,14 +3442,14 @@
 
 .brandCol {
   align-items: flex-start;
-  gap: 18px;
-  padding: 8px 0 0;
+  gap: var(--space-5);
+  padding: var(--space-2) 0 0;
   border: 0;
 }
 
 .brandLogo {
-  width: 96px;
-  height: 96px;
+  width: var(--space-24);
+  height: var(--space-24);
   max-height: none;
   object-fit: contain;
 }
@@ -3472,7 +3472,7 @@
   content: "BRACKETWORKS";
   display: block;
   color: var(--bw-text-title);
-  font-size: 25px;
+  font-size: var(--font-size-4xl);
   font-weight: 900;
 }
 
@@ -3483,17 +3483,17 @@
 .brandEyebrow::after {
   content: "PUBLIC TOURNAMENT VIEW";
   display: block;
-  margin-top: 3px;
+  margin-top: var(--space-1);
   color: var(--bw-text-accent);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 900;
   letter-spacing: 0.04em;
 }
 
 .brandSubline {
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
   color: var(--bw-text-title);
-  font-size: 22px;
+  font-size: var(--font-size-4xl);
   font-weight: 900;
   line-height: 1.25;
 }
@@ -3501,24 +3501,24 @@
 .controlsPanel {
   display: grid;
   align-content: space-between;
-  gap: 24px;
+  gap: var(--space-6);
   padding: 0;
 }
 
 .controlsTopRow {
   justify-content: flex-end;
-  gap: 28px;
+  gap: var(--space-7);
 }
 
 .squadSelector {
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .squadLabel {
   color: var(--bw-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -3532,35 +3532,35 @@
 
 .squadSelectWrap > svg {
   position: absolute;
-  left: 11px;
+  left: var(--space-3);
   z-index: 1;
-  width: 14px;
-  height: 14px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
   color: var(--bw-text-muted);
   pointer-events: none;
 }
 
 .squadSelect {
   width: auto;
-  min-width: 238px;
-  min-height: 36px;
-  padding: 0 34px 0 33px;
+  min-width: var(--space-60);
+  min-height: var(--space-9);
+  padding: 0 var(--space-9) 0 var(--space-8);
   border: 1px solid var(--bw-border-card);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 800;
 }
 
 .shareBtn {
-  min-height: 52px;
-  padding: 0 22px;
+  min-height: var(--space-14);
+  padding: 0 var(--space-6);
   border: 1px solid var(--bw-border-accent);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--bw-text-accent);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 900;
 }
 
@@ -3569,8 +3569,8 @@
 }
 
 .shareBtnSvg {
-  width: 21px;
-  height: 21px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 .tabs {
@@ -3584,7 +3584,7 @@
   width: 100%;
   height: auto !important;
   min-height: 0;
-  gap: 8px;
+  gap: var(--space-2);
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -3599,28 +3599,28 @@
   justify-content: center;
   width: 100%;
   height: auto !important;
-  min-height: 52px !important;
-  gap: 10px;
-  padding: 0 16px;
+  min-height: var(--space-14) !important;
+  gap: var(--space-2-5);
+  padding: 0 var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
   color: var(--bw-text-muted);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 .tab:last-child {
   border-right: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .tab:first-child {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
 }
 
 .tab > svg {
-  width: 22px;
-  height: 22px;
+  width: var(--space-6);
+  height: var(--space-6);
 }
 
 .tabActive {
@@ -3636,7 +3636,7 @@
 .main {
   width: 100%;
   max-width: none;
-  padding: 24px;
+  padding: var(--space-6);
   background: var(--bw-page);
 }
 
@@ -3648,7 +3648,7 @@
 }
 
 .aliveControls {
-  margin-bottom: 18px;
+  margin-bottom: var(--space-5);
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -3657,17 +3657,17 @@
 
 .bracketLiveControls,
 .sidePotLiveControls {
-  margin-bottom: 18px;
+  margin-bottom: var(--space-5);
 }
 
 .bracketControlsPanel {
   display: grid;
-  grid-template-columns: minmax(280px, 0.7fr) minmax(520px, 1.3fr);
-  gap: 16px 24px;
-  margin-bottom: 18px;
-  padding: 16px;
+  grid-template-columns: minmax(var(--space-72), 0.7fr) minmax(var(--size-lg), 1.3fr);
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
   border: 1px solid var(--bw-border-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
 }
 
@@ -3704,122 +3704,122 @@
 }
 
 .bracketControlsPanel .bracketSearchInput {
-  min-height: 46px;
+  min-height: var(--space-12);
 }
 
 .aliveToolbar {
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .searchRow {
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 .searchField {
   position: relative;
   display: flex;
   align-items: center;
-  min-width: 305px;
+  min-width: var(--space-80);
 }
 
 .searchField > svg {
   position: absolute;
-  left: 16px;
-  width: 21px;
-  height: 21px;
+  left: var(--space-4);
+  width: var(--space-5);
+  height: var(--space-5);
   color: var(--bw-text-title);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
-  min-height: 54px;
-  padding: 0 16px 0 50px;
-  border-radius: 11px;
+  min-height: var(--space-14);
+  padding: 0 var(--space-4) 0 var(--space-12);
+  border-radius: var(--radius-lg);
   font-weight: 500;
 }
 
 .countBadge {
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .refreshRow {
-  gap: 22px;
+  gap: var(--space-6);
 }
 
 .refreshMeta {
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .liveStatus {
-  min-height: 36px;
-  gap: 7px;
-  padding: 0 12px;
+  min-height: var(--space-9);
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-success) 34%, transparent);
-  border-radius: 9px;
-  font-size: 11px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
 }
 
 .liveStatus > svg {
-  width: 15px;
-  height: 15px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .refreshBtn > svg {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 .refreshBtn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 50px;
-  padding: 0 20px;
+  gap: var(--space-2-5);
+  min-height: var(--space-12);
+  padding: 0 var(--space-5);
 }
 
 .tableWrap {
   border: 1px solid var(--bw-border-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
 }
 
 .table thead th {
-  height: 52px;
-  padding: 0 22px;
+  height: var(--space-14);
+  padding: 0 var(--space-6);
   background: var(--bw-surface-card-strong);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .table td {
-  height: 56px;
-  padding: 0 22px;
-  font-size: 15px;
+  height: var(--space-14);
+  padding: 0 var(--space-6);
+  font-size: var(--font-size-lg);
 }
 
 .rankColumn {
-  width: 60px;
+  width: var(--space-16);
   color: var(--bw-text-muted) !important;
   text-align: center;
 }
 
 .tdName {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 .finalHeading {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: var(--space-2);
 }
 
 .finalHeading svg {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .wonNum {
@@ -3835,7 +3835,7 @@
 
   .headerTop {
     grid-template-columns: 1fr;
-    padding: 18px;
+    padding: var(--space-5);
   }
 
   .controlsTopRow {
@@ -3843,7 +3843,7 @@
   }
 
   .tabsTrack {
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
   }
 
   .aliveToolbar,
@@ -3869,16 +3869,16 @@
 
 @media (max-width: 600px) {
   .brandLogo {
-    width: 64px;
-    height: 64px;
+    width: var(--space-16);
+    height: var(--space-16);
   }
 
   .brandEyebrow {
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
   }
 
   .brandSubline {
-    font-size: 17px;
+    font-size: var(--font-size-2xl);
   }
 
   .controlsTopRow,
@@ -3889,22 +3889,22 @@
 
   .tabsTrack {
     height: auto !important;
-    min-height: 46px;
-    border-radius: 11px;
+    min-height: var(--space-12);
+    border-radius: var(--radius-lg);
   }
 
   .tab,
   .tabActive {
     height: auto !important;
-    min-height: 44px !important;
-    gap: 6px;
-    padding: 0 8px;
-    font-size: 11px;
+    min-height: var(--space-11) !important;
+    gap: var(--space-1-5);
+    padding: 0 var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .tab > svg {
-    width: 17px;
-    height: 17px;
+    width: var(--space-4);
+    height: var(--space-4);
     flex-shrink: 0;
   }
 
@@ -3915,27 +3915,27 @@
   }
 
   .main {
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .aliveControls {
-    padding: 14px;
+    padding: var(--space-3-5);
   }
 
   .table thead th,
   .table td {
-    padding-inline: 10px;
+    padding-inline: var(--space-2-5);
   }
 
   .rankColumn {
-    width: 38px;
+    width: var(--space-10);
   }
 }
 
 /* Reference-aligned side-pot leaderboard */
 .sidePotLeaderboard {
   display: grid;
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 .refreshSpin {
@@ -3947,9 +3947,9 @@
 }
 
 .sidePotSection {
-  padding: 12px;
+  padding: var(--space-3);
   border: 1px solid var(--bw-border-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
   overflow: hidden;
 }
@@ -3957,9 +3957,9 @@
 .sidePotModeTabs {
   display: inline-flex;
   gap: 0;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--bw-surface-card-strong);
 }
@@ -3969,17 +3969,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
-  min-width: 170px;
-  min-height: 50px;
-  padding: 0 18px;
+  gap: var(--space-2-5);
+  min-width: var(--space-44);
+  min-height: var(--space-12);
+  padding: 0 var(--space-5);
   border: 0;
   border-right: 1px solid var(--bw-border-subtle);
   background: transparent;
   color: var(--bw-text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
 }
 
@@ -3988,8 +3988,8 @@
 }
 
 .sidePotModeTab svg {
-  width: 19px;
-  height: 19px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 .sidePotModeTabActive {
@@ -4003,61 +4003,61 @@
   right: 0;
   bottom: 0;
   left: 0;
-  height: 2px;
+  height: var(--space-0-5);
   background: var(--color-primary);
 }
 
 .sidePotGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .sidePotCard {
   display: flex;
   min-width: 0;
-  min-height: 286px;
-  padding: 18px;
+  min-height: var(--space-72);
+  padding: var(--space-5);
   flex-direction: column;
   border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card-strong);
 }
 
 .sidePotCardLabel {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 2px 16px;
+  gap: var(--space-3);
+  padding: 0 var(--space-0-5) var(--space-4);
   border-bottom: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-title);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .sidePotCardLabel svg {
-  width: 21px;
-  height: 21px;
+  width: var(--space-5);
+  height: var(--space-5);
   color: var(--bw-text-accent);
 }
 
 .sidePotPodium {
   display: grid;
   gap: 0;
-  margin: 14px 0 0;
+  margin: var(--space-3-5) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .sidePotPodiumRow {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: var(--space-12) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  min-height: 52px;
-  padding: 0 10px;
+  gap: var(--space-2-5);
+  min-height: var(--space-14);
+  padding: 0 var(--space-2-5);
   border-bottom: 1px solid var(--bw-border-subtle);
   border-radius: 0;
   background: transparent;
@@ -4065,19 +4065,19 @@
 
 .sidePotPodiumFirst {
   border: 1px solid color-mix(in srgb, var(--color-primary) 42%, transparent);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 22%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent));
 }
 
 .sidePotPodiumPlace {
   display: inline-grid;
-  min-width: 42px;
-  min-height: 30px;
+  min-width: var(--space-11);
+  min-height: var(--space-8);
   place-items: center;
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-panel);
   color: var(--bw-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -4090,7 +4090,7 @@
 .sidePotPodiumName {
   overflow: hidden;
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4098,7 +4098,7 @@
 
 .sidePotPodiumScore {
   color: var(--bw-text-body);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 800;
 }
 
@@ -4108,14 +4108,14 @@
 
 .sidePotCardFooter {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: var(--space-3-5);
   color: var(--bw-text-faint);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   text-align: center;
 }
 
 .sidePotCardFooter span {
-  margin: 0 4px;
+  margin: 0 var(--space-1);
 }
 
 @media (max-width: 980px) {
@@ -4135,7 +4135,7 @@
     flex: 1;
     min-width: 0;
     justify-content: center;
-    padding-inline: 10px;
+    padding-inline: var(--space-2-5);
   }
 
   .sidePotGrid {
@@ -4145,10 +4145,10 @@
 
 /* Shared spacing rhythm across all public live-view tabs */
 .page {
-  --live-space-xs: 8px;
-  --live-space-sm: 12px;
-  --live-space-md: 16px;
-  --live-space-lg: 24px;
+  --live-space-xs: var(--space-2);
+  --live-space-sm: var(--space-3);
+  --live-space-md: var(--space-4);
+  --live-space-lg: var(--space-6);
 }
 
 .main {
@@ -4214,8 +4214,8 @@
 
 @media (max-width: 767px) {
   .page {
-    --live-space-md: 12px;
-    --live-space-lg: 12px;
+    --live-space-md: var(--space-3);
+    --live-space-lg: var(--space-3);
   }
 
   .main {
@@ -4244,11 +4244,11 @@
 }
 
 @media (max-width: 767px) {
-  .headerTop { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px; }
-  .brandLogo { width: 44px; height: 44px; }
+  .headerTop { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3); }
+  .brandLogo { width: var(--space-11); height: var(--space-11); }
   .brandEyebrow,
-  .brandEyebrow::before { font-size: 13px; }
-  .brandSubline { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .brandEyebrow::before { font-size: var(--font-size-base); }
+  .brandSubline { overflow: hidden; font-size: var(--font-size-base); text-overflow: ellipsis; white-space: nowrap; }
   .controlsTopRow,
   .squadSelector,
   .aliveToolbar,
@@ -4261,24 +4261,24 @@
   .shareBtn,
   .searchField,
   .searchInput { width: 100%; min-width: 0; }
-  .shareBtn { min-height: 38px; justify-content: center; }
+  .shareBtn { min-height: var(--control-height); justify-content: center; }
   .tabsTrack { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .tab,
-  .tabActive { min-width: 0; min-height: 40px !important; padding-inline: 8px; }
-  .main { padding: 12px; }
+  .tabActive { min-width: 0; min-height: var(--space-10) !important; padding-inline: var(--space-2); }
+  .main { padding: var(--space-3); }
   .tableWrap,
   .bracketTreeWrap,
   .bracketPills,
   .bracketGroupTabs { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-  .table { min-width: 620px; font-size: 13px; }
+  .table { min-width: var(--size-2xl); font-size: var(--font-size-base); }
   .table thead th,
-  .table td { height: 44px; padding-inline: 10px; }
+  .table td { height: var(--space-11); padding-inline: var(--space-2-5); }
   .table .thFull { display: none; }
   .table .thShort { display: inline; }
   .bracketTreeWrap { width: 100%; height: auto !important; }
   .bracketTreeGrid,
-  .bracketTreeGridScaled { min-width: 760px; transform: none !important; }
-  .sidePotGrid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .bracketTreeGridScaled { min-width: var(--size-4xl); transform: none !important; }
+  .sidePotGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
 }
 
 /* Keep the production bracket canvas fitted to the phone viewport. The tree is
@@ -4297,7 +4297,7 @@
 
   .bracketTreeGrid,
   .bracketTreeGridScaled {
-    min-width: 760px;
+    min-width: var(--size-4xl);
   }
 
   .bracketTreeGridScaled {
@@ -4325,7 +4325,7 @@
   .sidePotModeTab {
     width: 100%;
     min-width: 0;
-    padding-inline: 10px;
+    padding-inline: var(--space-2-5);
     justify-content: center;
   }
 
@@ -4335,6 +4335,6 @@
 
   .sidePotPodiumRow {
     min-width: 0;
-    grid-template-columns: 42px minmax(0, 1fr) auto;
+    grid-template-columns: var(--space-11) minmax(0, 1fr) auto;
   }
 }

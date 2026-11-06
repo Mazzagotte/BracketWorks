@@ -19,16 +19,16 @@ body { margin: 0; background: var(--print-paper); color: var(--print-ink); font-
 .brand-left h2 { font-size: 19px; line-height: 1; }
 .brand-left p,.report-title p { margin: 5px 0 0; color: var(--print-muted); font-size: 7.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .report-title { text-align: right; }
-.report-title h1 { font-size: 18px; line-height: 1; text-transform: uppercase; }
+.report-title h1 { font-size: var(--font-size-2xl); line-height: 1; text-transform: uppercase; }
 .event-band { display: grid; grid-template-columns: 1fr auto; align-items: start; gap: 18px; padding: 13px 0 10px; }
-.event-band h2 { font-size: 16px; }
+.event-band h2 { font-size: var(--font-size-xl); }
 .event-band p { margin: 4px 0 0; color: var(--print-muted); font-size: 9px; }
 .event-right { display: grid; justify-items: end; gap: 7px; color: var(--print-muted); font-size: 8px; }
 .event-right strong { color: var(--print-ink); font-size: 7px; letter-spacing: .04em; text-transform: uppercase; }
 .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin-bottom: 10px; }
 .stat-card { min-height: 37px; padding: 7px 9px; border: .7px solid var(--print-rule); }
 .stat-label { display: block; color: var(--print-muted); font-size: 6.7px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.stat-value { display: block; margin-top: 4px; font-size: 12px; line-height: 1; }
+.stat-value { display: block; margin-top: 4px; font-size: var(--font-size-sm); line-height: 1; }
 table { width: 100%; border: .8px solid var(--print-ink); border-collapse: collapse; table-layout: fixed; }
 thead { display: table-header-group; }
 thead th { height: 22px; padding: 5px 7px; background: var(--print-soft); font-size: 7.5px; letter-spacing: .04em; text-align: left; text-transform: uppercase; }

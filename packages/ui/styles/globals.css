@@ -1,12 +1,11 @@
+/*
+  Shared BracketWorks stylesheet. Both apps import this first from app/layout.tsx.
+  Order matters: later files may reference and override earlier tokens.
+*/
 @import './tokens.css';
 @import './reset.css';
 @import './components.css';
 @import '../src/bracketworks-public-header.css';
-
-:root {
-  color-scheme: dark;
-  --bw-page: var(--color-bg-primary);
-  --bw-page-soft: var(--color-bg-secondary);
-  --bw-border: var(--color-border-primary);
-  --bw-muted: var(--color-text-secondary);
-}
+@import './theme.css';
+@import './base.css';
+@import './app-theme.css';

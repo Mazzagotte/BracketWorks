@@ -7,7 +7,8 @@ import { ArrowLeft } from 'lucide-react';
 import { listTournamentActivity, type TournamentActivityEntry } from '@/components/organizer/organizerApi';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
-import styles from '../page.module.css';
+import styles from '../page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 const PAGE_SIZE = 25;
 
@@ -70,7 +71,7 @@ export default function OrganizerTournamentActivityPage() {
           <p>Recent changes and events for {tournamentName}.</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 

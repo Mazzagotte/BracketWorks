@@ -1,28 +1,28 @@
 .backdrop {
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-overlay);
   inset: 0;
   display: grid;
   place-items: center;
   overflow-y: auto;
-  padding: 20px;
-  background: rgba(3, 5, 12, 0.78);
+  padding: var(--space-5);
+  background: color-mix(in srgb, var(--color-bg-primary) 78%, transparent);
   backdrop-filter: blur(5px);
 }
 
 .dialog {
   box-sizing: border-box;
-  width: min(460px, 100%);
-  max-height: calc(100dvh - 40px);
+  width: min(var(--size-md), 100%);
+  max-height: calc(100dvh - var(--space-10));
   overflow-y: auto;
-  padding: 24px;
+  padding: var(--space-6);
   display: grid;
-  gap: 14px;
-  border: 1px solid var(--bw-border-card, #333642);
-  border-radius: 18px;
-  color: var(--bw-text-body, #e5e7eb);
-  background: var(--bw-surface-card, #171a23);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  gap: var(--space-3-5);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-2xl);
+  color: var(--bw-text-body);
+  background: var(--bw-surface-card);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--color-black) 50%, transparent);
 }
 
 .header {
@@ -34,89 +34,89 @@
 .icon {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(255, 121, 0, 0.25);
-  border-radius: 14px;
-  color: #ff982e;
-  background: rgba(255, 121, 0, 0.1);
+  width: var(--space-12);
+  height: var(--space-12);
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 25%, transparent);
+  border-radius: var(--radius-xl);
+  color: var(--color-accent-text);
+  background: color-mix(in srgb, var(--color-accent-primary) 10%, transparent);
 }
 
 .dangerIcon {
-  border-color: rgba(240, 82, 82, 0.25);
-  color: #ff8585;
-  background: rgba(240, 82, 82, 0.1);
+  border-color: color-mix(in srgb, var(--color-status-red) 25%, transparent);
+  color: var(--color-status-red-light);
+  background: color-mix(in srgb, var(--color-status-red) 10%, transparent);
 }
 
 .closeButton {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: var(--space-11);
+  height: var(--space-11);
   border: 0;
-  border-radius: 10px;
-  color: var(--bw-text-muted, #aeb3c2);
+  border-radius: var(--radius-lg);
+  color: var(--bw-text-muted);
   background: transparent;
   cursor: pointer;
 }
 
 .dialog h2 {
   margin: 0;
-  color: var(--bw-text-title, #fff);
-  font-size: 1.25rem;
+  color: var(--bw-text-title);
+  font-size: var(--font-size-3xl);
   line-height: 1.3;
 }
 
 .dialog p {
   margin: 0;
   overflow-wrap: anywhere;
-  color: var(--bw-text-muted, #aeb3c2);
-  font-size: 0.9375rem;
+  color: var(--bw-text-muted);
+  font-size: var(--font-size-lg);
   line-height: 1.65;
   white-space: pre-line;
 }
 
 .dialog p.error {
-  color: #ffaaaa;
+  color: var(--color-status-red-pale);
 }
 
 .dialog footer {
-  margin-top: 8px;
-  padding-top: 20px;
-  border-top: 1px solid var(--bw-border-card, #333642);
+  margin-top: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--bw-border-card);
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .cancelButton,
 .confirmButton,
 .dangerButton {
-  min-height: 44px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 0.875rem;
+  min-height: var(--space-11);
+  padding: var(--space-2-5) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-md);
   font-weight: 700;
   cursor: pointer;
 }
 
 .cancelButton {
-  border: 1px solid var(--bw-border-card, #333642);
-  color: var(--bw-text-body, #e5e7eb);
+  border: 1px solid var(--bw-border-card);
+  color: var(--bw-text-body);
   background: transparent;
 }
 
 .confirmButton {
-  border: 1px solid #ff7900;
-  color: #17120c;
-  background: #ff7900;
+  border: 1px solid var(--color-accent-primary);
+  color: var(--color-on-accent);
+  background: var(--color-accent-primary);
 }
 
 .dangerButton {
-  border: 1px solid #c93737;
-  color: #fff;
-  background: #c93737;
+  border: 1px solid var(--color-danger-strong);
+  color: var(--color-text-primary);
+  background: var(--color-danger-strong);
 }
 
 .dialog button:hover:not(:disabled) {
@@ -130,12 +130,12 @@
 
 .dialog:focus-visible,
 .dialog button:focus-visible {
-  outline: 2px solid #ff982e;
+  outline: 2px solid var(--color-accent-text);
   outline-offset: 4px;
 }
 
 @media (max-width: 480px) {
-  .backdrop { padding: 16px; }
-  .dialog { padding: 20px; max-height: calc(100dvh - 32px); }
-  .dialog footer button { flex: 1; padding-inline: 12px; }
+  .backdrop { padding: var(--space-4); }
+  .dialog { padding: var(--space-5); max-height: calc(100dvh - var(--space-8)); }
+  .dialog footer button { flex: 1; padding-inline: var(--space-3); }
 }

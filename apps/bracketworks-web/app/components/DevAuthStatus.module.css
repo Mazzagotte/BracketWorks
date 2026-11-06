@@ -1,12 +1,12 @@
 .status {
   position: fixed;
-  right: 8px;
-  bottom: 8px;
+  right: var(--space-2);
+  bottom: var(--space-2);
   z-index: var(--z-toast);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-bg-primary) 60%, transparent);
   color: var(--bw-text-title);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   pointer-events: none;
 }

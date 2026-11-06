@@ -26,7 +26,7 @@ body {
   background: #f3f4f6;
   color: var(--print-text-primary);
   font-family: var(--print-font-family);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.35;
 }
 
@@ -95,7 +95,7 @@ body {
 }
 
 .compact-brand-name {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .brand-tagline {
@@ -122,7 +122,7 @@ body {
 }
 
 .continuation-header .report-title h1 {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .report-title p {
@@ -136,7 +136,7 @@ body {
   margin-top: 7px;
   padding: 3px 7px;
   border: 1px solid var(--print-brand);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--print-brand-dark);
   font-size: 8px;
   font-weight: 900;
@@ -156,7 +156,7 @@ body {
 .tournament-info h2 {
   margin: 0;
   color: var(--print-text-primary);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 900;
   line-height: 1.2;
 }
@@ -210,7 +210,7 @@ body {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   border: 1px solid var(--print-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--print-surface);
 }
@@ -228,7 +228,7 @@ body {
 .summary-cell strong {
   display: block;
   color: var(--print-text-primary);
-  font-size: 18px;
+  font-size: var(--font-size-2xl);
   font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -248,7 +248,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border: 1px solid var(--print-border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--print-soft);
 }
 
@@ -274,7 +274,7 @@ body {
   display: block;
   margin-top: 3px;
   color: var(--print-text-primary);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -286,7 +286,7 @@ body {
   border-spacing: 0;
   table-layout: fixed;
   border: 1px solid var(--print-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .winner-table thead th:first-child {
@@ -399,7 +399,7 @@ body {
   display: block;
   color: var(--print-text-primary);
   font-family: Arial, sans-serif;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1;
 }
 
@@ -453,7 +453,7 @@ body {
 .commissioner h2 {
   margin: 0 0 10px;
   color: var(--print-text-primary);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 900;
   letter-spacing: 0.7px;
   text-transform: uppercase;
@@ -464,7 +464,7 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   border: 1px solid var(--print-border-soft);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--print-surface);
 }

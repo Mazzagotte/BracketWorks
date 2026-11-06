@@ -38,9 +38,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: var(--space-96);
   color: var(--color-text-secondary);
-  font-size: 1.125rem;
+  font-size: var(--font-size-2xl);
 }
 
 /* ===================================
@@ -49,10 +49,10 @@
 
 .bracketTitle {
   width: 100%;
-  padding: 0.625rem 0 0.75rem;
-  margin-bottom: 0.5rem;
+  padding: var(--space-2-5) 0 var(--space-3);
+  margin-bottom: var(--space-2);
   text-align: center;
-  font-size: 0.9375rem;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.02em;
@@ -66,11 +66,11 @@
 
 .bracketCard {
   background: var(--color-brand-ivory-light);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: 0 2px 8px var(--opacity-black-08);
   border: 1px solid var(--color-border-light);
   border-top: 4px solid var(--color-primary);
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-5) var(--space-6);
   max-width: none;
   width: 100%;
 }
@@ -89,19 +89,19 @@
 .headerRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
   padding: 0;
 }
 
 .roundHeader {
   background: var(--color-warning-tint);
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   box-shadow: 0 1px 4px var(--opacity-black-08);
   border: 1px solid var(--color-border-light);
   border-top: 2px solid var(--color-border-hover);
-  transition: all 0.3s ease;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease, outline 0.3s ease, outline-offset 0.3s ease, grid-column 0.3s ease;
 }
 
 .roundHeader:hover {
@@ -111,18 +111,18 @@
 .roundBadgeContainer {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 
 .roundBadge {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-white);
   background: var(--color-primary);
@@ -133,28 +133,28 @@
 .roundInfo {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--space-1);
   flex: 1;
 }
 
 .roundTitle {
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
   font-weight: 600;
   margin: 0;
   color: var(--color-secondary);
 }
 
 .roundProgress {
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   color: var(--color-dark-lighter);
   font-weight: 500;
 }
 
 .progressMeter {
   width: 100%;
-  height: 6px;
+  height: var(--space-1-5);
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background: var(--color-border-light);
   appearance: none;
@@ -162,17 +162,17 @@
 
 .progressMeter::-webkit-progress-bar {
   background: var(--color-border-light);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .progressMeter::-webkit-progress-value {
   background: var(--color-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .progressMeter::-moz-progress-bar {
   background: var(--color-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 
@@ -187,7 +187,7 @@
   grid-template-columns: repeat(9, auto);
   gap: 0;
   align-items: center;
-  padding: 0.75rem 0;
+  padding: var(--space-3) 0;
 }
 
 .r1m1 {
@@ -232,12 +232,12 @@
 .matchCard {
   background: var(--color-brand-ivory-soft);
   border: 1.5px solid var(--color-border-light);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 2px 12px var(--opacity-black-08);
-  transition: all 0.2s ease;
-  width: 280px;
-  min-height: 96px;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, border 0.2s ease, border-top 0.2s ease, background 0.2s ease, border-bottom-color 0.2s ease, border-width 0.2s ease, border-left 0.2s ease, border-left-width 0.2s ease, filter 0.2s ease, outline 0.2s ease, outline-offset 0.2s ease;
+  width: var(--space-72);
+  min-height: var(--space-24);
   display: flex;
   flex-direction: column;
   justify-self: center;
@@ -246,11 +246,11 @@
 }
 
 .tieIndicator {
-  font-size: 0.5625rem;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-sm);
   cursor: help;
   background: var(--color-secondary);
   color: var(--color-white);
@@ -259,11 +259,11 @@
 }
 
 .splitPotIndicator {
-  font-size: 0.5625rem;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius-sm);
   cursor: help;
   background: var(--color-primary);
   color: var(--color-white);
@@ -345,9 +345,9 @@
 .matchLabel {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -357,9 +357,9 @@
 }
 
 .vsRow {
-  height: 1px;
+  height: var(--space-px);
   background: var(--color-border-light);
-  margin: 0 12px;
+  margin: 0 var(--space-3);
   pointer-events: none;
 }
 
@@ -369,12 +369,12 @@
 
 .player {
   display: grid;
-  grid-template-columns: 1fr 52px;
+  grid-template-columns: 1fr var(--space-14);
   align-items: center;
-  gap: 0 8px;
-  padding: 7px 12px;
+  gap: 0 var(--space-2);
+  padding: var(--space-2) var(--space-3);
   transition: background-color 0.2s ease;
-  min-height: 36px;
+  min-height: var(--space-9);
   cursor: pointer;
 }
 
@@ -389,18 +389,18 @@
 .player.highlightedPlayer {
   background: var(--color-border-light);
   font-weight: 700;
-  padding-left: 8px;
+  padding-left: var(--space-2);
 }
 
 .player.winner {
   background: var(--color-green-light);
   font-weight: 600;
   border-left: 4px solid var(--color-success);
-  padding-left: 8px;
+  padding-left: var(--space-2);
 }
 
 .playerName {
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
   font-weight: 500;
   color: var(--color-secondary);
   white-space: nowrap;
@@ -414,7 +414,7 @@
 }
 
 .playerScore {
-  font-size: 0.9375rem;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-dark-lighter);
   text-align: right;
@@ -424,7 +424,7 @@
 
 .player.winner .playerScore {
   color: var(--color-green-dark);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   text-shadow: none;
 }
 
@@ -432,8 +432,8 @@
   display: inline-block;
   color: var(--color-success);
   font-weight: 800;
-  font-size: 0.75rem;
-  margin-right: 3px;
+  font-size: var(--font-size-sm);
+  margin-right: var(--space-1);
   vertical-align: middle;
 }
 
@@ -446,14 +446,14 @@
 }
 
 .championLabel {
-  font-size: 0.6rem;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-primary);
   white-space: nowrap;
   line-height: 1.2;
-  margin-top: 1px;
+  margin-top: var(--space-px);
 }
 
 
@@ -464,40 +464,40 @@
 
 @media (max-width: 1023px) {
   .bracketTree {
-    gap: 60px;
+    gap: var(--space-16);
   }
 
   .matchCard {
-    width: 220px;
+    width: var(--space-56);
   }
 
 }
 
 @media (max-width: 480px) {
   .bracketTreeContainer {
-    padding: 1rem;
+    padding: var(--space-4);
   }
 
   .bracketTree {
-    gap: 40px;
-    padding: 1rem;
+    gap: var(--space-10);
+    padding: var(--space-4);
   }
 
   .matchCard {
-    width: 200px;
+    width: var(--space-52);
   }
 
   .roundTitle {
-    font-size: 1rem;
+    font-size: var(--font-size-xl);
   }
 
   .player {
-    grid-template-columns: 1fr 45px;
-    padding: 10px 12px;
+    grid-template-columns: 1fr var(--space-11);
+    padding: var(--space-2-5) var(--space-3);
   }
 
   .playerName {
-    font-size: 0.8125rem;
+    font-size: var(--font-size-base);
   }
 
 }
@@ -534,18 +534,18 @@
   border-right: 4px solid var(--color-border-hover);
   border-top: 4px solid var(--color-border-hover);
   border-bottom: 4px solid var(--color-border-hover);
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   align-self: stretch;
-  min-width: 28px;
+  min-width: var(--space-7);
   pointer-events: none;
 }
 
 /* Horizontal arm from bracket spine to output match */
 .connectorArm {
-  height: 4px;
+  height: var(--space-1);
   background: var(--color-border-hover);
   align-self: center;
-  min-width: 40px;
+  min-width: var(--space-10);
   pointer-events: none;
 }
 
@@ -586,32 +586,32 @@
 }
 
 .bracketCard {
-  padding: 0.78rem;
+  padding: var(--space-3);
   width: fit-content;
   max-width: 100%;
   margin-inline: auto;
   border: 1px solid var(--tree-card-border);
   border-top: 1px solid var(--tree-card-border-accent);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   background: var(--tree-card-panel);
   box-shadow: var(--tree-card-shadow);
 }
 
 .bracketTitle {
-  padding: 0.1rem 0 0.58rem;
-  margin-bottom: 0.45rem;
+  padding: var(--space-0-5) 0 var(--space-2-5);
+  margin-bottom: var(--space-2);
   color: var(--tree-title);
   border-bottom: 1px solid var(--tree-card-border);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
 }
 
 .headerRow {
-  grid-template-columns: 184px 52px 184px 52px 184px;
+  grid-template-columns: var(--space-48) var(--space-14) var(--space-48) var(--space-14) var(--space-48);
   gap: 0;
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1-5);
 }
 
 .roundHeader:nth-child(1) {
@@ -627,7 +627,7 @@
 }
 
 .roundHeader {
-  padding: 0.32rem 0.45rem;
+  padding: var(--space-1-5) var(--space-2);
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -645,31 +645,31 @@
 
 .roundTitle {
   color: var(--tree-title);
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
 .roundProgress {
-  margin-top: 0.16rem;
+  margin-top: var(--space-0-5);
   color: var(--tree-text-muted);
-  font-size: 0.6rem;
+  font-size: var(--font-size-2xs);
 }
 
 .bracketGrid {
   width: max-content;
   justify-content: start;
-  padding: 0.2rem 0;
+  padding: var(--space-1) 0;
 }
 
 .matchCard {
-  width: 184px;
+  width: var(--space-48);
   max-width: none;
-  min-height: 82px;
+  min-height: var(--space-20);
   box-sizing: border-box;
   border: 1px solid var(--tree-card-border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--tree-card-surface-soft);
   box-shadow: none;
 }
@@ -717,11 +717,11 @@
 }
 
 .matchLabel {
-  padding: 5px 10px;
+  padding: var(--space-1-5) var(--space-2-5);
   color: var(--tree-text-accent);
   background: var(--tree-card-panel-strong);
   border-bottom: 1px solid var(--tree-card-border);
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0;
 }
@@ -734,13 +734,13 @@
 
 .vsRow {
   background: color-mix(in srgb, var(--tree-card-panel-strong) 90%, transparent);
-  margin: 0 10px;
+  margin: 0 var(--space-2-5);
 }
 
 .player {
-  min-height: 32px;
-  padding: 6px 10px;
-  grid-template-columns: minmax(0, 1fr) 44px;
+  min-height: var(--space-8);
+  padding: var(--space-1-5) var(--space-2-5);
+  grid-template-columns: minmax(0, 1fr) var(--space-11);
 }
 
 .player:hover {
@@ -757,7 +757,7 @@
 
 .playerName {
   color: var(--tree-title);
-  font-size: 0.8rem;
+  font-size: var(--font-size-base);
   font-weight: 650;
 }
 
@@ -767,7 +767,7 @@
 
 .playerScore {
   color: var(--tree-text);
-  font-size: 0.86rem;
+  font-size: var(--font-size-md);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -775,7 +775,7 @@
 
 .player.winner .playerScore {
   color: var(--tree-text-success);
-  font-size: 0.9rem;
+  font-size: var(--font-size-md);
   text-shadow: none;
 }
 
@@ -785,15 +785,15 @@
 }
 
 .connectorBracket {
-  min-width: 22px;
+  min-width: var(--space-6);
   border-right: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
   border-top: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
   border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 58%, transparent);
 }
 
 .connectorArm {
-  min-width: 30px;
-  height: 2px;
+  min-width: var(--space-8);
+  height: var(--space-0-5);
   background: color-mix(in srgb, var(--color-primary) 58%, transparent);
 }
 
@@ -801,24 +801,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 0.45rem;
-  padding-top: 0.55rem;
+  gap: var(--space-4);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
   border-top: 1px solid var(--tree-card-border);
   color: var(--tree-text-muted);
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
 }
 
 .bracketLegend span {
   display: inline-flex;
   align-items: center;
-  gap: 0.34rem;
+  gap: var(--space-1-5);
 }
 
 .bracketLegend i {
-  width: 8px;
-  height: 8px;
-  border-radius: 3px;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-sm);
 }
 
 .legendWinner {
@@ -832,18 +832,18 @@
 }
 
 .emptyState {
-  min-height: 220px;
+  min-height: var(--space-56);
   color: var(--tree-text-muted);
   background: var(--tree-card-panel);
   border: 1px solid var(--tree-card-border);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
 }
 
 @media (max-width: 1023px) {
   .matchCard {
     width: fit-content;
-    min-width: 196px;
-    max-width: 220px;
+    min-width: var(--space-48);
+    max-width: var(--space-56);
   }
 }
 
@@ -854,96 +854,96 @@
   }
 
   .bracketCard {
-    padding-top: 0.44rem;
-    padding-bottom: 0.44rem;
-    padding-left: 0.44rem;
-    padding-right: 0.64rem;
-    border-radius: 16px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    padding-left: var(--space-2);
+    padding-right: var(--space-2-5);
+    border-radius: var(--radius-xl);
   }
 
   .bracketTitle {
-    padding-bottom: 0.36rem;
-    margin-bottom: 0.28rem;
-    font-size: 0.7rem;
+    padding-bottom: var(--space-1-5);
+    margin-bottom: var(--space-1);
+    font-size: var(--font-size-xs);
   }
 
   .headerRow {
-    gap: 0.62rem;
-    margin-bottom: 0.72rem;
+    gap: var(--space-2-5);
+    margin-bottom: var(--space-3);
   }
 
   .roundHeader {
-    padding: 0.42rem 0.58rem;
+    padding: var(--space-1-5) var(--space-2-5);
   }
 
   .roundBadgeContainer {
-    gap: 0.36rem;
-    margin-bottom: 0.36rem;
+    gap: var(--space-1-5);
+    margin-bottom: var(--space-1-5);
   }
 
   .roundBadge {
-    width: 24px;
-    height: 24px;
-    font-size: 0.74rem;
+    width: var(--space-6);
+    height: var(--space-6);
+    font-size: var(--font-size-sm);
   }
 
   .roundTitle {
-    font-size: 0.72rem;
+    font-size: var(--font-size-sm);
   }
 
   .roundProgress {
-    font-size: 0.6rem;
+    font-size: var(--font-size-2xs);
   }
 
   .bracketGrid {
-    padding: 0.35rem 0;
+    padding: var(--space-1-5) 0;
   }
 
   .matchCard {
     width: fit-content;
-    min-width: 160px;
-    max-width: 176px;
-    min-height: 78px;
-    border-radius: 12px;
+    min-width: var(--space-40);
+    max-width: var(--space-44);
+    min-height: var(--space-20);
+    border-radius: var(--radius-lg);
   }
 
   .matchLabel {
-    padding: 4px 8px;
-    font-size: 0.62rem;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-2xs);
   }
 
   .player {
-    grid-template-columns: 1fr 42px;
-    min-height: 28px;
-    padding: 5px 8px;
+    grid-template-columns: 1fr var(--space-11);
+    min-height: var(--space-7);
+    padding: var(--space-1-5) var(--space-2);
   }
 
   .playerName {
-    font-size: 0.72rem;
+    font-size: var(--font-size-sm);
   }
 
   .playerScore {
-    font-size: 0.76rem;
+    font-size: var(--font-size-sm);
   }
 
   .player.winner .playerScore {
-    font-size: 0.8rem;
+    font-size: var(--font-size-base);
   }
 
   .championLabel {
-    font-size: 0.54rem;
+    font-size: var(--font-size-3xs);
   }
 
   .connectorBracket {
-    min-width: 20px;
+    min-width: var(--space-5);
     border-right-width: 3px;
     border-top-width: 3px;
     border-bottom-width: 3px;
   }
 
   .connectorArm {
-    min-width: 28px;
-    height: 3px;
+    min-width: var(--space-7);
+    height: var(--space-1);
   }
 }
 
@@ -954,40 +954,40 @@
   }
 
   .bracketCard {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    padding-left: 0.5rem;
-    padding-right: 0.68rem;
-    border-radius: 16px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    padding-left: var(--space-2);
+    padding-right: var(--space-2-5);
+    border-radius: var(--radius-xl);
   }
 
   .matchCard {
     width: fit-content;
-    min-width: 152px;
-    max-width: 168px;
-    min-height: 72px;
+    min-width: var(--space-40);
+    max-width: var(--space-44);
+    min-height: var(--space-18);
   }
 
   .player {
-    grid-template-columns: 1fr 38px;
-    min-height: 26px;
-    padding: 4px 7px;
+    grid-template-columns: 1fr var(--space-10);
+    min-height: var(--space-7);
+    padding: var(--space-1) var(--space-2);
   }
 
   .playerName {
-    font-size: 0.68rem;
+    font-size: var(--font-size-xs);
   }
 
   .playerScore {
-    font-size: 0.72rem;
+    font-size: var(--font-size-sm);
   }
 
   .connectorBracket {
-    min-width: 16px;
+    min-width: var(--space-4);
   }
 
   .connectorArm {
-    min-width: 22px;
+    min-width: var(--space-6);
   }
 }
 
@@ -1006,13 +1006,13 @@
 .desktop .bracketGrid {
   width: 100%;
   grid-template-columns:
-    minmax(184px, 1fr)
-    minmax(22px, 0.22fr)
-    minmax(30px, 0.3fr)
-    minmax(184px, 1fr)
-    minmax(22px, 0.22fr)
-    minmax(30px, 0.3fr)
-    minmax(184px, 1fr)
+    minmax(var(--space-48), 1fr)
+    minmax(var(--space-6), 0.22fr)
+    minmax(var(--space-8), 0.3fr)
+    minmax(var(--space-48), 1fr)
+    minmax(var(--space-6), 0.22fr)
+    minmax(var(--space-8), 0.3fr)
+    minmax(var(--space-48), 1fr)
     0
     0;
 }

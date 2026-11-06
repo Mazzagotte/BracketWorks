@@ -44,24 +44,24 @@ html:has(.login-page-container) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 24px !important;
+  padding: var(--space-6) !important;
   background: var(--bw-app-bg) !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  z-index: 1000 !important;
+  z-index: var(--z-overlay) !important;
   overflow: auto !important;
   font-family: var(--font-family-primary) !important;
 }
 
 .enhanced-card {
   position: relative !important;
-  padding: 48px 32px !important;
+  padding: var(--space-12) var(--space-8) !important;
   background: var(--bw-surface-panel) !important;
   border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent) !important;
-  border-radius: 24px !important;
+  border-radius: var(--radius-3xl) !important;
   box-shadow: 0 18px 38px var(--opacity-black-30) !important;
   background-image: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary) 6%, transparent) 100%) !important;
   animation: slideUp 0.6s ease-out !important;
@@ -76,17 +76,17 @@ html:has(.login-page-container) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 80px !important;
-  height: 80px !important;
-  margin: 0 auto 24px auto !important;
-  padding: 16px !important;
+  width: var(--space-20) !important;
+  height: var(--space-20) !important;
+  margin: 0 auto var(--space-6) auto !important;
+  padding: var(--space-4) !important;
   background: linear-gradient(145deg, color-mix(in srgb, var(--color-primary) 16%, transparent) 0%, color-mix(in srgb, var(--color-primary) 6%, transparent) 100%) !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-2xl) !important;
   border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent) !important;
 }
 
 .login-title {
-  margin: 0 0 12px 0 !important;
+  margin: 0 0 var(--space-3) 0 !important;
   font-size: var(--font-size-6xl) !important;
   font-weight: var(--font-weight-bold) !important;
   color: var(--bw-text-title) !important;
@@ -98,7 +98,7 @@ html:has(.login-page-container) {
   color: var(--bw-text-faint) !important;
   font-size: var(--font-size-xl) !important;
   font-weight: var(--font-weight-medium) !important;
-  margin: 0 0 32px 0 !important;
+  margin: 0 0 var(--space-8) 0 !important;
   line-height: var(--line-height-normal) !important;
 }
 
@@ -109,7 +109,7 @@ html:has(.login-page-container) {
 
 .input-container,
 .password-container {
-  margin-bottom: 24px !important;
+  margin-bottom: var(--space-6) !important;
   position: relative !important;
 }
 
@@ -118,20 +118,20 @@ html:has(.login-page-container) {
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-medium) !important;
   color: var(--bw-text-body) !important;
-  margin-bottom: 8px !important;
+  margin-bottom: var(--space-2) !important;
 }
 
 .login-input,
 .password-input {
   width: 100% !important;
-  height: 48px !important;
-  padding: 0 16px !important;
+  height: var(--space-12) !important;
+  padding: 0 var(--space-4) !important;
   font-size: var(--font-size-xl) !important;
   font-weight: var(--font-weight-normal) !important;
   border: 1px solid var(--bw-border-subtle) !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   background: color-mix(in srgb, var(--bw-surface-card) 72%, transparent) !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease !important;
   outline: none !important;
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
@@ -141,7 +141,7 @@ html:has(.login-page-container) {
 }
 
 .password-input {
-  padding-right: 48px !important;
+  padding-right: var(--space-12) !important;
 }
 
 .login-input:focus,
@@ -166,21 +166,21 @@ html:has(.login-page-container) {
 
 .password-toggle {
   position: absolute !important;
-  right: 14px !important;
+  right: var(--space-3-5) !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  width: 44px !important;
-  height: 44px !important;
+  width: var(--space-11) !important;
+  height: var(--space-11) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: none !important;
   border: none !important;
-  border-radius: 6px !important;
+  border-radius: var(--radius-md) !important;
   cursor: pointer !important;
   font-size: var(--font-size-xl) !important;
   color: var(--color-gray-500) !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, background 0.2s ease !important;
 }
 
 .password-toggle:hover {
@@ -189,15 +189,15 @@ html:has(.login-page-container) {
 }
 
 .error-container {
-  margin-top: 20px !important;
+  margin-top: var(--space-5) !important;
 }
 
 .success-message {
-  margin-top: 20px !important;
-  padding: 16px 20px !important;
+  margin-top: var(--space-5) !important;
+  padding: var(--space-4) var(--space-5) !important;
   background: var(--color-green-primary) !important;
   color: var(--color-white) !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   font-size: var(--font-size-lg) !important;
   font-weight: var(--font-weight-semibold) !important;
   text-align: center !important;
@@ -207,7 +207,7 @@ html:has(.login-page-container) {
   width: 100% !important;
   min-height: var(--btn-height) !important;
   height: var(--btn-height) !important;
-  margin-top: 10px !important;
+  margin-top: var(--space-2-5) !important;
   padding: 0 var(--btn-padding-x) !important;
   font-size: var(--font-size-sm) !important;
   font-weight: 800 !important;
@@ -215,9 +215,9 @@ html:has(.login-page-container) {
   color: var(--color-white) !important;
   background: var(--color-brand-gold) !important;
   border: none !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, background 0.2s ease !important;
   position: relative !important;
   overflow: hidden !important;
   font-family: var(--font-family-primary) !important;
@@ -234,10 +234,10 @@ html:has(.login-page-container) {
 }
 
 .links-container {
-  margin-top: 10px !important;
+  margin-top: var(--space-2-5) !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 10px !important;
+  gap: var(--space-2-5) !important;
   align-items: center !important;
 }
 
@@ -251,8 +251,8 @@ html:has(.login-page-container) {
   font-size: var(--font-size-sm) !important;
   font-weight: 800 !important;
   text-decoration: none !important;
-  border-radius: 12px !important;
-  transition: all 0.2s ease !important;
+  border-radius: var(--radius-lg) !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, background 0.2s ease !important;
   width: 100% !important;
   text-align: center !important;
   font-family: var(--font-family-primary) !important;
@@ -282,11 +282,11 @@ html:has(.login-page-container) {
 
 @media (max-width: 480px) {
   .login-page-container {
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+    padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left)) !important;
   }
 
   .enhanced-card {
-    padding: 24px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)) !important;
+    padding: var(--space-6) max(var(--space-4), env(safe-area-inset-right)) var(--space-6) max(var(--space-4), env(safe-area-inset-left)) !important;
     max-width: 100% !important;
   }
 
@@ -297,18 +297,18 @@ html:has(.login-page-container) {
 
 .auth-logo-section {
   text-align: center !important;
-  margin-bottom: 20px !important;
+  margin-bottom: var(--space-5) !important;
 }
 
 .auth-logo-img {
-  border-radius: 16px !important;
-  margin-bottom: 16px !important;
+  border-radius: var(--radius-xl) !important;
+  margin-bottom: var(--space-4) !important;
 }
 
 .auth-brand-title {
-  font-size: 28px !important;
+  font-size: var(--font-size-5xl) !important;
   font-weight: 700 !important;
-  margin: 0 0 8px 0 !important;
+  margin: 0 0 var(--space-2) 0 !important;
   color: var(--color-text-primary) !important;
   letter-spacing: -0.5px !important;
   line-height: 1.2 !important;
@@ -316,9 +316,9 @@ html:has(.login-page-container) {
 }
 
 .auth-page-heading {
-  font-size: 24px !important;
+  font-size: var(--font-size-4xl) !important;
   font-weight: 600 !important;
-  margin: 16px 0 8px 0 !important;
+  margin: var(--space-4) 0 var(--space-2) 0 !important;
   color: var(--color-text-primary) !important;
   text-align: center !important;
 }
@@ -358,14 +358,14 @@ html:has(.signup-page-container) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 24px !important;
+  padding: var(--space-6) !important;
   background: var(--bw-app-bg) !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  z-index: 1000 !important;
+  z-index: var(--z-overlay) !important;
   overflow: hidden !important;
   font-family: var(--font-family-primary) !important;
 }
@@ -385,12 +385,12 @@ html:has(.signup-page-container) {
   position: relative !important;
   z-index: 1 !important;
   width: 100% !important;
-  max-width: 520px !important;
-  max-height: calc(100dvh - 48px) !important;
-  padding: 40px !important;
+  max-width: var(--size-lg) !important;
+  max-height: calc(100dvh - var(--space-12)) !important;
+  padding: var(--space-10) !important;
   background: var(--color-brand-ivory-light) !important;
   backdrop-filter: none !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-2xl) !important;
   border: 1px solid var(--color-border-light) !important;
   box-shadow: 0 32px 64px var(--opacity-black-12), 0 16px 32px var(--opacity-black-08), inset 0 1px 0 var(--opacity-white-30) !important;
   animation: slideUp 0.6s ease-out !important;
@@ -411,21 +411,21 @@ html:has(.signup-page-container) {
 
 .signup-header-section {
   text-align: center !important;
-  margin-bottom: 32px !important;
+  margin-bottom: var(--space-8) !important;
 }
 
 .signup-logo-container {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 110px !important;
-  height: 110px !important;
-  margin: 0 auto 20px auto !important;
-  padding: 10px !important;
+  width: var(--space-28) !important;
+  height: var(--space-28) !important;
+  margin: 0 auto var(--space-5) auto !important;
+  padding: var(--space-2-5) !important;
   background: linear-gradient(135deg, var(--color-brand-border-faint) 0%, var(--color-brand-tint-mid) 35%, var(--color-warning-surface) 70%, var(--color-brand-tint) 100%) !important;
-  border-radius: 22px !important;
+  border-radius: var(--radius-3xl) !important;
   border: 1px solid var(--color-border-light) !important;
-  transition: all 0.3s ease !important;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease !important;
 }
 
 .signup-logo-container:hover {
@@ -434,8 +434,8 @@ html:has(.signup-page-container) {
 }
 
 .signup-logo-image {
-  width: 92px !important;
-  height: 92px !important;
+  width: var(--space-24) !important;
+  height: var(--space-24) !important;
   object-fit: contain !important;
 }
 
@@ -443,14 +443,14 @@ html:has(.signup-page-container) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 64px !important;
-  height: 64px !important;
-  margin: 0 auto 20px auto !important;
-  padding: 12px !important;
+  width: var(--space-16) !important;
+  height: var(--space-16) !important;
+  margin: 0 auto var(--space-5) auto !important;
+  padding: var(--space-3) !important;
   background: linear-gradient(135deg, var(--color-brand-border-faint) 0%, var(--color-brand-tint-mid) 35%, var(--color-warning-surface) 70%, var(--color-brand-tint) 100%) !important;
-  border-radius: 16px !important;
+  border-radius: var(--radius-xl) !important;
   border: 1px solid var(--color-border-light) !important;
-  transition: all 0.3s ease !important;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease !important;
 }
 
 .logo-container:hover {
@@ -459,13 +459,13 @@ html:has(.signup-page-container) {
 }
 
 .logo-image {
-  border-radius: 16px !important;
+  border-radius: var(--radius-xl) !important;
 }
 
 .signup-title {
   font-size: var(--font-size-5xl) !important;
   font-weight: var(--font-weight-bold) !important;
-  margin: 0 0 8px 0 !important;
+  margin: 0 0 var(--space-2) 0 !important;
   color: var(--color-text-primary) !important;
   letter-spacing: -0.5px !important;
   line-height: var(--line-height-tight) !important;
@@ -485,7 +485,7 @@ html:has(.signup-page-container) {
 
 .signup-input-container,
 .signup-password-container {
-  margin-bottom: 20px !important;
+  margin-bottom: var(--space-5) !important;
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
@@ -495,13 +495,13 @@ html:has(.signup-page-container) {
 .signup-input-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 16px !important;
-  margin-bottom: 20px !important;
+  gap: var(--space-4) !important;
+  margin-bottom: var(--space-5) !important;
 }
 
 .signup-input-label {
   display: block !important;
-  margin-bottom: 6px !important;
+  margin-bottom: var(--space-1-5) !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-semibold) !important;
   color: var(--color-text-primary) !important;
@@ -517,14 +517,14 @@ html:has(.signup-page-container) {
 .signup-input,
 .signup-password-input {
   width: 100% !important;
-  height: 52px !important;
-  padding: 0 88px 0 16px !important;
+  height: var(--space-14) !important;
+  padding: 0 var(--space-24) 0 var(--space-4) !important;
   font-size: var(--font-size-lg) !important;
   font-weight: var(--font-weight-medium) !important;
   border: 1px solid var(--color-border-medium) !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   background: var(--color-white) !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   outline: none !important;
   box-shadow: none !important;
   letter-spacing: 0.3px !important;
@@ -534,7 +534,7 @@ html:has(.signup-page-container) {
 }
 
 .signup-password-input {
-  padding-right: 148px !important;
+  padding-right: var(--space-36) !important;
 }
 
 .signup-input:focus,
@@ -553,25 +553,25 @@ html:has(.signup-page-container) {
 .surface-authPasswordToggle,
 .signup-password-toggle {
   position: absolute !important;
-  right: 16px !important;
+  right: var(--space-4) !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  min-width: 116px !important;
-  min-height: 44px !important;
+  min-width: var(--space-28) !important;
+  min-height: var(--space-11) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: transparent !important;
   border: none !important;
-  border-radius: 6px !important;
+  border-radius: var(--radius-md) !important;
   cursor: pointer !important;
-  font-size: 11px !important;
+  font-size: var(--font-size-xs) !important;
   font-weight: var(--font-weight-bold) !important;
   letter-spacing: 0.03em !important;
   text-transform: uppercase !important;
   color: var(--color-dark-accent) !important;
-  transition: all 0.2s ease !important;
-  padding: 0 10px !important;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, background 0.2s ease !important;
+  padding: 0 var(--space-2-5) !important;
   margin: 0 !important;
   z-index: 10 !important;
 }
@@ -585,18 +585,18 @@ html:has(.signup-page-container) {
 
 .signup-button {
   width: 100% !important;
-  height: 52px !important;
-  margin-top: 24px !important;
-  padding: 0 24px !important;
+  height: var(--space-14) !important;
+  margin-top: var(--space-6) !important;
+  padding: 0 var(--space-6) !important;
   font-size: var(--font-size-xl) !important;
   font-weight: var(--font-weight-semibold) !important;
   letter-spacing: 0.3px !important;
   color: var(--color-white) !important;
   background: var(--color-primary) !important;
   border: none !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   cursor: pointer !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 0 4px 12px var(--color-border-hover), 0 2px 6px var(--opacity-black-10) !important;
   position: relative !important;
   overflow: hidden !important;
@@ -628,11 +628,11 @@ html:has(.signup-page-container) {
 }
 
 .signup-success-message {
-  margin-top: 20px !important;
-  padding: 16px 20px !important;
+  margin-top: var(--space-5) !important;
+  padding: var(--space-4) var(--space-5) !important;
   background: var(--gradient-green) !important;
   color: var(--color-white) !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   font-size: var(--font-size-lg) !important;
   font-weight: var(--font-weight-semibold) !important;
   text-align: center !important;
@@ -642,17 +642,17 @@ html:has(.signup-page-container) {
 }
 
 .signup-error-container {
-  margin-top: 16px !important;
-  padding: 12px 16px !important;
+  margin-top: var(--space-4) !important;
+  padding: var(--space-3) var(--space-4) !important;
   background: var(--color-error-bg) !important;
   border: 1px solid var(--color-error-border) !important;
-  border-radius: 8px !important;
+  border-radius: var(--radius-md) !important;
   color: var(--color-error-darker) !important;
-  font-size: 14px !important;
+  font-size: var(--font-size-md) !important;
 }
 
 .signup-login-link {
-  margin-top: 24px !important;
+  margin-top: var(--space-6) !important;
   text-align: center !important;
 }
 
@@ -660,13 +660,13 @@ html:has(.signup-page-container) {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 12px 20px !important;
+  padding: var(--space-3) var(--space-5) !important;
   font-size: var(--font-size-md) !important;
   font-weight: var(--font-weight-medium) !important;
   text-decoration: none !important;
-  border-radius: 10px !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  min-width: 200px !important;
+  border-radius: var(--radius-lg) !important;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-width: var(--space-52) !important;
   text-align: center !important;
   font-family: var(--font-family-primary) !important;
   letter-spacing: 0.1px !important;
@@ -690,13 +690,13 @@ html:has(.signup-page-container) {
 
 @media (max-width: 480px) {
   .signup-page-container {
-    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+    padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left)) !important;
   }
 
   .signup-card {
-    padding: 32px 24px !important;
+    padding: var(--space-8) var(--space-6) !important;
     max-width: 100% !important;
-    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - var(--space-8) - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
   }
 
   .signup-title {
@@ -705,7 +705,7 @@ html:has(.signup-page-container) {
 
   .signup-input-grid {
     grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    gap: var(--space-3) !important;
   }
 
   .signup-login-button {
@@ -722,8 +722,8 @@ html:has(.signup-page-container) {
 
 /* Final reset page polish (request + verify routes) */
 .login-page-container .enhanced-card {
-  max-width: 460px !important;
-  padding: 34px 30px 28px !important;
+  max-width: var(--size-md) !important;
+  padding: var(--space-9) var(--space-8) var(--space-7) !important;
   background: var(--bw-surface-card) !important;
   border: 1px solid var(--bw-border-card) !important;
   border-left: var(--bw-accent-rail) !important;
@@ -734,7 +734,7 @@ html:has(.signup-page-container) {
 
 .login-page-container .auth-brand-title {
   color: var(--bw-text-title) !important;
-  font-size: 30px !important;
+  font-size: var(--font-size-5xl) !important;
 }
 
 .login-page-container .auth-page-heading {
@@ -743,12 +743,12 @@ html:has(.signup-page-container) {
 
 .login-page-container .login-subtitle {
   color: var(--bw-text-muted) !important;
-  margin-bottom: 22px !important;
+  margin-bottom: var(--space-6) !important;
 }
 
 .login-page-container .login-input,
 .login-page-container .password-input {
-  min-height: 48px !important;
+  min-height: var(--space-12) !important;
   border: 1px solid var(--bw-border-subtle) !important;
   border-radius: var(--radius-md) !important;
   background: var(--bw-surface-card-strong) !important;
@@ -768,8 +768,8 @@ html:has(.signup-page-container) {
 }
 
 .login-page-container .login-button {
-  min-height: 48px !important;
-  height: 48px !important;
+  min-height: var(--space-12) !important;
+  height: var(--space-12) !important;
   border: 1px solid var(--bw-border-accent) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: none !important;
@@ -788,105 +788,105 @@ html:has(.signup-page-container) {
 }
 
 .login-page-container .links-container {
-  margin-top: 12px !important;
-  gap: 8px !important;
+  margin-top: var(--space-3) !important;
+  gap: var(--space-2) !important;
 }
 
 .login-page-container .signup-link,
 .login-page-container .forgot-link {
-  min-height: 42px !important;
+  min-height: var(--space-11) !important;
   border-radius: var(--radius-md) !important;
 }
 
 /* Width parity with signup shell/card breakpoints for reset request+verify pages */
 .login-page-container {
-  padding: 24px 20px !important;
+  padding: var(--space-6) var(--space-5) !important;
 }
 
 .login-page-container .enhanced-card {
   width: 100% !important;
-  max-width: 480px !important;
+  max-width: var(--size-lg) !important;
 }
 
 @media (min-width: 1024px) and (max-width: 1440px) {
   .login-page-container {
-    padding: 36px 24px !important;
+    padding: var(--space-9) var(--space-6) !important;
   }
 
   .login-page-container .enhanced-card {
-    max-width: 560px !important;
+    max-width: var(--size-xl) !important;
   }
 }
 
 @media (max-width: 480px) {
   .login-page-container {
-    padding: 16px !important;
+    padding: var(--space-4) !important;
   }
 
   .login-page-container .enhanced-card {
     max-width: 100% !important;
-    border-radius: 16px !important;
+    border-radius: var(--radius-xl) !important;
   }
 }
 
 /* Internal rhythm parity with signup for reset request+verify pages */
 .login-page-container .enhanced-card {
-  padding: 20px 28px 26px !important;
+  padding: var(--space-5) var(--space-7) var(--space-7) !important;
 }
 
 .login-page-container .header-section {
-  margin-bottom: 12px !important;
+  margin-bottom: var(--space-3) !important;
 }
 
 .login-page-container .input-container,
 .login-page-container .password-container {
-  margin-bottom: 18px !important;
+  margin-bottom: var(--space-5) !important;
 }
 
 @media (min-width: 1024px) and (max-width: 1440px) {
   .login-page-container .enhanced-card {
-    padding: 24px 34px 28px !important;
+    padding: var(--space-6) var(--space-9) var(--space-7) !important;
   }
 }
 
 @media (max-width: 480px) {
   .login-page-container .enhanced-card {
-    padding: 18px 20px 20px !important;
+    padding: var(--space-5) var(--space-5) var(--space-5) !important;
   }
 }
 
 /* Final type hierarchy parity with signup */
 .login-page-container .auth-brand-title {
-  font-size: 1.3rem !important;
+  font-size: var(--font-size-3xl) !important;
   line-height: 1.15 !important;
   font-weight: 800 !important;
   letter-spacing: 0 !important;
-  margin-bottom: 4px !important;
+  margin-bottom: var(--space-1) !important;
 }
 
 .login-page-container .auth-page-heading {
-  font-size: 1.05rem !important;
+  font-size: var(--font-size-xl) !important;
   line-height: 1.25 !important;
   font-weight: 700 !important;
-  margin: 8px 0 6px !important;
+  margin: var(--space-2) 0 var(--space-1-5) !important;
 }
 
 .login-page-container .login-subtitle {
-  font-size: 14px !important;
+  font-size: var(--font-size-md) !important;
   line-height: 1.35 !important;
 }
 
 @media (min-width: 1024px) and (max-width: 1440px) {
   .login-page-container .auth-brand-title {
-    font-size: 1.35rem !important;
+    font-size: var(--font-size-3xl) !important;
   }
 
   .login-page-container .auth-page-heading {
-    font-size: 1.1rem !important;
+    font-size: var(--font-size-2xl) !important;
   }
 
   .login-page-container .login-subtitle {
-    font-size: 15px !important;
+    font-size: var(--font-size-lg) !important;
   }
 }
 
@@ -894,7 +894,7 @@ html:has(.signup-page-container) {
 .login-page-container .login-button,
 .login-page-container .signup-link,
 .login-page-container .forgot-link {
-  font-size: 14px !important;
+  font-size: var(--font-size-md) !important;
   font-weight: 800 !important;
   line-height: 1 !important;
   letter-spacing: 0.01em !important;
@@ -915,18 +915,18 @@ html:has(.signup-page-container) {
 }
 
 .reset-password-card {
-  padding: 48px 44px;
-  min-width: 380px;
-  max-width: 420px;
+  padding: var(--space-12) var(--space-11);
+  min-width: var(--space-96);
+  max-width: var(--size-md);
   width: 100%;
   text-align: center;
   backdrop-filter: blur(20px);
   background: var(--color-white);
   border: 1px solid var(--color-border-light);
   box-shadow: 0 20px 60px var(--opacity-black-20), 0 8px 32px var(--color-border-light);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   --bw-form-bg: var(--color-surface-translucent-strong);
-  --bw-form-radius: 14px;
+  --bw-form-radius: var(--radius-xl);
   --bw-form-border-default: var(--color-border-muted);
   --bw-form-border-hover: var(--color-border-hover);
   --bw-form-border-focus: var(--color-border-hover);
@@ -937,29 +937,29 @@ html:has(.signup-page-container) {
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-5xl);
   color: var(--color-dark-base);
-  margin: 0 0 32px 0;
+  margin: 0 0 var(--space-8) 0;
   letter-spacing: 0.5px;
 }
 
 .reset-password-subtitle {
   color: var(--color-text-muted-subtle);
   font-size: var(--font-size-xl);
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
   line-height: var(--line-height-normal);
 }
 
 .form-field {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .input-wrapper {
   position: relative;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .form-input {
   width: 100%;
-  padding: 16px 18px;
+  padding: var(--space-4) var(--space-5);
   font-size: var(--font-size-xl);
   backdrop-filter: blur(8px);
   transition: background-color 0.2s ease;
@@ -969,11 +969,11 @@ html:has(.signup-page-container) {
 }
 
 .form-input--with-icons {
-  padding-right: 80px;
+  padding-right: var(--space-20);
 }
 
 .form-input--with-validation {
-  padding-right: 45px;
+  padding-right: var(--space-11);
 }
 
 .form-input:focus {
@@ -982,7 +982,7 @@ html:has(.signup-page-container) {
 
 .password-toggle-btn {
   position: absolute;
-  right: 50px;
+  right: var(--space-12);
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -991,13 +991,13 @@ html:has(.signup-page-container) {
   font-size: var(--font-size-xl);
   color: var(--color-text-muted-alt);
   transition: color 0.2s ease;
-  padding: 4px;
-  border-radius: 4px;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
 }
 
 .password-toggle-btn:hover {
@@ -1007,10 +1007,10 @@ html:has(.signup-page-container) {
 
 .validation-icon {
   position: absolute;
-  right: 18px;
+  right: var(--space-5);
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: bold;
 }
 
@@ -1023,14 +1023,14 @@ html:has(.signup-page-container) {
 }
 
 .password-strength-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .password-strength-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .password-strength-label {
@@ -1061,9 +1061,9 @@ html:has(.signup-page-container) {
 }
 
 .alert {
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-5);
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-lg);
 }
@@ -1082,13 +1082,13 @@ html:has(.signup-page-container) {
 
 .submit-btn {
   width: 100%;
-  padding: 16px 0;
-  border-radius: 14px;
+  padding: var(--space-4) 0;
+  border-radius: var(--radius-xl);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-2xl);
   border: 2px solid var(--color-border-hover);
-  margin-bottom: 24px;
-  transition: all 0.3s ease;
+  margin-bottom: var(--space-6);
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
   letter-spacing: 0.5px;
   cursor: pointer;
   background: var(--color-primary);
@@ -1137,11 +1137,11 @@ html:has(.signup-page-container) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .back-link-wrapper {
-  margin-top: 24px;
+  margin-top: var(--space-6);
   display: flex;
   justify-content: center;
 }
@@ -1150,9 +1150,9 @@ html:has(.signup-page-container) {
   color: var(--color-brand-gold);
   text-decoration: none;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
   background: var(--color-warning-surface);
   border: 1px solid var(--color-border-light);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
 }

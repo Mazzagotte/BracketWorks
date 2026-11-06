@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { useId } from 'react';
 import { useModalFocus } from '@/lib/useModalFocus';
-import styles from './tournament-setup.module.css';
+import styles from './tournament-setup.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type ConfigDrawerProps = {
   open: boolean;
@@ -41,7 +42,7 @@ export default function ConfigDrawer({ open, title, subtitle, onClose, children 
             {subtitle ? <p id={descriptionId}>{subtitle}</p> : null}
           </div>
           <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={onClose} aria-label="Close modal">
-            <X size={16} />
+            <X size={ICON_SIZE.md} />
           </button>
         </header>
         <div className={styles.drawerBody}>{children}</div>

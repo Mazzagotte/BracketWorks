@@ -15,7 +15,8 @@ import {
   type TournamentDocumentKind,
   type TournamentDocumentRecord,
 } from '@/components/organizer/organizerApi';
-import styles from './page.module.css';
+import styles from './page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 const DOC_TYPE_OPTIONS: Array<{ value: TournamentDocumentKind; label: string }> = [
   { value: 'rules', label: 'Rules' },
@@ -151,7 +152,7 @@ export default function OrganizerTournamentDocumentsPage() {
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
@@ -194,10 +195,10 @@ export default function OrganizerTournamentDocumentsPage() {
                   <span>{formatFileSize(document.file_size)} &middot; {formatUploadedAt(document.uploaded_at)}</span>
                   <div className={styles.docActions}>
                     <button type="button" aria-label={`Download ${document.file_name}`} onClick={() => void handleDownload(document)}>
-                      <Download size={13} aria-hidden="true" /> Download
+                      <Download size={ICON_SIZE.sm} aria-hidden="true" /> Download
                     </button>
                     <button type="button" aria-label={`Delete ${document.file_name}`} className={styles.deleteButton} onClick={() => void handleDelete(document)}>
-                      <Trash2 size={13} aria-hidden="true" /> Delete
+                      <Trash2 size={ICON_SIZE.sm} aria-hidden="true" /> Delete
                     </button>
                   </div>
                 </div>

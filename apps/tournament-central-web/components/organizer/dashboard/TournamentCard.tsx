@@ -7,7 +7,8 @@ import TournamentStatusBadge from './TournamentStatusBadge';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
-import { formatMoney } from '../organizerFormatting';
+import { formatMoney } from '../organizerFormatting';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type TournamentCardProps = {
   tournament: OrganizerDashboardTournament;
@@ -22,7 +23,7 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
         <span className={styles.compactLogo} aria-hidden="true">
           {tournament.hasLogo
             ? <Image src={`/api/v1/tc/tournaments/${tournament.id}/logo`} alt="" width={44} height={44} unoptimized />
-            : <Trophy size={22} />}
+            : <Trophy size={ICON_SIZE['2xl']} />}
         </span>
         <div className={styles.tournamentCopy}>
           <div className={styles.tournamentTitleLine}>
@@ -40,14 +41,14 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
       </dl>
       <div className={styles.rowActions}>
         <Link href={organizerRoutes.overview(tournament.id)} className={styles.manageButton}
-          aria-label={`Manage ${tournament.name}`}>Manage <ArrowUpRight size={15} aria-hidden="true" /></Link>
+          aria-label={`Manage ${tournament.name}`}>Manage <ArrowUpRight size={ICON_SIZE.md} aria-hidden="true" /></Link>
         {tournament.publicUrl && <Link href={tournament.publicUrl} className={styles.rowUtilityLink}
           target="_blank" rel="noreferrer" aria-label={`View public page for ${tournament.name} (opens in a new tab)`}>Public page</Link>}
         <button type="button" className={styles.rowDeleteButton}
           onClick={() => onDelete(tournament)} disabled={isDeleting || (tournament.entryCount ?? 0) > 0}
           aria-label={`Delete ${tournament.name}`}
           title={(tournament.entryCount ?? 0) > 0 ? 'Tournaments with registrations cannot be deleted.' : 'Delete tournament'}>
-          <Trash2 size={15} aria-hidden="true" />{isDeleting ? 'Deleting...' : 'Delete'}
+          <Trash2 size={ICON_SIZE.md} aria-hidden="true" />{isDeleting ? 'Deleting...' : 'Delete'}
         </button>
       </div>
     </article>

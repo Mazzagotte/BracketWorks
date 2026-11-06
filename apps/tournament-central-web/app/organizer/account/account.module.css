@@ -1,62 +1,62 @@
 .shell {
   width: 100%;
-  max-width: 880px;
+  max-width: var(--size-5xl);
   margin: 0 auto;
-  padding: 20px var(--organizer-page-padding) 40px;
+  padding: var(--space-5) var(--organizer-page-padding) var(--space-10);
   display: grid;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .header {
-  padding: 4px 0 14px;
+  padding: var(--space-1) 0 var(--space-3-5);
   border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .header h1 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 1.5rem;
+  font-size: var(--font-size-4xl);
   letter-spacing: -0.03em;
 }
 
 .header p {
-  margin: 5px 0 0;
+  margin: var(--space-1-5) 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
 }
 
 .loading {
-  padding: 28px;
+  padding: var(--space-7);
   border: 1px solid var(--bw-border-card);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   color: var(--bw-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
 }
 
 .card {
-  padding: 24px;
+  padding: var(--space-6);
   min-width: 0;
   border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
 }
 
 .card h2 {
-  margin: 0 0 14px;
+  margin: 0 0 var(--space-3-5);
   color: var(--bw-text-title);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
 }
 
 .form {
   display: grid;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .gridFull {
@@ -65,45 +65,45 @@
 
 .form label {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
   color: var(--bw-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
   font-weight: 700;
 }
 
 .form input {
-  min-height: 44px;
+  min-height: var(--space-11);
   min-width: 0;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   border: 1px solid var(--bw-border-card);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   outline: 0;
   color: var(--bw-text-body);
   background: var(--bw-surface-panel);
-  font-size: 0.875rem;
+  font-size: var(--font-size-md);
 }
 
 .form input:focus {
-  border-color: #ff7900;
+  border-color: var(--color-accent-primary);
 }
 
 .checkboxRow {
   display: flex !important;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .checkboxRow input {
   min-height: 0;
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 
 .hint {
-  margin: -8px 0 0;
+  margin: calc(var(--space-2) * -1) 0 0;
   color: var(--bw-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
 }
 
 .formActions {
@@ -112,18 +112,18 @@
 }
 
 .primaryButton {
-  min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid #ff7900;
-  border-radius: 8px;
-  color: #fff;
-  background: #ff7900;
-  font-size: 0.75rem;
+  min-height: var(--space-11);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-accent-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  background: var(--color-accent-primary);
+  font-size: var(--font-size-sm);
   font-weight: 700;
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #e86e00;
+  background: var(--color-accent-hover);
 }
 
 .primaryButton:disabled {
@@ -135,34 +135,34 @@
   margin: 0;
   color: var(--color-error-text);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
 }
 
 .success {
   margin: 0;
-  color: #20d884;
+  color: var(--color-status-green);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
 }
 
 .infoBanner {
-  margin: -6px 0 6px;
-  padding: 8px 10px;
-  border: 1px solid rgba(245, 162, 26, 0.4);
-  border-radius: 7px;
-  color: #f5a21a;
-  background: rgba(245, 162, 26, 0.12);
-  font-size: 0.7rem;
+  margin: calc(var(--space-1-5) * -1) 0 var(--space-1-5);
+  padding: var(--space-2) var(--space-2-5);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 40%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  font-size: var(--font-size-xs);
   font-weight: 600;
 }
 
 @media (max-width: 767px) {
   .shell {
-    padding: 16px var(--organizer-page-padding) 32px;
+    padding: var(--space-4) var(--organizer-page-padding) var(--space-8);
   }
 
   .card {
-    padding: 14px;
+    padding: var(--space-3-5);
   }
 
   .grid {

@@ -4,7 +4,8 @@ import { FormEvent, useState } from 'react';
 import { X } from 'lucide-react';
 
 import styles from './ResetPasswordModal.module.css';
-import { useModalFocus } from '@/lib/useModalFocus';
+import { useModalFocus } from '@/lib/useModalFocus';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type ResetPasswordModalProps = {
   isOpen: boolean;
@@ -66,7 +67,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
     <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="reset-password-title" aria-describedby="reset-password-description">
       <div className={styles.modal}>
         <button type="button" onClick={handleClose} className={styles.closeButton} aria-label="Close reset password modal">
-          <X size={18} strokeWidth={2.25} aria-hidden="true" />
+          <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>

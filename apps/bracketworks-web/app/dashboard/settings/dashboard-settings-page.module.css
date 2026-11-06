@@ -1,6 +1,6 @@
 .pageShell {
   padding: var(--space-page-y) var(--space-page-x);
-  max-width: 1200px;
+  max-width: var(--size-8xl);
   margin: 0 auto;
 }
 
@@ -11,7 +11,7 @@
   max-width: none;
   min-height: 100%;
   margin: 0;
-  padding: 4px 6px 8px;
+  padding: var(--space-1) var(--space-1-5) var(--space-2);
 }
 
 .embeddedShell {
@@ -55,22 +55,22 @@
 }
 
 .pageHeader {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .pageShellModal .pageHeader {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .pageState {
-  padding: 40px;
+  padding: var(--space-10);
   text-align: center;
   color: var(--bw-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .settingsSelect {
-  width: 96px;
+  width: var(--space-24);
 }
 
 .settingsCurrencyInput {
@@ -83,27 +83,27 @@
   border-radius: var(--radius-2xl);
 }
 
-.staffHeader { display: flex; gap: 12px; align-items: center; border-bottom: 1px solid var(--bw-border-subtle); }
-.staffHeader h2 { margin: 0; color: var(--bw-text-title); font-size: 1rem; font-weight: 800; }
-.staffHeader p, .staffState { margin: 3px 0 0; color: var(--bw-text-muted); font-size: .82rem; }
-.staffIcon { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--dash-accent-border); border-radius: var(--radius-md); color: var(--color-primary); background: var(--dash-accent-panel); }
-.staffIcon svg { width: 18px; }
-.staffInviteRow { display: grid; grid-template-columns: minmax(180px, 1fr) 180px auto; gap: 8px; margin-top: 14px; }
-.staffField { width: 100%; min-height: 38px; border-radius: var(--radius-md); padding: 0 10px; font-size: .84rem; }
-.staffInviteRow button { min-height: 38px; }
-.staffInviteRow button svg, .staffControls button svg { width: 16px; height: 16px; }
-.staffList { display: grid; margin-top: 4px; }
-.staffRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--bw-border-subtle); }
+.staffHeader { display: flex; gap: var(--space-3); align-items: center; border-bottom: 1px solid var(--bw-border-subtle); }
+.staffHeader h2 { margin: 0; color: var(--bw-text-title); font-size: var(--font-size-xl); font-weight: 800; }
+.staffHeader p, .staffState { margin: var(--space-1) 0 0; color: var(--bw-text-muted); font-size: var(--font-size-base); }
+.staffIcon { display: grid; width: var(--space-9); height: var(--space-9); place-items: center; border: 1px solid var(--dash-accent-border); border-radius: var(--radius-md); color: var(--color-primary); background: var(--dash-accent-panel); }
+.staffIcon svg { width: var(--space-5); }
+.staffInviteRow { display: grid; grid-template-columns: minmax(var(--space-44), 1fr) var(--space-44) auto; gap: var(--space-2); margin-top: var(--space-3-5); }
+.staffField { width: 100%; min-height: var(--control-height); border-radius: var(--radius-md); padding: 0 var(--space-2-5); font-size: var(--font-size-base); }
+.staffInviteRow button { min-height: var(--control-height); }
+.staffInviteRow button svg, .staffControls button svg { width: var(--space-4); height: var(--space-4); }
+.staffList { display: grid; margin-top: var(--space-1); }
+.staffRow { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3-5) 0; border-bottom: 1px solid var(--bw-border-subtle); }
 .staffRow > div:first-child { display: grid; min-width: 0; }
-.staffRow strong { color: var(--bw-text-title); font-size: .88rem; }
-.staffRow span { overflow: hidden; color: var(--bw-text-muted); font-size: .76rem; text-overflow: ellipsis; }
-.staffControls { display: flex; align-items: center; gap: 7px; }
-.staffControls select { min-width: 160px; }
-.staffRemoveButton { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--color-error-border); border-radius: var(--radius-md); color: var(--bw-text-danger); background: var(--color-error-bg-soft); }
+.staffRow strong { color: var(--bw-text-title); font-size: var(--font-size-md); }
+.staffRow span { overflow: hidden; color: var(--bw-text-muted); font-size: var(--font-size-sm); text-overflow: ellipsis; }
+.staffControls { display: flex; align-items: center; gap: var(--space-2); }
+.staffControls select { min-width: var(--space-40); }
+.staffRemoveButton { display: grid; width: var(--space-9); height: var(--space-9); place-items: center; border: 1px solid var(--color-error-border); border-radius: var(--radius-md); color: var(--bw-text-danger); background: var(--color-error-bg-soft); }
 .staffRemoveButton:disabled { cursor: not-allowed; opacity: .55; }
-.staffRole { flex: 0 0 auto; padding: 5px 8px; border-radius: 999px; color: var(--bw-text-accent) !important; background: var(--dash-accent-panel); }
-.restoreButton { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; min-height: 34px; border: 1px solid var(--bw-border-subtle); border-radius: 8px; padding: 6px 10px; color: var(--bw-text-body); background: var(--bw-surface-panel); font-weight: 700; }
-.restoreButton svg { width: 15px; height: 15px; color: var(--color-primary); }
+.staffRole { flex: 0 0 auto; padding: var(--space-1-5) var(--space-2); border-radius: var(--radius-full); color: var(--bw-text-accent) !important; background: var(--dash-accent-panel); }
+.restoreButton { display: inline-flex; flex: 0 0 auto; align-items: center; gap: var(--space-1-5); min-height: var(--space-9); border: 1px solid var(--bw-border-subtle); border-radius: var(--radius-md); padding: var(--space-1-5) var(--space-2-5); color: var(--bw-text-body); background: var(--bw-surface-panel); font-weight: 700; }
+.restoreButton svg { width: var(--space-4); height: var(--space-4); color: var(--color-primary); }
 
 @media (max-width: 640px) {
   .staffInviteRow { grid-template-columns: 1fr; }
@@ -113,15 +113,15 @@
 }
 
 .backButton {
-  margin-bottom: 16px;
-  padding: 10px 16px;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2-5) var(--space-4);
   border: 1px solid var(--bw-border-accent);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-primary);
   color: var(--color-white);
   box-shadow: var(--bw-shadow-accent);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
 }
 
@@ -130,31 +130,31 @@
 }
 
 .pageTitle {
-  margin: 16px 0 8px;
+  margin: var(--space-4) 0 var(--space-2);
   color: var(--bw-text-title);
-  font-size: 28px;
+  font-size: var(--font-size-5xl);
   font-weight: 700;
 }
 
 .pageTitleModal {
-  margin: 0 0 8px;
-  font-size: 24px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-4xl);
 }
 
 .pageSubtitle {
   color: var(--bw-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .pageGrid {
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 @media (max-width: 980px) {
   .pageShell {
     max-width: none;
     margin: 0;
-    padding: 16px 12px;
+    padding: var(--space-4) var(--space-3);
   }
 
   .pageShellModal {
@@ -165,44 +165,44 @@
 
 @media (max-width: 640px) {
   .pageShell {
-    padding: 10px;
+    padding: var(--space-2-5);
   }
 
   .pageHeader {
-    border-radius: 14px;
-    padding: 10px 12px;
+    border-radius: var(--radius-xl);
+    padding: var(--space-2-5) var(--space-3);
   }
 
   .pageTitle {
-    font-size: 1.25rem;
+    font-size: var(--font-size-3xl);
   }
 }
 
 @media (max-width: 390px) {
   .pageShell {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .pageHeader {
-    padding: 8px 10px;
-    border-radius: 12px;
+    padding: var(--space-2) var(--space-2-5);
+    border-radius: var(--radius-lg);
   }
 
   .pageTitle {
-    font-size: 1.08rem;
-    margin: 10px 0 6px;
+    font-size: var(--font-size-2xl);
+    margin: var(--space-2-5) 0 var(--space-1-5);
   }
 
   .pageSubtitle {
-    font-size: 0.78rem;
+    font-size: var(--font-size-sm);
   }
 }
 
 @media (max-width: 360px) {
   .backButton {
-    min-height: 36px;
-    font-size: 0.78rem;
-    padding: 8px 12px;
+    min-height: var(--space-9);
+    font-size: var(--font-size-sm);
+    padding: var(--space-2) var(--space-3);
   }
 }
 
@@ -260,18 +260,18 @@
 }
 
 .pageState {
-  max-width: 640px;
+  max-width: var(--size-2xl);
   margin: 0 auto;
   border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
   background: color-mix(in srgb, var(--settings-card-utility) 88%, transparent);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   color: var(--bw-text-muted);
 }
 
 .pageHeader {
   background: var(--settings-card-primary);
   border: 1px solid var(--bw-border-card);
-  border-radius: 20px;
-  padding: 14px 16px;
+  border-radius: var(--radius-2xl);
+  padding: var(--space-3-5) var(--space-4);
   box-shadow: var(--bw-shadow-card);
 }

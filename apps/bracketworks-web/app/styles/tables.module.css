@@ -1,42 +1,8 @@
-.tableShell {
-  background: var(--bw-surface-card);
-  border: 1px solid var(--bw-border-card);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--bw-shadow-card);
-  overflow: hidden;
-}
-
 .table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--bw-surface-card-strong);
-}
-
-.headerCell {
-  padding: var(--space-table-y) var(--space-table-x);
-  background: var(--bw-surface-panel);
-  border-bottom: 1px solid var(--bw-border-subtle);
-  color: var(--bw-text-muted);
-  font-size: var(--bw-type-table-heading);
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.cell {
-  padding: var(--space-table-y) var(--space-table-x);
-  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
-  color: var(--bw-text-body);
-  font-size: var(--bw-type-table);
-}
-
-.rowHover {
-  transition: background-color 0.18s ease, box-shadow 0.18s ease;
-}
-
-.rowHover:hover {
-  box-shadow: inset 2px 0 0 var(--color-primary);
 }
 
 .numericCell {
@@ -45,7 +11,7 @@
 }
 
 .statusCell {
-  min-width: 88px;
+  min-width: var(--space-24);
   text-align: center;
 }
 
@@ -58,39 +24,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.38rem;
+  gap: var(--space-1-5);
   white-space: nowrap;
 }
 
-.sortableHeader {
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.18s ease, background-color 0.18s ease;
-}
-
-.sortableHeader:hover {
-  color: var(--bw-text-title);
-  background: color-mix(in srgb, var(--color-primary) 7%, var(--bw-surface-panel));
-}
-
 @media (max-width: 767px) {
-  .tableShell {
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-  }
 
   .table {
-    min-width: 640px;
+    min-width: var(--size-2xl);
   }
 
   .rowActions {
-    gap: 0.25rem;
+    gap: var(--space-1);
   }
 }
 
 @media (max-width: 480px) {
   .statusCell {
-    min-width: 64px;
+    min-width: var(--space-16);
   }
 
   .actionCell {

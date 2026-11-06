@@ -1,13 +1,13 @@
 /* Dashboard board refresh */
 .dashboardBoard {
-  width: min(1320px, 100%);
-  margin: 0 auto 18px;
+  width: min(var(--size-9xl), 100%);
+  margin: 0 auto var(--space-5);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) var(--space-96);
   align-items: start;
-  gap: 14px;
-  padding: 8px;
-  border-radius: 24px;
+  gap: var(--space-3-5);
+  padding: var(--space-2);
+  border-radius: var(--radius-3xl);
 }
 
 .dashboardHeaderCard,
@@ -16,50 +16,50 @@
   border: 1px solid var(--bw-border-card);
   background: color-mix(in srgb, var(--bw-surface-card) 90%, transparent);
   box-shadow: var(--bw-shadow-card);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
 }
 
 .dashboardHeaderCard {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .dashboardHeaderTop {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--space-3);
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-  padding-bottom: 10px;
+  padding-bottom: var(--space-2-5);
 }
 
 .dashboardTournamentName {
   margin: 0;
-  font-size: clamp(24px, 2.4vw, 36px);
+  font-size: clamp(var(--font-size-4xl), 2.4vw, var(--font-size-6xl));
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: var(--bw-text-title);
 }
 
 .dashboardTournamentMeta {
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 18px;
-  font-size: 13px;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--font-size-base);
   color: var(--bw-text-muted);
 }
 
 .dashboardTournamentMeta span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-1-5);
 }
 
 .dashboardMetaIcon {
-  width: 13px;
-  height: 13px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
   color: var(--color-primary);
   stroke-width: 2.1;
   flex-shrink: 0;
@@ -70,7 +70,7 @@
   align-items: center;
   gap: 0;
   overflow-x: auto;
-  padding: 0 0 2px;
+  padding: 0 0 var(--space-0-5);
   scrollbar-width: thin;
 }
 
@@ -79,17 +79,17 @@
   min-width: max-content;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .workflowDot {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   flex: none;
 }
@@ -118,12 +118,12 @@
 }
 
 .workflowText strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--bw-text-title);
 }
 
 .workflowText span {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--bw-text-muted);
 }
 
@@ -137,10 +137,10 @@
 }
 
 .workflowConnector {
-  height: 1px;
-  min-width: 48px;
+  height: var(--space-px);
+  min-width: var(--space-12);
   flex: 1;
-  margin: 0 12px;
+  margin: 0 var(--space-3);
   background: color-mix(in srgb, var(--bw-border-subtle) 80%, transparent);
 }
 
@@ -158,7 +158,7 @@
 
 .dashboardMainColumn {
   display: grid;
-  gap: 14px;
+  gap: var(--space-3-5);
   min-width: 0;
 }
 
@@ -166,7 +166,7 @@
   grid-column: 2;
   grid-row: 1 / span 2;
   display: grid;
-  gap: 14px;
+  gap: var(--space-3-5);
   align-content: start;
 }
 
@@ -174,12 +174,12 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .kpiCard {
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: var(--space-3) var(--space-3-5);
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
   box-shadow: none;
 }
@@ -189,13 +189,13 @@
   grid-template-columns: auto minmax(0, auto);
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   height: 100%;
 }
 
 .kpiIconBadge {
-  width: 52px;
-  height: 52px;
+  width: var(--space-14);
+  height: var(--space-14);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -213,15 +213,15 @@
 }
 
 .kpiIcon {
-  width: 29px;
-  height: 29px;
+  width: var(--space-7);
+  height: var(--space-7);
   color: var(--color-primary);
   stroke-width: 1.8;
 }
 
 .kpiLabel {
-  margin: 6px 0 0;
-  font-size: 11px;
+  margin: var(--space-1-5) 0 0;
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.045em;
   color: var(--bw-text-body);
@@ -231,7 +231,7 @@
 
 .kpiValue {
   margin: 0;
-  font-size: clamp(28px, 2.1vw, 34px);
+  font-size: clamp(var(--font-size-5xl), 2.1vw, var(--font-size-6xl));
   line-height: 0.95;
   color: var(--bw-text-title);
   letter-spacing: -0.035em;
@@ -240,10 +240,10 @@
 
 .kpiDetail {
   width: 100%;
-  margin: 5px 0 0;
-  padding-top: 6px;
+  margin: var(--space-1-5) 0 0;
+  padding-top: var(--space-1-5);
   border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.25;
   color: var(--bw-text-muted);
   white-space: nowrap;
@@ -252,24 +252,24 @@
 .dashboardPanelsGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .dashboardPanel {
-  padding: 14px;
+  padding: var(--space-3-5);
 }
 
 .summaryDetailPanel {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
 }
 
 .summaryDetailPanel .dashboardDataRows {
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .dashboardPanelTitle {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--bw-text-accent);
@@ -278,13 +278,13 @@
 .dashboardPanelHeading {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2-5);
 }
 
 .dashboardPanelIcon {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   color: var(--color-primary);
   stroke-width: 2.15;
   flex-shrink: 0;
@@ -292,15 +292,15 @@
 
 .dashboardDataRows {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .dashboardDataRows > div {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
-  padding-bottom: 6px;
+  padding-bottom: var(--space-1-5);
 }
 
 .dashboardDataRows > div:last-child {
@@ -309,12 +309,12 @@
 }
 
 .dashboardDataRows span {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--bw-text-muted);
 }
 
 .dashboardDataRows strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--bw-text-title);
   text-align: right;
 }
@@ -327,10 +327,10 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2-5);
   min-width: 0;
-  padding: 10px 0;
-  margin: 10px 0 0;
+  padding: var(--space-2-5) 0;
+  margin: var(--space-2-5) 0 0;
   text-align: left;
   border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 75%, transparent);
@@ -340,7 +340,7 @@
   display: flex;
   align-items: baseline;
   justify-content: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -350,8 +350,8 @@
 }
 
 .dashboardPanelEyebrow {
-  margin: 0 0 8px;
-  font-size: 11px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--bw-text-accent);
@@ -359,13 +359,13 @@
 }
 
 .financialSplitSection {
-  margin: 10px 0 8px;
+  margin: var(--space-2-5) 0 var(--space-2);
   display: block;
 }
 
 .financialHeroValue {
   margin: 0;
-  font-size: 36px;
+  font-size: var(--font-size-6xl);
   line-height: 1.1;
   color: var(--color-primary);
   letter-spacing: -0.03em;
@@ -385,30 +385,30 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   align-items: flex-start;
 }
 
 .entryBreakdownStat {
   display: grid;
   width: fit-content;
-  gap: 3px;
+  gap: var(--space-1);
   text-align: center;
-  padding: 11px 10px;
-  border-radius: 12px;
+  padding: var(--space-3) var(--space-2-5);
+  border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 85%, transparent);
   background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
 }
 
 .entryBreakdownStat strong {
-  font-size: clamp(28px, 2vw, 34px);
+  font-size: clamp(var(--font-size-5xl), 2vw, var(--font-size-6xl));
   line-height: 1;
   letter-spacing: -0.03em;
   color: var(--bw-text-title);
 }
 
 .entryBreakdownStat small {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--bw-text-muted);
   white-space: nowrap;
 }
@@ -416,23 +416,23 @@
 .activityPanel {
   display: grid;
   grid-column: 1 / -1;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .activityList {
   display: grid;
-  gap: 8px;
-  max-height: 420px;
+  gap: var(--space-2);
+  max-height: var(--size-md);
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--space-1);
 }
 
 .activityItem {
   display: grid;
-  gap: 7px;
-  padding: 10px 12px;
+  gap: var(--space-2);
+  padding: var(--space-2-5) var(--space-3);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
 }
 
@@ -440,18 +440,18 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .activityItemHeader div {
   display: grid;
-  gap: 3px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
 .activityItemHeader strong {
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.25;
 }
 
@@ -459,7 +459,7 @@
 .activityItemHeader time,
 .activityMeta {
   color: var(--bw-text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.3;
 }
 
@@ -470,12 +470,12 @@
 
 .activityReason {
   margin: 0;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   border-left: 3px solid var(--color-primary);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-primary) 9%, transparent);
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.4;
 }
 
@@ -485,18 +485,18 @@
 }
 
 .activityState {
-  padding: 14px;
+  padding: var(--space-3-5);
   border: 1px dashed color-mix(in srgb, var(--bw-border-subtle) 92%, transparent);
-  border-radius: 13px;
+  border-radius: var(--radius-lg);
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   text-align: center;
 }
 
 .entryBreakdownLabelHandicap,
 .entryBreakdownLabelScratch,
 .entryBreakdownLabelOptional {
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -520,7 +520,7 @@
 }
 
 .sideCardSection {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
 }
 
 .sideCardSection + .sideCardSection {
@@ -528,8 +528,8 @@
 }
 
 .sideCardSectionLabel {
-  margin: 0 0 8px;
-  font-size: 11px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -550,21 +550,21 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .continuePanelBody {
-  margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  margin-top: var(--space-2);
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-xl);
   border: 1px solid color-mix(in srgb, var(--color-primary) 36%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
 }
 
 .continuePanelIconWrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -574,36 +574,36 @@
 }
 
 .continuePanelIcon {
-  width: 22px;
-  height: 22px;
+  width: var(--space-6);
+  height: var(--space-6);
   stroke-width: 2.1;
 }
 
 .sideCardMeta {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .sideCardPrimaryButton {
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
   width: 100%;
-  min-height: 38px;
+  min-height: var(--control-height);
 }
 
 .sideActionList {
   display: grid;
-  gap: 5px;
+  gap: var(--space-1-5);
 }
 
 .sideActionButton {
   border: 1px solid var(--bw-border-subtle);
   background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
   color: var(--bw-text-title);
-  border-radius: 12px;
-  min-height: 38px;
-  padding: 6px 10px;
-  font-size: 13px;
+  border-radius: var(--radius-lg);
+  min-height: var(--control-height);
+  padding: var(--space-1-5) var(--space-2-5);
+  font-size: var(--font-size-base);
   font-weight: 600;
   display: flex;
   justify-content: space-between;
@@ -615,13 +615,13 @@
 .sideActionButtonLabel {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   min-width: 0;
 }
 
 .sideActionIcon {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   color: var(--color-primary);
   stroke-width: 2.05;
   flex-shrink: 0;
@@ -653,33 +653,33 @@
   color: var(--bw-text-danger);
 }
 
-.tournamentTitleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
-.lifecycleBadge { padding: 4px 8px; border: 1px solid var(--dash-accent-border); border-radius: 999px; color: var(--bw-text-accent); background: var(--dash-accent-panel); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.tournamentTitleRow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2-5); }
+.lifecycleBadge { padding: var(--space-1) var(--space-2); border: 1px solid var(--dash-accent-border); border-radius: var(--radius-full); color: var(--bw-text-accent); background: var(--dash-accent-panel); font-size: var(--font-size-2xs); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
 
 .scoreProgressBar {
   display: block;
   width: 100%;
-  height: 5px;
-  margin-top: 8px;
+  height: var(--space-1-5);
+  margin-top: var(--space-2);
   overflow: hidden;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--bw-border-subtle);
   accent-color: var(--color-primary);
 }
 
 .scoreProgressBar::-webkit-progress-bar {
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--bw-border-subtle);
 }
 
 .scoreProgressBar::-webkit-progress-value {
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-primary);
 }
 
 .scoreProgressBar::-moz-progress-bar {
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--color-primary);
 }
 
@@ -688,26 +688,26 @@
    screens, before the layout drops to a single column at 1180px. */
 @media (max-width: 1700px) {
   .workflowItem {
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .workflowDot {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+    width: var(--space-6);
+    height: var(--space-6);
+    font-size: var(--font-size-xs);
   }
 
   .workflowText strong {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
 
   .workflowText span {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .workflowConnector {
-    min-width: 16px;
-    margin: 0 6px;
+    min-width: var(--space-4);
+    margin: 0 var(--space-1-5);
   }
 }
 
@@ -743,7 +743,7 @@
   .dashboardHeaderCard,
   .dashboardPanel,
   .kpiCard {
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
   }
 
   .dashboardHeaderTop {
@@ -757,12 +757,12 @@
   }
 
   .workflowText strong {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
 
   .activityItemHeader {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .activityItemHeader time {

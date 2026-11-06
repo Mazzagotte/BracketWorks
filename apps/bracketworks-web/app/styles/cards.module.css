@@ -18,7 +18,7 @@
 
 .cardHeaderDense {
   padding: var(--space-card-small-y) var(--space-card-x);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   font-weight: 800;
   color: var(--bw-text-title);
@@ -34,15 +34,11 @@
   letter-spacing: 0;
 }
 
-.cardTitleCompact {
-  font-size: 0.9rem;
-}
-
 .cardHeaderRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -50,10 +46,6 @@
   background: var(--bw-surface-card);
   border-color: var(--bw-border-card);
   box-shadow: inset 3px 0 0 var(--color-primary), var(--bw-shadow-card);
-}
-
-.accentRail {
-  border-left: var(--bw-accent-rail);
 }
 
 .statTile {
@@ -64,22 +56,22 @@
 }
 
 .statTileCompact {
-  min-width: 132px;
+  min-width: var(--space-32);
   min-height: 0;
   padding: var(--space-card-compact-y) var(--space-card-compact-x);
-  gap: 4px;
+  gap: var(--space-1);
   border-radius: var(--radius-lg);
 }
 
 .statValue {
-  font-size: 1.35rem;
+  font-size: var(--font-size-3xl);
   font-weight: 800;
   line-height: 1;
   color: var(--bw-text-title);
 }
 
 .statLabel {
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   color: var(--bw-text-muted);
   letter-spacing: 0;
@@ -87,18 +79,8 @@
 }
 
 .statDetail {
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   color: var(--bw-text-muted);
-}
-
-.accentSurface {
-  background: var(--bw-surface-panel);
-  border-color: var(--bw-border-accent);
-}
-
-.mutedSurface {
-  background: var(--bw-surface-card-strong);
-  border-color: var(--bw-border-subtle);
 }
 
 .emptyStateCard {
@@ -106,7 +88,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.5rem;
+  padding: var(--space-10) var(--space-6);
   text-align: center;
   color: var(--bw-text-muted);
 }
@@ -115,8 +97,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
-  margin-top: 1rem;
+  gap: var(--space-2-5);
+  margin-top: var(--space-4);
   flex-wrap: wrap;
 }
 
@@ -130,19 +112,6 @@
   border-color: var(--color-error-border);
   border-left: 4px solid var(--color-error);
   color: var(--bw-text-danger);
-}
-
-.warningPanel {
-  background: var(--color-warning-surface);
-  border-color: color-mix(in srgb, var(--color-warning) 34%, var(--bw-border-subtle));
-  border-left: 4px solid var(--color-warning);
-  color: var(--color-warning);
-}
-
-.successPanel {
-  background: var(--color-success-soft);
-  border-color: var(--color-success-border);
-  color: var(--bw-text-success);
 }
 
 .quickActionsCard {
@@ -179,8 +148,8 @@
 .quickActionControl {
   min-height: var(--control-height);
   border-radius: var(--radius-md);
-  padding: 0.42rem 0.78rem;
-  font-size: 0.78rem;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-sm);
   font-weight: 750;
   line-height: 1.1;
   letter-spacing: 0;
@@ -188,9 +157,7 @@
 }
 
 /* Unified card system: hierarchy, anatomy, states, and interactions */
-.cardPrimary,
-.cardSecondary,
-.cardUtility {
+.cardPrimary {
   border-radius: var(--radius-2xl);
   border: 1px solid var(--bw-border-subtle);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
@@ -202,33 +169,8 @@
   box-shadow: var(--bw-shadow-card);
 }
 
-.cardSecondary {
-  background: var(--bw-surface-panel);
-  border-color: var(--bw-border-subtle);
-  box-shadow: none;
-}
-
-.cardUtility {
-  background: var(--bw-surface-panel);
-  border-color: var(--bw-border-subtle);
-  box-shadow: none;
-}
-
-.cardInteractive:hover {
-  transform: translateY(-1px);
-  border-color: var(--bw-border-card);
-  box-shadow: var(--bw-shadow-card);
-}
-
-.cardInteractive:focus-visible {
-  outline: none;
-  border-color: var(--bw-border-accent);
-  box-shadow: var(--bw-focus-ring);
-}
-
 .cardHeaderSection,
-.cardBodySection,
-.cardFooterSection {
+.cardBodySection {
   padding-left: var(--space-card-x);
   padding-right: var(--space-card-x);
 }
@@ -243,77 +185,6 @@
 .cardBodySection {
   padding-top: var(--space-card-y);
   padding-bottom: var(--space-card-y);
-}
-
-.cardFooterSection {
-  padding-top: var(--space-card-compact-y);
-  padding-bottom: var(--space-card-compact-y);
-  border-top: 1px solid color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
-  background: var(--bw-surface-panel);
-}
-
-.cardEyebrow {
-  font-size: var(--bw-type-label);
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--bw-text-faint);
-}
-
-.cardMeta {
-  font-size: var(--bw-type-helper);
-  line-height: 1.4;
-  color: var(--bw-text-muted);
-}
-
-.cardMetric {
-  color: var(--bw-text-title);
-  font-size: clamp(20px, 2vw, 28px);
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.cardAccentInfo {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 62%, transparent);
-}
-
-.cardAccentSuccess {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-success) 62%, transparent);
-}
-
-.cardAccentWarning {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-warning) 62%, transparent);
-}
-
-.cardAccentDanger {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-error) 62%, transparent);
-}
-
-.cardStateLoading {
-  position: relative;
-  overflow: hidden;
-}
-
-.cardStateLoading::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 0%, color-mix(in srgb, var(--bw-surface-panel-strong) 70%, transparent) 42%, transparent 72%);
-  transform: translateX(-100%);
-  animation: cardShimmer 1.45s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.cardStateError {
-  background: var(--color-error-bg-soft);
-  border-color: var(--color-error-border);
-}
-
-.cardStateEmpty {
-  background: var(--bw-surface-panel);
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
 }
 
 @keyframes cardShimmer {
@@ -335,43 +206,31 @@
 }
 
 @media (max-width: 640px) {
-  .cardPrimary,
-  .cardSecondary,
-  .cardUtility {
+  .cardPrimary {
     border-radius: var(--radius-2xl);
   }
 
   .cardHeaderSection,
-  .cardBodySection,
-  .cardFooterSection {
+  .cardBodySection {
     padding-left: var(--space-card-small-x);
     padding-right: var(--space-card-small-x);
   }
 
   .cardHeaderSection {
-    padding-top: 11px;
-    padding-bottom: 10px;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-2-5);
   }
 
   .cardBodySection {
-    padding-top: 11px;
-    padding-bottom: 11px;
-  }
-
-  .cardFooterSection {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  }
-
-  .cardMetric {
-    font-size: clamp(18px, 5vw, 22px);
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
   }
 
   .quickActionsGroupLeft,
   .quickActionsGroupRight {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.52rem;
+    gap: var(--space-2);
   }
 
   .quickActionsRow :where(button, a),

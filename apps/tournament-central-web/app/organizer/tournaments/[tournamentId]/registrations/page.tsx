@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowDown,
   ArrowDownToLine,
   ArrowLeft,
   CalendarDays,
@@ -33,7 +34,8 @@ import { formatMoney } from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
-import styles from '../page.module.css';
+import styles from '../page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
 
@@ -548,7 +550,7 @@ export default function OrganizerTournamentRegistrationsPage() {
           <p>Review bowlers, payments, events, and squad assignments for {tournamentName}.</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
@@ -573,26 +575,26 @@ export default function OrganizerTournamentRegistrationsPage() {
                   <p>{filteredRegistrations.length} of {metrics.total} registrations shown</p>
                 </div>
                 <button type="button" className={styles.manualRegistrationButton} onClick={() => { void openManualRegistration(); }} disabled={isManualRegistrationLoading}>
-                  <UserPlus size={14} aria-hidden="true" /> Manual Registration
+                  <UserPlus size={ICON_SIZE.sm} aria-hidden="true" /> Manual Registration
                 </button>
               </div>
               <div className={styles.registrationToolbar}>
                 <label className={styles.registrationSearch}>
-                  <Search size={14} aria-hidden="true" />
+                  <Search size={ICON_SIZE.sm} aria-hidden="true" />
                   <span className={styles.srOnly}>Search registrations</span>
                   <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name, email, or confirmation #..." />
                 </label>
                 <FilterSelect label="Status" value={statusFilter} onChange={(value) => setStatusFilter(value as FilterValue)} options={[['all', 'All'], ['confirmed', 'Confirmed'], ['pending', 'Pending'], ['cancelled', 'Cancelled']]} />
                 <FilterSelect label="Squad" value={squadFilter} onChange={setSquadFilter} options={[["all", 'All'], ...squadOptions]} />
                 <FilterSelect label="Event" value={eventFilter} onChange={setEventFilter} options={[["all", 'All'], ...eventOptions]} />
-                <button type="button" className={styles.registrationExportButton} onClick={exportRegistrations}><ArrowDownToLine size={14} /> Export</button>
+                <button type="button" className={styles.registrationExportButton} onClick={exportRegistrations}><ArrowDownToLine size={ICON_SIZE.sm} /> Export</button>
               </div>
 
               {selectedIds.size > 0 ? (
                 <div className={styles.registrationToolbar}>
                   <span>{selectedIds.size} selected</span>
                   <button type="button" className={styles.manualRegistrationButton} onClick={handleBulkMarkPaid} disabled={isMutating}>
-                    <CircleDollarSign size={14} aria-hidden="true" /> Mark {selectedIds.size} as Paid
+                    <CircleDollarSign size={ICON_SIZE.sm} aria-hidden="true" /> Mark {selectedIds.size} as Paid
                   </button>
                   <button type="button" className={styles.registrationExportButton} onClick={() => setSelectedIds(new Set())}>Clear selection</button>
                 </div>
@@ -622,7 +624,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                           disabled={unpaidVisibleIds.length === 0}
                         />
                       </th>
-                      <th>Confirmation #</th><th>Contact</th><th>Events</th><th>Squad</th><th>Status</th><th>Payment</th><th>Total</th><th>Date <span aria-hidden="true">↓</span></th><th>Actions</th></tr>
+                      <th>Confirmation #</th><th>Contact</th><th>Events</th><th>Squad</th><th>Status</th><th>Payment</th><th>Total</th><th>Date <ArrowDown aria-hidden="true" size={ICON_SIZE.xs} /></th><th>Actions</th></tr>
                   </thead>
                   <tbody>
                     {visibleRegistrations.map((registration) => {
@@ -660,7 +662,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                             {activeActionId === actionId && registration.entries?.length ? (
                               <div className={styles.entryActionModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveActionId(null); }}>
                                 <section className={styles.entryActionModal} role="dialog" aria-modal="true" aria-labelledby={`entry-actions-${registration.id}`}>
-                                  <header><div><span>Registration Actions</span><h2 id={`entry-actions-${registration.id}`}>{name}</h2></div><button type="button" onClick={() => setActiveActionId(null)} aria-label="Close actions"><X size={16} /></button></header>
+                                  <header><div><span>Registration Actions</span><h2 id={`entry-actions-${registration.id}`}>{name}</h2></div><button type="button" onClick={() => setActiveActionId(null)} aria-label="Close actions"><X size={ICON_SIZE.md} /></button></header>
                                   <div className={styles.entryActionModalBody}>
                                     {registration.entries.map((registrationEntry) => (
                                       <div key={registrationEntry.id} className={styles.entryActionGroup}>
@@ -686,14 +688,14 @@ export default function OrganizerTournamentRegistrationsPage() {
 
               <footer className={styles.registrationPagination}>
                 <div className={styles.paginationButtons}>
-                  <button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={14} /></button>
+                  <button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={ICON_SIZE.sm} /></button>
                   {Array.from({ length: Math.min(pageCount, 3) }, (_, index) => index + 1).map((number) => <button type="button" key={number} className={number === page ? styles.paginationActive : ''} onClick={() => setPage(number)}>{number}</button>)}
                   {pageCount > 3 ? <span>...</span> : null}
                   {pageCount > 3 ? <button type="button" onClick={() => setPage(pageCount)}>{pageCount}</button> : null}
-                  <button type="button" aria-label="Next page" disabled={page === pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}><ChevronRight size={14} /></button>
+                  <button type="button" aria-label="Next page" disabled={page === pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}><ChevronRight size={ICON_SIZE.sm} /></button>
                 </div>
                 <span>Showing {pageStart} to {pageEnd} of {filteredRegistrations.length} registrations</span>
-                <label className={styles.pageSizeSelect}>10 / page <ChevronDown size={12} /></label>
+                <label className={styles.pageSizeSelect}>10 / page <ChevronDown size={ICON_SIZE.xs} /></label>
               </footer>
             </section>
 
@@ -746,7 +748,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                 <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
                   <h4>Manual Registration</h4>
                   <button type="button" className={styles.detailsModalClose} onClick={() => setIsManualRegistrationOpen(false)} aria-label="Close manual registration">
-                    <X size={18} strokeWidth={2.25} aria-hidden="true" />
+                    <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
                   </button>
                 </header>
                 <div className={styles.registrationModalBody}>
@@ -768,7 +770,7 @@ export default function OrganizerTournamentRegistrationsPage() {
           <section className={styles.entryModal} role="dialog" aria-modal="true" aria-labelledby="edit-entry-title">
             <header>
               <div><span>Edit Entry</span><h2 id="edit-entry-title">{entryLabel(editingEntry.entry, 'event')}</h2></div>
-              <button type="button" className={styles.entryModalClose} onClick={() => setEditingEntry(null)} aria-label="Close edit entry dialog"><X size={16} /></button>
+              <button type="button" className={styles.entryModalClose} onClick={() => setEditingEntry(null)} aria-label="Close edit entry dialog"><X size={ICON_SIZE.md} /></button>
             </header>
             <div className={styles.entryModalFields}>
               <div className={styles.entryEditSection}><strong>Contact</strong><div className={styles.entryEditGrid}>
@@ -828,5 +830,5 @@ function MetricCard({ icon, tone, label, value, detail }: { icon: React.ReactNod
 }
 
 function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]> }) {
-  return <label className={styles.registrationFilter}><span className={styles.srOnly}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{label}: {optionLabel}</option>)}</select><ChevronDown size={12} aria-hidden="true" /></label>;
+  return <label className={styles.registrationFilter}><span className={styles.srOnly}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{label}: {optionLabel}</option>)}</select><ChevronDown size={ICON_SIZE.xs} aria-hidden="true" /></label>;
 }

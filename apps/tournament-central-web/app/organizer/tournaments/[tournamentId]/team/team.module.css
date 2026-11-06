@@ -1,15 +1,15 @@
 .inviteForm {
-  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
-  gap: 14px;
-  padding: 4px 20px 20px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(var(--space-60), 0.75fr);
+  gap: var(--space-3-5);
+  padding: var(--space-1) var(--space-5) var(--space-5);
 }
 
 .inviteForm label {
   display: grid;
   align-content: start;
-  gap: 7px;
+  gap: var(--space-2);
   color: var(--bw-text-muted);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
   font-weight: 700;
 }
 
@@ -17,15 +17,15 @@
 .inviteForm select {
   width: 100%;
   min-width: 0;
-  height: 44px;
-  padding: 0 11px;
+  height: var(--space-11);
+  padding: 0 var(--space-3);
   border: 1px solid var(--bw-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   outline: 0;
   color: var(--bw-text-title);
   background: var(--bw-surface-panel);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
@@ -36,13 +36,13 @@
 }
 
 .headingIcon {
-  width: 25px;
-  height: 25px;
+  width: var(--space-6);
+  height: var(--space-6);
   display: inline-grid;
   place-items: center;
-  margin-right: 8px;
+  margin-right: var(--space-2);
   border: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 9%, transparent);
   vertical-align: middle;
@@ -50,15 +50,15 @@
 
 .roleDescription {
   color: var(--bw-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   font-weight: 400;
   line-height: 1.4;
 }
 
 .inviteButton {
-  min-height: 40px;
-  padding-inline: 16px;
-  border-radius: 8px;
+  min-height: var(--space-10);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-md);
 }
 
 .fullWidth {
@@ -73,13 +73,13 @@
 
 .successText {
   margin: 0;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, #20d884 28%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, #20d884 8%, transparent);
-  color: #20d884;
+  padding: var(--space-2-5) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-status-green) 28%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-status-green) 8%, transparent);
+  color: var(--color-status-green);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
 }
 
 .teamTable {
@@ -91,7 +91,7 @@
 .teamTable th {
   color: var(--bw-text-muted);
   background: color-mix(in srgb, var(--bw-surface-panel) 72%, transparent);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -132,11 +132,11 @@
 }
 
 .teamTable th {
-  padding-block: 12px;
+  padding-block: var(--space-3);
 }
 
 .teamTable td {
-  padding-block: 15px;
+  padding-block: var(--space-4);
 }
 
 .teamTable tbody tr {
@@ -153,16 +153,16 @@
 
 .memberCount {
   width: fit-content;
-  min-height: 25px;
+  min-height: var(--space-6);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 9px;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-2-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--bw-text-muted);
   background: var(--bw-surface-panel);
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
   font-weight: 650;
 }
 
@@ -173,12 +173,12 @@
 .memberIdentity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .memberAvatar {
-  width: 34px;
-  height: 34px;
+  width: var(--space-9);
+  height: var(--space-9);
   flex: 0 0 auto;
   display: grid;
   place-items: center;
@@ -186,7 +186,7 @@
   border-radius: 50%;
   color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
-  font-size: 0.62rem;
+  font-size: var(--font-size-2xs);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -196,21 +196,21 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .memberIdentity strong {
   color: var(--bw-text-title);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
 }
 
 .youBadge {
-  padding: 3px 6px;
+  padding: var(--space-1) var(--space-1-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--bw-text-muted);
   background: var(--bw-surface-panel);
-  font-size: 0.52rem;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   line-height: 1;
   text-transform: uppercase;
@@ -218,20 +218,20 @@
 
 .memberEmail {
   color: var(--bw-text-body);
-  font-size: 0.8125rem;
+  font-size: var(--font-size-base);
 }
 
 .roleBadge {
-  min-height: 27px;
+  min-height: var(--space-7);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 9px;
+  gap: var(--space-1-5);
+  padding: 0 var(--space-2-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--bw-text-body);
   background: var(--bw-surface-panel);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -250,20 +250,20 @@
 
 .noAction {
   color: var(--bw-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
 }
 
 .roleSelect {
-  min-height: 40px;
-  max-width: 190px;
-  padding: 0 28px 0 10px;
+  min-height: var(--space-10);
+  max-width: var(--space-48);
+  padding: 0 var(--space-7) 0 var(--space-2-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 7px;
+  border-radius: var(--radius-md);
   outline: 0;
   color: var(--bw-text-title);
   background: var(--bw-surface-panel);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
   cursor: pointer;
 }
 
@@ -277,26 +277,26 @@
 }
 
 .removeButton {
-  min-height: 31px;
+  min-height: var(--space-8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 10px;
-  border: 1px solid color-mix(in srgb, #ff6b6b 26%, var(--bw-border-card));
-  border-radius: 7px;
-  color: #ff7777;
-  background: color-mix(in srgb, #ff6b6b 6%, var(--bw-surface-panel));
+  gap: var(--space-1-5);
+  padding: 0 var(--space-2-5);
+  border: 1px solid color-mix(in srgb, var(--color-status-red-soft) 26%, var(--bw-border-card));
+  border-radius: var(--radius-md);
+  color: var(--color-error-light);
+  background: color-mix(in srgb, var(--color-status-red-soft) 6%, var(--bw-surface-panel));
   font: inherit;
-  font-size: 0.61rem;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   cursor: pointer;
   transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .removeButton:hover:not(:disabled) {
-  border-color: #ff6b6b;
-  background: color-mix(in srgb, #ff6b6b 13%, var(--bw-surface-panel));
+  border-color: var(--color-status-red-soft);
+  background: color-mix(in srgb, var(--color-status-red-soft) 13%, var(--bw-surface-panel));
 }
 
 .removeButton:disabled {
@@ -306,15 +306,15 @@
 
 .loadingLayout {
   display: grid;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .loadingAnnouncement {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: var(--space-px);
+  height: var(--space-px);
   padding: 0;
-  margin: -1px;
+  margin: calc(var(--space-px) * -1);
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -327,34 +327,34 @@
 
 .loadingInviteFields {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
-  gap: 14px;
-  padding: 4px 20px 20px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(var(--space-60), 0.75fr);
+  gap: var(--space-3-5);
+  padding: var(--space-1) var(--space-5) var(--space-5);
 }
 
 .loadingField {
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .loadingInviteAction {
   grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
-  padding-top: 2px;
+  padding-top: var(--space-0-5);
 }
 
 .loadingMemberList {
-  padding: 0 16px 6px;
+  padding: 0 var(--space-4) var(--space-1-5);
 }
 
 .loadingMemberRow {
-  min-height: 59px;
+  min-height: var(--space-14);
   display: grid;
-  grid-template-columns: minmax(190px, 1.2fr) minmax(160px, 0.9fr) minmax(86px, 0.3fr);
+  grid-template-columns: minmax(var(--space-48), 1.2fr) minmax(var(--space-40), 0.9fr) minmax(var(--space-20), 0.3fr);
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
   border-bottom: 1px solid var(--bw-border-subtle);
 }
 
@@ -365,19 +365,19 @@
 .loadingMemberIdentity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .loadingMemberText {
   flex: 1;
   display: grid;
-  gap: 7px;
+  gap: var(--space-2);
 }
 
 .skeletonBlock {
   position: relative;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--bw-text-muted) 12%, var(--bw-surface-panel));
 }
 
@@ -385,22 +385,22 @@
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, white 9%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--color-white-pure) 9%, transparent), transparent);
   animation: teamSkeletonShimmer 1.5s ease-in-out infinite;
   content: '';
 }
 
-.skeletonHeading { width: 118px; height: 14px; }
-.skeletonCaption { width: 154px; height: 9px; margin-top: 7px; }
-.skeletonLabel { width: 52px; height: 9px; }
-.skeletonInput { width: 100%; height: 40px; border-radius: 8px; }
-.skeletonRoleHint { width: min(92%, 260px); height: 8px; margin-top: 1px; }
-.skeletonButton { width: 146px; height: 40px; border-radius: 8px; }
-.skeletonAvatar { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; }
-.skeletonName { width: min(170px, 70%); height: 10px; }
-.skeletonEmail { width: min(210px, 88%); height: 8px; }
-.skeletonRole { width: 132px; height: 28px; border-radius: 999px; }
-.skeletonRemove { width: 76px; height: 31px; justify-self: end; border-radius: 7px; }
+.skeletonHeading { width: var(--space-28); height: var(--space-3-5); }
+.skeletonCaption { width: var(--space-40); height: var(--space-2-5); margin-top: var(--space-2); }
+.skeletonLabel { width: var(--space-14); height: var(--space-2-5); }
+.skeletonInput { width: 100%; height: var(--space-10); border-radius: var(--radius-md); }
+.skeletonRoleHint { width: min(92%, var(--space-64)); height: var(--space-2); margin-top: var(--space-px); }
+.skeletonButton { width: var(--space-36); height: var(--space-10); border-radius: var(--radius-md); }
+.skeletonAvatar { width: var(--space-9); height: var(--space-9); flex: 0 0 auto; border-radius: 50%; }
+.skeletonName { width: min(var(--space-44), 70%); height: var(--space-2-5); }
+.skeletonEmail { width: min(var(--space-52), 88%); height: var(--space-2); }
+.skeletonRole { width: var(--space-32); height: var(--space-7); border-radius: var(--radius-full); }
+.skeletonRemove { width: var(--space-20); height: var(--space-8); justify-self: end; border-radius: var(--radius-md); }
 
 @keyframes teamSkeletonShimmer {
   100% { transform: translateX(100%); }
@@ -409,12 +409,12 @@
 @media (max-width: 767px) {
   .inviteForm {
     grid-template-columns: 1fr;
-    padding: 4px 12px 14px;
+    padding: var(--space-1) var(--space-3) var(--space-3-5);
   }
 
   .loadingInviteFields {
     grid-template-columns: 1fr;
-    padding: 4px 12px 14px;
+    padding: var(--space-1) var(--space-3) var(--space-3-5);
   }
 
   .loadingInviteAction {
@@ -434,7 +434,7 @@
   }
 
   .teamTable {
-    min-width: 560px;
+    min-width: var(--size-xl);
   }
 
   .loadingMemberList {
@@ -442,7 +442,7 @@
   }
 
   .loadingMemberRow {
-    min-width: 520px;
+    min-width: var(--size-lg);
   }
 }
 
@@ -450,6 +450,6 @@
   .skeletonBlock::after {
     animation: none;
     transform: none;
-    background: color-mix(in srgb, white 4%, transparent);
+    background: color-mix(in srgb, var(--color-white-pure) 4%, transparent);
   }
 }

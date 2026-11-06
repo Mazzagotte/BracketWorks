@@ -12,8 +12,8 @@
   overflow-x: clip;
   background: var(--tc-page-bg);
   color: var(--tc-text-secondary);
-  font-size: 14px;
-  font-family: Inter, Segoe UI, system-ui, -apple-system, Arial, sans-serif;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family-primary);
 }
 
 .page * {
@@ -27,24 +27,24 @@
 
 .skipLink {
   position: fixed;
-  top: -52px;
-  left: 12px;
+  top: calc(var(--space-14) * -1);
+  left: var(--space-3);
   z-index: 100;
-  padding: 10px 14px;
-  border-radius: 6px;
+  padding: var(--space-2-5) var(--space-3-5);
+  border-radius: var(--radius-md);
   background: var(--color-primary);
   color: var(--bw-page) !important;
   font-weight: 800;
 }
 
 .skipLink:focus {
-  top: 12px;
+  top: var(--space-3);
 }
 
 .section {
-  width: min(calc(100% - 32px), 1200px);
+  width: min(calc(100% - var(--space-8)), var(--size-8xl));
   margin-inline: auto;
-  padding-block: 16px;
+  padding-block: var(--space-4);
 }
 
 .topNav,
@@ -58,23 +58,23 @@
 
 .topNavInner,
 .headerInner {
-  min-height: 64px;
+  min-height: var(--space-16);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .headerInner,
 .section {
-  width: min(calc(100% - 32px), 1200px);
+  width: min(calc(100% - var(--space-8)), var(--size-8xl));
   margin-inline: auto;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   white-space: nowrap;
 }
 
@@ -85,7 +85,7 @@
 
 .brand strong {
   color: var(--bw-text-title);
-  font-size: 20px;
+  font-size: var(--font-size-3xl);
   line-height: 1;
   letter-spacing: -0.6px;
 }
@@ -95,18 +95,18 @@
 }
 
 .brand small {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--bw-text-muted);
-  font-size: 8px;
+  font-size: var(--font-size-3xs);
   letter-spacing: 0.7px;
   text-transform: uppercase;
 }
 
 .header nav {
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   color: var(--bw-text-body);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 650;
 }
 
@@ -118,14 +118,14 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .accountActions > a,
 .accountMenu summary,
 .accountMenu a,
 .accountMenu button {
-  min-height: 44px;
+  min-height: var(--space-11);
 }
 
 .accountMenu {
@@ -135,9 +135,9 @@
 .accountMenu summary {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  border: 1px solid #686872;
-  border-radius: 8px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
   color: var(--bw-text-title);
   cursor: pointer;
 }
@@ -145,13 +145,13 @@
 .accountMenu > div {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
-  width: 220px;
-  padding: 8px;
+  top: calc(100% + var(--space-2));
+  width: var(--space-56);
+  padding: var(--space-2);
   display: grid;
   background: var(--bw-surface-panel);
   border: 1px solid var(--bw-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   z-index: 60;
 }
 
@@ -159,7 +159,7 @@
 .accountMenu button {
   display: flex;
   align-items: center;
-  padding: 8px;
+  padding: var(--space-2);
   background: transparent;
   border: 0;
   color: var(--bw-text-title);
@@ -174,24 +174,24 @@
 
 .tournamentInformation {
   display: grid;
-  gap: 24px;
+  gap: var(--space-6);
   overflow-wrap: anywhere;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.5;
 }
 
 .informationHighlights {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0;
 }
 
 .informationHighlights > div {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
 }
 
@@ -201,9 +201,9 @@
 }
 
 .informationHighlights dt {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -215,16 +215,16 @@
 
 .informationHighlights small {
   display: block;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 400;
 }
 
 .informationSection h3 {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: var(--bw-text-title);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
 }
 
@@ -239,7 +239,7 @@
 .informationSquadList,
 .informationDocumentList {
   display: grid;
-  gap: 10px;
+  gap: var(--space-2-5);
   padding: 0;
   margin: 0;
   list-style: none;
@@ -255,9 +255,9 @@
 .informationContact,
 .informationDocumentList > li {
   min-width: 0;
-  padding: 16px;
+  padding: var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
 }
 
@@ -269,7 +269,7 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: var(--space-2) var(--space-4);
 }
 
 .informationEventPrice {
@@ -279,14 +279,14 @@
 
 .informationScoring {
   display: block;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   text-transform: capitalize;
 }
 
 .informationSectionHeading {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .informationSectionHeading h3 {
@@ -296,7 +296,7 @@
 .informationSectionHeading > span,
 .informationSquadCapacity > span {
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .informationSquadHeading {
@@ -304,15 +304,15 @@
 }
 
 .informationSquadHeading > strong {
-  flex: 1 1 220px;
+  flex: 1 1 var(--space-56);
 }
 
 .informationAvailability,
 .informationFull {
-  padding: 4px 9px;
+  padding: var(--space-1) var(--space-2-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -328,66 +328,66 @@
 }
 
 .informationSquadCard .informationSquadSchedule {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: var(--space-1);
+  font-size: var(--font-size-sm);
 }
 
 .informationSquadCapacity {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--bw-border-subtle);
 }
 
 .informationSquadCapacity p strong {
-  font-size: 22px;
+  font-size: var(--font-size-4xl);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .informationContact {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .tournamentRulesText {
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
   color: var(--bw-text-body);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.7;
 }
 
 .registrationRules {
   min-width: 0;
-  padding: 14px;
+  padding: var(--space-3-5);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 .registrationRules summary {
   cursor: pointer;
   color: var(--color-primary);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 
 .registrationRules > section {
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 .registrationProgress {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding: 16px 8px;
-  margin: 0 0 16px;
+  padding: var(--space-4) var(--space-2);
+  margin: 0 0 var(--space-4);
   list-style: none;
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
 }
 
@@ -396,10 +396,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: var(--space-2-5);
   align-items: center;
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   text-align: center;
 }
@@ -407,11 +407,11 @@
 .registrationProgress li:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: 17px;
-  left: calc(50% + 23px);
-  width: calc(100% - 46px);
-  height: 2px;
-  border-radius: 2px;
+  top: var(--space-4);
+  left: calc(50% + var(--space-6));
+  width: calc(100% - var(--space-12));
+  height: var(--space-0-5);
+  border-radius: var(--radius-sm);
   background: var(--bw-border-card);
 }
 
@@ -427,12 +427,12 @@
 .registrationStepNumber {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--space-9);
+  height: var(--space-9);
   border: 1px solid var(--bw-border-card);
   border-radius: 50%;
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   background: var(--bw-surface-panel);
 }
 
@@ -460,13 +460,13 @@
 
 .registrationPaymentNotice,
 .registrationReviewCard {
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
   color: var(--bw-text-body);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
@@ -476,19 +476,19 @@
 }
 
 .registrationPaymentNotice p {
-  margin: 6px 0 0;
+  margin: var(--space-1-5) 0 0;
 }
 
 .registrationConvenience {
   display: grid;
   justify-items: start;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .registrationConvenience small {
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationReviewCard dl {
@@ -496,9 +496,9 @@
 }
 
 .registrationReviewCard dt {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationReviewCard dd {
@@ -508,22 +508,22 @@
 
 .registrationConfirmationCode {
   color: var(--color-primary);
-  font-size: 24px;
+  font-size: var(--font-size-4xl);
 }
 
 @media (max-width: 400px) {
   .registrationProgress {
-    padding-inline: 4px;
+    padding-inline: var(--space-1);
   }
 
   .registrationProgress li {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 }
 
 .tournamentInformation .informationEmpty {
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 480px) {
@@ -534,7 +534,7 @@
   .informationHighlights > div,
   .informationEventList > li,
   .informationSquadCard {
-    padding: 12px;
+    padding: var(--space-3);
   }
 }
 
@@ -542,7 +542,7 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mobileMenu {
@@ -551,12 +551,12 @@
 }
 
 .mobileMenu summary {
-  width: 38px;
-  height: 38px;
+  width: var(--space-10);
+  height: var(--control-height);
   display: grid;
   place-items: center;
   border: 1px solid var(--bw-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
   list-style: none;
@@ -568,26 +568,26 @@
 }
 
 .mobileMenu summary svg {
-  width: 20px;
+  width: var(--space-5);
 }
 
 .mobileMenu > div {
   position: absolute;
-  top: 46px;
+  top: var(--space-12);
   right: 0;
-  width: 220px;
-  padding: 8px;
+  width: var(--space-56);
+  padding: var(--space-2);
   display: grid;
-  gap: 2px;
+  gap: var(--space-0-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-panel);
   z-index: 60;
 }
 
 .mobileMenu a {
-  padding: 9px;
-  border-radius: 5px;
+  padding: var(--space-2-5);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   color: inherit;
 }
@@ -598,11 +598,11 @@
 
 .ghostBtn,
 .primaryBtn {
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: 8px;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 800;
   color: var(--bw-text-title);
   background: var(--bw-surface-card);
@@ -616,15 +616,15 @@
 
 .primaryButton,
 .secondaryButton {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   font-weight: 800;
   transition: background-color 0.15s, border-color 0.15s;
 }
@@ -673,9 +673,9 @@
 }
 
 .hero {
-  min-height: 320px;
-  padding-top: 30px;
-  padding-bottom: 24px;
+  min-height: var(--space-80);
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -683,13 +683,13 @@
 }
 
 .heroCopy {
-  max-width: 920px;
+  max-width: var(--size-5xl);
 }
 
 .eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
   color: var(--bw-text-accent);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 850;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -698,44 +698,44 @@
 .hero h1 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: clamp(34px, 4.4vw, 56px);
+  font-size: clamp(var(--font-size-6xl), 4.4vw, var(--font-size-9xl));
   line-height: 1.05;
   letter-spacing: -1.6px;
 }
 
 .lead {
-  max-width: 760px;
-  margin: 18px auto 0;
+  max-width: var(--size-4xl);
+  margin: var(--space-5) auto 0;
   color: var(--bw-text-muted);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   line-height: 1.55;
 }
 
 .explore {
-  padding-top: 12px;
+  padding-top: var(--space-3);
   padding-bottom: 0;
 }
 
 .discoveryHeader {
   display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
   border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
 }
 
 .discoveryIntro {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .discoveryIntro h1 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 28px;
+  font-size: var(--font-size-5xl);
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -743,17 +743,17 @@
 .discoveryIntro p {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .discoverySearch {
-  min-height: 42px;
+  min-height: var(--space-11);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
+  gap: var(--space-2-5);
+  padding: 0 var(--space-3-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
   color: var(--bw-text-muted);
   transition: border-color 140ms ease, box-shadow 140ms ease;
@@ -779,17 +779,17 @@
 }
 
 .discoverySearchClear {
-  width: 24px;
-  height: 24px;
+  width: var(--space-6);
+  height: var(--space-6);
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--bw-text-muted);
-  font-size: 18px;
+  font-size: var(--font-size-2xl);
   line-height: 1;
   cursor: pointer;
 }
@@ -801,27 +801,27 @@
 }
 
 .discoveryFilters {
-  --btn-height: 44px;
+  --btn-height: var(--space-11);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px;
+  gap: var(--space-2);
+  padding: var(--space-1);
 }
 
 .discoveryFilters button {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: var(--space-11);
+  min-width: var(--space-11);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex: 0 0 auto;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   border: 1px solid var(--bw-border-card);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-card);
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
 }
@@ -835,10 +835,10 @@
 
 .srOnly {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: var(--space-px);
+  height: var(--space-px);
   padding: 0;
-  margin: -1px;
+  margin: calc(var(--space-px) * -1);
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -850,40 +850,40 @@
 }
 
 .featuredLayout {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(var(--space-72), var(--space-96));
+  gap: var(--space-3);
   align-items: start;
 }
 
 .featuredStrip {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: var(--space-3);
+  padding: var(--space-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
 }
 
 .featuredHeader {
   color: var(--bw-text-title);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .resultsSkeletonList {
   display: grid;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--space-2-5);
+  padding: var(--space-3) var(--space-3-5);
 }
 
 .resultsSkeleton {
-  height: 92px;
+  height: var(--space-24);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(90deg, var(--bw-surface-card), var(--bw-surface-panel-strong), var(--bw-surface-card));
   background-size: 220% 100%;
   animation: resultSkeletonPulse 1.8s ease-in-out infinite;
@@ -897,14 +897,14 @@
 .featuredGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .featuredCard {
   position: relative;
   min-height: 0;
   border: 1px solid var(--bw-border-card);
-  border-radius: 18px;
+  border-radius: var(--radius-2xl);
   overflow: hidden;
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
@@ -925,32 +925,32 @@
   justify-content: flex-start;
   gap: 0;
   height: 100%;
-  padding: 12px;
+  padding: var(--space-3);
 }
 
 .featuredIntro {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 64px;
+  gap: var(--space-2-5);
+  min-height: var(--space-16);
 }
 
 .featuredCard h3 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 18px;
+  font-size: var(--font-size-2xl);
   line-height: 1.16;
   letter-spacing: -0.03em;
   font-weight: 800;
 }
 
 .featuredLogoWrap {
-  width: 54px;
-  height: 54px;
+  width: var(--space-14);
+  height: var(--space-14);
   display: grid;
   place-items: center;
   border: 1px solid var(--bw-border-card);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel-strong);
   overflow: hidden;
   flex: 0 0 auto;
@@ -973,12 +973,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 430px;
-  min-height: 220px;
+  max-width: var(--size-md);
+  min-height: var(--space-56);
   margin: 0 auto;
-  padding: 20px 20px 18px;
+  padding: var(--space-5) var(--space-5) var(--space-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-card);
   box-shadow: var(--bw-shadow-card);
   overflow: hidden;
@@ -992,9 +992,9 @@
 .featuredBrandTitle {
   width: 100%;
   max-width: 100%;
-  margin: 0 auto 18px;
+  margin: 0 auto var(--space-5);
   color: var(--bw-text-title);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-weight: 700;
@@ -1006,8 +1006,8 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .brandProductBlock {
@@ -1015,50 +1015,50 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   min-width: 0;
 }
 
 .brandWordmarkLogo {
-  width: 78px;
-  height: 78px;
+  width: var(--space-20);
+  height: var(--space-20);
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--bw-border-card);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-white-pure) 2%, transparent);
   overflow: hidden;
 }
 
 .brandWordmarkLogo img {
-  width: 56px;
-  height: 56px;
+  width: var(--space-14);
+  height: var(--space-14);
   object-fit: contain;
 }
 
 .brandProductLabel {
   color: var(--bw-text-title);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   letter-spacing: -0.03em;
   text-align: center;
 }
 
 .brandMath {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-white-pure) 2%, transparent);
   color: var(--color-primary);
   border: 1px solid color-mix(in srgb, var(--bw-border-card) 82%, var(--color-primary) 18%);
   flex-shrink: 0;
 }
 
 .brandDivider {
-  height: 1px;
-  margin: 0 0 18px;
+  height: var(--space-px);
+  margin: 0 0 var(--space-5);
   background: color-mix(in srgb, var(--bw-text-title) 12%, transparent);
 }
 
@@ -1066,19 +1066,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin: 0 auto 10px;
+  gap: var(--space-2);
+  margin: 0 auto var(--space-2-5);
   width: 100%;
   max-width: 100%;
 }
 
 .brandCheck {
-  width: 18px;
-  height: 18px;
+  width: var(--space-5);
+  height: var(--space-5);
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-white-pure) 4%, transparent);
   color: var(--color-primary);
   flex-shrink: 0;
 }
@@ -1086,7 +1086,7 @@
 .featuredBrandSummary {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -1098,7 +1098,7 @@
   width: 100%;
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1.5;
   letter-spacing: -0.02em;
   text-align: center;
@@ -1106,59 +1106,59 @@
 
 .featuredBrandCta {
   width: 100%;
-  min-height: 52px;
-  margin-top: 18px;
-  padding: 0 16px;
+  min-height: var(--space-14);
+  margin-top: var(--space-5);
+  padding: 0 var(--space-4);
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: var(--bw-page);
-  font-size: clamp(18px, 1.8vw, 28px);
+  font-size: clamp(var(--font-size-2xl), 1.8vw, var(--font-size-5xl));
   font-weight: 900;
   letter-spacing: -0.05em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-white-pure) 14%, transparent);
 }
 
 .featuredBrandFooter {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-2-5);
+  padding-top: var(--space-2-5);
   border-top: 1px solid color-mix(in srgb, var(--bw-text-title) 12%, transparent);
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   text-align: center;
 }
 
 .brandFooterIcon {
-  width: 18px;
-  height: 18px;
+  width: var(--space-5);
+  height: var(--space-5);
   display: inline-grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-white-pure) 4%, transparent);
   color: var(--color-primary);
   flex-shrink: 0;
 }
 
 .featuredDivider {
-  height: 1px;
+  height: var(--space-px);
   width: 100%;
   background: color-mix(in srgb, var(--bw-text-title) 12%, transparent);
-  margin: 10px 0 12px;
+  margin: var(--space-2-5) 0 var(--space-3);
 }
 
 .featuredInfoList {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
   margin-top: 0;
 }
 
@@ -1168,43 +1168,43 @@
 .featuredFooterRow {
   margin: 0;
   color: color-mix(in srgb, var(--bw-text-title) 86%, transparent);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.5;
 }
 
 .featuredVenueRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   margin-top: 0;
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .featuredCityRow {
   margin-top: 0;
-  margin-left: 42px;
-  margin-top: -6px;
-  font-size: 12px;
+  margin-left: var(--space-11);
+  margin-top: calc(var(--space-1-5) * -1);
+  font-size: var(--font-size-sm);
   color: var(--bw-text-muted);
 }
 
 .featuredFooterRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   margin-top: 0;
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .featuredInfoIcon {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
@@ -1217,15 +1217,15 @@
 .featuredRegistrationBlock {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
+  gap: var(--space-2-5);
+  margin-top: var(--space-2-5);
+  padding-top: var(--space-2-5);
   border-top: 1px solid color-mix(in srgb, var(--bw-text-title) 12%, transparent);
 }
 
 .featuredRegistrationIcon {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1238,38 +1238,38 @@
 
 .featuredRegistrationText {
   display: grid;
-  gap: 2px;
+  gap: var(--space-0-5);
 }
 
 .featuredRegistrationLabel {
   color: var(--color-primary);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .featuredRegistrationDate {
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .featuredCardPrimaryAction {
   width: 100%;
-  min-height: 34px;
-  margin-top: 10px;
-  padding: 0 18px;
+  min-height: var(--space-9);
+  margin-top: var(--space-2-5);
+  padding: 0 var(--space-5);
   border: 1px solid var(--color-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--color-primary);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 800;
   letter-spacing: -0.03em;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
 }
 
@@ -1285,29 +1285,29 @@
 }
 
 .layoutGrid {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   display: grid;
-  grid-template-columns: minmax(640px, 1.4fr) minmax(360px, 0.9fr);
-  gap: 14px;
+  grid-template-columns: minmax(var(--size-2xl), 1.4fr) minmax(var(--space-96), 0.9fr);
+  gap: var(--space-3-5);
   align-items: start;
 }
 
 .mapShell,
 .statePanel {
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   border: 1px solid var(--tc-border);
   background: var(--tc-card-bg);
   box-shadow: none;
   overflow: hidden;
-  height: 640px;
+  height: var(--size-2xl);
 }
 
 .mapShell {
   position: relative;
   width: 100%;
-  border-radius: 20px;
-  background: #080808;
-  padding: 16px;
+  border-radius: var(--radius-2xl);
+  background: var(--color-bg-primary);
+  padding: var(--space-4);
   overflow: hidden;
 }
 
@@ -1321,22 +1321,22 @@
 
 .mapControls {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-4);
+  right: var(--space-4);
   z-index: 3;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mapControlButton {
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  min-width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  font-size: 14px;
+  min-width: var(--space-10);
+  height: var(--control-height);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
@@ -1357,24 +1357,24 @@
 }
 
 .mapControlReset {
-  padding: 0 12px;
-  min-width: 64px;
-  font-size: 12px;
+  padding: 0 var(--space-3);
+  min-width: var(--space-16);
+  font-size: var(--font-size-sm);
   letter-spacing: 0.01em;
 }
 
 .mapHint {
   position: absolute;
-  left: 16px;
-  bottom: 16px;
+  left: var(--space-4);
+  bottom: var(--space-4);
   z-index: 3;
   margin: 0;
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--bw-border-subtle);
   background: var(--bw-surface-card);
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.2;
 }
 
@@ -1404,7 +1404,7 @@
 }
 
 .geographyBase {
-  stroke: #4a4a4a;
+  stroke: var(--color-dark-accent);
   stroke-width: 1.15;
   fill-opacity: 1;
   vector-effect: non-scaling-stroke;
@@ -1412,13 +1412,19 @@
   transition: stroke 120ms ease, stroke-width 120ms ease;
 }
 
+.geographyBase[data-tone='none'] { fill: var(--color-map-fill-none); }
+.geographyBase[data-tone='past'] { fill: var(--color-map-fill-past); }
+.geographyBase[data-tone='upcoming'] { fill: var(--color-map-fill-upcoming); }
+.geographyBase[data-tone='inprogress'] { fill: var(--color-map-fill-in-progress); }
+.geographyBase[data-selected='true'] { fill: var(--color-map-fill-selected); }
+
 .geographyBase:hover {
-  stroke: #8a8a8a;
+  stroke: var(--color-neutral-400);
   stroke-width: 1.6;
 }
 
 .geographyBase[data-selected='true'] {
-  stroke: #c4c4c4;
+  stroke: var(--color-neutral-300);
   stroke-width: 2;
 }
 
@@ -1432,7 +1438,7 @@
 
 .venueMarkerDot {
   display: block;
-  fill: #ff7a00;
+  fill: var(--color-accent-primary);
   stroke: none;
   opacity: 0.95;
   transition: r 140ms ease, opacity 140ms ease;
@@ -1450,12 +1456,12 @@
 }
 
 .venueMarkerHot {
-  filter: drop-shadow(0 0 5px rgb(255 122 0 / 55%));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-accent-primary) 55%, transparent));
 }
 
 .venueMarkerCount {
-  fill: #171717;
-  font-size: 5px;
+  fill: var(--color-brand-charcoal-deep);
+  font-size: var(--font-size-3xs);
   font-weight: 800;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -1463,7 +1469,7 @@
 }
 
 .statePanel {
-  padding: 14px 16px;
+  padding: var(--space-3-5) var(--space-4);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1473,18 +1479,18 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .stateMeta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .stateTitleBlock h3 {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--font-size-4xl);
   line-height: 1.1;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1492,15 +1498,15 @@
 }
 
 .stateTitleBlock p {
-  margin: 6px 0 0;
+  margin: var(--space-1-5) 0 0;
   color: var(--bw-text-body);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   transition: color 160ms ease;
 }
 
 .stateShape {
-  width: 69px;
-  height: 88px;
+  width: var(--space-18);
+  height: var(--space-24);
   display: block;
   flex-shrink: 0;
   transition: transform 180ms ease;
@@ -1512,27 +1518,27 @@
 
 .stateFlagFallback {
   color: var(--bw-text-accent);
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .stateStatusSummary {
-  margin-top: 10px;
+  margin-top: var(--space-2-5);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: var(--space-1);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--tc-input-bg);
-  padding: 5px;
+  padding: var(--space-1-5);
 }
 
 .stateStatusItem {
   display: grid;
-  gap: 2px;
-  padding: 5px 6px;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) var(--space-1-5);
   border-right: 1px solid var(--bw-border-subtle);
 }
 
@@ -1542,7 +1548,7 @@
 
 .stateStatusItem span {
   color: var(--bw-text-muted);
-  font-size: 9px;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   line-height: 1.1;
   text-transform: uppercase;
@@ -1550,49 +1556,49 @@
 
 .stateStatusItem strong {
   color: var(--bw-text-title);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1;
 }
 
 .cardList {
-  margin-top: 14px;
+  margin-top: var(--space-3-5);
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   align-content: start;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--space-1);
   container-type: inline-size;
   container-name: tournament-list;
 }
 
 .emptyState {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
-  padding: 24px 18px 18px;
+  padding: var(--space-6) var(--space-5) var(--space-5);
   display: grid;
   justify-items: center;
   text-align: center;
 }
 
 .emptyStateIcon {
-  width: 88px;
-  height: 88px;
+  width: var(--space-24);
+  height: var(--space-24);
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-white-pure) 4%, transparent);
   border: 1px solid var(--bw-border-card);
   color: var(--bw-text-title);
-  margin: 0 auto 16px;
+  margin: 0 auto var(--space-4);
 }
 
 .emptyState h4 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: clamp(18px, 1.6vw, 24px);
+  font-size: clamp(var(--font-size-2xl), 1.6vw, var(--font-size-4xl));
   line-height: 1.15;
   letter-spacing: -0.04em;
   font-weight: 700;
@@ -1603,29 +1609,29 @@
 }
 
 .emptyState p {
-  margin: 8px 0 0;
+  margin: var(--space-2) 0 0;
   color: var(--bw-text-muted);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1.5;
 }
 
 .emptyStatePrimaryAction,
 .emptyStateSecondaryAction {
   width: 100%;
-  min-height: 48px;
-  border-radius: 10px;
-  font-size: 14px;
+  min-height: var(--space-12);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-md);
   font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
 }
 
 .emptyStatePrimaryAction {
-  margin-top: 24px;
+  margin-top: var(--space-6);
   border: 0;
   background: var(--color-primary);
   color: var(--bw-page);
@@ -1636,7 +1642,7 @@
 }
 
 .emptyStateSecondaryAction {
-  margin-top: 18px;
+  margin-top: var(--space-5);
   border: 1px solid var(--bw-border-card);
   background: transparent;
   color: var(--bw-text-title);
@@ -1649,13 +1655,13 @@
 
 .tournamentCard {
   border: 1px solid var(--bw-border-card);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   background: var(--bw-surface-panel);
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
+  grid-template-columns: var(--space-20) minmax(0, 1fr);
   align-items: start;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--space-2-5);
+  padding: var(--space-3) var(--space-3-5);
   box-shadow: none;
   transition: border-color 0.14s ease, background-color 0.14s ease;
 }
@@ -1666,12 +1672,12 @@
 }
 
 .loadMoreButton {
-  min-height: 38px;
-  border-radius: 8px;
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: border-color 120ms ease, background-color 120ms ease;
@@ -1686,7 +1692,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   height: auto;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--bw-border-subtle);
   flex-shrink: 0;
   overflow: hidden;
@@ -1703,11 +1709,11 @@
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 5px;
+  gap: var(--space-1-5);
   width: 100%;
   height: 100%;
   color: var(--bw-text-muted);
-  font-size: 8px;
+  font-size: var(--font-size-3xs);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.04em;
@@ -1716,11 +1722,11 @@
 
 .tournamentMediaPlaceholder svg {
   box-sizing: border-box;
-  width: 42px;
-  height: 42px;
-  padding: 10px;
+  width: var(--space-11);
+  height: var(--space-11);
+  padding: var(--space-2-5);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel-strong);
   color: var(--color-primary);
 }
@@ -1746,12 +1752,12 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .cardTitle {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -1765,69 +1771,69 @@
 .cardMetaLine {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 
 .statusMicroChip {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
+  gap: var(--space-1-5);
+  min-height: var(--space-6);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .statusMicroDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
+  border-radius: var(--radius-full);
   background: var(--bw-text-muted);
 }
 
 .cardStatusUpcoming .statusMicroChip {
-  border-color: color-mix(in srgb, #3b82f6 45%, transparent);
-  background: color-mix(in srgb, #3b82f6 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-info) 45%, transparent);
+  background: color-mix(in srgb, var(--color-info) 12%, transparent);
 }
 
 .cardStatusUpcoming .statusMicroDot {
-  background: #3b82f6;
+  background: var(--color-info);
 }
 
 .cardStatusInProgress .statusMicroChip {
-  border-color: color-mix(in srgb, #f59e0b 50%, transparent);
-  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 50%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
 }
 
 .cardStatusInProgress .statusMicroDot {
-  background: #f59e0b;
+  background: var(--color-warning);
 }
 
 .cardStatusPast .statusMicroChip {
-  border-color: color-mix(in srgb, #71717a 55%, transparent);
-  background: color-mix(in srgb, #71717a 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-neutral-500) 55%, transparent);
+  background: color-mix(in srgb, var(--color-neutral-500) 12%, transparent);
 }
 
 .cardStatusPast .statusMicroDot {
-  background: #71717a;
+  background: var(--color-neutral-500);
 }
 
 .cardMetaBlock {
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .cardMetaRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .cardMetaIcon {
@@ -1848,9 +1854,9 @@
 .cardActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   grid-column: 1 / -1;
-  margin-top: 4px;
+  margin-top: var(--space-1);
   min-width: 0;
   width: 100%;
 }
@@ -1858,17 +1864,17 @@
 .cardDetailButton {
   width: auto;
   flex: 1 1 auto;
-  min-height: 34px;
-  border-radius: 8px;
+  min-height: var(--space-9);
+  border-radius: var(--radius-md);
   border: 0;
   background: var(--color-primary);
   color: var(--bw-page);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   box-shadow: none;
 }
 
@@ -1877,13 +1883,13 @@
 }
 
 .cardRegisterButton {
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: var(--space-9);
+  padding: 0 var(--space-3);
   border: 1px solid var(--color-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-primary);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   cursor: pointer;
   flex: 0 0 auto;
@@ -1896,29 +1902,29 @@
 .panelFooter {
   width: 100%;
   flex: 0 0 auto;
-  margin-top: 14px;
-  height: 38px;
-  border-radius: 8px;
+  margin-top: var(--space-3-5);
+  height: var(--control-height);
+  border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   cursor: pointer;
   transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .cardActions .ghostBtn {
-  min-height: 34px;
+  min-height: var(--space-9);
   width: auto;
   justify-self: stretch;
 }
 
 @container tournament-list (max-width: 620px) {
   .tournamentCard {
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: 8px;
-    padding: 10px 12px;
+    grid-template-columns: var(--space-18) minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-2-5) var(--space-3);
   }
 
   .cardTitle {
@@ -1949,16 +1955,16 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: var(--space-4);
   z-index: 120;
   overflow-y: auto;
 }
 
 .detailsModalCard {
-  width: min(780px, 100%);
-  max-height: calc(100dvh - 32px);
+  width: min(var(--size-4xl), 100%);
+  max-height: calc(100dvh - var(--space-8));
   border: 1px solid var(--bw-border-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-panel);
   box-shadow: var(--bw-shadow-card);
   overflow: hidden;
@@ -1967,10 +1973,10 @@
 }
 
 .registrationModalCard {
-  width: min(700px, 100%);
-  max-height: calc(100dvh - 32px);
+  width: min(var(--size-3xl), 100%);
+  max-height: calc(100dvh - var(--space-8));
   border: 1px solid var(--bw-border-card);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   background: var(--bw-surface-panel);
   box-shadow: var(--shadow-3);
   overflow: hidden;
@@ -1982,8 +1988,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 14px;
-  padding: 18px 22px 16px;
+  gap: var(--space-3-5);
+  padding: var(--space-5) var(--space-6) var(--space-4);
   border-bottom: 1px solid var(--bw-border-subtle);
 }
 
@@ -1991,15 +1997,15 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .detailsModalHeadingMeta {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-bottom: 8px;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
 .detailsModalHeadingMeta .detailsModalEyebrow {
@@ -2008,20 +2014,20 @@
 
 .detailsModalHeadingMeta .detailsModalStatusValue {
   color: var(--bw-text-body);
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
 }
 
 .detailsModalHeadingMeta .detailsModalStatusDot {
-  width: 6px;
-  height: 6px;
+  width: var(--space-1-5);
+  height: var(--space-1-5);
 }
 
 .detailsModalEyebrow {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
   color: var(--color-primary);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2030,18 +2036,18 @@
 .detailsModalHeader h2 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 24px;
+  font-size: var(--font-size-4xl);
   line-height: 1.15;
   font-weight: 800;
 }
 
 .detailsModalClose {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
+  width: var(--space-11);
+  height: var(--space-11);
+  min-height: var(--space-11);
   flex-shrink: 0;
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-panel-strong);
   color: var(--bw-text-muted);
@@ -2069,30 +2075,30 @@
 
 .detailsModalBody {
   display: grid;
-  gap: 24px;
-  padding: 20px 24px 24px;
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6) var(--space-6);
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .detailsModalLogoWrap {
-  width: 88px;
-  height: 88px;
+  width: var(--space-24);
+  height: var(--space-24);
   display: grid;
   place-items: center;
   flex: 0 0 auto;
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
-  padding: 10px;
+  padding: var(--space-2-5);
   overflow: hidden;
 }
 
 .registrationModalBody {
   display: grid;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--space-3);
+  padding: var(--space-3-5) var(--space-4);
   overflow-y: auto;
   min-height: 0;
 }
@@ -2100,21 +2106,21 @@
 .registrationModalLead {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 0.84rem;
+  font-size: var(--font-size-base);
 }
 
 .registrationModalHeader h4 {
-  font-size: 24px;
+  font-size: var(--font-size-4xl);
 }
 
 .registrationSummary {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1.5fr) minmax(110px, 0.7fr) minmax(150px, 0.9fr);
+  grid-template-columns: var(--space-12) minmax(0, 1.5fr) minmax(var(--space-28), 0.7fr) minmax(var(--space-36), 0.9fr);
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
+  gap: var(--space-3-5);
+  padding: var(--space-3-5) var(--space-4);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
 }
 
@@ -2126,8 +2132,8 @@
 }
 
 .registrationSummaryIcon {
-  width: 44px;
-  height: 44px;
+  width: var(--space-11);
+  height: var(--space-11);
   border-radius: 50%;
   background: color-mix(in srgb, var(--color-primary) 14%, var(--bw-surface-panel-strong));
   overflow: hidden;
@@ -2143,14 +2149,14 @@
 .registrationSummaryItem {
   min-width: 0;
   display: grid;
-  gap: 4px;
-  padding-left: 14px;
+  gap: var(--space-1);
+  padding-left: var(--space-3-5);
   border-left: 1px solid var(--bw-border-subtle);
 }
 
 .registrationSummaryItem span {
   color: var(--bw-text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2159,14 +2165,14 @@
 .registrationSummaryItem strong {
   overflow: hidden;
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.3;
   text-overflow: ellipsis;
 }
 
 .registrationGrid {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -2175,9 +2181,9 @@
 .registrationQuestionRow,
 .registrationNotesRow {
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -2187,12 +2193,12 @@
 .registrationQuestionRow select,
 .registrationNotesRow textarea {
   width: 100%;
-  min-height: 42px;
-  border-radius: 8px;
+  min-height: var(--space-11);
+  border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  padding: 0 12px;
+  padding: 0 var(--space-3);
 }
 
 .registrationFieldWide {
@@ -2200,19 +2206,19 @@
 }
 
 .registrationNotesRow textarea {
-  min-height: 88px;
+  min-height: var(--space-24);
   resize: vertical;
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
 }
 
 .registrationQuestionRow textarea {
   width: 100%;
-  min-height: 88px;
-  border-radius: 8px;
+  min-height: var(--space-24);
+  border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-card);
   background: var(--bw-surface-card);
   color: var(--bw-text-title);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   resize: vertical;
 }
 
@@ -2229,22 +2235,22 @@
 
 .registrationQuestionChoices {
   display: grid;
-  gap: 6px;
-  margin-top: 2px;
+  gap: var(--space-1-5);
+  margin-top: var(--space-0-5);
 }
 
 .registrationChoiceItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
 }
 
 .registrationChoiceItem input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
+  width: var(--space-4);
+  height: var(--space-4);
   margin: 0;
 }
 
@@ -2259,43 +2265,43 @@
 
 .registrationDynamicSection {
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
-  padding: 12px;
+  padding: var(--space-3);
 }
 
 .registrationBowlerCountInfo {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationBowlerSection {
   grid-column: 1 / -1;
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
-  padding: 12px;
+  padding: var(--space-3);
   display: grid;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .registrationBowlerSection h5 {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .registrationBowlerIcon {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   border-radius: 50%;
   background: color-mix(in srgb, var(--color-primary) 14%, var(--bw-surface-panel-strong));
 }
@@ -2306,18 +2312,18 @@
 }
 
 .registrationModalFooter .detailsModalHint {
-  max-width: 220px;
+  max-width: var(--space-56);
 }
 
 .registrationSubmitButton {
-  min-height: 46px;
-  min-width: 220px;
-  padding: 0 20px;
+  min-height: var(--space-12);
+  min-width: var(--space-56);
+  padding: 0 var(--space-5);
   border: 1px solid var(--color-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: var(--bw-page);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 800;
   cursor: pointer;
 }
@@ -2334,28 +2340,28 @@
 .registrationDynamicSection h5 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 
 .registrationDynamicSection p {
-  margin: 4px 0 8px;
+  margin: var(--space-1) 0 var(--space-2);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationDynamicSection ul {
   margin: 0;
-  padding-left: 18px;
+  padding-left: var(--space-5);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationConsentRow {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--bw-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .registrationDisclosureBackdrop {
@@ -2365,56 +2371,56 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--space-4);
   background: color-mix(in srgb, var(--bw-page) 82%, transparent);
 }
 
 .registrationDisclosureDialog {
   display: grid;
-  gap: 20px;
-  width: min(560px, 100%);
-  max-height: calc(100dvh - 32px);
+  gap: var(--space-5);
+  width: min(var(--size-xl), 100%);
+  max-height: calc(100dvh - var(--space-8));
   overflow-y: auto;
-  padding: 24px;
+  padding: var(--space-6);
   border: 1px solid var(--bw-border-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bw-surface-panel);
   box-shadow: var(--shadow-3);
 }
 
 .registrationDisclosureCopy {
   display: grid;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .registrationDisclosureCopy h2 {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 21px;
+  font-size: var(--font-size-3xl);
   line-height: 1.2;
 }
 
 .registrationDisclosureCopy p {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   line-height: 1.6;
 }
 
 .registrationDisclosureActions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .registrationDisclosureCancel {
-  min-height: 46px;
-  padding: 0 18px;
+  min-height: var(--space-12);
+  padding: 0 var(--space-5);
   border: 1px solid var(--bw-border-card);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-panel-strong);
   color: var(--bw-text-title);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
   cursor: pointer;
 }
@@ -2431,44 +2437,44 @@
 
 .registrationSubmitMessage {
   margin: 0;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, #22C55E 55%, transparent);
-  background: color-mix(in srgb, #22C55E 12%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-success) 55%, transparent);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
   color: var(--bw-text-title);
-  font-size: 12px;
-  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
 }
 
 .registrationError {
   margin: 0;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, #EF4444 60%, transparent);
-  background: color-mix(in srgb, #EF4444 12%, transparent);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 60%, transparent);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
   color: var(--bw-text-title);
-  font-size: 12px;
-  padding: 8px 12px;
+  font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-3);
 }
 
 .detailsModalBody p {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 
 .detailsModalFacts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .detailsModalFactRow {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-columns: var(--space-6) minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  min-height: 76px;
-  padding: 12px 14px;
-  border-radius: 10px;
+  gap: var(--space-3);
+  min-height: var(--space-20);
+  padding: var(--space-3) var(--space-3-5);
+  border-radius: var(--radius-lg);
   background: var(--bw-surface-card);
   border: 1px solid var(--bw-border-subtle);
 }
@@ -2483,12 +2489,12 @@
 .detailsModalFactRow strong {
   color: var(--bw-text-title);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .detailsModalFactRow span {
   color: var(--bw-text-body);
-  font-size: 14px;
+  font-size: var(--font-size-md);
 }
 
 .detailsModalFactRow > span:last-child {
@@ -2500,9 +2506,9 @@
   width: fit-content;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2-5);
+  border-radius: var(--radius-full);
   color: var(--bw-text-title) !important;
   font-weight: 700;
 }
@@ -2517,8 +2523,8 @@
 
 .detailsModalStatusDot,
 .detailsModalRegistrationDot {
-  width: 12px;
-  height: 12px;
+  width: var(--space-3);
+  height: var(--space-3);
   border-radius: 50%;
 }
 
@@ -2543,15 +2549,15 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 0;
   background: transparent;
 }
 
 .detailsModalFooter {
   display: grid;
-  gap: 12px;
-  padding: 14px 22px 18px;
+  gap: var(--space-3);
+  padding: var(--space-3-5) var(--space-6) var(--space-5);
   border-top: 1px solid var(--bw-border-subtle);
   background: var(--bw-surface-panel);
 }
@@ -2559,16 +2565,16 @@
 .detailsModalHint {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   color: var(--bw-text-muted);
-  font-size: 13px;
+  font-size: var(--font-size-base);
 }
 
 .detailsModalActions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .detailsModalShareAction {
@@ -2577,12 +2583,12 @@
 
 .detailsModalPrimaryAction,
 .detailsModalSecondaryAction {
-  min-height: 40px;
-  min-width: 100px;
-  padding: 0 16px;
-  border-radius: 9px;
+  min-height: var(--space-10);
+  min-width: var(--space-24);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
   border: 1px solid transparent;
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 800;
   cursor: pointer;
 }
@@ -2622,13 +2628,13 @@
   }
 
   .detailsModalTitleGroup .detailsModalLogoWrap {
-    width: 48px;
-    height: 48px;
-    padding: 5px;
+    width: var(--space-12);
+    height: var(--space-12);
+    padding: var(--space-1-5);
   }
 
   .detailsModalHeader h2 {
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
     line-height: 1.3;
   }
 }
@@ -2646,7 +2652,7 @@
 
   .mapShell,
   .statePanel {
-    height: 420px;
+    height: var(--size-md);
   }
 }
 
@@ -2672,13 +2678,13 @@
 @media (max-width: 767px) {
   .headerInner,
   .section {
-    width: calc(100% - 24px);
+    width: calc(100% - var(--space-6));
   }
 
   .headerInner {
-    min-height: 58px;
+    min-height: var(--space-14);
     flex-wrap: wrap;
-    padding-block: 8px;
+    padding-block: var(--space-2);
   }
 
   .header .accountActions {
@@ -2687,16 +2693,16 @@
   }
 
   .brand img {
-    width: 32px;
-    height: 32px;
+    width: var(--space-8);
+    height: var(--space-8);
   }
 
   .brand strong {
-    font-size: 17px;
+    font-size: var(--font-size-2xl);
   }
 
   .brand small {
-    font-size: 7px;
+    font-size: var(--font-size-3xs);
   }
 
   .topActions,
@@ -2705,43 +2711,43 @@
   }
 
   .mapControls {
-    top: 12px;
-    right: 12px;
-    gap: 6px;
+    top: var(--space-3);
+    right: var(--space-3);
+    gap: var(--space-1-5);
   }
 
   .discoveryHeader {
     position: static;
     z-index: 10;
-    margin-inline: -6px;
-    padding: 12px;
+    margin-inline: calc(var(--space-1-5) * -1);
+    padding: var(--space-3);
   }
 
   .discoveryIntro h1 {
-    font-size: 24px;
+    font-size: var(--font-size-4xl);
   }
 
   .discoveryIntro p {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   .discoverySearch {
-    min-height: 40px;
+    min-height: var(--space-10);
   }
 
   .mapShell,
   .statePanel {
-    height: 360px;
+    height: var(--space-96);
   }
 
   .tournamentCard {
-    grid-template-columns: 64px minmax(0, 1fr);
-    border-radius: 12px;
-    padding: 10px;
+    grid-template-columns: var(--space-16) minmax(0, 1fr);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2-5);
   }
 
   .tournamentMedia {
-    border-radius: 9px;
+    border-radius: var(--radius-md);
   }
 
   .cardActions {
@@ -2749,84 +2755,84 @@
   }
 
   .cardRegisterButton {
-    padding-inline: 10px;
+    padding-inline: var(--space-2-5);
   }
 
   .detailsModalCard {
     width: 100%;
-    max-height: calc(100dvh - 24px);
+    max-height: calc(100dvh - var(--space-6));
   }
 
   .detailsModalHeader {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .detailsModalTitleGroup {
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .detailsModalLogoWrap {
-    width: 76px;
-    height: 76px;
-    border-radius: 12px;
+    width: var(--space-20);
+    height: var(--space-20);
+    border-radius: var(--radius-lg);
   }
 
   .detailsModalEyebrow {
-    margin-bottom: 6px;
-    font-size: 11px;
+    margin-bottom: var(--space-1-5);
+    font-size: var(--font-size-xs);
   }
 
   .detailsModalHeader h2 {
-    font-size: 20px;
+    font-size: var(--font-size-3xl);
   }
 
   .detailsModalClose {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    border-radius: 9px;
+    width: var(--space-11);
+    height: var(--space-11);
+    min-height: var(--space-11);
+    border-radius: var(--radius-md);
   }
 
   .detailsModalBody {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .detailsModalFactRow {
-    grid-template-columns: 20px minmax(0, 1fr);
-    gap: 8px;
-    min-height: 54px;
-    padding: 8px 10px;
+    grid-template-columns: var(--space-5) minmax(0, 1fr);
+    gap: var(--space-2);
+    min-height: var(--space-14);
+    padding: var(--space-2) var(--space-2-5);
   }
 
   .detailsModalFactIcon svg {
-    width: 20px;
-    height: 20px;
+    width: var(--space-5);
+    height: var(--space-5);
   }
 
   .detailsModalFactRow strong,
   .detailsModalFactRow span {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   .detailsModalStatusValue,
   .detailsModalRegistrationValue {
-    gap: 6px;
-    padding: 5px 9px;
+    gap: var(--space-1-5);
+    padding: var(--space-1-5) var(--space-2-5);
   }
 
   .detailsModalStatusDot,
   .detailsModalRegistrationDot {
-    width: 8px;
-    height: 8px;
+    width: var(--space-2);
+    height: var(--space-2);
   }
 
   .detailsModalFooter {
-    padding: 12px 16px 16px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
   }
 
   .detailsModalHint {
     align-items: flex-start;
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   .detailsModalHint svg {
@@ -2846,31 +2852,31 @@
   .detailsModalPrimaryAction,
   .detailsModalSecondaryAction {
     min-width: 0;
-    min-height: 44px;
-    font-size: 14px;
+    min-height: var(--space-11);
+    font-size: var(--font-size-md);
   }
 
   .registrationModalCard {
     width: 100%;
-    max-height: calc(100dvh - 24px);
+    max-height: calc(100dvh - var(--space-6));
   }
 
   .registrationModalHeader h4 {
-    font-size: 20px;
+    font-size: var(--font-size-3xl);
   }
 
   .registrationSummary {
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: var(--space-10) minmax(0, 1fr);
+    gap: var(--space-2-5);
   }
 
   .registrationSummaryIcon {
-    width: 36px;
-    height: 36px;
+    width: var(--space-9);
+    height: var(--space-9);
   }
 
   .registrationSummaryItem {
-    padding-left: 10px;
+    padding-left: var(--space-2-5);
   }
 
   .registrationSummaryItem:nth-of-type(n + 3) {
@@ -2890,7 +2896,7 @@
   }
 
   .registrationDisclosureDialog {
-    padding: 20px;
+    padding: var(--space-5);
   }
 
   .registrationDisclosureActions {
@@ -2907,25 +2913,25 @@
   }
 
   .mapControlButton {
-    min-width: 32px;
-    height: 32px;
+    min-width: var(--space-8);
+    height: var(--space-8);
   }
 
   .mapControlReset {
-    min-width: 52px;
-    padding: 0 8px;
+    min-width: var(--space-14);
+    padding: 0 var(--space-2);
   }
 
   .mapHint {
-    left: 12px;
-    bottom: 10px;
-    max-width: calc(100% - 24px);
-    border-radius: 10px;
-    font-size: 0.7rem;
+    left: var(--space-3);
+    bottom: var(--space-2-5);
+    max-width: calc(100% - var(--space-6));
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-xs);
   }
 
   .featuredStrip {
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .featuredGrid {
@@ -2937,71 +2943,71 @@
   }
 
   .featuredCardContent {
-    padding: 28px 28px 24px;
+    padding: var(--space-7) var(--space-7) var(--space-6);
   }
 
   .featuredIntro {
-    gap: 20px;
-    min-height: 132px;
+    gap: var(--space-5);
+    min-height: var(--space-32);
   }
 
   .featuredLogoWrap {
-    width: 132px;
-    height: 132px;
-    border-radius: 18px;
+    width: var(--space-32);
+    height: var(--space-32);
+    border-radius: var(--radius-2xl);
   }
 
   .featuredCard h3 {
-    font-size: 24px;
+    font-size: var(--font-size-4xl);
   }
 
   .featuredDivider {
-    margin: 24px 0 26px;
+    margin: var(--space-6) 0 var(--space-7);
   }
 
   .featuredInfoList {
-    gap: 22px;
+    gap: var(--space-6);
   }
 
   .featuredVenueRow,
   .featuredFooterRow {
-    gap: 14px;
-    font-size: 18px;
+    gap: var(--space-3-5);
+    font-size: var(--font-size-2xl);
   }
 
   .featuredCityRow {
-    margin-left: 68px;
-    margin-top: -14px;
-    font-size: 16px;
+    margin-left: var(--space-18);
+    margin-top: calc(var(--space-3-5) * -1);
+    font-size: var(--font-size-xl);
   }
 
   .featuredInfoIcon {
-    width: 54px;
-    height: 54px;
+    width: var(--space-14);
+    height: var(--space-14);
   }
 
   .featuredRegistrationBlock {
-    gap: 14px;
-    margin-top: 24px;
-    padding-top: 24px;
+    gap: var(--space-3-5);
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
   }
 
   .featuredRegistrationIcon {
-    width: 42px;
-    height: 42px;
+    width: var(--space-11);
+    height: var(--space-11);
   }
 
   .featuredRegistrationLabel {
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
   }
 
   .featuredRegistrationDate {
-    font-size: 16px;
+    font-size: var(--font-size-xl);
   }
 
   .featuredCardPrimaryAction {
-    min-height: 58px;
-    border-radius: 14px;
-    font-size: 20px;
+    min-height: var(--space-14);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-3xl);
   }
 }

@@ -9,7 +9,8 @@ import { adminApi } from "../services/adminApi";
 import type { BowlerProfileOwner, BowlerProfileRow, BowlerProfilesResponse } from "../types";
 import { formatAdminTimestamp } from "../utils";
 import buttonStyles from "../../styles/buttons.module.css";
-import styles from "../admin.module.css";
+import styles from "../admin.module.css";
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type Props = {
   onSuccess: (message: string) => void;
@@ -240,8 +241,8 @@ export function AdminBowlersSection({ onSuccess }: Props) {
             <option value="">All profile owners</option>
             {owners.map(owner => <option value={owner.id} key={owner.id}>{owner.name || owner.username} (@{owner.username})</option>)}
           </select>
-          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}><Download aria-hidden="true" size={15} /> {exporting ? "Exporting…" : "Export CSV"}</button>
-          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}><FileUp aria-hidden="true" size={15} /> Import Excel</button>
+          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}><Download aria-hidden="true" size={ICON_SIZE.md} /> {exporting ? "Exporting..." : "Export CSV"}</button>
+          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}><FileUp aria-hidden="true" size={ICON_SIZE.md} /> Import Excel</button>
           <input ref={fileInputRef} type="file" accept=".xlsx" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
         </div>
       </div>
@@ -249,7 +250,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
         <table className={styles.table}>
           <thead><tr><th>Bowler</th><th>USBC</th><th>Average</th><th>Profile owner</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
           <tbody>
-            {loading ? <tr><td className={styles.tableState} colSpan={7}><span role="status">Loading bowler profiles…</span></td></tr> : response.profiles.length === 0 ? <tr><td className={styles.tableState} colSpan={7}><strong>No bowler profiles found</strong><span>Try a different search or status filter.</span></td></tr> : response.profiles.map(profile => (
+            {loading ? <tr><td className={styles.tableState} colSpan={7}><span role="status">Loading bowler profiles...</span></td></tr> : response.profiles.length === 0 ? <tr><td className={styles.tableState} colSpan={7}><strong>No bowler profiles found</strong><span>Try a different search or status filter.</span></td></tr> : response.profiles.map(profile => (
               <tr key={profile.id}>
                 <td><strong>{profile.first_name} {profile.last_name}</strong><br /><span className={styles.secondaryText}>Profile #{profile.id}</span></td>
                 <td>{profile.usbc_number || "-"}</td>
@@ -258,9 +259,9 @@ export function AdminBowlersSection({ onSuccess }: Props) {
                 <td><span className={`${styles.statusPill} ${profile.is_active ? styles.statusActive : styles.statusInactive}`}>{profile.is_active ? "Active" : "Archived"}</span></td>
                 <td>{formatAdminTimestamp(profile.updated_at, "Unknown")}</td>
                 <td><div className={styles.rowActions}>
-                  <button type="button" className={styles.actionBtn} aria-label={`Edit ${profile.first_name} ${profile.last_name}`} onClick={() => beginEdit(profile)}><Pencil aria-hidden="true" size={14} /> Edit</button>
+                  <button type="button" className={styles.actionBtn} aria-label={`Edit ${profile.first_name} ${profile.last_name}`} onClick={() => beginEdit(profile)}><Pencil aria-hidden="true" size={ICON_SIZE.sm} /> Edit</button>
                   <button type="button" className={`${styles.actionBtn} ${profile.is_active ? styles.actionBtnDanger : ""}`} aria-label={`${profile.is_active ? "Archive" : "Reactivate"} ${profile.first_name} ${profile.last_name}`} onClick={() => { void changeProfileStatus(profile); }}>
-                    {profile.is_active ? <Trash2 aria-hidden="true" size={14} /> : <RotateCcw aria-hidden="true" size={14} />}{profile.is_active ? "Archive" : "Reactivate"}
+                    {profile.is_active ? <Trash2 aria-hidden="true" size={ICON_SIZE.sm} /> : <RotateCcw aria-hidden="true" size={ICON_SIZE.sm} />}{profile.is_active ? "Archive" : "Reactivate"}
                   </button>
                 </div></td>
               </tr>
@@ -286,7 +287,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
               <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-average">Average</label><input id="profile-average" className={styles.formInput} type="number" min="0" max="300" step="1" value={editAverage} onChange={event => setEditAverage(event.target.value)} /></div>
               <p className={styles.secondaryText}>{editingProfile.linked_entry_count} tournament entries will keep their history and receive the updated name/USBC.</p>
             </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditingProfile(null)}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={editSaving || !editFirstName.trim() || !editLastName.trim()} onClick={() => { void saveEdit(); }}>{editSaving ? "Saving…" : "Save changes"}</button></div>
+            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditingProfile(null)}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={editSaving || !editFirstName.trim() || !editLastName.trim()} onClick={() => { void saveEdit(); }}>{editSaving ? "Saving..." : "Save changes"}</button></div>
           </div>
         </div>
       )}
@@ -301,7 +302,7 @@ export function AdminBowlersSection({ onSuccess }: Props) {
               {importSkippedRows > 0 && <p className={styles.secondaryText}>{importSkippedRows} row{importSkippedRows === 1 ? " was" : "s were"} skipped because the name was incomplete.</p>}
               <p className={styles.secondaryText}>Owner: {owners.find(owner => String(owner.id) === selectedOwnerId)?.name || "Selected account"}. Existing profiles with matching USBC or name will be skipped.</p>
             </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setImportRows(null)} disabled={importing}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => { void commitImport(); }} disabled={importing || !importRows.length || !selectedOwnerId}>{importing ? "Importing…" : `Import ${importRows.length} profiles`}</button></div>
+            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setImportRows(null)} disabled={importing}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => { void commitImport(); }} disabled={importing || !importRows.length || !selectedOwnerId}>{importing ? "Importing..." : `Import ${importRows.length} profiles`}</button></div>
           </div>
         </div>
       )}

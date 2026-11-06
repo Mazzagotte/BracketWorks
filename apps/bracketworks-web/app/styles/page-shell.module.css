@@ -1,6 +1,6 @@
 .page {
   width: 100%;
-  max-width: min(1680px, 100%);
+  max-width: min(var(--size-12xl), 100%);
   margin: 0 auto;
   color: var(--bw-text-body);
   font-size: var(--bw-type-body);
@@ -9,7 +9,7 @@
 
 .content {
   width: 100%;
-  max-width: 1600px;
+  max-width: var(--size-11xl);
   margin: 0 auto;
   padding: 0 var(--bw-page-gutter);
   position: relative;
@@ -17,12 +17,6 @@
 
 .section {
   width: 100%;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--bw-stack-gap);
 }
 
 .page :where(h1, h2, h3, h4) {

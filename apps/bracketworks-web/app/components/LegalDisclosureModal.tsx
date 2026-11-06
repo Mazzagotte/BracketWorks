@@ -6,7 +6,8 @@ import { FileCheck2, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { OPEN_LEGAL_DISCLOSURE_EVENT } from '../lib/legalDisclosure';
 import buttonStyles from '../styles/buttons.module.css';
-import styles from './LegalDisclosureModal.module.css';
+import styles from './LegalDisclosureModal.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export type LegalDisclosureStatus = {
   required: boolean;
@@ -116,7 +117,7 @@ export default function LegalDisclosureModal({ enabled, onBlockingChange, onLogo
     <div className={styles.overlay} role="presentation">
       <div ref={dialogRef} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="legal-disclosure-title" tabIndex={-1}>
         <header className={styles.header}>
-          <span className={styles.icon} aria-hidden="true"><FileCheck2 size={20} /></span>
+          <span className={styles.icon} aria-hidden="true"><FileCheck2 size={ICON_SIZE.xl} /></span>
           <div><p>{isRequired ? 'Required disclosure' : 'Account disclosure'}</p><h2 id="legal-disclosure-title">{disclosure?.title || 'Legal Disclosure'}</h2></div>
         </header>
         <div className={styles.body}>
@@ -138,7 +139,7 @@ export default function LegalDisclosureModal({ enabled, onBlockingChange, onLogo
             <button className={`${buttonStyles.button} ${buttonStyles.secondary}`} onClick={onLogout}>Sign Out</button>
           </> : <button className={`${buttonStyles.button} ${buttonStyles.primary}`} onClick={() => setViewOnly(false)}>Close</button>}
         </footer>
-        {isRequired && <div className={styles.requiredHint}><Lock size={12} /> Acceptance is required to use tournament-management pages.</div>}
+        {isRequired && <div className={styles.requiredHint}><Lock size={ICON_SIZE.xs} /> Acceptance is required to use tournament-management pages.</div>}
       </div>
     </div>
   );

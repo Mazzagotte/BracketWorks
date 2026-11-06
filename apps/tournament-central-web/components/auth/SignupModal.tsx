@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { capitalizeFirstLetter } from '@bracketworks/ui';
+import { capitalizeFirstLetter, ICON_SIZE } from '@bracketworks/ui';
 import { X } from 'lucide-react';
 
 import styles from './SignupModal.module.css';
@@ -140,7 +140,7 @@ export default function SignupModal({ isOpen, onClose, onSuccess }: SignupModalP
     <div ref={dialogRef} tabIndex={-1} className={styles.overlay} role="dialog" aria-modal="true" aria-labelledby="signup-title" aria-describedby="signup-description">
       <div className={styles.modal}>
         <button type="button" onClick={closeModal} className={styles.closeButton} aria-label="Close signup modal">
-          <X size={18} strokeWidth={2.25} aria-hidden="true" />
+          <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
         </button>
 
         <div className={styles.header}>

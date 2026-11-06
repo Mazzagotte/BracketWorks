@@ -1,31 +1,31 @@
 .form {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .twoCol {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .fieldLabel {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 
 .fieldInput {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--space-14);
   border: 1px solid var(--color-border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  padding: 0 14px;
-  font-size: 16px;
+  padding: 0 var(--space-3-5);
+  font-size: var(--font-size-xl);
   box-sizing: border-box;
 }
 
@@ -44,21 +44,21 @@
 }
 
 .passwordRow .fieldInput {
-  padding-right: 102px;
+  padding-right: var(--space-24);
 }
 
 .toggleButton {
   position: absolute;
-  right: 10px;
+  right: var(--space-2-5);
   top: 50%;
   transform: translateY(-50%);
-  min-height: 33px;
-  min-width: 80px;
-  border-radius: 8px;
+  min-height: var(--space-8);
+  min-width: var(--space-20);
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border-primary);
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
 }
@@ -72,18 +72,18 @@
 .hint {
   margin: 0;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   line-height: 1.35;
 }
 
 .submitButton {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--space-14);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: var(--color-text-primary);
-  font-size: 17px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -97,9 +97,9 @@
 .errorMessage,
 .successMessage {
   margin: 0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--font-size-md);
   line-height: 1.35;
 }
 
@@ -116,12 +116,12 @@
 }
 
 .helperLinks {
-  margin-top: 6px;
+  margin-top: var(--space-1-5);
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: var(--space-1-5);
+  font-size: var(--font-size-md);
   color: var(--color-text-secondary);
 }
 

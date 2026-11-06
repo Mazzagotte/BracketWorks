@@ -11,7 +11,8 @@ import {
 } from '../organizerApi';
 import { formatFileSize } from '../setupFormatting';
 import { useConfirmation } from '../useConfirmation';
-import styles from '../tournament-setup.module.css';
+import styles from '../tournament-setup.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type Props = {
   tournamentId: number | null;
@@ -170,7 +171,7 @@ export default function RulesDocumentsSection({ tournamentId, rulesText, onRules
                 setMessage('');
               }}
               disabled={!tournamentId || busy || isLoading || Boolean(loadError)} />
-            <span className={styles.rulesFileIcon} aria-hidden="true">{selectedFile ? <FileText size={22} /> : <Upload size={22} />}</span>
+            <span className={styles.rulesFileIcon} aria-hidden="true">{selectedFile ? <FileText size={ICON_SIZE['2xl']} /> : <Upload size={ICON_SIZE['2xl']} />}</span>
             <span className={styles.rulesFileCopy} aria-live="polite">
               <strong>{selectedFile ? selectedFile.name : 'Choose a rules document'}</strong>
               <span>{selectedFile ? `${formatFileSize(selectedFile.size)} - Ready to upload` : 'PDF, Word, or image - up to 20 MB'}</span>

@@ -31,61 +31,20 @@
   text-transform: uppercase;
 }
 
-.searchBar {
-  background: var(--bw-surface-panel);
-  border: 1px solid var(--bw-border-subtle);
-  border-radius: var(--radius-xl);
-}
-
 .compactControl {
-  min-height: 36px;
+  min-height: var(--space-9);
   border-radius: var(--radius-md);
-  padding: 0.42rem 0.72rem;
-  font-size: 0.84rem;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--font-size-base);
   line-height: 1.2;
 }
 
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.controlRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-stack);
-  flex-wrap: wrap;
-}
-
-.helperText {
-  margin: 0;
-  color: var(--bw-text-muted);
-  font-size: var(--bw-type-helper);
-  line-height: 1.45;
-}
-
-.searchBarCompact {
-  padding: var(--space-card-small-y) var(--space-card-small-x);
-  gap: var(--space-stack);
-}
-
 @media (max-width: 767px) {
-  .controlRow {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .controlRow > * {
-    width: 100%;
-  }
 
   .field,
   .select,
   .search {
-    min-height: 40px;
+    min-height: var(--space-10);
   }
 }
 
@@ -93,19 +52,19 @@
   .field,
   .select,
   .search {
-    min-height: 40px;
-    font-size: 16px;
+    min-height: var(--space-10);
+    font-size: var(--font-size-xl);
     border-radius: var(--radius-md);
   }
 
   .compactControl {
-    min-height: 36px;
-    font-size: 0.8rem;
+    min-height: var(--space-9);
+    font-size: var(--font-size-base);
   }
 }
 
 @media (max-width: 360px) {
   .fieldLabel {
-    font-size: 0.62rem;
+    font-size: var(--font-size-2xs);
   }
 }

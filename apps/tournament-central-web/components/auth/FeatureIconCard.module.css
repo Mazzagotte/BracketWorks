@@ -1,7 +1,7 @@
 .card {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: var(--space-14);
+  height: var(--space-14);
   display: grid;
   flex: 0 0 auto;
   place-items: center;
@@ -15,8 +15,8 @@
 
 .card::before {
   position: absolute;
-  inset: 1px;
-  border-radius: calc(var(--radius-lg) - 1px);
+  inset: var(--space-px);
+  border-radius: calc(var(--radius-lg) - var(--radius-sm));
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--bw-text-title) 12%, transparent),

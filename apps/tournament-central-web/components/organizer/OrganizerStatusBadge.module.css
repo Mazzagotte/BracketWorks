@@ -1,17 +1,17 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 3px 8px;
+  min-height: var(--space-6);
+  padding: var(--space-1) var(--space-2);
   border: 1px solid currentColor;
   border-radius: var(--radius-full);
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
 }
 
-.success { color: #20d884; background: color-mix(in srgb, #20d884 10%, transparent); }
-.warning { color: #ffb347; background: color-mix(in srgb, #ffb347 10%, transparent); }
-.danger { color: #ff6b6b; background: color-mix(in srgb, #ff6b6b 10%, transparent); }
+.success { color: var(--color-status-green); background: color-mix(in srgb, var(--color-status-green) 10%, transparent); }
+.warning { color: var(--color-status-amber); background: color-mix(in srgb, var(--color-status-amber) 10%, transparent); }
+.danger { color: var(--color-status-red-soft); background: color-mix(in srgb, var(--color-status-red-soft) 10%, transparent); }
 .neutral { color: var(--color-text-secondary); background: color-mix(in srgb, currentColor 8%, transparent); }

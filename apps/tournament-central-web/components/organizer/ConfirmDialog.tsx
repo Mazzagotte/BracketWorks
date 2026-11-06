@@ -5,7 +5,8 @@ import { useId } from 'react';
 import { createPortal } from 'react-dom';
 import { CircleAlert, Trash2, X } from 'lucide-react';
 
-import styles from './ConfirmDialog.module.css';
+import styles from './ConfirmDialog.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -50,9 +51,9 @@ export default function ConfirmDialog({
       <section ref={dialogRef} tabIndex={-1} className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={messageId} aria-busy={busy}>
         <header className={styles.header}>
           <span className={`${styles.icon} ${tone === 'danger' ? styles.dangerIcon : ''}`} aria-hidden="true">
-            {tone === 'danger' ? <Trash2 size={22} /> : <CircleAlert size={22} />}
+            {tone === 'danger' ? <Trash2 size={ICON_SIZE['2xl']} /> : <CircleAlert size={ICON_SIZE['2xl']} />}
           </span>
-          <button type="button" className={styles.closeButton} aria-label="Close confirmation" onClick={close} disabled={busy}><X size={20} aria-hidden="true" /></button>
+          <button type="button" className={styles.closeButton} aria-label="Close confirmation" onClick={close} disabled={busy}><X size={ICON_SIZE.xl} aria-hidden="true" /></button>
         </header>
         <h2 id={titleId}>{title}</h2>
         <p id={messageId}>{message}</p>

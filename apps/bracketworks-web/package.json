@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --cache --cache-strategy content --cache-location .eslintcache --report-unused-disable-directives && npm run lint:ui-rules",
-    "lint:ui-rules": "node ./scripts/enforce-ui-css-rules.mjs",
-    "lint:ui-rules:full": "node ./scripts/enforce-ui-css-rules.mjs --full",
+    "lint:ui-rules": "node ../../scripts/enforce-ui-css-rules.mjs",
+    "lint:ui-rules:full": "node ../../scripts/enforce-ui-css-rules.mjs --full",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "browserslist:update": "npx.cmd update-browserslist-db@latest"

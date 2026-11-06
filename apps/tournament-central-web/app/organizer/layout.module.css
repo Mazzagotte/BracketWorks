@@ -1,6 +1,6 @@
 .shell {
-  --organizer-content-width: 1440px;
-  --organizer-page-padding: clamp(16px, 2.2vw, 32px);
+  --organizer-content-width: var(--size-10xl);
+  --organizer-page-padding: clamp(var(--space-4), 2.2vw, var(--space-8));
   min-height: 100dvh;
   background: var(--bw-page);
   line-height: 1.5;
@@ -12,11 +12,11 @@
 }
 
 .content {
-  padding-top: calc(var(--header-height) + 12px);
+  padding-top: calc(var(--header-height) + var(--space-3));
 }
 
 @media (max-width: 1023px) {
   .content {
-    padding-top: calc(56px + env(safe-area-inset-top) + 12px);
+    padding-top: calc(var(--space-14) + env(safe-area-inset-top) + var(--space-3));
   }
 }

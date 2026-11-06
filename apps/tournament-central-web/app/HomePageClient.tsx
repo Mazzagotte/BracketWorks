@@ -14,6 +14,7 @@ import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
 import { useModalFocus } from '@/lib/useModalFocus';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 const TournamentRegistrationForm = dynamic(() => import('@/components/public/TournamentRegistrationForm'));
 
@@ -241,26 +242,6 @@ function getStateToneFromSummary(summary: StateSummary | undefined): MapStateTon
   }
 
   return 'none';
-}
-
-function getToneFill(tone: MapStateTone, isSelected: boolean, _stateCode: string): string {
-  if (isSelected) {
-    return '#313131';
-  }
-
-  if (tone === 'inprogress') {
-    return '#292929';
-  }
-
-  if (tone === 'upcoming') {
-    return '#202020';
-  }
-
-  if (tone === 'past') {
-    return '#191919';
-  }
-
-  return '#111111';
 }
 
 function parseLocation(location: string | null): { venue: string; city: string; stateCode: string } {
@@ -1417,7 +1398,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
             <p>Search by tournament, bowling center, city, or state.</p>
           </div>
           <label className={styles.discoverySearch}>
-            <Search size={18} aria-hidden="true" />
+            <Search size={ICON_SIZE.lg} aria-hidden="true" />
             <span className={styles.srOnly}>Search tournaments, bowling centers, cities, or states</span>
             <input
               value={searchQuery}
@@ -1457,7 +1438,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                   if (filter === 'past') setSelectedTab('PAST RESULTS');
                 }}
               >
-                {filter === 'near' ? <LocateFixed size={15} aria-hidden="true" /> : null}
+                {filter === 'near' ? <LocateFixed size={ICON_SIZE.md} aria-hidden="true" /> : null}
                 {label}
               </button>
             ))}
@@ -1549,7 +1530,6 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     const stateCode = STATE_FIPS_TO_CODE[fips];
                     const tone = stateCode ? (stateToneByCode.get(stateCode) ?? 'none') : 'none';
                     const isSelected = stateCode === selectedStateCode;
-                    const fill = getToneFill(tone, Boolean(isSelected), stateCode ?? 'ZZ');
 
                     return (
                       <Geography
@@ -1558,7 +1538,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                         className={styles.geographyBase}
                         data-state-code={stateCode ?? ''}
                         data-selected={isSelected ? 'true' : 'false'}
-                        fill={fill}
+                        data-tone={tone}
                         onClick={(event) => {
                           if (stateCode) {
                             handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
@@ -1675,7 +1655,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       />
                     ) : (
                       <div className={styles.tournamentMediaPlaceholder}>
-                        <Trophy size={28} aria-hidden="true" />
+                        <Trophy size={ICON_SIZE['3xl']} aria-hidden="true" />
                         <span>Tournament</span>
                       </div>
                     )}
@@ -1690,12 +1670,12 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                     </div>
                     <div className={styles.cardMetaBlock}>
                       <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
-                        <CalendarDays size={16} className={styles.cardMetaIcon} aria-hidden="true" />
+                        <CalendarDays size={ICON_SIZE.md} className={styles.cardMetaIcon} aria-hidden="true" />
                         <span>{tournament.date}</span>
                       </p>
                       <span className={styles.cardMetaDivider} aria-hidden="true" />
                       <p className={`${styles.cardMetaLine} ${styles.cardMetaRow}`}>
-                        <MapPin size={16} className={styles.cardMetaIcon} aria-hidden="true" />
+                        <MapPin size={ICON_SIZE.md} className={styles.cardMetaIcon} aria-hidden="true" />
                         <span className={styles.cardMetaLocation}>{tournament.venue} • {tournament.city}, {tournament.stateLabel}</span>
                       </p>
                     </div>
@@ -1710,7 +1690,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       }}
                     >
                       View Details
-                      <ChevronRight size={20} aria-hidden="true" />
+                      <ChevronRight size={ICON_SIZE.xl} aria-hidden="true" />
                     </button>
                     {tournament.registrationUrl ? (
                       <button
@@ -1741,7 +1721,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
               {!isLoading && visibleTournaments.length === 0 && (
                 <div className={styles.emptyState}>
                   <div className={styles.emptyStateIcon} aria-hidden="true">
-                    <CalendarDays size={27} />
+                    <CalendarDays size={ICON_SIZE['3xl']} />
                   </div>
                   <h4>{searchQuery.trim() ? 'No matching tournaments' : showAllStatuses ? 'No tournaments yet' : `No ${statusLabel[selectedTab].toLowerCase()} tournaments yet`}</h4>
                   <p>
@@ -1757,7 +1737,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       className={styles.emptyStatePrimaryAction}
                       onClick={() => setSearchQuery('')}
                     >
-                      <Search size={18} />
+                      <Search size={ICON_SIZE.lg} />
                       Clear Search
                     </button>
                   ) : null}
@@ -1771,7 +1751,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       setShowAllStatuses(true);
                     }}
                   >
-                    <CalendarDays size={18} />
+                    <CalendarDays size={ICON_SIZE.lg} />
                     Browse All Tournaments
                   </button>
                   {!searchQuery.trim() ? <button
@@ -1781,7 +1761,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       setShowAllStatuses(true);
                     }}
                   >
-                    <Plus size={18} />
+                    <Plus size={ICON_SIZE.lg} />
                     {`List a Tournament in ${selectedState?.stateName ?? 'This State'}`}
                   </button> : null}
                 </div>
@@ -1831,19 +1811,19 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                       </div>
                     </div>
                     <button type="button" className={styles.detailsModalClose} onClick={closeDetailModal} aria-label="Close tournament details">
-                      <X size={18} strokeWidth={2.25} aria-hidden="true" />
+                      <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
                     </button>
                   </header>
                   <div className={styles.detailsModalBody}>
                     <p id="tournament-details-description">Review tournament information, availability, and documents before registering.</p>
                     <div className={styles.detailsModalFacts}>
                       <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><CalendarDays size={28} /></span>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><CalendarDays size={ICON_SIZE['3xl']} /></span>
                         <strong>Date</strong>
                         <span>{detailTournament.date}</span>
                       </p>
                       <p className={styles.detailsModalFactRow}>
-                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><MapPin size={28} /></span>
+                        <span className={styles.detailsModalFactIcon} aria-hidden="true"><MapPin size={ICON_SIZE['3xl']} /></span>
                         <strong>Location</strong>
                         <span>{detailTournament.locationText}</span>
                       </p>
@@ -1854,7 +1834,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                   </div>
                   <footer className={styles.detailsModalFooter}>
                     <span className={styles.detailsModalHint}>
-                      <Info size={22} aria-hidden="true" />
+                      <Info size={ICON_SIZE['2xl']} aria-hidden="true" />
                       Complete your bowler details and submit registration directly from this page.
                     </span>
                     <div className={styles.detailsModalActions}>
@@ -1942,7 +1922,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                         </div>
                       ) : (
                         <div className={`${styles.featuredLogoWrap} ${styles.featuredLogoPlaceholder}`} aria-hidden="true">
-                          <Trophy size={22} />
+                          <Trophy size={ICON_SIZE['2xl']} />
                         </div>
                       )}
                       <h3>{tournament.title}</h3>
@@ -1952,20 +1932,20 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
 
                     <div className={styles.featuredInfoList}>
                       <p className={styles.featuredVenueRow}>
-                        <span className={styles.featuredInfoIcon} aria-hidden="true"><MapPin size={20} /></span>
+                        <span className={styles.featuredInfoIcon} aria-hidden="true"><MapPin size={ICON_SIZE.xl} /></span>
                         <span>{tournament.venue}</span>
                       </p>
                       {tournament.city ? <p className={styles.featuredCityRow}>{tournament.city}</p> : null}
 
                       <p className={styles.featuredFooterRow}>
-                        <span className={styles.featuredInfoIcon} aria-hidden="true"><CalendarDays size={20} /></span>
+                        <span className={styles.featuredInfoIcon} aria-hidden="true"><CalendarDays size={ICON_SIZE.xl} /></span>
                         <span>{tournament.dateLabel}</span>
                       </p>
                     </div>
 
                     <div className={styles.featuredRegistrationBlock}>
                       <span className={styles.featuredRegistrationIcon} aria-hidden="true">
-                        <CalendarCheck2 size={18} />
+                        <CalendarCheck2 size={ICON_SIZE.lg} />
                       </span>
                       <div className={styles.featuredRegistrationText}>
                         <div className={styles.featuredRegistrationLabel}>Registration Details</div>
@@ -2000,7 +1980,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
               </div>
 
               <div className={styles.brandMath} aria-hidden="true">
-                <Plus size={20} strokeWidth={3} />
+                <Plus size={ICON_SIZE.xl} strokeWidth={3} />
               </div>
 
               <div className={styles.brandProductBlock}>
@@ -2014,7 +1994,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
 
             <div className={styles.brandWorkflowRow}>
               <span className={styles.brandCheck} aria-hidden="true">
-                <Link2 size={12} strokeWidth={2.5} />
+                <Link2 size={ICON_SIZE.xs} strokeWidth={2.5} />
               </span>
               <p className={styles.featuredBrandSummary}>One connected tournament workflow.</p>
             </div>
@@ -2030,7 +2010,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
 
             <div className={styles.featuredBrandFooter}>
               <span className={styles.brandFooterIcon} aria-hidden="true">
-                <ShieldCheck size={14} strokeWidth={2.5} />
+                <ShieldCheck size={ICON_SIZE.sm} strokeWidth={2.5} />
               </span>
               <span>Built for organizers. Trusted by players.</span>
             </div>

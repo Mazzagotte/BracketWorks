@@ -1,20 +1,38 @@
 #!/usr/bin/env node
 
+/*
+  Shared UI style rules for BracketWorks, Tournament Central, and @bracketworks/ui.
+  Run from an app or package directory:
+    node ../../scripts/enforce-ui-css-rules.mjs          # changed lines only
+    node ../../scripts/enforce-ui-css-rules.mjs --full   # every tracked file
+  Color literals are allowed only in the token files listed below.
+*/
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 
 const frontendRoot = process.cwd();
 const isFullMode = process.argv.includes('--full');
+const scannedDirectories = ['app', 'components', 'lib', 'styles', 'src'];
 
 const allowedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.css', '.scss']);
 
 const colorLiteralRegex = /(?<!&)#(?:[0-9a-fA-F]{3,8})\b|(?:rgb|hsl)a?\s*\(/;
 const namedColorLiteralRegex = /(?<![-\w])(?:black|white)(?![-\w])/i;
+// Paths are relative to the directory the script runs from.
 const colorTokenFiles = new Set([
-  'app/styles/colors.global.css',
+  // packages/ui
+  'styles/tokens.css',
+  'styles/theme.css',
+  'styles/app-theme.css',
+  'src/bracketworks-theme.css',
+  // bracketworks-web
   'app/styles/main.css',
   'app/styles/landing-global.css',
+  // tournament-central-web
+  'styles/main.css',
+  'lib/printTheme.ts',
 ]);
 const inlineStyleRegex = /\bstyle\s*=\s*\{\{/;
 const inlineHtmlStyleAttrRegex = /\bstyle\s*=\s*["'`]/;
@@ -23,8 +41,15 @@ const styledJsxRegex = /<style\s+jsx/;
 const emojiRegex = /[\u{1F300}-\u{1FAFF}]/u;
 const uiSymbolRegex = /[✓✔▲▼►▶◀◁←→↑↓⊕…⋯]/u;
 const uiSymbolEntityRegex = /&#(?:10003|10004);/;
-const fontFamilyLiteralRegex = /\bfont-family\s*:\s*(?!var\(|inherit\b|initial\b|unset\b)/;
+const fontFamilyLiteralRegex = /\bfont-family\s*:(?!\s*(?:var\(|inherit\b|initial\b|unset\b))/;
 const transitionAllRegex = /\btransition\s*:\s*all\b/i;
+// Sizes must come from the shared scales in packages/ui/styles/tokens.css
+// (--space-*, --size-*, --font-size-*, --radius-*). Borders, shadows, transforms,
+// letter-spacing, and @media breakpoints are exempt.
+const hardcodedSizeRegex = /(?:^|[;{\s])(?:font-size|font|padding(?:-[a-z]+)*|margin(?:-[a-z]+)*|gap|row-gap|column-gap|inset(?:-[a-z]+)*|top|right|bottom|left|width|height|min-width|min-height|max-width|max-height|block-size|inline-size|flex-basis|flex|grid-template-[a-z]+|grid-auto-[a-z]+|border(?:-[a-z]+)*-radius)\s*:[^;}]*?(?<![\w#.-])\d*\.?\d+(?:px|rem)\b/;
+const atRuleConditionRegex = /^\s*@(?:media|container|supports)\b/;
+// Icon components take ICON_SIZE from @bracketworks/ui instead of a number.
+const hardcodedIconSizeRegex = /<[A-Z][\w.]*\b[^>]*\bsize=\{\d/;
 const hardcodedMediaQueryRegex = /\b(?:window\.)?matchMedia\s*\(\s*['"`][^'"`]*(?:min|max)-width\s*:/;
 
 const violations = [];
@@ -34,7 +59,10 @@ function normalizePath(filePath) {
 }
 
 function shouldScanFile(filePath) {
-  if (!filePath.startsWith('app/') && !filePath.startsWith('components/')) {
+  if (!scannedDirectories.some((directory) => filePath.startsWith(`${directory}/`))) {
+    return false;
+  }
+  if (/\.test\.[jt]sx?$/.test(filePath)) {
     return false;
   }
 
@@ -80,11 +108,25 @@ function checkLine(filePath, lineNumber, line) {
     addViolation(filePath, lineNumber, 'use-shared-font-tokens', line);
   }
 
+  if (
+    (ext === '.css' || ext === '.scss') &&
+    !colorTokenFiles.has(filePath) &&
+    !atRuleConditionRegex.test(line) &&
+    !/^\s*(?:\/\*|\*)/.test(line) &&
+    hardcodedSizeRegex.test(line.replace(/\/\*.*?\*\//g, ''))
+  ) {
+    addViolation(filePath, lineNumber, 'use-shared-size-tokens', line);
+  }
+
   if ((ext === '.css' || ext === '.scss') && transitionAllRegex.test(line)) {
     addViolation(filePath, lineNumber, 'no-transition-all', line);
   }
 
   if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
+    if (hardcodedIconSizeRegex.test(codeLine)) {
+      addViolation(filePath, lineNumber, 'use-shared-icon-size', line);
+    }
+
     if (inlineStyleRegex.test(codeLine)) {
       addViolation(filePath, lineNumber, 'no-inline-jsx-style', line);
     }
@@ -132,7 +174,7 @@ function scanFullRepo() {
 }
 
 function scanChangedLines() {
-  const diff = execSync('git diff --unified=0 -- app components', {
+  const diff = execSync(`git diff --unified=0 --relative -- ${scannedDirectories.join(' ')}`, {
     cwd: frontendRoot,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],

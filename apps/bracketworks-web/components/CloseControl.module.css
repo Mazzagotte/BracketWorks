@@ -1,6 +1,6 @@
 .root {
-  --close-size: 42px;
-  --close-icon-size: 18px;
+  --close-size: var(--space-11);
+  --close-icon-size: var(--space-5);
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -9,7 +9,7 @@
   height: var(--close-size);
   padding: 0;
   border: 1px solid var(--color-border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-surface-secondary);
   color: var(--color-text-secondary);
   box-shadow: none;
@@ -42,21 +42,21 @@
 
 .absolute {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-4);
+  right: var(--space-4);
   z-index: 1;
 }
 
 .small {
-  --close-size: 34px;
-  --close-icon-size: 14px;
-  border-radius: 9px;
+  --close-size: var(--space-9);
+  --close-icon-size: var(--space-3-5);
+  border-radius: var(--radius-md);
 }
 
 .xsmall {
-  --close-size: 26px;
-  --close-icon-size: 11px;
-  border-radius: 8px;
+  --close-size: var(--space-7);
+  --close-icon-size: var(--space-3);
+  border-radius: var(--radius-md);
   box-shadow: none;
 }
 

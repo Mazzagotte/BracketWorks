@@ -11,7 +11,8 @@ import { useSignupForm } from '../hooks/useSignupForm';
 import { getSignupValidationError, submitSignup } from '../lib/auth/signup';
 import { logger } from '../lib/logger';
 import CloseControl from '../../components/CloseControl';
-import styles from './SignupModal.module.css';
+import styles from './SignupModal.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 interface SignupModalProps {
   mode?: 'modal' | 'page';
@@ -191,7 +192,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             <div className={styles.field}>
               <label className="surface-authLabel">First name *</label>
               <div className={styles.inputWrapper}>
-                <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+                <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                 <input
                   type="text"
                   value={firstName}
@@ -208,7 +209,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
             <div className={styles.field}>
               <label className="surface-authLabel">Last name *</label>
               <div className={styles.inputWrapper}>
-                <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+                <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                 <input
                   type="text"
                   value={lastName}
@@ -228,7 +229,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Username *</label>
             <div className={styles.inputWrapper}>
-              <User size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+              <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="text"
                 value={username}
@@ -255,7 +256,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Organization (optional)</label>
             <div className={styles.inputWrapper}>
-              <Building2 size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+              <Building2 size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="text"
                 value={organization}
@@ -276,7 +277,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
           <div className={styles.field}>
             <label className="surface-authLabel">Email address *</label>
             <div className={styles.inputWrapper}>
-              <Mail size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+              <Mail size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
               <input
                 type="email"
                 value={email}
@@ -297,7 +298,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
               <label className="surface-authLabel">Password *</label>
               <div className={styles.passwordField}>
                 <div className={styles.inputWrapper}>
-                    <Lock size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+                    <Lock size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -323,7 +324,7 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
               <label className="surface-authLabel">Confirm password *</label>
               <div className={styles.passwordField}>
                 <div className={styles.inputWrapper}>
-                    <Lock size={18} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
+                    <Lock size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}

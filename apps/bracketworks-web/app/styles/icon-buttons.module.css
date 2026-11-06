@@ -2,12 +2,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
+  min-width: var(--space-8);
   padding: 0;
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   background: var(--bw-surface-panel-strong);
   color: var(--bw-text-body);
   cursor: pointer;

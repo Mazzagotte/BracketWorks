@@ -6,8 +6,8 @@
   height: var(--header-height);
   display: flex;
   align-items: center;
-  gap: 12px;
-  z-index: 1100;
+  gap: var(--space-3);
+  z-index: var(--z-nav);
   padding: 0 var(--organizer-page-padding);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
   backdrop-filter: blur(20px);
@@ -20,7 +20,7 @@
 .logoLink {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   text-decoration: none;
   flex-shrink: 0;
   opacity: 1;
@@ -33,13 +33,13 @@
 }
 
 .logoIcon {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   flex-shrink: 0;
 }
 
 .logoText {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
@@ -47,12 +47,12 @@
 }
 
 .tournamentContext {
-  min-width: 120px;
-  max-width: 240px;
+  min-width: var(--space-32);
+  max-width: var(--space-60);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 2px;
-  padding: 6px 14px;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) var(--space-3-5);
   border-left: 1px solid var(--bw-border-subtle);
   border-right: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-body);
@@ -68,19 +68,14 @@
 }
 
 .tournamentContextName {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.25;
   font-weight: 700;
   color: var(--bw-text-title);
 }
 
-.tournamentContextEmpty .tournamentContextName {
-  font-weight: 600;
-  color: var(--bw-text-faint);
-}
-
 .squadContextName {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.25;
   font-weight: 600;
   color: var(--bw-text-accent);
@@ -89,17 +84,17 @@
 .navPills {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-0-5);
   flex: 1;
   min-width: 0;
   justify-content: center;
 }
 
 .navPill {
-  min-height: 40px;
-  padding: 7px 12px;
+  min-height: var(--space-10);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--bw-text-muted);
   text-decoration: none;
@@ -109,19 +104,14 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .navPillScopedStart {
-  margin-left: 7px;
-  padding-left: 17px;
+  margin-left: var(--space-2);
+  padding-left: var(--space-4);
   border-left-color: var(--bw-border-subtle);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-
-.navPillSetup {
-  margin-left: 6px;
-  border-left-color: var(--bw-border-subtle);
 }
 
 .navPill:hover {
@@ -150,35 +140,8 @@
 .rightZone {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   flex-shrink: 0;
-}
-
-.publicViewButton {
-  min-height: 34px;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  color: var(--bw-text-title);
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
-}
-
-.publicViewButton:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--color-primary) 56%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 26%, transparent);
-}
-
-.externalMark {
-  margin-left: 3px;
-  font-size: 11px;
-  line-height: 1;
-  color: currentColor;
 }
 
 .userMenu {
@@ -186,14 +149,14 @@
 }
 
 .userMenuTrigger {
-  min-height: 44px;
+  min-height: var(--space-11);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-subtle);
   background: var(--bw-surface-panel);
-  padding: 3px 8px 3px 3px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
   color: var(--bw-text-body);
   cursor: pointer;
 }
@@ -204,13 +167,13 @@
 }
 
 .avatarChip {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   border-radius: var(--radius-md);
   background: var(--bw-surface-panel-strong);
   border: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-title);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -229,23 +192,23 @@
 
 .userMenuPanel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + var(--space-2));
   right: 0;
-  min-width: 190px;
+  min-width: var(--space-48);
   display: grid;
-  gap: 2px;
-  padding: 8px;
+  gap: var(--space-0-5);
+  padding: var(--space-2);
   border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-accent);
   background: var(--bw-surface-card-strong);
   box-shadow: var(--bw-shadow-card);
-  z-index: 1200;
+  z-index: var(--z-popover);
 }
 
 .userMenuHeader {
-  padding: 7px 8px;
-  margin-bottom: 2px;
-  font-size: 12px;
+  padding: var(--space-2) var(--space-2);
+  margin-bottom: var(--space-0-5);
+  font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--bw-text-title);
   border-bottom: 1px solid var(--bw-border-subtle);
@@ -255,12 +218,12 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -284,12 +247,12 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: calc(56px + env(safe-area-inset-top));
+  height: calc(var(--space-14) + env(safe-area-inset-top));
   display: none;
   align-items: center;
-  gap: 12px;
-  z-index: 1100;
-  padding: env(safe-area-inset-top) 16px 0;
+  gap: var(--space-3);
+  z-index: var(--z-nav);
+  padding: env(safe-area-inset-top) var(--space-4) 0;
   background: var(--bw-surface-card-strong);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -301,20 +264,20 @@
 .mobileBrand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   text-decoration: none;
   flex: 1;
   min-width: 0;
 }
 
 .mobileLogoIcon {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   flex-shrink: 0;
 }
 
 .mobileBrandText {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
@@ -325,14 +288,14 @@
 .mobileTournamentBadge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-md);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-primary);
   background: var(--bw-surface-hover-warm);
   border: 1px solid var(--bw-border-accent);
-  max-width: 120px;
+  max-width: var(--space-32);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -340,11 +303,11 @@
 }
 
 .mobileNavMenu { position: relative; flex: 0 0 auto; }
-.mobileNavMenu summary { min-height: 44px; display: flex; align-items: center; padding: 6px 10px; border: 1px solid var(--bw-border-card); border-radius: 8px; color: var(--bw-text-title); font-size: 12px; font-weight: 700; list-style: none; cursor: pointer; }
+.mobileNavMenu summary { min-height: var(--space-11); display: flex; align-items: center; padding: var(--space-1-5) var(--space-2-5); border: 1px solid var(--bw-border-card); border-radius: var(--radius-md); color: var(--bw-text-title); font-size: var(--font-size-sm); font-weight: 700; list-style: none; cursor: pointer; }
 .mobileNavMenu summary::-webkit-details-marker { display: none; }
-.mobileNavMenu nav { position: absolute; top: calc(100% + 8px); right: 0; width: 210px; padding: 6px; display: grid; gap: 3px; border: 1px solid var(--bw-border-card); border-radius: 10px; background: var(--bw-surface-card-strong); box-shadow: var(--bw-shadow-card); }
+.mobileNavMenu nav { position: absolute; top: calc(100% + var(--space-2)); right: 0; width: var(--space-52); padding: var(--space-1-5); display: grid; gap: var(--space-1); border: 1px solid var(--bw-border-card); border-radius: var(--radius-lg); background: var(--bw-surface-card-strong); box-shadow: var(--bw-shadow-card); }
 .mobileNavMenu nav a,
-.mobileNavMenu nav button { min-height: 44px; padding: 0 9px; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; border-radius: 7px; color: var(--bw-text-body); font-size: 12px; text-decoration: none; text-align: left; cursor: pointer; }
+.mobileNavMenu nav button { min-height: var(--space-11); padding: 0 var(--space-2-5); display: flex; align-items: center; gap: var(--space-2); border: 0; background: transparent; border-radius: var(--radius-md); color: var(--bw-text-body); font-size: var(--font-size-sm); text-decoration: none; text-align: left; cursor: pointer; }
 .mobileNavMenu nav a:hover,
 .mobileNavMenu nav .mobileNavLinkActive { color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
 
@@ -354,19 +317,14 @@
   }
 
   .tournamentContext {
-    min-width: 150px;
-    max-width: 190px;
-    padding-inline: 10px;
+    min-width: var(--space-36);
+    max-width: var(--space-48);
+    padding-inline: var(--space-2-5);
   }
 
   .navPill {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-
-  .publicViewButton {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: var(--space-1-5) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 }
 

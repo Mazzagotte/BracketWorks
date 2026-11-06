@@ -6,7 +6,8 @@ import CloseControl from '../../components/CloseControl';
 import { apiClient } from '../lib/api';
 import type { ChangelogEntry } from '../lib/types';
 import modalStyles from '../styles/modals.module.css';
-import styles from './ChangelogModal.module.css';
+import styles from './ChangelogModal.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export interface ChangelogModalProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps)
         {/* Header */}
         <div className={modalStyles.header}>
           <div className={styles.headerContent}>
-            <BookOpen size={18} className={styles.icon} aria-hidden="true" />
+            <BookOpen size={ICON_SIZE.lg} className={styles.icon} aria-hidden="true" />
             <h2 id="changelog-title" className={styles.title}>
               What&apos;s New
             </h2>

@@ -10,9 +10,9 @@
   height: var(--header-height);
   display: flex;
   align-items: center;
-  gap: 14px;
-  z-index: 1100;
-  padding: 0 24px;
+  gap: var(--space-3-5);
+  z-index: var(--z-nav);
+  padding: 0 var(--space-6);
   background: color-mix(in srgb, var(--bw-surface-card) 94%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -26,7 +26,7 @@
 .logoLink {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   text-decoration: none;
   flex-shrink: 0;
   margin-right: 0;
@@ -35,12 +35,12 @@
 }
 
 .tournamentContext {
-  min-width: 180px;
-  max-width: 300px;
+  min-width: var(--space-44);
+  max-width: var(--space-72);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 2px;
-  padding: 6px 14px;
+  gap: var(--space-0-5);
+  padding: var(--space-1-5) var(--space-3-5);
   border-left: 1px solid var(--bw-border-subtle);
   border-right: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-body);
@@ -56,7 +56,7 @@
 }
 
 .tournamentContextName {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.25;
   font-weight: 700;
   color: var(--bw-text-title);
@@ -68,7 +68,7 @@
 }
 
 .squadContextName {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   line-height: 1.25;
   font-weight: 600;
   color: var(--bw-text-accent);
@@ -80,13 +80,13 @@
 }
 
 .logoIcon {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   flex-shrink: 0;
 }
 
 .logoText {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
@@ -98,16 +98,16 @@
 .navPills {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-0-5);
   flex: 1;
   min-width: 0;
   justify-content: center;
 }
 
 .navPill {
-  padding: 7px 16px;
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--bw-text-muted);
   text-decoration: none;
@@ -154,7 +154,7 @@
 .rightZone {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   flex-shrink: 0;
   margin-left: 0;
 }
@@ -162,33 +162,33 @@
 .publicActions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .tournamentBadge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-primary);
   background: var(--bw-surface-hover-warm);
   border: 1px solid var(--bw-border-accent);
-  max-width: 180px;
+  max-width: var(--space-44);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .avatarChip {
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   border-radius: var(--radius-md);
   background: var(--bw-surface-panel-strong);
   border: 1px solid var(--bw-border-subtle);
   color: var(--bw-text-title);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -197,9 +197,9 @@
 }
 
 .publicViewButton {
-  padding: 8px 14px;
+  padding: var(--space-2) var(--space-3-5);
   border-radius: var(--radius-md);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
   white-space: nowrap;
 }
@@ -217,10 +217,10 @@
 }
 
 .shareQrButton {
-  width: 34px;
-  height: 34px;
+  width: var(--space-9);
+  height: var(--space-9);
   border-radius: var(--radius-md);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   letter-spacing: 0;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
@@ -237,8 +237,8 @@
 }
 
 .externalMark {
-  margin-left: 3px;
-  font-size: 11px;
+  margin-left: var(--space-1);
+  font-size: var(--font-size-xs);
   line-height: 1;
   color: currentColor;
 }
@@ -250,11 +250,11 @@
 .userMenuTrigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
   border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-subtle);
   background: var(--bw-surface-panel);
-  padding: 3px 8px 3px 3px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
   color: var(--bw-text-body);
   cursor: pointer;
 }
@@ -275,31 +275,31 @@
 
 .userMenuPanel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + var(--space-2));
   right: 0;
-  min-width: 190px;
+  min-width: var(--space-48);
   display: grid;
-  gap: 2px;
-  padding: 8px;
+  gap: var(--space-0-5);
+  padding: var(--space-2);
   border-radius: var(--radius-md);
   border: 1px solid var(--bw-border-accent);
   background: var(--bw-surface-card-strong);
   box-shadow: var(--bw-shadow-card);
-  z-index: 1200;
+  z-index: var(--z-popover);
 }
 
 .userMenuHeader {
-  padding: 7px 8px;
-  margin-bottom: 2px;
-  font-size: 12px;
+  padding: var(--space-2) var(--space-2);
+  margin-bottom: var(--space-0-5);
+  font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--bw-text-title);
   border-bottom: 1px solid var(--bw-border-subtle);
 }
 
 .userMenuDivider {
-  height: 1px;
-  margin: 4px 2px;
+  height: var(--space-px);
+  margin: var(--space-1) var(--space-0-5);
   background: var(--bw-border-subtle);
 }
 
@@ -308,12 +308,12 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
   color: var(--bw-text-body);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
@@ -347,12 +347,12 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: calc(56px + env(safe-area-inset-top));
+  height: calc(var(--space-14) + env(safe-area-inset-top));
   display: flex;
   align-items: center;
-  gap: 12px;
-  z-index: 1100;
-  padding: env(safe-area-inset-top) 16px 0;
+  gap: var(--space-3);
+  z-index: var(--z-nav);
+  padding: env(safe-area-inset-top) var(--space-4) 0;
   background: var(--bw-surface-card-strong);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -363,9 +363,9 @@
 
 .hamburgerBtn {
   flex-direction: column;
-  gap: 4px;
-  width: 44px;
-  height: 44px;
+  gap: var(--space-1);
+  width: var(--space-11);
+  height: var(--space-11);
   border-radius: var(--radius-md);
   flex-shrink: 0;
   transition: background 0.15s ease;
@@ -377,29 +377,29 @@
 
 .hamburgerLine {
   display: block;
-  width: 16px;
-  height: 1.5px;
+  width: var(--space-4);
+  height: var(--space-0-5);
   background: var(--bw-text-body);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 
 .mobileBrand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   text-decoration: none;
   flex: 1;
   min-width: 0;
 }
 
 .mobileLogoIcon {
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   flex-shrink: 0;
 }
 
 .mobileBrandText {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
@@ -410,14 +410,14 @@
 .mobileTournamentBadge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: var(--space-1) var(--space-2-5);
   border-radius: var(--radius-md);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-primary);
   background: var(--bw-surface-hover-warm);
   border: 1px solid var(--bw-border-accent);
-  max-width: 120px;
+  max-width: var(--space-32);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -426,32 +426,32 @@
 
 @media (max-width: 640px) {
   .topNavMobile {
-    gap: 10px;
-    padding: env(safe-area-inset-top) 12px 0;
+    gap: var(--space-2-5);
+    padding: env(safe-area-inset-top) var(--space-3) 0;
   }
 
   .mobileBrand {
-    gap: 7px;
+    gap: var(--space-2);
     flex: 1 1 auto;
   }
 
   .mobileBrandText {
-    font-size: 13px;
+    font-size: var(--font-size-base);
     max-width: 30vw;
   }
 
   .mobileTournamentBadge {
-    max-width: min(34vw, 180px);
+    max-width: min(34vw, var(--space-44));
     min-width: 0;
-    padding: 3px 9px;
-    font-size: 10.5px;
+    padding: var(--space-1) var(--space-2-5);
+    font-size: var(--font-size-xs);
     line-height: 1.1;
   }
 }
 
 @media (max-width: 1380px) {
   .tournamentContext {
-    max-width: 230px;
+    max-width: var(--space-56);
   }
 }
 
@@ -465,24 +465,24 @@
   }
 
   .tournamentContext {
-    min-width: 150px;
-    max-width: 190px;
-    padding-inline: 10px;
+    min-width: var(--space-36);
+    max-width: var(--space-48);
+    padding-inline: var(--space-2-5);
   }
 
   .navPill {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: var(--space-1-5) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 
   .publicViewButton {
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 
   .shareQrButton {
-    width: 32px;
-    height: 32px;
+    width: var(--space-8);
+    height: var(--space-8);
   }
 }
 
@@ -499,53 +499,53 @@
 /* Final mobile header fit pass */
 @media (max-width: 480px) {
   .topNavMobile {
-    gap: 8px;
-    padding: env(safe-area-inset-top) 10px 0;
+    gap: var(--space-2);
+    padding: env(safe-area-inset-top) var(--space-2-5) 0;
   }
 
   .hamburgerBtn {
-    width: 44px;
-    height: 44px;
+    width: var(--space-11);
+    height: var(--space-11);
   }
 
   .mobileBrand {
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .mobileLogoIcon {
-    width: 24px;
-    height: 24px;
+    width: var(--space-6);
+    height: var(--space-6);
   }
 
   .mobileBrandText {
-    font-size: 13px;
+    font-size: var(--font-size-base);
     max-width: 34vw;
   }
 
   .mobileTournamentBadge {
     max-width: 42vw;
     min-width: 0;
-    padding: 2px 8px;
-    font-size: 10px;
+    padding: var(--space-0-5) var(--space-2);
+    font-size: var(--font-size-2xs);
     line-height: 1.1;
   }
 }
 
 @media (max-width: 390px) {
   .topNavMobile {
-    gap: 6px;
-    padding: env(safe-area-inset-top) 8px 0;
+    gap: var(--space-1-5);
+    padding: env(safe-area-inset-top) var(--space-2) 0;
   }
 
   .mobileBrandText {
     max-width: 28vw;
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
 
   .mobileTournamentBadge {
     max-width: 44vw;
-    padding: 2px 7px;
-    font-size: 9.5px;
+    padding: var(--space-0-5) var(--space-2);
+    font-size: var(--font-size-2xs);
   }
 }
 

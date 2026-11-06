@@ -22,7 +22,7 @@
   align-items: flex-start;
   justify-content: center;
   z-index: var(--z-modal);
-  padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+  padding: max(var(--space-5), env(safe-area-inset-top)) var(--space-5) max(var(--space-5), env(safe-area-inset-bottom));
   background: color-mix(in srgb, var(--color-black) 60%, transparent);
   backdrop-filter: blur(10px);
   overflow-y: auto;
@@ -32,27 +32,27 @@
 .pageShell {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--z-overlay);
   overflow: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 20px;
+  padding: var(--space-6) var(--space-5);
   background: var(--color-bg-primary);
 }
 
 /* --- Modal Card --- */
 .modal {
-  max-width: 480px;
+  max-width: var(--size-lg);
   width: 100%;
-  max-height: calc(100dvh - max(40px, env(safe-area-inset-top)) - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - max(var(--space-10), env(safe-area-inset-top)) - env(safe-area-inset-bottom));
   overflow: auto;
   animation: slideUp 0.3s ease-out;
   scrollbar-width: none;
   position: relative;
   background: var(--color-bg-primary);
   border: 2px solid var(--color-primary);
-  border-radius: 20px;
+  border-radius: var(--radius-2xl);
   box-shadow: 0 20px 60px color-mix(in srgb, var(--color-black) 50%, transparent);
 }
 
@@ -61,38 +61,38 @@
 }
 
 .pageCard {
-  max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height: calc(100dvh - var(--space-12) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 /* --- Header --- */
 .header {
-  padding: 28px 24px;
+  padding: var(--space-7) var(--space-6);
   background: var(--color-surface-primary);
   position: relative;
 }
 
 .headerContent {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: flex-start;
 }
 
 .logoIcon {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   flex-shrink: 0;
 }
 
 .title {
-  margin: 0 0 4px;
-  font-size: 20px;
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-3xl);
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
@@ -100,8 +100,8 @@
 /* --- Close Button --- */
 .closeBtn {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-4);
+  right: var(--space-4);
 }
 
 .closeBtn :global(.root) {
@@ -127,14 +127,14 @@
 
 /* --- Form Body --- */
 .body {
-  padding: 20px 24px;
+  padding: var(--space-5) var(--space-6);
   background: var(--color-bg-primary);
 }
 
 /* --- Section Headers --- */
 .sectionHeader {
-  margin: 14px 0 10px;
-  font-size: 11px;
+  margin: var(--space-3-5) 0 var(--space-2-5);
+  font-size: var(--font-size-xs);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -147,27 +147,27 @@
 
 /* --- Form Fields --- */
 .field {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .field :global(.surface-authLabel) {
   display: block;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
 }
 
 .nameRow,
 .passwordRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .fieldHint {
-  margin: 3px 0 0;
-  font-size: 12px;
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.3;
 }
@@ -181,9 +181,9 @@
 
 .fieldIcon {
   position: absolute;
-  left: 12px;
-  width: 18px;
-  height: 18px;
+  left: var(--space-3);
+  width: var(--space-5);
+  height: var(--space-5);
   color: var(--color-text-secondary);
   pointer-events: none;
   flex-shrink: 0;
@@ -191,13 +191,13 @@
 
 .inputWrapper input {
   width: 100%;
-  padding: 10px 12px 10px 40px;
+  padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-10);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-md);
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -225,19 +225,11 @@
   -webkit-box-shadow: 0 0 0 30px var(--color-bg-primary) inset, 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
 }
 
-.inputWrapper input.surface-authInputError {
-  border-color: var(--color-danger);
-}
-
-.inputWrapper input.surface-authInputValid {
-  border-color: var(--color-success);
-}
-
 /* --- Password Fields --- */
 .passwordField {
   position: relative;
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
@@ -246,28 +238,28 @@
 }
 
 .passwordField .inputWrapper input {
-  padding-right: 64px;
+  padding-right: var(--space-16);
 }
 
 .passwordRequirements {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
 
 .checking {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--color-primary);
 }
 
 /* --- Submit Button --- */
 .submitBtn {
   width: 100%;
-  min-height: 44px;
-  margin-top: 4px;
+  min-height: var(--space-11);
+  margin-top: var(--space-1);
   background: var(--color-primary) !important;
   color: var(--color-text-primary) !important;
   border: none !important;
-  border-radius: 10px;
-  font-size: 16px;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xl);
   font-weight: 700;
   letter-spacing: 0.02em;
   transition: background 0.2s ease;
@@ -286,15 +278,15 @@
 
 /* --- Footer --- */
 .footer {
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--color-border-primary);
   text-align: center;
 }
 
 .tosText {
-  margin: 0 0 8px;
-  font-size: 12px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.4;
 }
@@ -311,16 +303,16 @@
 }
 
 .divider {
-  margin: 8px 0;
-  font-size: 11px;
+  margin: var(--space-2) 0;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-muted);
   letter-spacing: 0.04em;
 }
 
 .loginPrompt {
-  margin: 8px 0 0;
-  font-size: 13px;
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
 }
 
@@ -344,45 +336,45 @@
 @media (max-width: 480px) {
   .modal {
     max-width: 100%;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
   }
 
   .header {
-    padding: 20px 20px;
+    padding: var(--space-5) var(--space-5);
   }
 
   .headerContent {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
     align-items: center;
     text-align: center;
   }
 
   .logoIcon {
-    width: 36px;
-    height: 36px;
+    width: var(--space-9);
+    height: var(--space-9);
   }
 
   .title {
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
   }
 
   .body {
-    padding: 18px 20px;
+    padding: var(--space-5) var(--space-5);
   }
 
   .nameRow,
   .passwordRow {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .field {
-    margin-bottom: 10px;
+    margin-bottom: var(--space-2-5);
   }
 
   .inputWrapper input {
-    font-size: 16px;
-    padding: 10px 12px 10px 40px;
+    font-size: var(--font-size-xl);
+    padding: var(--space-2-5) var(--space-3) var(--space-2-5) var(--space-10);
   }
 }

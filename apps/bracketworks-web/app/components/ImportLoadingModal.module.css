@@ -12,8 +12,8 @@
 
 /* Bowling ball */
 .bowlingBall {
-  width: 80px;
-  height: 80px;
+  width: var(--space-20);
+  height: var(--space-20);
   position: relative;
   animation: spin 2s linear infinite;
   flex-shrink: 0;
@@ -25,8 +25,8 @@
 }
 
 .ballBody {
-  width: 80px;
-  height: 80px;
+  width: var(--space-20);
+  height: var(--space-20);
   background: radial-gradient(circle at 30% 30%, var(--color-gray-500), var(--color-text-primary));
   border-radius: 50%;
   border: 3px solid var(--color-brand-charcoal);
@@ -38,8 +38,8 @@
 
 .fingerHole {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: var(--space-2-5);
+  height: var(--space-2-5);
   background-color: var(--color-black);
   border-radius: 50%;
   box-shadow:
@@ -47,9 +47,9 @@
     0 1px 2px var(--opacity-white-10);
 }
 
-.fingerHole1 { top: 15px; left: 15px; }
-.fingerHole2 { top: 25px; left: 35px; }
-.fingerHole3 { top: 35px; left: 25px; }
+.fingerHole1 { top: var(--space-4); left: var(--space-4); }
+.fingerHole2 { top: var(--space-6); left: var(--space-9); }
+.fingerHole3 { top: var(--space-9); left: var(--space-6); }
 
 .overlay {
   position: fixed;
@@ -64,10 +64,10 @@
 }
 
 .card {
-  min-width: min(360px, calc(100vw - 32px));
-  max-width: 420px;
-  padding: 1.4rem;
-  gap: 0.85rem;
+  min-width: min(var(--space-96), calc(100vw - var(--space-8)));
+  max-width: var(--size-md);
+  padding: var(--space-6);
+  gap: var(--space-3-5);
   color: var(--bw-text-body);
   background: var(--bw-surface-card);
   border: 1px solid var(--bw-border-subtle);
@@ -82,33 +82,33 @@
 }
 
 .bowlingBall {
-  width: 54px;
-  height: 54px;
+  width: var(--space-14);
+  height: var(--space-14);
   animation: none;
 }
 
 .ballBody {
-  width: 54px;
-  height: 54px;
+  width: var(--space-14);
+  height: var(--space-14);
   background: radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--bw-text-title) 85%, transparent), color-mix(in srgb, var(--bw-text-muted) 86%, transparent) 42%, color-mix(in srgb, var(--bw-surface-card) 92%, var(--color-black)) 100%);
   border: 2px solid color-mix(in srgb, var(--bw-text-title) 55%, transparent);
   box-shadow: 0 10px 26px color-mix(in srgb, var(--color-black) 32%, transparent), inset 2px 2px 8px color-mix(in srgb, var(--bw-text-title) 18%, transparent);
 }
 
 .fingerHole {
-  width: 7px;
-  height: 7px;
+  width: var(--space-2);
+  height: var(--space-2);
   background-color: color-mix(in srgb, var(--bw-page) 90%, var(--color-black));
 }
 
-.fingerHole1 { top: 13px; left: 16px; }
-.fingerHole2 { top: 24px; left: 28px; }
-.fingerHole3 { top: 31px; left: 19px; }
+.fingerHole1 { top: var(--space-3-5); left: var(--space-4); }
+.fingerHole2 { top: var(--space-6); left: var(--space-7); }
+.fingerHole3 { top: var(--space-8); left: var(--space-5); }
 
 .title {
   margin: 0;
   color: var(--bw-text-title);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
@@ -117,7 +117,7 @@
 .subtitle {
   margin: 0;
   color: var(--bw-text-muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-base);
   line-height: 1.45;
   letter-spacing: 0;
 }

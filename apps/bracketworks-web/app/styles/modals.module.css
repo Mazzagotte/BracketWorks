@@ -17,11 +17,11 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 2600;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(12px, 3vh, 24px);
+  padding: clamp(var(--space-3), 3vh, var(--space-6));
   background: color-mix(in srgb, var(--bw-page) 84%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -32,9 +32,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(860px, calc(100vw - 40px));
-  max-width: calc(100vw - 24px);
-  max-height: min(calc(100dvh - 48px), 820px);
+  width: min(var(--size-5xl), calc(100vw - var(--space-10)));
+  max-width: calc(100vw - var(--space-6));
+  max-height: min(calc(100dvh - var(--space-12)), var(--size-4xl));
   overflow: hidden;
   border: 1px solid var(--bw-border-card);
   border-radius: var(--radius-2xl);
@@ -44,13 +44,13 @@
 }
 
 .compactModal {
-  width: min(560px, calc(100vw - 20px));
+  width: min(var(--size-xl), calc(100vw - var(--space-5)));
 }
 
 .header {
   position: relative;
   flex-shrink: 0;
-  padding: var(--space-card-y) 60px var(--space-card-compact-y) var(--space-card-x);
+  padding: var(--space-card-y) var(--space-16) var(--space-card-compact-y) var(--space-card-x);
   border-bottom: 1px solid var(--bw-border-accent);
   background: var(--bw-surface-panel);
 }
@@ -65,7 +65,7 @@
 }
 
 .kicker {
-  margin: 0 0 0.35rem;
+  margin: 0 0 var(--space-1-5);
   color: var(--bw-text-muted);
   font-size: var(--bw-type-label);
   font-weight: var(--font-weight-bold);
@@ -102,24 +102,24 @@
   .overlay {
     align-items: flex-start;
     justify-content: center;
-    padding: max(6px, env(safe-area-inset-top)) 9px 9px;
+    padding: max(var(--space-1-5), env(safe-area-inset-top)) var(--space-2-5) var(--space-2-5);
     background: color-mix(in srgb, var(--bw-page) 88%, transparent);
   }
 
   .modal {
-    width: min(calc(100vw - 18px), 408px);
-    max-height: calc(100dvh - max(14px, env(safe-area-inset-top)) - env(safe-area-inset-bottom));
+    width: min(calc(100vw - var(--space-5)), var(--space-96));
+    max-height: calc(100dvh - max(var(--space-3-5), env(safe-area-inset-top)) - env(safe-area-inset-bottom));
     border-radius: var(--radius-2xl);
     border: 1px solid var(--bw-border-card);
     box-shadow: 0 16px 34px color-mix(in srgb, var(--color-black) 34%, transparent);
   }
 
   .compactModal {
-    width: min(calc(100vw - 18px), 388px);
+    width: min(calc(100vw - var(--space-5)), var(--space-96));
   }
 
   .header {
-    padding: var(--space-card-compact-y) 52px var(--space-card-small-y) var(--space-card-small-x);
+    padding: var(--space-card-compact-y) var(--space-14) var(--space-card-small-y) var(--space-card-small-x);
   }
 
   .header h2 {
@@ -128,8 +128,8 @@
   }
 
   .kicker {
-    margin-bottom: 0.24rem;
-    font-size: 0.58rem;
+    margin-bottom: var(--space-1);
+    font-size: var(--font-size-3xs);
   }
 
   .closeButton {
@@ -150,32 +150,32 @@
 
 @media (max-width: 480px) {
   .modal {
-    width: calc(100vw - 12px);
-    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - env(safe-area-inset-bottom));
+    width: calc(100vw - var(--space-3));
+    max-height: calc(100dvh - max(var(--space-2), env(safe-area-inset-top)) - env(safe-area-inset-bottom));
     border-radius: var(--radius-xl);
   }
 
   .compactModal {
-    width: calc(100vw - 12px);
+    width: calc(100vw - var(--space-3));
   }
 
   .header {
-    padding: 0.76rem 3rem 0.66rem 0.82rem;
+    padding: var(--space-3) var(--space-12) var(--space-2-5) var(--space-3-5);
   }
 
   .header h2 {
-    font-size: 0.96rem;
+    font-size: var(--font-size-lg);
   }
 
   .content {
-    padding: 0.64rem;
+    padding: var(--space-2-5);
   }
 }
 
 @media (max-width: 380px) {
   .modal,
   .compactModal {
-    width: calc(100vw - 10px);
+    width: calc(100vw - var(--space-2-5));
   }
 }
 

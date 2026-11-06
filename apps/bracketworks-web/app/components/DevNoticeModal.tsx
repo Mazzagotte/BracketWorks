@@ -6,7 +6,8 @@ import { apiClient } from '../lib/api';
 import CloseControl from '../../components/CloseControl';
 import buttonStyles from '../styles/buttons.module.css';
 import modalStyles from '../styles/modals.module.css';
-import styles from './DevNoticeModal.module.css';
+import styles from './DevNoticeModal.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export interface DevNoticeModalProps {
   isOpen: boolean;
@@ -123,7 +124,7 @@ export default function DevNoticeModal({
         {/* Header */}
         <div className={`${modalStyles.header} ${styles.header}`}>
           <div className={styles.warningIcon} aria-hidden="true">
-            <AlertTriangle size={18} strokeWidth={2.5} />
+            <AlertTriangle size={ICON_SIZE.lg} strokeWidth={2.5} />
           </div>
           <div>
             <p className={styles.kicker}>
@@ -160,7 +161,7 @@ export default function DevNoticeModal({
           <ul className={styles.checkList} aria-label="Acknowledgment checklist">
             {CHECKLIST_ITEMS.map(item => (
               <li key={item} className={styles.checkItem}>
-                <CheckCircle2 size={16} className={styles.checkIcon} aria-hidden="true" />
+                <CheckCircle2 size={ICON_SIZE.md} className={styles.checkIcon} aria-hidden="true" />
                 {item}
               </li>
             ))}
@@ -197,7 +198,7 @@ export default function DevNoticeModal({
                 disabled={!acknowledged || submitting}
                 onClick={handleAgree}
               >
-                {submitting ? 'Saving…' : 'Agree and Continue'}
+                {submitting ? 'Saving...' : 'Agree and Continue'}
               </button>
               <button className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.fullWidth}`} onClick={onLogout}>
                 Cancel and Log Out
@@ -211,7 +212,7 @@ export default function DevNoticeModal({
         </div>
         {mode === 'require-acceptance' && (
           <p className={styles.footerHint}>
-            <Lock size={11} aria-hidden="true" />
+            <Lock size={ICON_SIZE.xs} aria-hidden="true" />
             You must agree to continue.
           </p>
         )}

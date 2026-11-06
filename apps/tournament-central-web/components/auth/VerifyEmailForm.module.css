@@ -1,13 +1,13 @@
 .form {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .statusMessage {
   margin: 0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--font-size-md);
   line-height: 1.35;
 }
 
@@ -31,20 +31,20 @@
 
 .fieldLabel {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
 }
 
 .fieldInput {
   width: 100%;
   border: 1px solid var(--color-border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  padding: 12px 14px;
-  font-size: 16px;
+  padding: var(--space-3) var(--space-3-5);
+  font-size: var(--font-size-xl);
   box-sizing: border-box;
   resize: vertical;
 }
@@ -61,12 +61,12 @@
 
 .submitButton {
   width: 100%;
-  min-height: 52px;
+  min-height: var(--space-14);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: var(--color-text-primary);
-  font-size: 17px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -81,20 +81,20 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .helperLinks a {
   color: var(--color-primary);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   text-decoration: none;
 }
 
 .helperLinks span {
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
 }
 
 .helperLinks a:hover {

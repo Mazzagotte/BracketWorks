@@ -8,7 +8,8 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildParticipantRows } from '@/components/organizer/tournamentInsights';
-import styles from '../page.module.css';
+import styles from '../page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export default function OrganizerTournamentParticipantsPage() {
   const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError } = useTournamentContext();
@@ -42,7 +43,7 @@ export default function OrganizerTournamentParticipantsPage() {
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
@@ -56,7 +57,7 @@ export default function OrganizerTournamentParticipantsPage() {
           </div>
           <div className={styles.registrationToolbar}>
             <label className={styles.registrationSearch}>
-              <Search size={14} aria-hidden="true" />
+              <Search size={ICON_SIZE.sm} aria-hidden="true" />
               <span className={styles.srOnly}>Search participants</span>
               <input
                 value={search}

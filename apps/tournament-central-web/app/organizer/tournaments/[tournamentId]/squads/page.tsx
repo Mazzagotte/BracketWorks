@@ -10,7 +10,8 @@ import { formatSquadTime, formatTournamentDate } from '@/components/organizer/or
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import type { OrganizerRegistrationRecord } from '@/components/organizer/organizerApi';
-import styles from './page.module.css';
+import styles from './page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 function registrantName(registration: OrganizerRegistrationRecord): string {
   const name = `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim();
@@ -54,7 +55,7 @@ export default function OrganizerTournamentSquadsPage() {
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.backButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 
@@ -127,7 +128,7 @@ export default function OrganizerTournamentSquadsPage() {
                 <h2>{selectedSummary.squad.name}</h2>
               </div>
               <button type="button" className={styles.rosterModalClose} onClick={() => setSelectedSquadId(null)} aria-label="Close roster">
-                <X size={18} aria-hidden="true" />
+                <X size={ICON_SIZE.lg} aria-hidden="true" />
               </button>
             </header>
             <div className={styles.rosterList}>

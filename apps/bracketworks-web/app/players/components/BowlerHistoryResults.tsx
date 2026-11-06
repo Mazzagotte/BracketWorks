@@ -1,6 +1,7 @@
 'use client'
 
 import type { BowlerHistoryProfile } from '../hooks/useBowlerHistorySearch'
+import { ICON_SIZE } from '@bracketworks/ui'
 import { ArrowRight } from 'lucide-react'
 import styles from '../entries.module.css'
 
@@ -49,7 +50,7 @@ export default function BowlerHistoryResults({
                   </span>
                 </span>
                 <span className={styles.historyResultAction} aria-hidden="true">
-                  <ArrowRight size={16} />
+                  <ArrowRight size={ICON_SIZE.md} />
                 </span>
               </button>
             ))}

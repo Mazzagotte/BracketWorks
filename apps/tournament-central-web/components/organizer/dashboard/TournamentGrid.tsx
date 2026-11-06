@@ -5,7 +5,8 @@ import { Search } from 'lucide-react';
 
 import TournamentCard from './TournamentCard';
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
-import styles from './OrganizerDashboard.module.css';
+import styles from './OrganizerDashboard.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type TournamentGridProps = {
   tournaments: OrganizerDashboardTournament[];
@@ -28,7 +29,7 @@ export default function TournamentGrid({ tournaments, deletingTournamentId, onDe
       </div>
       <div className={styles.operationsToolbar}>
         <label className={styles.tournamentSearch}>
-          <Search size={18} aria-hidden="true" />
+          <Search size={ICON_SIZE.lg} aria-hidden="true" />
           <span className={styles.srOnly}>Search your tournaments</span>
           <input type="search" placeholder="Search by tournament or location" value={search} onChange={(event) => setSearch(event.target.value)} />
         </label>

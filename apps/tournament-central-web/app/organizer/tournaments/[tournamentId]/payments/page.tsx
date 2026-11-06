@@ -11,7 +11,8 @@ import { formatMoney } from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import { buildPaymentSummary } from '@/components/organizer/tournamentInsights';
 import { updateTournamentRegistrationPaymentStatus, type OrganizerRegistrationRecord } from '@/components/organizer/organizerApi';
-import styles from '../page.module.css';
+import styles from '../page.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export default function OrganizerTournamentPaymentsPage() {
   const { tournamentId, tournament, registrations, isRegistrationsLoading, tournamentError, registrationsError, refreshRegistrations } = useTournamentContext();
@@ -83,7 +84,7 @@ export default function OrganizerTournamentPaymentsPage() {
           <p>{tournament?.name || 'Tournament'}</p>
         </div>
         <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back to Overview
+          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
         </Link>
       </header>
 

@@ -1,680 +1,13 @@
 /* Mobile-Friendly Dashboard Styles */
 
-.commandCenterGrid {
-  --dash-surface: var(--bw-surface-card);
-  --dash-border: var(--bw-border-subtle);
-  --dash-shadow: var(--bw-shadow-card);
-  --dash-border-faint: color-mix(in srgb, var(--bw-border-subtle) 55%, transparent);
-  --dash-border-soft: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
-  --dash-surface-soft: var(--bw-surface-panel);
-  --dash-surface-strong: var(--bw-surface-panel-strong);
-  --dash-surface-deep: var(--bw-surface-card);
-  --dash-input-surface: var(--bw-surface-panel-strong);
-  --dash-input-surface-disabled: var(--bw-surface-card-strong);
-  --dash-text-title: var(--bw-text-title);
-  --dash-text-body: var(--bw-text-body);
-  --dash-text-muted: var(--bw-text-muted);
-  --dash-text-faint: var(--bw-text-faint);
-  --dash-text-accent: var(--bw-text-accent);
-  --dash-text-success: var(--bw-text-success);
-  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  --dash-accent-panel: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  --dash-accent-border: color-mix(in srgb, var(--color-primary) 28%, transparent);
-  --dash-accent-border-strong: color-mix(in srgb, var(--color-primary) 62%, transparent);
-  --dash-success-soft: color-mix(in srgb, var(--color-success) 10%, transparent);
-  --dash-success-border: var(--color-success-border);
-  --dash-danger-soft: var(--color-error-bg-soft);
-  --dash-danger-border: var(--color-error-border);
-  display: grid;
-  grid-template-columns: auto auto;
-  gap: var(--space-grid);
-  align-items: start;
-  justify-content: center;
-  margin-bottom: var(--space-section);
-}
-
-.dashboardOverviewStack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-grid);
-}
-
-.dashboardOverviewStack .commandCenterGrid {
-  margin-bottom: 0;
-}
-
-.commandCenterGrid > article,
-.commandCenterGrid > aside {
-  height: 100%;
-}
-
-.gridTools,
-.gridHero {
-  display: flex;
-  flex-direction: column;
-}
-
-.gridHero {
-  grid-column: 1;
-  width: fit-content;
-  justify-self: center;
-}
-
-.gridTools {
-  grid-column: 2;
-  align-self: start;
-  justify-self: center;
-}
-
-.gridSummary {
-  grid-column: 1 / -1;
-  width: fit-content;
-  justify-self: center;
-}
-
-.entriesOverviewCard {
-  border-radius: var(--radius-2xl);
-  padding: var(--space-card-y) var(--space-card-x);
-  background: var(--dash-surface);
-  border: 1px solid var(--dash-border);
-  box-shadow: var(--dash-shadow);
-  width: fit-content;
-}
-
-.entriesOverviewStandalone {
-  --dash-surface: color-mix(in srgb, var(--bw-surface-card) 88%, transparent);
-  --dash-border: var(--bw-border-subtle);
-  --dash-shadow: var(--bw-shadow-card);
-  --dash-card-bg: var(--bw-surface-card);
-  --dash-card-border: var(--bw-border-card);
-  --dash-accent-border: var(--bw-border-accent);
-  margin: 0 auto var(--space-section);
-}
-
-.entriesOverviewSection {
-  display: flex;
-  justify-content: center;
-}
-
-.entriesOverviewHeader {
-  font-size: var(--bw-type-label);
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  line-height: 1.3;
-  color: var(--color-text-secondary);
-  margin-bottom: 10px;
-  font-weight: var(--font-weight-bold);
-}
-
-.summaryCardsBand {
-  --entries-overview-card-height: auto;
-  --entries-overview-gap: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: stretch;
-  gap: var(--entries-overview-gap);
-}
-
-.summaryCardsBand .statTile {
-  height: var(--entries-overview-card-height);
-  flex: 0 1 calc((100% - (var(--entries-overview-gap) * 3)) / 4);
-  max-width: calc((100% - (var(--entries-overview-gap) * 3)) / 4);
-  min-width: 210px;
-}
-
-.liveBoardCard,
-.toolsCard,
-.statTile {
-  background: var(--dash-surface);
-  border: 1px solid var(--dash-border);
-  box-shadow: var(--dash-shadow);
-}
-
-.liveBoardCard {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-2xl);
-  padding: var(--space-card-y) var(--space-card-x);
-}
-
-.liveBoardCard,
-.entriesOverviewCard {
-  border-color: var(--bw-border-card);
-}
-
-.toolsCard,
-.squadRailCard,
-.statTile {
-  border-color: var(--bw-border-subtle);
-}
-
-.liveBoardCard,
-.toolsCard,
-.squadRailCard,
-.statTile,
-.entriesOverviewCard {
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-}
-
-.liveBoardCard:hover,
-.toolsCard:hover,
-.squadRailCard:hover,
-.entriesOverviewCard:hover {
-  transform: translateY(-1px);
-  border-color: var(--bw-border-card);
-  box-shadow: var(--bw-shadow-card);
-}
-
-.heroTopRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 72%, transparent);
-}
-
-.heroKicker,
-.sectionKicker {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  line-height: 1.3;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
-}
-
-.heroTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.heroTitle {
-  margin: 0;
-  font-size: clamp(30px, 3.5vw, 48px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.04;
-  color: var(--color-text-primary);
-}
-
-.heroSubtitle {
-  margin: 10px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 64ch;
-  color: var(--color-text-secondary);
-}
-
-.liveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--color-white);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-orange-dark) 100%);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 24%, transparent), var(--bw-shadow-accent);
-}
-
-.heroMiddleRow {
-  margin-bottom: 14px;
-}
-
-.heroBottomRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  padding-top: 2px;
-}
-
-.heroMetaRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.heroMetaPill {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 11px;
-  border-radius: 999px;
-  background: var(--bw-surface-panel);
-  border: 1px solid var(--bw-border-subtle);
-  color: var(--color-text-primary);
-  font-size: 11px;
-  line-height: 1.35;
-  font-weight: 600;
-}
-
-.heroMetaPill:first-child {
-  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-}
-
-.entriesOverviewCard .entriesOverviewHeader,
-.toolsCard .sectionKicker,
-.squadRailCard .sectionKicker {
-  color: var(--dash-text-faint);
-}
-
-.bracketPreview {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: 10px;
-  margin-bottom: 0;
-  width: fit-content;
-  max-width: 1000px;
-  justify-content: start;
-}
-
-.bracketRound {
-  position: relative;
-  min-height: 166px;
-  padding: 12px;
-  border-radius: 18px;
-  background: var(--bw-surface-panel);
-  border: 1px solid var(--bw-border-subtle);
-}
-
-.prizeBreakdownCard {
-  min-height: auto;
-}
-
-.statTile:nth-child(1) {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 62%, transparent), inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
-}
-
-.statTile:nth-child(2) {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-success) 62%, transparent), inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
-}
-
 .modalScrollBody.settingsModalScrollBody .bracketSettingsCard {
   border-color: var(--dash-border-soft);
-}
-
-@media (max-width: 900px) {
-  .liveBoardCard,
-  .toolsCard,
-  .squadRailCard,
-  .entriesOverviewCard,
-  .statTile {
-    border-radius: 18px;
-  }
-
-  .liveBoardCard,
-  .toolsCard,
-  .entriesOverviewCard {
-    padding: 14px;
-  }
-
-  .heroTopRow {
-    padding-bottom: 8px;
-  }
-}
-
-.bracketRound:last-child::after {
-  display: none;
-}
-
-.bracketRoundTitle {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--color-text-primary);
-}
-
-.bracketMatchStack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.bracketMatch {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  background: var(--opacity-black-18);
-  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 84%, transparent);
-  color: var(--color-text-primary);
-  font-size: 11px;
-  line-height: 1.35;
-  font-weight: 600;
-}
-
-.bracketSubsection {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-top: 2px;
-}
-
-.prizeSectionTitle {
-  margin-top: 10px;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--color-text-secondary);
-  font-weight: 700;
-}
-
-.heroActionRail {
-  display: grid;
-  gap: 10px;
-}
-
-.heroWarningStrip {
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1.4;
-  padding: 7px 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.heroWarningStripWarning {
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 6%, transparent));
-  color: var(--bw-text-accent);
-}
-
-.heroWarningStripInfo {
-  border: 1px solid color-mix(in srgb, var(--bw-text-muted) 28%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-panel-strong) 90%, transparent), color-mix(in srgb, var(--bw-surface-panel) 92%, transparent));
-  color: var(--bw-text-title);
-}
-
-.heroWarningIcon {
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.heroWarningIconWarning {
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  color: var(--bw-text-accent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 26%, transparent);
-}
-
-.heroWarningIconInfo {
-  background: var(--bw-surface-panel-strong);
-  color: var(--bw-text-title);
-  border: 1px solid var(--bw-border-subtle);
-}
-
-.squadRail {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.squadRailCard {
-  border-radius: var(--radius-2xl);
-  padding: var(--space-card-y) var(--space-card-x);
-  background: var(--dash-surface);
-  border: 1px solid var(--dash-border);
-  box-shadow: var(--dash-shadow);
-}
-
-.gridTools .squadRailList {
-  flex: 1;
-}
-
-.squadRailList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.commissionerPanel {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-  width: 100%;
-  max-width: 440px;
-  justify-self: center;
-}
-
-.commissionerPanel .squadRailList {
-  flex: 0 0 auto;
-  gap: 7px;
-}
-
-.commissionerSectionTitle {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-secondary);
-  font-weight: 700;
-  margin-top: 2px;
-}
-
-.commissionerActionIndicator {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.commissionerActionIndicatorAccent {
-  color: var(--bw-text-accent);
-}
-
-.commissionerActionDisabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-  border-color: var(--bw-border-subtle);
-  background: var(--bw-surface-panel);
-}
-
-.commissionerActionDisabled:hover {
-  border-color: var(--bw-border-subtle);
-  background: var(--bw-surface-panel);
-}
-
-.commissionerActionDisabled .commissionerActionIndicator {
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.commissionerAdminRow {
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: var(--bw-surface-panel);
-  border-color: var(--bw-border-subtle);
-  color: var(--bw-text-body);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.commissionerAdminIndicator {
-  color: var(--bw-text-faint);
-  font-size: 12px;
-}
-
-.commissionerAdminRow:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
-  background: color-mix(in srgb, var(--color-primary) 7%, transparent);
-  color: var(--color-text-primary);
-}
-
-.commissionerAdminRow:hover .commissionerAdminIndicator {
-  color: var(--bw-text-accent);
-}
-
-.squadRailPill {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid var(--bw-border-subtle);
-  background: var(--bw-surface-panel);
-  color: var(--color-text-primary);
-  font-size: 12px;
-  line-height: 1.35;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.squadRailPill:hover {
-  background: var(--bw-surface-panel-strong);
-  border-color: var(--bw-border-card);
-}
-
-.statTile {
-  border-radius: 18px;
-  padding: 14px;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  background: color-mix(in srgb, var(--bw-surface-card-strong) 90%, transparent);
-  border: 1px solid var(--bw-border-subtle);
-  box-shadow: inset 0 1px 0 var(--bw-surface-panel), var(--bw-shadow-card);
-  transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.statTile::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(140deg, var(--bw-surface-panel-strong), transparent 55%);
-  pointer-events: none;
-}
-
-.statTile:hover {
-  transform: translateY(-1px);
-  border-color: var(--bw-border-card);
-  box-shadow: inset 0 1px 0 var(--bw-surface-panel-strong), var(--bw-shadow-card);
-}
-
-@media (max-width: 1200px) {
-  .summaryCardsBand .statTile {
-    flex-basis: calc((100% - (var(--entries-overview-gap) * 2)) / 3);
-    max-width: calc((100% - (var(--entries-overview-gap) * 2)) / 3);
-  }
-}
-
-@media (max-width: 900px) {
-  .summaryCardsBand .statTile {
-    flex-basis: calc((100% - var(--entries-overview-gap)) / 2);
-    max-width: calc((100% - var(--entries-overview-gap)) / 2);
-  }
-}
-
-@media (max-width: 640px) {
-  .summaryCardsBand .statTile {
-    flex-basis: 100%;
-    max-width: 100%;
-    min-width: 0;
-  }
-}
-
-.statStatusRow {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  margin-bottom: 8px;
-}
-
-.statStatusBadge {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border-radius: 999px;
-  padding: 4px 9px;
-  border: 1px solid var(--bw-border-subtle);
-  color: var(--color-text-secondary);
-  background: var(--bw-surface-panel);
-}
-
-.statStatusBadgeActive {
-  color: var(--bw-text-title);
-}
-
-.statStatusBadgeMuted {
-  color: var(--bw-text-muted);
-  border-color: var(--bw-border-subtle);
-}
-
-.statStatusBadgeAccent {
-  color: var(--bw-text-accent);
-  border-color: color-mix(in srgb, var(--color-primary) 24%, var(--bw-border-subtle));
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.statLabel {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  line-height: 1.35;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.statValue {
-  font-size: clamp(24px, 2.2vw, 30px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
-  color: var(--color-text-primary);
-}
-
-.statValueAccent {
-  color: var(--color-brand-amber);
-}
-
-.statCaption {
-  margin-top: 4px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--color-text-secondary);
-}
-
-.statCaptionMuted {
-  margin-top: 3px;
-  font-size: 11px;
-  line-height: 1.32;
-  color: var(--dash-text-muted);
 }
 
 .advancedGrid {
   display: grid;
   grid-template-columns: repeat(2, auto);
-  gap: 16px;
+  gap: var(--space-4);
   align-items: start;
   width: fit-content;
   margin: 0 auto;
@@ -697,10 +30,7 @@
 }
 
 .advancedGrid .bracketSettingsCard,
-.advancedGrid .squadSelectionCard,
 .advancedGrid .mainBracketSettingsCard,
-.advancedGrid .optionalBracketsCard,
-.advancedGrid .byeSettingsCard,
 .advancedGrid .sidePotsCard {
   background: var(--dash-surface-soft);
   border-color: var(--dash-border-faint);
@@ -708,40 +38,40 @@
 }
 
 .advancedGrid .settingsHeader {
-  padding: 14px 18px 12px;
+  padding: var(--space-3-5) var(--space-5) var(--space-3);
   border-bottom: 1px solid var(--dash-border-faint);
 }
 
 .advancedGrid .settingsTitle {
-  font-size: 18px;
+  font-size: var(--font-size-2xl);
   font-weight: 600;
 }
 
 .advancedGrid .settingsMeta {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
 .advancedGrid .settingsContent {
-  padding: 12px 16px 16px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
 }
 
 .advancedGrid .sectionHeader {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
   padding-bottom: 0;
 }
 
 .advancedGrid .sectionTitle {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   margin-bottom: 0;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .advancedGrid .programCard {
-  padding: 8px 10px;
-  border-radius: 12px;
+  padding: var(--space-2) var(--space-2-5);
+  border-radius: var(--radius-lg);
   background: var(--dash-surface-strong);
   border: 1px solid var(--dash-border-faint);
 }
@@ -749,13 +79,13 @@
 .advancedGrid .compactField {
   background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-  border-radius: 10px;
-  padding: 7px;
-  gap: 5px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+  gap: var(--space-1-5);
 }
 
 .advancedGrid .compactLabel {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -763,19 +93,11 @@
 }
 
 .settingsModalGrid {
-  gap: 20px;
-}
-
-.advancedGrid .compactSelect,
-.advancedGrid .compactInput {
-  font-size: 13px;
-  border-color: var(--dash-border-faint);
-  background: var(--dash-surface-soft);
-  color: var(--color-text-primary);
+  gap: var(--space-5);
 }
 
 .modalOverlayTop {
-  z-index: 2000;
+  z-index: var(--z-dialog);
 }
 
 /* Responsive adjustments */
@@ -787,19 +109,18 @@
   align-items: flex-start;
   align-content: flex-start;
   justify-content: center;
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
   overflow-x: clip;
 }
 
 @media (max-width: 640px) {
   .cardsContainer {
     flex-direction: column;
-    gap: 24px;
+    gap: var(--space-6);
   }
 
-  .bracketSettingsCard,
-  .squadSelectionCard {
+  .bracketSettingsCard {
     flex: 0 0 100%;
     width: 100%;
   }
@@ -818,21 +139,19 @@
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
-  gap: 16px;
+  gap: var(--space-4);
   flex: 1;
 }
 
 .settingsModalGrid .bracketSettingsCard,
 .settingsModalGrid .mainBracketSettingsCard,
-.settingsModalGrid .optionalBracketsCard,
-.settingsModalGrid .byeSettingsCard,
 .settingsModalGrid .sidePotsCard {
   display: flex;
   flex-direction: column;
   width: fit-content;
   max-width: none;
   min-width: 0;
-  border-radius: 22px;
+  border-radius: var(--radius-3xl);
   background: var(--dash-surface-deep);
   border: 1px solid var(--dash-border);
   box-shadow: 0 10px 26px var(--opacity-black-30), inset 0 1px 0 var(--bw-surface-panel);
@@ -840,7 +159,7 @@
 
 .settingsModalGrid .mainBracketSettingsCard,
 .settingsModalGrid .sidePotsCard {
-  min-height: 388px;
+  min-height: var(--space-96);
 }
 
 .programsSettingsCard {
@@ -851,89 +170,82 @@
 }
 
 .settingsModalGrid .settingsHeader {
-  padding: 14px 16px 10px;
+  padding: var(--space-3-5) var(--space-4) var(--space-2-5);
   border-bottom: 1px solid var(--dash-border-soft);
 }
 
 .settingsModalGrid .settingsTitle {
-  font-size: 21px;
+  font-size: var(--font-size-3xl);
   font-weight: 700;
 }
 
 .settingsModalGrid .settingsMeta {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   color: var(--dash-text-muted);
 }
 
 .settingsModalGrid .settingsTitleBlock {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .settingsModalGrid .settingsContent {
   flex: 1;
-  padding: 12px 14px 14px;
-  gap: 10px;
+  padding: var(--space-3) var(--space-3-5) var(--space-3-5);
+  gap: var(--space-2-5);
 }
 
 .settingsModalGrid .sectionHeader {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
 }
 
 .settingsModalGrid .sectionTitle {
-  font-size: 14px;
+  font-size: var(--font-size-md);
   font-weight: 700;
 }
 
 .settingsSectionHint {
-  margin: -2px 0 6px;
-  font-size: 12px;
+  margin: calc(var(--space-0-5) * -1) 0 var(--space-1-5);
+  font-size: var(--font-size-sm);
   color: var(--dash-text-muted);
   line-height: 1.4;
 }
 
-.settingsFieldHint {
-  margin: 4px 0 0;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--dash-text-muted);
-}
-
 .settingsModalGrid .fieldGroup {
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .settingsModalGrid .mainBracketSettingsCard .settingsGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .settingsModalGrid .mainBracketSettingsCard .settingsColumn,
 
   .settingsModalGrid .mainBracketSettingsCard .settingsGrid {
-    gap: 10px;
+    gap: var(--space-2-5);
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsColumn {
     background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
     border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
-    border-radius: 12px;
-    padding: 8px 9px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-2-5);
   }
 
   .settingsModalGrid .mainBracketSettingsCard .sectionHeader,
   .settingsModalGrid .sidePotsCard .sectionHeader,
   .settingsModalGrid .programsSettingsCard .sectionHeader {
     border-bottom: none;
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
     padding: 0;
   }
 
   .settingsModalGrid .mainBracketSettingsCard .sectionTitle,
   .settingsModalGrid .sidePotsCard .sectionTitle,
   .settingsModalGrid .programsSettingsCard .sectionTitle {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     letter-spacing: 0.03em;
     text-transform: uppercase;
     color: color-mix(in srgb, var(--bw-text-muted) 88%, transparent);
@@ -941,15 +253,15 @@
 
   .settingsModalGrid .mainBracketSettingsCard .fieldGroup,
   .settingsModalGrid .sidePotsCard .fieldGroup {
-    gap: 7px;
+    gap: var(--space-2);
   }
 
   .settingsModalGrid .compactField {
     background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
     border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-    border-radius: 10px;
-    padding: 7px;
-    gap: 5px;
+    border-radius: var(--radius-lg);
+    padding: var(--space-2);
+    gap: var(--space-1-5);
   }
 
   /* Bracket Settings: drop the boxed look around individual inputs */
@@ -961,69 +273,35 @@
   }
 
   .settingsModalGrid .settingsCalculatedSummary {
-    margin-top: 6px;
-    padding-top: 8px;
+    margin-top: var(--space-1-5);
+    padding-top: var(--space-2);
     border-top-color: color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-    gap: 5px;
+    gap: var(--space-1-5);
   }
 
   .settingsModalGrid .settingsCalculatedSummaryRow {
     background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
     border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent);
-    border-radius: 9px;
-    padding: 6px 8px;
-    font-size: 11px;
+    border-radius: var(--radius-md);
+    padding: var(--space-1-5) var(--space-2);
+    font-size: var(--font-size-xs);
   }
 
   .settingsModalGrid .settingsCalculatedSummaryRow strong {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
-.settingsModalGrid .mainBracketSettingsCard .settingsSection,
 .settingsModalGrid .mainBracketSettingsCard .sectionHeader,
 .settingsModalGrid .mainBracketSettingsCard .fieldGroup {
   width: 100%;
 }
 
-.settingsModalGrid .mainBracketSettingsCard .compactSelect,
-.settingsModalGrid .mainBracketSettingsCard .compactInputWrapper,
-.settingsModalGrid .mainBracketSettingsCard .handicapField > .compactInput,
-.settingsModalGrid .mainBracketSettingsCard .handicapField > .compactInputWrapper {
+.settingsModalGrid .mainBracketSettingsCard .compactInputWrapper {
   width: 100%;
-}
-
-.settingsModalGrid .compactSelect,
-.settingsModalGrid .compactInput {
-  min-height: 36px;
-  background: var(--dash-input-surface);
-  border: 1px solid var(--dash-border-soft);
-  color: var(--dash-text-title);
-  border-radius: 9px;
-}
-
-.settingsModalGrid .compactSelect:focus,
-.settingsModalGrid .compactInput:focus {
-  border-color: var(--dash-accent-border-strong);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
-}
-
-.settingsModalGrid .compactInputReadOnly {
-  background: var(--dash-input-surface-disabled) !important;
-  color: var(--dash-text-body) !important;
-  border-color: var(--dash-border) !important;
-}
-
-.settingsModalGrid .compactInput:disabled,
-.settingsModalGrid .compactSelect:disabled {
-  opacity: 0.62;
-  cursor: not-allowed;
-  background: var(--dash-input-surface-disabled);
-  color: var(--dash-text-muted);
-  border-color: var(--dash-border);
 }
 
 .settingsModalGrid .compactLabel {
   color: var(--dash-text-body);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1031,9 +309,9 @@
 .settingsModalGrid .programCard {
   border: 1px solid var(--dash-border);
   border-left: 1px solid var(--dash-border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--dash-input-surface-disabled);
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-2-5);
 }
 
 .settingsModalGrid .programCardChecked {
@@ -1044,17 +322,17 @@
 .settingsModalGrid .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
   color: var(--dash-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
 }
 
 .settingsModalGrid .checkboxInput {
   appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
   background: color-mix(in srgb, var(--bw-surface-panel) 96%, transparent);
   display: inline-grid;
@@ -1064,8 +342,8 @@
 
 .settingsModalGrid .checkboxInput::after {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   transform: scale(0);
   transition: transform 120ms ease-in-out;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
@@ -1084,9 +362,9 @@
 .settingsModalGrid .sidePotSharedFee {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding-bottom: 8px;
-  margin-bottom: 2px;
+  gap: var(--space-2-5);
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-0-5);
   border-bottom: 1px solid var(--dash-border-soft);
 }
 
@@ -1097,7 +375,7 @@
 .settingsProgramsGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .settingsProgramsColumn {
@@ -1106,118 +384,36 @@
 
 .settingsProgramsColumnSecondary {
   border-left: 1px solid var(--dash-border);
-  padding-left: 12px;
+  padding-left: var(--space-3);
 }
 
 .settingsCalculatedSummary {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   border-top: 1px solid var(--dash-border);
-  padding-top: 10px;
+  padding-top: var(--space-2-5);
   display: grid;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .settingsCalculatedSummaryRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  font-size: 12px;
+  gap: var(--space-2-5);
+  font-size: var(--font-size-sm);
   color: var(--dash-text-muted);
 }
 
 .settingsCalculatedSummaryRow strong {
   color: var(--dash-text-title);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
-}
-
-.settingsModalGrid .byeSettingsCard .programList {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
 }
 
 .programListTwoColumn {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.settingsModalFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  position: sticky;
-  bottom: 0;
-  z-index: 4;
-  margin-top: auto;
-  padding: 12px 10px 6px;
-  border-top: 1px solid var(--dash-border);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 76%, transparent), color-mix(in srgb, var(--bw-surface-card) 94%, transparent));
-  backdrop-filter: blur(10px);
-}
-
-.settingsModalFooterStatus {
-  font-size: 13px;
-  color: var(--dash-text-body);
-  font-weight: 600;
-}
-
-.settingsModalFooterStatusSaved {
-  color: var(--dash-text-muted);
-}
-
-.settingsModalFooterStatusUnsaved {
-  color: var(--dash-text-accent);
-}
-
-.settingsModalFooterActions {
-  display: flex;
-  gap: 10px;
-}
-
-.settingsFooterCancelButton,
-.settingsFooterSaveButton {
-  border-radius: 10px;
-  padding: 10px 14px;
-  min-width: 122px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.settingsFooterCancelButton {
-  background: var(--dash-input-surface);
-  color: var(--dash-text-title);
-  border: 1px solid var(--dash-border-soft);
-}
-
-.settingsFooterSaveButton {
-  background: var(--dash-input-surface-disabled);
-  color: var(--color-white);
-  border: 1px solid var(--dash-border-soft);
-  box-shadow: none;
-}
-
-.settingsFooterSaveButtonActive {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%));
-  border-color: color-mix(in srgb, var(--bw-text-accent) 34%, transparent);
-  box-shadow: none;
-}
-
-.settingsFooterSaveButtonIdle {
-  background: var(--dash-input-surface-disabled);
-  border-color: var(--dash-border-soft);
-  color: var(--dash-text-body);
-}
-
-.settingsFooterCancelButton:disabled,
-.settingsFooterSaveButton:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  box-shadow: none !important;
+  gap: var(--space-2);
 }
 
 @media (max-width: 980px) {
@@ -1232,33 +428,33 @@
   }
 
   .modalCard.settingsModalCard {
-    width: min(1320px, calc(100vw - 12px));
+    width: min(var(--size-9xl), calc(100vw - var(--space-3)));
     max-height: 94vh;
-    border-radius: 24px;
+    border-radius: var(--radius-3xl);
   }
 
   .modalScrollBody.settingsModalScrollBody {
-    padding: 10px 8px 10px;
+    padding: var(--space-2-5) var(--space-2) var(--space-2-5);
   }
 
   .settingsModalGrid {
-    gap: 16px;
+    gap: var(--space-4);
   }
 
   .settingsModalGrid .settingsHeader {
-    padding: 14px 16px 12px;
+    padding: var(--space-3-5) var(--space-4) var(--space-3);
   }
 
   .settingsModalGrid .settingsContent {
-    padding: 14px 16px 16px;
+    padding: var(--space-3-5) var(--space-4) var(--space-4);
   }
 
   .settingsModalGrid .settingsTitle {
-    font-size: 19px;
+    font-size: var(--font-size-3xl);
   }
 
   .settingsModalGrid .sectionTitle {
-    font-size: 15px;
+    font-size: var(--font-size-lg);
   }
 
   .programListTwoColumn {
@@ -1266,14 +462,13 @@
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsGrid,
-  .settingsModalGrid .sidePotSharedFee,
-  .settingsModalGrid .byeSettingsCard .programList {
+  .settingsModalGrid .sidePotSharedFee {
     grid-template-columns: 1fr;
   }
 
   .settingsProgramsGrid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: var(--space-2-5);
   }
 
   .settingsProgramsColumnSecondary {
@@ -1286,48 +481,27 @@
   .settingsModalGrid .programsSettingsCard {
     min-height: 0;
   }
-
-  .settingsModalFooter {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .settingsModalFooterActions {
-    width: 100%;
-  }
-
-  .settingsFooterCancelButton,
-  .settingsFooterSaveButton {
-    flex: 1;
-  }
 }
 
 @media (max-width: 480px) {
   .modalOverlay.settingsModalOverlay {
-    padding: 6px;
+    padding: var(--space-1-5);
   }
 
   .modalCard.settingsModalCard {
     min-width: 0;
-    width: calc(100vw - 16px);
-    border-radius: 18px;
+    width: calc(100vw - var(--space-4));
+    border-radius: var(--radius-2xl);
   }
 
   .modalScrollBody.settingsModalScrollBody {
-    padding: 10px 8px 10px;
-  }
-
-  .settingsModalFrame {
-    height: min(70vh, 560px);
-    min-height: 420px;
-    border-radius: 14px;
+    padding: var(--space-2-5) var(--space-2) var(--space-2-5);
   }
 
   .cardsContainer {
     width: 100%;
-    gap: 20px;
-    margin-bottom: 24px;
+    gap: var(--space-5);
+    margin-bottom: var(--space-6);
   }
   
   .bracketSettingsCard {
@@ -1351,10 +525,8 @@
     max-width: 100%;
   }
 
-  .mainBracketSettingsCard .settingsSection,
   .mainBracketSettingsCard .sectionHeader,
-  .mainBracketSettingsCard .fieldGroup,
-  .mainBracketSettingsCard .handicapContainer {
+  .mainBracketSettingsCard .fieldGroup {
     width: 100%;
     max-width: 100%;
   }
@@ -1365,116 +537,81 @@
   }
   
   .settingsTitle {
-    font-size: 20px;
+    font-size: var(--font-size-3xl);
   }
 
-  .mainBracketSettingsCard .compactSelect,
   .mainBracketSettingsCard .compactInputWrapper {
     width: 100%;
     min-width: 0;
   }
 
-  .mainBracketSettingsCard .handicapField > .compactInput {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .compactSelect,
-  .compactInput {
-    font-size: 16px;
-    padding: 10px 12px;
-  }
-
   .sectionTitle {
-    font-size: 15px;
-  }
-  
-  .summaryGrid {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    font-size: var(--font-size-lg);
   }
   
   .settingsGrid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: var(--space-5);
   }
 }
 
 @media (min-width: 641px) and (max-width: 900px) {
   .cardsContainer {
-    column-gap: 12px;
-    row-gap: 6px;
-    margin-bottom: 16px;
+    column-gap: var(--space-3);
+    row-gap: var(--space-1-5);
+    margin-bottom: var(--space-4);
   }
 
   .bracketSettingsCard {
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
   }
 
   .settingsHeader {
-    padding: 10px 14px 8px;
+    padding: var(--space-2-5) var(--space-3-5) var(--space-2);
   }
 
   .settingsTitle {
-    font-size: 16px;
+    font-size: var(--font-size-xl);
   }
 
   .mainBracketSettingsCard .settingsContent {
-    padding: 8px 12px 10px;
-    gap: 4px;
-  }
-
-  .optionalBracketsCard .settingsContent {
-    padding: 6px 10px 10px;
-  }
-
-  .optionalBracketsCard .settingsHeader {
-    padding: 10px 14px 8px;
+    padding: var(--space-2) var(--space-3) var(--space-2-5);
+    gap: var(--space-1);
   }
 
   .compactLabel {
-    font-size: 11px;
-  }
-
-  .compactSelect,
-  .compactInput {
-    font-size: 12px;
-    padding: 5px 8px;
+    font-size: var(--font-size-xs);
   }
 
   .sectionTitle {
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-1-5);
   }
 
   .programCard {
-    padding: 6px 10px;
-    border-radius: 8px;
+    padding: var(--space-1-5) var(--space-2-5);
+    border-radius: var(--radius-md);
   }
 
   .checkboxLabel {
-    font-size: 12px;
-    gap: 7px;
+    font-size: var(--font-size-sm);
+    gap: var(--space-2);
   }
 
   .checkboxInput {
-    width: 15px;
-    height: 15px;
-  }
-
-  .squadSelectionCompactCard .settingsHeader {
-    padding: 10px 14px 8px;
+    width: var(--space-4);
+    height: var(--space-4);
   }
 
   .sidePotsCard .settingsContent {
-    padding: 8px 10px 10px;
-    gap: 8px;
+    padding: var(--space-2) var(--space-2-5) var(--space-2-5);
+    gap: var(--space-2);
   }
 }
 
 .bracketSettingsCard {
   background: color-mix(in srgb, var(--bw-surface-card) 78%, transparent);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   padding: 0;
   box-shadow: 0 12px 36px var(--opacity-black-35), inset 0 1px 0 var(--opacity-white-04);
   border: 1px solid var(--opacity-white-08);
@@ -1482,37 +619,13 @@
   overflow: hidden;
   flex: 0 0 auto;
   width: max-content;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.advancedGrid .bracketSettingsCard,
-.advancedGrid .squadSelectionCard {
+.advancedGrid .bracketSettingsCard {
   width: 100%;
   max-width: none;
   flex: 1 1 auto;
-}
-
-.optionalBracketsCard .settingsHeader {
-  padding: 16px 18px 12px;
-}
-
-.optionalBracketsCard .settingsContent {
-  padding: 10px 12px 12px;
-  gap: 6px;
-}
-
-.optionalBracketsCard .programList {
-  gap: 6px;
-}
-
-.optionalBracketsCard .programCard {
-  padding: 8px 10px;
-  border-radius: 10px;
-}
-
-.optionalBracketsCard .checkboxLabel {
-  font-size: 13px;
-  gap: 8px;
 }
 
 .mainBracketSettingsCard {
@@ -1527,41 +640,27 @@
 .mainBracketSettingsCard .settingsContent {
   max-width: 100%;
   align-self: flex-start;
-  gap: 6px;
-  padding: 10px 16px 12px;
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) var(--space-4) var(--space-3);
 }
 
 .mainBracketSettingsCard .settingsGrid {
   display: inline-grid;
   grid-template-columns: max-content max-content;
   justify-content: start;
-  column-gap: 12px;
-  row-gap: 4px;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
 }
 
 .mainBracketSettingsCard .settingsColumn {
-  gap: 4px;
-}
-
-.mainBracketSettingsCard .settingsSection {
-  width: max-content;
-  max-width: 100%;
-  margin-bottom: 6px;
+  gap: var(--space-1);
 }
 
 .mainBracketSettingsCard .sectionHeader {
   width: max-content;
   max-width: 100%;
-  margin-bottom: 4px;
-  padding-bottom: 3px;
-}
-
-.mainBracketSettingsCard .handicapContainer {
-  width: max-content;
-  max-width: 100%;
-  grid-template-columns: max-content auto max-content;
-  justify-content: start;
-  gap: 8px;
+  margin-bottom: var(--space-1);
+  padding-bottom: var(--space-1);
 }
 
 .mainBracketSettingsCard .fieldGroup {
@@ -1573,28 +672,28 @@
 
 .mainBracketSettingsCard .fieldGroup > .compactField {
   flex: 1 1 0;
-  min-width: 96px;
+  min-width: var(--space-24);
 }
 
 .mainBracketSettingsCard .settingsHeader {
   width: 100%;
   justify-content: flex-start;
-  padding: 14px 16px 12px;
+  padding: var(--space-3-5) var(--space-4) var(--space-3);
 }
 
 .settingsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
+  padding: var(--space-5) var(--space-6) var(--space-4);
   background: linear-gradient(180deg, var(--opacity-white-04) 0%, color-mix(in srgb, var(--opacity-white-04) 50%, transparent) 100%);
   border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .settingsTitle {
-  font-size: 22px;
+  font-size: var(--font-size-4xl);
   font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.025em;
@@ -1602,64 +701,51 @@
   flex: 0 0 auto;
 }
 
-.settingsSection {
-  margin-bottom: 8px;
-}
-
-.settingsSection:last-child {
-  margin-bottom: 0;
-}
-
 .sectionTitle {
-  font-size: 16px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.formGrid {
-  display: grid;
-  gap: 28px;
+  gap: var(--space-2);
 }
 
 /* Compact Settings Layout */
 .settingsContent {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 20px 18px;
+  gap: var(--space-2);
+  padding: var(--space-3-5) var(--space-5) var(--space-5);
 }
 
 .advancedGrid .settingsContent {
-  padding: 16px 20px 20px;
+  padding: var(--space-4) var(--space-5) var(--space-5);
 }
 
 .settingsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .settingsColumn {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .programList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .programCard {
   border: 1px solid var(--opacity-white-08);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--opacity-white-06) 50%, transparent);
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   display: flex;
   align-items: center;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -1673,14 +759,14 @@
 .sectionHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1-5);
+  padding-bottom: var(--space-1);
   border-bottom: 1px solid var(--color-border-soft);
 }
 
 .sectionTitle {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -1689,43 +775,19 @@
 .fieldGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .compactField {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .compactLabel {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
-}
-
-.compactSelect, .compactInput {
-  width: 100%;
-  background: var(--color-white);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: 7px;
-  padding: 6px 9px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  transition: all 0.2s ease;
-}
-
-.compactSelect:focus, .compactInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-border-light);
-}
-
-.compactInputReadOnly {
-  background: var(--opacity-black-18) !important;
-  color: color-mix(in srgb, var(--bw-text-title) 58%, transparent) !important;
-  cursor: default;
 }
 
 .compactInputWrapper {
@@ -1735,40 +797,17 @@
   width: 100%;
 }
 
-.mainBracketSettingsCard .compactSelect,
 .mainBracketSettingsCard .compactInputWrapper {
-  width: 96px;
+  width: var(--space-24);
   min-width: 0;
-}
-
-.mainBracketSettingsCard .handicapField > .compactInput,
-.mainBracketSettingsCard .handicapField > .compactInputWrapper {
-  width: 56px;
-  min-width: 0;
-}
-
-.mainBracketSettingsCard .handicapField .compactInputWrapper .compactInput {
-  width: 100%;
-  padding-right: 20px;
-}
-
-.handicapPercentRow .compactInput {
-  width: 56px;
-}
-
-.handicapField {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 /* BYE checkbox */
 .checkboxLabel {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: var(--space-2-5);
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text-primary);
   cursor: pointer;
@@ -1777,9 +816,9 @@
 
 .checkboxInput {
   appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
+  width: var(--space-5);
+  height: var(--space-5);
+  border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 96%, transparent);
   background: color-mix(in srgb, var(--bw-surface-panel) 96%, transparent);
   display: inline-grid;
@@ -1791,8 +830,8 @@
 
 .checkboxInput::after {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: var(--space-2);
+  height: var(--space-2);
   transform: scale(0);
   transition: transform 120ms ease-in-out;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
@@ -1815,51 +854,15 @@
 
 /* Calculation Summary Styles */
 
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.fieldLabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--bw-text-title) 72%, transparent);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.inputIcon.right {
-  right: 12px;
-}
-
-.enhancedInput.error {
-  border-color: var(--color-red-dark);
-  background: var(--color-hc-error-bg);
-}
-
-.enhancedInput.error:focus {
-  border-color: var(--color-red-dark);
-  box-shadow:
-    0 0 0 3px var(--color-error-input-bg),
-    0 1px 3px var(--opacity-black-02);
-}
-
-.handicapField {
-  flex: 1;
-}
-
 @media (max-width: 767px) {
   .bracketSettingsCard {
-    border-radius: 16px;
-    margin: 0 -4px;
+    border-radius: var(--radius-xl);
+    margin: 0 calc(var(--space-1) * -1);
   }
 
   .advancedGrid {
     grid-template-columns: 1fr;
-    padding: 12px;
+    padding: var(--space-3);
   }
 
   .advancedGrid > :global(.squadSelectionCard),
@@ -1887,10 +890,8 @@
     max-width: 100%;
   }
 
-  .mainBracketSettingsCard .settingsSection,
   .mainBracketSettingsCard .sectionHeader,
-  .mainBracketSettingsCard .fieldGroup,
-  .mainBracketSettingsCard .handicapContainer {
+  .mainBracketSettingsCard .fieldGroup {
     width: 100%;
     max-width: 100%;
   }
@@ -1898,31 +899,20 @@
   .settingsHeader {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
-  .mainBracketSettingsCard .compactSelect,
   .mainBracketSettingsCard .compactInputWrapper {
     width: 100%;
     min-width: 0;
   }
-
-  .mainBracketSettingsCard .handicapField > .compactInput {
-    width: 100%;
-    min-width: 0;
-  }
-  
-  .formGrid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
   
   .settingsTitle {
-    font-size: 20px;
+    font-size: var(--font-size-3xl);
   }
   
   .sectionTitle {
-    font-size: 15px;
+    font-size: var(--font-size-lg);
   }
 }
 
@@ -1934,57 +924,27 @@
 }
 
 .sidePotsCard .settingsContent {
-  padding: 10px 14px 14px;
-  gap: 10px;
-}
-
-.sidePotsCard .compactInput:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  padding: var(--space-2-5) var(--space-3-5) var(--space-3-5);
+  gap: var(--space-2-5);
 }
 
 .sidePotSharedFee {
   display: flex;
   flex-direction: row;
-  gap: 10px;
-  padding-bottom: 10px;
-  margin-bottom: 4px;
+  gap: var(--space-2-5);
+  padding-bottom: var(--space-2-5);
+  margin-bottom: var(--space-1);
   border-bottom: 2px solid var(--color-border-soft);
 }
 
 .sidePotSharedFee .compactInputWrapper {
-  width: 80px;
-}
-
-.squadTime {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.squadPillEnhanced.selected {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-white);
-  font-weight: 600;
-  box-shadow: 0 4px 12px var(--color-border-hover);
-  outline: 1px solid var(--color-white-glass);
-}
-
-.squadPillEnhanced.selected .squadDate,
-.squadPillEnhanced.selected .squadTimeSlot {
-  color: var(--color-white);
-}
-
-.squadPillEnhanced.selected:hover {
-  background: var(--color-primary-hover);
-  transform: translateY(-1px);
+  width: var(--space-20);
 }
 
 .createTournamentModalContent {
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - 48px);
+  max-height: calc(100dvh - var(--space-12));
   overflow: hidden;
 }
 
@@ -1998,47 +958,14 @@
 
 
 /* Match footer to modal body and round its bottom corners to fit the card */
-
-@media (min-width: 768px) {
-  .formGrid {
-    grid-template-columns: 1fr;
-  }
-}
 /* Header Action Buttons */
-.devButton {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1.5px dashed var(--opacity-white-35);
-  background: var(--opacity-white-08);
-  color: var(--opacity-white-60);
-  cursor: pointer;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.devButton:hover {
-  background: var(--color-border-light);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-@media (max-width: 480px) {
-
-  .devButton {
-    width: 100%;
-    max-width: none;
-    min-height: var(--touch-target-comfortable);
-  }
-}
 
 /* ── Edit / Create Tournament modal redesign ───────────────────── */
 .tournamentModalContent {
-  width: min(900px, calc(100vw - 20px));
-  min-width: min(420px, 100%);
-  max-height: min(96vh, 1060px);
-  border-radius: 28px;
+  width: min(var(--size-5xl), calc(100vw - var(--space-5)));
+  min-width: min(var(--size-md), 100%);
+  max-height: min(96vh, var(--size-7xl));
+  border-radius: var(--radius-3xl);
   border: 1px solid var(--dash-border);
   background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 40%, transparent) 28%, color-mix(in srgb, var(--bw-surface-card) 94%, transparent) 100%);
   box-shadow: 0 30px 80px color-mix(in srgb, var(--color-black) 50%, transparent), 0 0 0 1px var(--bw-surface-panel) inset;
@@ -2056,11 +983,11 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding: 14px 24px 12px;
+  padding: var(--space-3-5) var(--space-6) var(--space-3);
   --bw-form-bg: var(--opacity-black-20);
   --bw-form-text: var(--color-text-primary);
   --bw-form-placeholder: var(--dash-text-muted);
-  --bw-form-radius: 11px;
+  --bw-form-radius: var(--radius-lg);
   --bw-form-border-default: var(--bw-border-subtle);
   --bw-form-border-hover: color-mix(in srgb, var(--bw-border-subtle) 132%, transparent);
   --bw-form-border-focus: var(--color-primary);
@@ -2068,8 +995,8 @@
 }
 
 .tournamentSectionLabel {
-  margin: 4px 0 8px;
-  font-size: 10px;
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: var(--font-size-2xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -2079,7 +1006,7 @@
 .tournamentFormFields {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .tournamentFormFields :global(.form-field) {
@@ -2102,12 +1029,12 @@
 .tournamentDateRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .squadTimesSection {
-  margin-top: 14px;
-  padding-top: 10px;
+  margin-top: var(--space-3-5);
+  padding-top: var(--space-2-5);
   border-top: 1px solid var(--dash-border);
 }
 
@@ -2115,8 +1042,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: var(--space-2-5);
+  margin-bottom: var(--space-2);
 }
 
 .squadTimesTitle {
@@ -2127,12 +1054,12 @@
 }
 
 .squadTimesCount {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--color-text-secondary);
   border: 1px solid var(--dash-border-soft);
-  border-radius: 999px;
-  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-2-5);
   background: var(--dash-input-surface);
 }
 
@@ -2145,8 +1072,8 @@
 .squadDay {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px 0;
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) 0;
   border-bottom: 1px solid color-mix(in srgb, var(--dash-border) 70%, transparent);
 }
 
@@ -2163,18 +1090,18 @@
 .squadTimesList {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .squadTimeEntry {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 12px;
+  padding: var(--space-2-5) var(--space-3);
+  border-radius: var(--radius-lg);
   background: var(--dash-input-surface);
   border: 1px solid var(--dash-border);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -2186,9 +1113,9 @@
 .squadTimeRemove {
   background: color-mix(in srgb, var(--bw-surface-panel) 70%, transparent);
   border: 1px solid var(--dash-border-soft);
-  border-radius: 9px;
-  padding: 5px 10px;
-  font-size: 11px;
+  border-radius: var(--radius-md);
+  padding: var(--space-1-5) var(--space-2-5);
+  font-size: var(--font-size-xs);
   color: var(--dash-text-body);
   cursor: pointer;
   font-weight: 700;
@@ -2205,26 +1132,26 @@
 .squadTimeAddRow {
   display: flex;
   align-items: stretch;
-  gap: 10px;
-  margin-top: 6px;
+  gap: var(--space-2-5);
+  margin-top: var(--space-1-5);
 }
 
 .squadTimeSelect {
-  width: min(280px, 100%);
+  width: min(var(--space-72), 100%);
   flex: 1;
-  min-height: 40px;
+  min-height: var(--space-10);
   color: var(--color-text-primary);
 }
 
 .squadTimeAddBtn {
   flex: none;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 10px;
+  min-height: var(--space-10);
+  padding: 0 var(--space-3-5);
+  border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-white)) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%)) !important;
   color: var(--color-white);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -2246,8 +1173,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 10px 20px;
+  gap: var(--space-3-5);
+  padding: var(--space-2-5) var(--space-5);
   border-top: 1px solid color-mix(in srgb, var(--dash-border) 76%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 90%, transparent), color-mix(in srgb, var(--bw-surface-card) 98%, transparent));
   backdrop-filter: blur(8px);
@@ -2255,7 +1182,7 @@
 }
 
 .tournamentSaveStatus {
-  font-size: 12px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
@@ -2270,17 +1197,17 @@
 .tournamentModalFooterActions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .tournamentCancelButton {
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 10px;
+  min-height: var(--space-10);
+  padding: 0 var(--space-3-5);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--dash-border-soft);
   background: var(--dash-input-surface);
   color: var(--dash-text-title);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -2292,13 +1219,13 @@
 }
 
 .tournamentSaveButton {
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 10px;
+  min-height: var(--space-10);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-white));
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%));
   color: var(--color-white);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
   transition: border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
@@ -2318,29 +1245,6 @@
   box-shadow: none;
 }
 
-.cancelBtn {
-  flex: 1;
-  padding: 9px 20px;
-  border-radius: 8px;
-  border: 1.5px solid var(--color-brand-orange);
-  background: transparent;
-  color: var(--color-brand-orange);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.cancelBtn:hover:not(:disabled) {
-  background: var(--color-brand-orange);
-  color: var(--color-white);
-}
-
-.cancelBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .closeBtn {
   background: var(--color-primary) !important;
   color: var(--color-white) !important;
@@ -2356,19 +1260,19 @@
 
 @media (max-width: 720px) {
   .tournamentModalContent {
-    width: min(100vw, calc(100vw - 12px));
+    width: min(100vw, calc(100vw - var(--space-3)));
     min-width: 0;
-    max-height: calc(100dvh - 24px);
-    border-radius: 22px;
+    max-height: calc(100dvh - var(--space-6));
+    border-radius: var(--radius-3xl);
   }
 
   .tournamentFormBody {
-    padding: 14px 14px 12px;
+    padding: var(--space-3-5) var(--space-3-5) var(--space-3);
   }
 
   .tournamentDateRow {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: var(--space-2-5);
   }
 
   .squadTimeAddRow {
@@ -2384,8 +1288,8 @@
   .tournamentModalFooter {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 12px 14px;
+    gap: var(--space-2-5);
+    padding: var(--space-3) var(--space-3-5);
   }
 
   .tournamentModalFooterActions {
@@ -2400,15 +1304,15 @@
 
 /* Content container */
 .contentContainer {
-  max-width: 1600px;
+  max-width: var(--size-11xl);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-4);
   position: relative;
 }
 
 @media (max-width: 480px) {
   .contentContainer {
-    padding: 0 8px;
+    padding: 0 var(--space-2);
   }
 }
 
@@ -2424,14 +1328,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: var(--space-5);
   background: var(--overlay-dark);
   backdrop-filter: blur(4px);
   overflow: hidden;
 }
 
 .modalOverlay.settingsModalOverlay {
-  padding: 6px;
+  padding: var(--space-1-5);
   background: color-mix(in srgb, var(--bw-page) 78%, transparent);
   backdrop-filter: blur(10px) saturate(120%);
 }
@@ -2440,19 +1344,19 @@
    Uses dvh so mobile browser chrome doesn't push the modal off screen,
    and the overlay padding guarantees breathing room on every edge. */
 .modalOverlay {
-  padding: clamp(12px, 3vh, 24px);
+  padding: clamp(var(--space-3), 3vh, var(--space-6));
 }
 
 .modalCard {
   background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
-  border-radius: 24px;
+  border-radius: var(--radius-3xl);
   padding: 0;
-  min-width: min(360px, 100%);
-  width: min(560px, calc(100vw - 32px));
+  min-width: min(var(--space-96), 100%);
+  width: min(var(--size-xl), calc(100vw - var(--space-8)));
   box-shadow: 0 24px 70px var(--opacity-black-50);
   border: 1px solid var(--dash-border);
-  max-width: calc(100vw - 24px);
-  max-height: calc(100dvh - 48px);
+  max-width: calc(100vw - var(--space-6));
+  max-height: calc(100dvh - var(--space-12));
   overflow: hidden;
   position: relative;
   display: flex;
@@ -2460,32 +1364,20 @@
 }
 
 .modalCard.settingsModalCard {
-  width: min(1360px, calc(100vw - 16px));
-  min-width: min(420px, 100%);
-  max-height: min(calc(100dvh - 48px), 1160px);
-  border-radius: 30px;
+  width: min(var(--size-10xl), calc(100vw - var(--space-4)));
+  min-width: min(var(--size-md), 100%);
+  max-height: min(calc(100dvh - var(--space-12)), var(--size-8xl));
+  border-radius: var(--radius-full);
   border: 1px solid var(--dash-border);
   background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel) 24%, transparent) 24%, color-mix(in srgb, var(--bw-surface-card) 96%, transparent) 100%);
   box-shadow: 0 34px 90px var(--opacity-black-60), 0 0 0 1px var(--bw-surface-panel) inset;
 }
 
-.tournamentSelectorCard {
-  width: min(640px, calc(100vw - 28px));
-  max-height: min(82vh, 760px);
-  border-color: var(--dash-border-soft);
-  background: color-mix(in srgb, var(--bw-surface-card) 97%, transparent);
-  box-shadow: 0 34px 90px var(--opacity-black-60);
-}
-
-.squadChangeModalCard {
-  width: min(520px, calc(100vw - 32px));
-}
-
 .modalHeader {
   background: linear-gradient(180deg, var(--bw-surface-panel-strong) 0%, var(--bw-surface-panel) 100%);
   border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
-  border-radius: 24px 24px 0 0;
-  padding: 22px 56px 14px 28px;
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+  padding: var(--space-6) var(--space-14) var(--space-3-5) var(--space-7);
   flex-shrink: 0;
   position: relative;
 }
@@ -2493,81 +1385,17 @@
 .modalTitle {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: 22px;
+  font-size: var(--font-size-4xl);
   line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
 
 .modalSubtitle {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   color: var(--color-text-muted);
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   font-weight: 400;
-}
-
-.squadChangeList {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.squadChangeItem {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--bw-border-subtle);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--opacity-white-06) 50%, transparent);
-  color: var(--color-text-primary);
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-}
-
-.squadChangeItem:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  transform: translateY(-1px);
-}
-
-.squadChangeItemSelected {
-  border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-}
-
-.squadChangeItemMain {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.squadChangeItemLabel {
-  color: var(--bw-text-title);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.squadChangeItemMeta {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.squadChangeItemStatus {
-  flex: 0 0 auto;
-  color: var(--bw-text-accent);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0;
 }
 
 .modalScrollBody {
@@ -2578,242 +1406,7 @@
 }
 
 .modalScrollBody.settingsModalScrollBody {
-  padding: 12px 8px 10px;
-}
-
-.settingsModalFrame {
-  display: block;
-  width: 100%;
-  height: min(82vh, 860px);
-  min-height: 700px;
-  border: none;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--bw-page) 68%, transparent);
-}
-
-.modalTitleDanger {
-  color: var(--color-error);
-}
-
-.emptyTournaments {
-  color: var(--color-text-muted-strong);
-  font-size: 17px;
-  text-align: center;
-  padding: 42px 28px;
-}
-
-.emptyTournamentsHint {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  margin-top: 12px;
-}
-
-.tournamentList {
-  list-style: none;
-  padding: 14px 18px 10px;
-  margin: 0;
-}
-
-.tournamentItem {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, var(--bw-surface-panel-strong), color-mix(in srgb, var(--bw-surface-panel-strong) 56%, transparent));
-  border: 1px solid var(--bw-border-subtle);
-  box-shadow: inset 0 1px 0 var(--opacity-white-04), 0 10px 22px var(--opacity-black-25);
-  transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
-}
-
-.tournamentItem:hover {
-  transform: translateY(-1px);
-  box-shadow: inset 0 1px 0 var(--opacity-white-04), 0 14px 28px var(--opacity-black-30);
-  border-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
-}
-
-.tournamentItemActive {
-  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 8%, transparent), color-mix(in srgb, var(--opacity-white-04) 50%, transparent));
-}
-
-.tournamentInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.tournamentNameRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.tournamentName {
-  display: block;
-  font-weight: 800;
-  font-size: 17px;
-  line-height: 1.2;
-  color: var(--color-text-primary);
-  word-break: break-word;
-}
-
-.tournamentActiveBadge {
-  flex: 0 0 auto;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
-  border-radius: 999px;
-  padding: 3px 8px;
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  color: var(--color-primary);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0;
-}
-
-.tournamentLocation {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: color-mix(in srgb, var(--bw-text-title) 70%, transparent);
-  margin-top: 6px;
-}
-
-.tournamentDate {
-  font-size: 12.5px;
-  color: var(--bw-text-muted);
-  margin-top: 4px;
-}
-
-.tournamentMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.tournamentMeta span {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
-  border-radius: 20px;
-  padding: 3px 9px;
-  letter-spacing: 0;
-}
-
-.tournamentActions {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.loadBtn {
-  background: var(--color-brand-orange);
-  color: var(--color-white);
-  font-size: 13px;
-  padding: 9px 18px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--bw-text-title));
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.14s ease, box-shadow 0.18s ease;
-  font-weight: 700;
-  min-width: 78px;
-  text-align: center;
-  box-shadow: var(--bw-shadow-accent);
-}
-
-.loadBtn:hover {
-  background: var(--color-primary-hover);
-  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--bw-text-title));
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-btn-hover);
-}
-
-.deleteBtn {
-  background: var(--bw-surface-panel);
-  color: color-mix(in srgb, var(--color-error) 72%, var(--bw-text-title));
-  font-size: 12px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-error) 40%, transparent);
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
-  font-weight: 700;
-  min-width: 78px;
-  text-align: center;
-}
-
-.deleteBtn:hover {
-  background: color-mix(in srgb, var(--color-error) 14%, transparent);
-  border-color: color-mix(in srgb, var(--color-error) 58%, transparent);
-  color: color-mix(in srgb, var(--color-error) 28%, var(--bw-text-title));
-}
-
-.loadBtn:focus-visible,
-.deleteBtn:focus-visible {
-  outline: 2px solid var(--color-text-muted-strong);
-  outline-offset: 2px;
-}
-
-.paginationBar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px 20px;
-  border-top: 1px solid var(--opacity-white-06);
-}
-
-.paginationText {
-  font-size: 14px;
-  color: var(--color-text-muted-strong);
-  padding: 0 16px;
-}
-
-@media (max-width: 560px) {
-  .tournamentSelectorCard {
-    width: min(100vw, calc(100vw - 16px));
-  }
-
-  .tournamentList {
-    padding: 12px;
-  }
-
-  .tournamentItem {
-    flex-direction: column;
-    gap: 14px;
-    padding: 14px;
-  }
-
-  .tournamentActions {
-    flex-direction: row;
-    justify-content: stretch;
-  }
-
-  .loadBtn,
-  .deleteBtn {
-    flex: 1;
-  }
-}
-
-.deleteConfirmText {
-  font-size: 16px;
-  margin: 0;
-  padding: var(--space-card-y) var(--space-card-x);
-  color: var(--color-text-primary);
-}
-
-.deleteConfirmActions {
-  display: flex;
-  gap: var(--space-stack);
-  justify-content: flex-end;
-  padding: 0 var(--space-card-x) var(--space-card-y);
+  padding: var(--space-3) var(--space-2) var(--space-2-5);
 }
 
 /* Loading states */
@@ -2828,7 +1421,7 @@
 .loadingContent {
   text-align: center;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 @media (max-width: 480px) {
@@ -2836,40 +1429,14 @@
     min-width: unset;
     margin: 0;
     width: 100%;
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     max-height: 88vh;
   }
 
   .modalTitle {
-    font-size: 22px;
-    padding: 20px 52px 16px 20px;
-    border-radius: 14px 14px 0 0;
-  }
-
-  .tournamentList {
-    padding: 10px 16px 0;
-  }
-
-  .tournamentItem {
-    padding: 14px;
-  }
-
-  .tournamentName {
-    font-size: 18px;
-  }
-
-  .tournamentLocation {
-    font-size: 15px;
-  }
-
-  .tournamentDate {
-    font-size: 14px;
-  }
-
-  .loadBtn,
-  .deleteBtn {
-    min-height: 38px;
-    padding: 9px 14px;
+    font-size: var(--font-size-4xl);
+    padding: var(--space-5) var(--space-14) var(--space-4) var(--space-5);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
 }
 
@@ -2880,10 +1447,8 @@
   /* Force all cards to fill container width — base rules use width:max-content
      which would win over the earlier 480px block, so we re-declare here after
      all base styles to ensure the cascade order is correct */
-  .squadSelectionCard,
   .bracketSettingsCard,
   .mainBracketSettingsCard,
-  .optionalBracketsCard,
   .sidePotsCard {
     width: 100%;
     min-width: 0;
@@ -2893,57 +1458,47 @@
 
   /* Labels: larger for readability */
   .compactLabel {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   /* Inputs: more visible borders */
-  .compactSelect,
-  .compactInput {
-    border-width: 1.5px;
-    border-color: var(--color-border-light);
-  }
 
   /* Fix: desktop mainBracketSettingsCard .settingsGrid has row-gap: 4px which persists
      on mobile when grid collapses to 1 column — sections stack with only 4px spacing */
   .mainBracketSettingsCard .settingsGrid {
-    gap: 20px;
+    gap: var(--space-5);
   }
 
   /* Field & group spacing */
   .compactField {
-    gap: 6px;
+    gap: var(--space-1-5);
   }
 
   .fieldGroup {
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   /* Section headers: left accent bar for visual hierarchy */
   .sectionHeader {
     border-bottom: none;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
   }
 
   /* Card content spacing */
   .mainBracketSettingsCard .settingsContent {
-    gap: 14px;
-    padding: 14px 16px 18px;
-  }
-
-  .optionalBracketsCard .settingsContent {
-    gap: 10px;
-    padding: 12px 16px 16px;
+    gap: var(--space-3-5);
+    padding: var(--space-3-5) var(--space-4) var(--space-5);
   }
 
   .sidePotsCard .settingsContent {
-    gap: 12px;
-    padding: 12px 16px 16px;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4) var(--space-4);
   }
 
   /* Side pots shared fee: stack vertically instead of cramped row */
   .sidePotSharedFee {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .sidePotSharedFee .compactInputWrapper {
@@ -2969,18 +1524,18 @@
   .settingsTitleBlock {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-1);
     min-width: 0;
   }
 
   .settingsMeta {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     color: var(--color-text-muted-subtle);
     font-weight: 600;
   }
 
   .cardExpandIcon {
-    font-size: 22px;
+    font-size: var(--font-size-4xl);
     line-height: 1;
     color: var(--color-primary);
     font-weight: 600;
@@ -2988,117 +1543,42 @@
 
   @media (max-width: 480px) {
     .cardsContainer {
-      gap: 14px;
+      gap: var(--space-3-5);
     }
 
-    .bracketSettingsCard,
-    .squadSelectionCard {
-      border-radius: 14px;
+    .bracketSettingsCard {
+      border-radius: var(--radius-xl);
     }
 
     .settingsHeader {
-      padding: 12px 14px 10px;
-      gap: 8px;
+      padding: var(--space-3) var(--space-3-5) var(--space-2-5);
+      gap: var(--space-2);
     }
 
     .settingsTitle {
-      font-size: 18px;
+      font-size: var(--font-size-2xl);
       line-height: 1.15;
     }
 
     .settingsMeta {
-      font-size: 11px;
+      font-size: var(--font-size-xs);
     }
 
     .cardExpandIcon {
-      font-size: 20px;
+      font-size: var(--font-size-3xl);
     }
 
     .settingsContent {
-      padding: 10px 12px 12px;
-      gap: 6px;
+      padding: var(--space-2-5) var(--space-3) var(--space-3);
+      gap: var(--space-1-5);
     }
 
     .programCard {
-      padding: 8px 10px;
+      padding: var(--space-2) var(--space-2-5);
     }
   }
 
 /* Responsive: Lower Grid Mobile */
-@media (max-width: 1200px) {
-
-  .bracketPreview {
-    grid-template-columns: repeat(2, minmax(280px, 1fr));
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboardOverviewStack {
-    gap: 12px;
-    align-items: stretch;
-  }
-
-  .commandCenterGrid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    align-items: start;
-  }
-
-  .gridHero,
-  .gridTools,
-  .gridSummary {
-    grid-column: 1 / -1;
-  }
-
-  .gridHero {
-    width: 100%;
-    justify-self: stretch;
-  }
-
-  .commissionerPanel {
-    max-width: none;
-    justify-self: stretch;
-  }
-
-  .gridSummary,
-  .entriesOverviewCard {
-    width: 100%;
-    justify-self: stretch;
-  }
-
-  .entriesOverviewStandalone {
-    margin: 0 0 24px;
-  }
-}
-
-@media (max-width: 640px) {
-  .commandCenterGrid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    align-items: start;
-  }
-
-  .heroTopRow {
-    flex-direction: column;
-  }
-
-  .bracketPreview {
-    grid-template-columns: 1fr;
-    max-width: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .heroTitle {
-    font-size: 24px;
-    line-height: 1.16;
-    margin-bottom: 6px;
-  }
-
-  .summaryCardsBand .statTile {
-    min-width: 0;
-  }
-}
 
 .settingsModalCloseButton {
   background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
@@ -3123,9 +1603,9 @@
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
   background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
   color: var(--bw-text-title);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 13px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-2-5) var(--space-3-5);
+  font-size: var(--font-size-base);
   font-weight: 700;
   cursor: pointer;
 }
@@ -3138,350 +1618,56 @@
 
 /* Page text normalization */
 .contentContainer,
-.mobileContainer,
 .cardsContainer {
   color: var(--bw-text-body);
   font-size: var(--bw-type-body);
   line-height: 1.45;
 }
 
-.contentContainer :where(h1, h2, h3, h4),
-.mobileContainer :where(h1, h2, h3, h4),
-.cardsContainer :where(h1, h2, h3, h4) {
+.contentContainer :where(h1, h2, h3, h4), .cardsContainer :where(h1, h2, h3, h4) {
   color: var(--bw-text-title);
   letter-spacing: 0;
 }
 
-.contentContainer :where(h2, h3, .surface-cardHeader, .summaryTitle, .sectionTitle),
-.mobileContainer :where(h2, h3, .surface-cardHeader, .summaryTitle, .sectionTitle),
-.cardsContainer :where(h2, h3, .surface-cardHeader, .summaryTitle, .sectionTitle) {
+.contentContainer :where(h2, h3, .surface-cardHeader, .summaryTitle, .sectionTitle), .cardsContainer :where(h2, h3, .surface-cardHeader, .summaryTitle, .sectionTitle) {
   font-size: var(--bw-type-card-title);
   font-weight: 800;
 }
 
-.contentContainer :where(p, li),
-.mobileContainer :where(p, li),
-.cardsContainer :where(p, li) {
+.contentContainer :where(p, li), .cardsContainer :where(p, li) {
   color: var(--bw-text-body);
   font-size: var(--bw-type-body);
   line-height: 1.5;
 }
 
-.contentContainer :where(label, small),
-.mobileContainer :where(label, small),
-.cardsContainer :where(label, small) {
+.contentContainer :where(label, small), .cardsContainer :where(label, small) {
   color: var(--bw-text-muted);
   font-size: var(--bw-type-helper);
   letter-spacing: 0;
 }
 
 /* Dashboard orange hierarchy pass */
-.commandCenterGrid {
-  --dash-accent: var(--color-primary);
-  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 11%, transparent);
-  --dash-accent-border: color-mix(in srgb, var(--color-primary) 32%, transparent);
-}
-
-.liveBoardCard,
-.entriesOverviewCard,
-.squadRailCard,
-.statTile {
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
-}
-
-.liveBoardCard::before,
-.entriesOverviewCard::before,
-.squadRailCard::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 86%, transparent), color-mix(in srgb, var(--color-primary) 12%, transparent));
-  opacity: 0.85;
-  pointer-events: none;
-}
-
-.entriesOverviewCard,
-.squadRailCard {
-  position: relative;
-  overflow: hidden;
-}
-
-.liveBoardCard {
-  border-color: color-mix(in srgb, var(--color-primary) 22%, transparent);
-  box-shadow:
-    var(--dash-shadow),
-    0 0 0 1px color-mix(in srgb, var(--color-primary) 6%, transparent),
-    0 18px 46px color-mix(in srgb, var(--color-primary) 7%, transparent);
-}
-
-.heroKicker,
-.sectionKicker,
-.entriesOverviewHeader,
-.commissionerSectionTitle,
-.squadRailLabel,
-.snapshotPillLabel,
-.statLabel,
-.prizeSectionTitle,
-.bracketSubsection {
-  color: var(--color-primary);
-  letter-spacing: 0.04em;
-}
-
-.heroTitle {
-  text-shadow: none;
-}
-
-.heroMetaPill,
-.snapshotPill,
-.heroEntriesCompact,
-.bracketRound,
-.bracketMatch {
-  border-color: color-mix(in srgb, var(--color-primary) 13%, transparent);
-}
-
-.heroMetaPill:first-child,
-.snapshotPill:first-child,
-.bracketRound:first-child {
-  border-color: color-mix(in srgb, var(--color-primary) 28%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 6.5%, transparent);
-}
-
-.heroEntriesValue,
-.snapshotPillValue,
-.bracketRoundMeta,
-.statValue {
-  color: var(--bw-text-title);
-}
-
-.heroEntriesCard .heroEntriesValue,
-.summaryCardsBand .statTile:first-child .statValue,
-.summaryCardsBand .statTile:nth-child(2) .statValue,
-.statValueAccent {
-  color: var(--color-primary);
-}
-
-.liveBadge {
-  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary-hover) 88%, var(--color-black)) 100%);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--color-primary) 18%, transparent),
-    0 10px 26px color-mix(in srgb, var(--color-primary) 20%, transparent);
-}
-
-.squadRailPill,
-.commissionerAttentionRow {
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--bw-surface-panel) 86%, transparent);
-}
-
-.squadRailPill:hover,
-.commissionerAttentionRow:hover {
-  border-color: var(--dash-accent-border);
-  background: var(--dash-accent-soft);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 55%, transparent);
-}
-
-.commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child {
-  border-color: var(--dash-accent-border);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 17%, transparent), color-mix(in srgb, var(--color-primary) 10%, transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color-white) 6%, transparent),
-    0 10px 24px color-mix(in srgb, var(--color-primary) 12%, transparent);
-}
-
-.commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child:hover {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 22%, transparent), color-mix(in srgb, var(--color-primary) 13%, transparent));
-}
-
-.commissionerAdminRow:nth-child(3),
-.commissionerAdminRow:nth-child(4),
-.commissionerAdminRow:nth-child(5) {
-  border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
-}
-
-.commissionerAdminRow:nth-child(3) .commissionerAdminIndicator,
-.commissionerAdminRow:nth-child(4) .commissionerAdminIndicator,
-.commissionerAdminRow:nth-child(5) .commissionerAdminIndicator,
-.commissionerActionIndicatorAccent,
-.commissionerReviewIndicator,
-.squadRailAction,
-.ghostLinkButton {
-  color: var(--color-primary);
-}
-
-.commissionerAdminRow:hover .commissionerAdminIndicator,
-.squadRailPill:hover .commissionerActionIndicator {
-  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-white));
-}
-
-.statTile {
-  overflow: hidden;
-}
-
-.statTile::before {
-  display: none;
-}
-
-.statTile::after {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 54%, transparent), transparent 70%);
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.statStatusBadgeAccent {
-  color: color-mix(in srgb, var(--bw-text-accent) 84%, var(--color-white));
-  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
 
 /* Reduced orange pass: no orange gradients or orange setup cards */
-.liveBoardCard::before,
-.entriesOverviewCard::before,
-.squadRailCard::before {
-  background: color-mix(in srgb, var(--color-primary) 42%, transparent);
-}
-
-.liveBoardCard {
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 78%, transparent);
-  box-shadow: var(--dash-shadow);
-}
-
-.heroMetaPill:first-child,
-.snapshotPill:first-child,
-.bracketRound:first-child {
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
-}
-
-.liveBadge {
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, transparent);
-  box-shadow: none;
-}
-
-.commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child,
-.commissionerPanel .squadRailList:first-of-type .squadRailPill:first-child:hover {
-  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 50%, transparent);
-}
-
-.statTile::before {
-  background: transparent;
-}
-
-.statTile::after {
-  background: color-mix(in srgb, var(--color-primary) 38%, transparent);
-}
-
-.entriesOverviewCard .entriesOverviewHeader {
-  color: var(--bw-text-title);
-}
-
-.entriesOverviewCard .statLabel {
-  color: var(--color-primary);
-}
-
-.entriesOverviewCard .statTile,
-.entriesOverviewCard .summaryCardsBand .statTile,
-.entriesOverviewCard .summaryCardsBand .statTile:first-child,
-.entriesOverviewCard .summaryCardsBand .statTile:nth-child(2) {
-  background: var(--dash-surface);
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 74%, transparent);
-  box-shadow: var(--dash-shadow);
-  display: inline-grid;
-  width: max-content;
-  min-width: 0;
-  max-width: none;
-  justify-self: start;
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-.entriesOverviewCard .statTile::before {
-  background: transparent;
-}
-
-.entriesOverviewCard .statTile::after {
-  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
-}
-
-.entriesOverviewCard .statValue,
-.entriesOverviewCard .statValueAccent,
-.entriesOverviewCard .statTile .statValue,
-.entriesOverviewCard .statTile .statValueAccent,
-.entriesOverviewCard .summaryCardsBand .statTile:first-child .statValue,
-.entriesOverviewCard .summaryCardsBand .statTile:nth-child(2) .statValue,
-.entriesOverviewCard .summaryCardsBand .statTile:first-child .statValueAccent,
-.entriesOverviewCard .summaryCardsBand .statTile:nth-child(2) .statValueAccent,
-.entriesOverviewCard .statCaption,
-.entriesOverviewCard .statCaptionMuted,
-.entriesOverviewCard .statStatusBadge,
-.entriesOverviewCard .statStatusBadgeActive,
-.entriesOverviewCard .statStatusBadgeAccent,
-.entriesOverviewCard .statStatusBadgeMuted {
-  color: var(--bw-text-title);
-}
-
-.entriesOverviewCard .statCaption,
-.entriesOverviewCard .statCaptionMuted {
-  opacity: 0.72;
-}
-
-.bracketPreview .bracketRoundTitle {
-  color: var(--bw-text-title);
-}
-
-.bracketPreview .bracketMatch span:first-child,
-.bracketPreview .bracketSubsection,
-.bracketPreview .prizeSectionTitle {
-  color: var(--color-primary);
-}
-
-.bracketPreview .bracketMatch span:last-child,
-.bracketPreview .bracketRoundMeta,
-.bracketPreview .prizeRowWithHint small {
-  color: var(--bw-text-title);
-}
 
 /* Unified dashboard button treatment */
-.squadRailPill,
-.toolAction,
-.toolsFooterButton,
-.settingsFooterCancelButton,
-.settingsFooterSaveButton,
 .tournamentCancelButton,
-.tournamentSaveButton,
-.loadBtn {
+.tournamentSaveButton {
   color: var(--color-white);
   border-color: color-mix(in srgb, var(--color-primary) 46%, var(--opacity-white-25));
   background: var(--color-primary);
   box-shadow: none;
 }
 
-.squadRailPill:hover,
-.toolAction:hover,
-.toolsFooterButton:hover,
-.settingsFooterCancelButton:hover:not(:disabled),
-.settingsFooterSaveButton:hover:not(:disabled),
 .tournamentCancelButton:hover:not(:disabled),
-.tournamentSaveButton:hover:not(:disabled),
-.loadBtn:hover {
+.tournamentSaveButton:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white));
   background: var(--color-primary-hover);
   box-shadow: none;
 }
 
-.squadRailPill:disabled,
-.settingsFooterCancelButton:disabled,
-.settingsFooterSaveButton:disabled,
 .tournamentCancelButton:disabled,
-.tournamentSaveButton:disabled,
-.commissionerActionDisabled {
+.tournamentSaveButton:disabled {
   background: color-mix(in srgb, var(--bw-surface-card-strong) 72%, transparent) !important;
   border-color: color-mix(in srgb, var(--bw-border-subtle) 76%, transparent) !important;
   color: var(--bw-text-body) !important;
@@ -3489,85 +1675,23 @@
 }
 
 /* Dashboard tokenized color layer (no gradients) */
-.commandCenterGrid {
-  --dash-accent: var(--color-primary);
-  --dash-accent-strong: color-mix(in srgb, var(--color-primary) 82%, var(--color-white));
-  --dash-accent-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  --dash-accent-muted: color-mix(in srgb, var(--color-primary) 16%, transparent);
-  --dash-accent-border: var(--bw-border-accent);
-  --dash-card-border: var(--bw-border-card);
-  --dash-card-bg: var(--bw-surface-card);
-  --dash-panel-bg: var(--bw-surface-card-strong);
-  --dash-line-soft: color-mix(in srgb, var(--color-primary) 26%, transparent);
-}
 
-.liveBoardCard,
-.entriesOverviewCard,
-.squadRailCard,
-.statTile,
-.heroMetaPill,
-.snapshotPill,
-.bracketRound,
-.bracketMatch,
-.tournamentItem,
 .modalCard.settingsModalCard,
-.modalHeader,
-.settingsModalFrame {
+.modalHeader {
   background: var(--dash-card-bg) !important;
   border-color: var(--dash-card-border) !important;
 }
 
-.liveBoardCard::before,
-.entriesOverviewCard::before,
-.squadRailCard::before {
-  background: var(--color-primary) !important;
-}
-
-.heroMetaPill:first-child,
-.snapshotPill:first-child,
-.bracketRound:first-child,
-.tournamentItemActive {
-  background: var(--dash-card-bg) !important;
-  border-color: var(--dash-accent-border) !important;
-}
-
-.heroEntriesProgress > span,
-.statProgress > span,
-.statTile::after,
-.entriesOverviewCard .statTile::after {
-  background: var(--dash-accent-strong) !important;
-  box-shadow: none !important;
-}
-
-.statTile::before,
-.entriesOverviewCard .statTile::before {
-  background: transparent !important;
-}
-
-.liveBadge,
-.toolAction,
-.toolsFooterButton,
-.squadRailPill,
-.settingsFooterCancelButton,
-.settingsFooterSaveButton,
 .tournamentCancelButton,
-.tournamentSaveButton,
-.loadBtn {
+.tournamentSaveButton {
   background: var(--dash-accent) !important;
   border-color: var(--dash-accent-border) !important;
   color: var(--color-white) !important;
   box-shadow: none !important;
 }
 
-.liveBadge:hover,
-.toolAction:hover,
-.toolsFooterButton:hover,
-.squadRailPill:hover,
-.settingsFooterCancelButton:hover:not(:disabled),
-.settingsFooterSaveButton:hover:not(:disabled),
 .tournamentCancelButton:hover:not(:disabled),
-.tournamentSaveButton:hover:not(:disabled),
-.loadBtn:hover {
+.tournamentSaveButton:hover:not(:disabled) {
   background: var(--dash-accent-strong) !important;
   border-color: color-mix(in srgb, var(--color-primary) 52%, var(--color-white)) !important;
 }
@@ -3580,9 +1704,7 @@
 }
 
 .modalCard,
-.modalCard.settingsModalCard,
-.tournamentSelectorCard,
-.squadChangeModalCard {
+.modalCard.settingsModalCard {
   background: color-mix(in srgb, var(--bw-surface-card) 96%, transparent) !important;
   border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent) !important;
   border-radius: var(--radius-2xl);
@@ -3592,26 +1714,17 @@
 .modalHeader {
   background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent) !important;
   border-bottom: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent) !important;
-  padding: var(--space-card-y) 52px var(--space-card-compact-y) var(--space-card-x);
+  padding: var(--space-card-y) var(--space-14) var(--space-card-compact-y) var(--space-card-x);
 }
 
 .modalTitle {
   color: var(--bw-text-title);
-  font-size: 26px;
+  font-size: var(--font-size-5xl);
   letter-spacing: -0.03em;
 }
 
-.modalSubtitle,
-.emptyTournaments,
-.emptyTournamentsHint,
-.paginationText {
+.modalSubtitle {
   color: var(--bw-text-faint);
-}
-
-.settingsModalFrame {
-  background: color-mix(in srgb, var(--bw-surface-card) 88%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 82%, transparent) !important;
-  border-radius: var(--radius-xl);
 }
 
 .tournamentModalContent {
@@ -3621,7 +1734,7 @@
 }
 
 .tournamentFormBody {
-  padding: 22px 28px 18px;
+  padding: var(--space-6) var(--space-7) var(--space-5);
 }
 
 .tournamentSectionLabel {
@@ -3632,32 +1745,12 @@
 .tournamentInput,
 .squadTimeSelect,
 .squadTimeAddRow :global(select) {
-  min-height: 48px;
-  border-radius: 12px !important;
+  min-height: var(--space-12);
+  border-radius: var(--radius-lg) !important;
   border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
   background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
   color: var(--bw-text-title) !important;
   box-shadow: none !important;
-}
-
-.advancedGrid .compactSelect,
-.advancedGrid .compactInput,
-.settingsModalGrid .compactSelect,
-.settingsModalGrid .compactInput {
-  min-height: 36px;
-  border-radius: 12px !important;
-  border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
-  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
-  color: var(--bw-text-title) !important;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 10px;
-  box-shadow: none !important;
-}
-
-.advancedGrid .compactSelect,
-.settingsModalGrid .compactSelect {
-  color-scheme: dark;
 }
 
 .advancedGrid .compactInputWrapper,
@@ -3668,14 +1761,6 @@
 .tournamentInput:focus,
 .squadTimeSelect:focus,
 .squadTimeAddRow :global(select):focus {
-  border-color: color-mix(in srgb, var(--color-primary) 75%, transparent) !important;
-  box-shadow: var(--bw-focus-ring) !important;
-}
-
-.advancedGrid .compactSelect:focus,
-.advancedGrid .compactInput:focus,
-.settingsModalGrid .compactSelect:focus,
-.settingsModalGrid .compactInput:focus {
   border-color: color-mix(in srgb, var(--color-primary) 75%, transparent) !important;
   box-shadow: var(--bw-focus-ring) !important;
 }
@@ -3701,7 +1786,7 @@
   background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent) !important;
   border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent) !important;
   color: var(--bw-text-title) !important;
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
 }
 
 .squadTimeRemove:hover,
@@ -3712,1144 +1797,145 @@
 
 .squadTimeAddBtn,
 .tournamentSaveButton {
-  border-radius: 12px !important;
+  border-radius: var(--radius-lg) !important;
   border-color: color-mix(in srgb, var(--color-primary) 42%, transparent) !important;
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 72%, var(--color-warning) 28%)) !important;
   box-shadow: none !important;
 }
 
-.squadChangeModalCard {
-  max-width: 560px;
-}
-
-.squadChangeList {
-  padding: 18px 20px 20px;
-  gap: 10px;
-}
-
-.tournamentItem,
-.squadChangeItem {
-  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent) !important;
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent) !important;
-  box-shadow: none !important;
-  border-radius: 16px;
-}
-
-.tournamentItem:hover,
-.squadChangeItem:hover {
-  background: color-mix(in srgb, var(--color-primary) 8%, var(--bw-surface-panel)) !important;
-  border-color: var(--bw-border-accent) !important;
-  box-shadow: none !important;
-  transform: none;
-}
-
-.tournamentItemActive,
-.squadChangeItemSelected {
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel)) !important;
-  border-color: var(--bw-border-accent) !important;
-}
-
-.squadChangeItemSelected {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-primary) 52%, transparent) !important;
-}
-
-.tournamentName,
-.squadChangeItemLabel {
-  color: var(--bw-text-title);
-}
-
-.tournamentLocation,
-.tournamentDate,
-.squadChangeItemMeta {
-  color: var(--bw-text-muted);
-}
-
-.tournamentMeta span,
-.tournamentActiveBadge,
-.squadChangeItemStatus {
-  background: color-mix(in srgb, var(--color-primary) 10%, var(--bw-surface-panel));
-  border-color: var(--bw-border-accent);
-  color: var(--bw-text-accent);
-}
-
-.squadChangeItemStatus {
-  border-radius: 999px;
-  padding: 4px 9px;
-  border: 1px solid var(--bw-border-accent);
-  font-size: 10px;
-  letter-spacing: 0.02em;
-}
-
-.squadChangeItem:not(.squadChangeItemSelected) .squadChangeItemStatus {
-  background: color-mix(in srgb, var(--bw-surface-panel) 94%, transparent);
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
-  color: var(--bw-text-muted);
-}
-
-.squadChangeItemEmpty .squadChangeItemMeta {
-  color: color-mix(in srgb, var(--bw-text-muted) 82%, transparent);
-}
-
-.squadChangeItemEmpty:not(.squadChangeItemSelected) {
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 72%, transparent) !important;
-  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
-}
-
-.loadBtn,
-.loadBtn:hover {
-  border-color: var(--bw-border-accent) !important;
-  box-shadow: none !important;
-  transform: none;
-}
-
-.deleteBtn {
-  background: var(--bw-surface-panel);
-  border-color: color-mix(in srgb, var(--color-error) 34%, transparent);
-  color: color-mix(in srgb, var(--color-error) 24%, var(--bw-text-title));
-  box-shadow: none;
-}
-
-.deleteBtn:hover {
-  background: color-mix(in srgb, var(--color-error-darker) 22%, transparent);
-  border-color: color-mix(in srgb, var(--color-error) 48%, transparent);
-}
-
-.paginationBar {
-  border-top-color: var(--bw-border-subtle);
-}
-
-.squadRailPill,
-.toolAction,
-.toolsFooterButton,
-.settingsFooterCancelButton,
-.settingsFooterSaveButton,
 .tournamentCancelButton,
 .tournamentSaveButton {
   box-shadow: none !important;
 }
 
 /* Final dashboard hierarchy pass */
-.heroStatusChipRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: -2px;
-}
-
-.heroStatusChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--bw-border-subtle);
-  background: var(--bw-surface-panel);
-  color: var(--bw-text-body);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
-}
-
-.heroStatusChip strong {
-  color: var(--bw-text-title);
-  font-weight: 800;
-}
-
-.heroStatusChipInfo {
-  border-color: color-mix(in srgb, var(--bw-text-muted) 30%, transparent);
-}
-
-.heroStatusChipGood {
-  border-color: color-mix(in srgb, var(--color-success) 34%, transparent);
-  background: color-mix(in srgb, var(--color-success) 10%, transparent);
-}
-
-.heroStatusChipWarn {
-  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-}
-
-.heroStatusChip:hover {
-  border-color: var(--bw-border-card);
-}
-
-.commissionerSectionTitleDanger {
-  margin-top: 8px;
-  color: color-mix(in srgb, var(--color-error) 72%, var(--bw-text-muted));
-}
-
-.commissionerActionPrimary {
-  border-color: color-mix(in srgb, var(--color-primary) 52%, transparent) !important;
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--bw-surface-panel)) !important;
-  color: var(--bw-text-title) !important;
-}
-
-.commissionerActionPrimary .commissionerActionIndicator {
-  color: var(--bw-text-accent) !important;
-}
-
-.commissionerActionPrimary:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent) !important;
-  background: color-mix(in srgb, var(--color-primary) 22%, var(--bw-surface-panel)) !important;
-}
-
-.commissionerDangerRow {
-  border-color: color-mix(in srgb, var(--color-error) 42%, var(--bw-border-subtle)) !important;
-  background: color-mix(in srgb, var(--color-error) 10%, var(--bw-surface-panel)) !important;
-  color: color-mix(in srgb, var(--color-error) 82%, var(--bw-text-title)) !important;
-}
-
-.commissionerDangerRow:hover {
-  border-color: color-mix(in srgb, var(--color-error) 66%, var(--bw-border-subtle)) !important;
-  background: color-mix(in srgb, var(--color-error) 14%, var(--bw-surface-panel)) !important;
-}
-
-.commissionerDangerIndicator {
-  color: color-mix(in srgb, var(--color-error) 74%, var(--bw-text-accent));
-}
-
-.entriesHealthStrip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0 0 10px;
-}
-
-.entriesHealthItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 9px;
-  border-radius: 12px;
-  border: 1px solid var(--bw-border-subtle);
-  background: var(--bw-surface-panel);
-  color: var(--bw-text-body);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.18s ease, background-color 0.18s ease;
-}
-
-.entriesHealthItem strong {
-  color: var(--bw-text-title);
-  font-weight: 800;
-}
-
-.entriesHealthItemWarn {
-  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--bw-border-subtle));
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-}
-
-.entriesHealthItem:hover {
-  border-color: var(--bw-border-card);
-}
-
-.statTileActionable {
-  cursor: pointer;
-}
-
-.statTileActionable:focus-visible {
-  outline: none;
-  border-color: var(--bw-border-accent);
-  box-shadow: var(--bw-focus-ring);
-}
-
-@media (max-width: 900px) {
-  .entriesHealthStrip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .entriesHealthStrip {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* Final tournament overview hierarchy and responsiveness pass */
-.heroTitle {
-  font-size: clamp(1.55rem, 2vw, 1.9rem);
-  letter-spacing: 0.01em;
-}
-
-.heroActiveBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.22rem 0.6rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 46%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.heroMetaCompact,
-.heroSummaryLine {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: center;
-  color: color-mix(in srgb, var(--color-text-primary) 80%, transparent);
-  font-size: 0.8rem;
-}
-
-.heroSummaryLine {
-  margin-top: 0.35rem;
-  color: color-mix(in srgb, var(--color-text-secondary) 88%, transparent);
-}
-
-.heroStatusChip {
-  border-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
-}
-
-.bracketInfoGrid {
-  display: grid;
-  gap: 0.38rem;
-}
-
-.bracketInfoRow {
-  display: grid;
-  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.1fr);
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.42rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 5.5%, transparent);
-}
-
-.bracketInfoRow:last-child {
-  border-bottom: none;
-}
-
-.bracketInfoLabel {
-  font-size: 0.73rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text-primary) 86%, transparent);
-}
-
-.bracketInfoValue {
-  justify-self: end;
-  text-align: right;
-  font-size: 0.88rem;
-  color: color-mix(in srgb, var(--color-text-primary) 95%, transparent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.bracketInfoValueStrong {
-  font-weight: 700;
-}
-
-.bracketInfoValueNegative {
-  color: color-mix(in srgb, var(--color-text-secondary) 93%, transparent);
-}
-
-.bracketInfoValueWrap {
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.statusBadge {
-  justify-self: end;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.14rem 0.5rem;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--bw-text-title);
-  text-align: right;
-}
-
-.statusBadgeEnabled {
-  background: color-mix(in srgb, var(--color-success) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-success) 45%, transparent);
-  color: var(--bw-text-title);
-}
-
-.statusBadgeDisabled {
-  background: color-mix(in srgb, var(--color-black) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 34%, transparent);
-  color: var(--bw-text-title);
-}
-
-.prizePoolHero {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 0.38rem;
-  padding: 0.34rem 0;
-  border-radius: 0;
-  border: none;
-  background: transparent;
-}
-
-.prizePoolLabel {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
-}
-
-.prizePoolValue {
-  font-size: 1.08rem;
-  color: color-mix(in srgb, var(--color-text-secondary) 98%, transparent);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.prizeSectionLabel {
-  margin: 0.2rem 0 0.1rem;
-  font-size: 0.74rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text-primary) 74%, transparent);
-  font-weight: 700;
-}
-
-.prizeSectionLabelSpaced {
-  margin-top: 0.52rem;
-}
-
-.prizeSectionGroup {
-  display: grid;
-  gap: 0;
-}
-
-.prizeSectionGroup .bracketInfoRow {
-  padding: 0.5rem 0;
-}
-
-.prizeBreakdownCard .bracketInfoLabel {
-  text-transform: none;
-  letter-spacing: 0.01em;
-  font-size: 0.83rem;
-  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
-}
-
-.progressCard {
-  display: grid;
-  gap: 0.6rem;
-  padding: 0.8rem;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-  background: color-mix(in srgb, var(--color-black) 72%, transparent);
-}
-
-.progressCardTitle {
-  font-size: 0.84rem;
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  color: color-mix(in srgb, var(--color-text-secondary) 90%, transparent);
-  font-weight: 700;
-}
-
-.progressRows {
-  display: grid;
-  gap: 0;
-}
-
-.progressRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 0.84rem;
-  color: color-mix(in srgb, var(--color-text-primary) 87%, transparent);
-  min-height: 34px;
-  align-items: center;
-  padding: 0.12rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-text-primary) 7%, transparent);
-}
-
-.progressRow:last-of-type {
-  border-bottom: none;
-}
-
-.progressBarLabel {
-  margin-top: 0.35rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-text-primary) 84%, transparent);
-}
-
-.progressRow strong {
-  color: color-mix(in srgb, var(--color-text-primary) 97%, transparent);
-  font-weight: 700;
-}
-
-.progressBarTrack {
-  height: 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
-  overflow: hidden;
-  margin: 0.3rem 0 0.45rem;
-}
-
-.progressBarFill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 95%, transparent), color-mix(in srgb, var(--color-primary) 93%, transparent));
-  transition: width 180ms ease;
-}
-
-.progressPrimaryAction {
-  border-color: color-mix(in srgb, var(--color-primary) 46%, transparent);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 94%, transparent), color-mix(in srgb, var(--color-primary) 94%, transparent));
-  color: color-mix(in srgb, var(--color-danger) 95%, transparent);
-  justify-self: end;
-  width: auto;
-  min-width: 148px;
-  padding-left: 14px;
-  padding-right: 14px;
-}
-
-.progressPrimaryAction:hover:not(:disabled),
-.progressPrimaryAction:focus-visible:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: none;
-}
-
-.commissionerActionSecondary {
-  border-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
-}
-
-.moreActionsMenu {
-  display: grid;
-  gap: 0.35rem;
-  margin-top: 0.15rem;
-  padding: 0.45rem;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-  background: color-mix(in srgb, var(--color-black) 75%, transparent);
-}
-
-.moreActionItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  width: 100%;
-  border: 1px solid color-mix(in srgb, var(--color-text-primary) 10%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-black) 90%, transparent);
-  color: color-mix(in srgb, var(--color-text-primary) 95%, transparent);
-  font-size: 0.82rem;
-  font-weight: 600;
-  padding: 0.52rem 0.62rem;
-  cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease;
-}
-
-.moreActionItem:hover:not(:disabled),
-.moreActionItem:focus-visible:not(:disabled) {
-  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
-  background: color-mix(in srgb, var(--color-black) 97%, transparent);
-}
-
-.moreActionItemDanger {
-  border-color: color-mix(in srgb, var(--color-primary) 46%, transparent);
-  background: color-mix(in srgb, var(--color-danger) 58%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
-}
-
-.moreActionItemDanger:hover:not(:disabled),
-.moreActionItemDanger:focus-visible:not(:disabled) {
-  border-color: color-mix(in srgb, var(--color-primary) 70%, transparent);
-  background: color-mix(in srgb, var(--color-danger) 70%, transparent);
-}
-
-.moreActionIndicator {
-  font-size: 0.92rem;
-  line-height: 1;
-}
-
-.summaryCardsBand {
-  display: grid;
-  grid-template-columns: repeat(6, auto);
-  gap: 0.62rem;
-  align-items: stretch;
-  width: fit-content;
-  justify-content: start;
-}
-
-.summaryCard {
-  min-height: 132px;
-  height: 100%;
-}
-
-.summaryCardActionable {
-  justify-content: flex-start;
-}
-
-.summaryCardActionable:hover,
-.summaryCardActionable:focus-visible {
-  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
-}
-
-.summaryCardActionable:focus-visible,
-.squadRailPill:focus-visible,
-.moreActionItem:focus-visible,
-.progressPrimaryAction:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-primary) 78%, transparent);
-  outline-offset: 2px;
-}
 
 /* Final action rail hierarchy pass */
-.commissionerPanel .squadRailPill.commissionerActionSecondary,
-.commissionerPanel .squadRailPill.commissionerAdminRow,
-.commissionerPanel .squadRailPill.moreActionsToggle {
-  background: color-mix(in srgb, var(--bw-surface-panel) 88%, transparent) !important;
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 92%, transparent) !important;
-  color: var(--bw-text-title) !important;
-  box-shadow: none !important;
-}
-
-.commissionerPanel .squadRailPill.commissionerActionSecondary:hover,
-.commissionerPanel .squadRailPill.commissionerAdminRow:hover,
-.commissionerPanel .squadRailPill.moreActionsToggle:hover {
-  background: color-mix(in srgb, var(--bw-surface-panel-strong) 92%, transparent) !important;
-  border-color: color-mix(in srgb, var(--bw-border-card) 86%, transparent) !important;
-}
-
-.commissionerPanel .squadRailPill.commissionerActionPrimary {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 96%, transparent), color-mix(in srgb, var(--color-primary) 78%, var(--color-warning) 22%)) !important;
-  border-color: color-mix(in srgb, var(--color-primary) 56%, var(--color-white)) !important;
-  color: var(--color-white) !important;
-}
-
-.commissionerPanel .squadRailPill.commissionerActionPrimary:hover {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 90%, var(--color-white)), color-mix(in srgb, var(--color-primary) 82%, var(--color-warning) 18%)) !important;
-}
-
-.commissionerPanel .squadRailPill.moreActionsToggle {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-.moreActionsMenu {
-  gap: 0.25rem;
-  margin-top: 0.1rem;
-  padding: 0.34rem;
-  border-radius: 10px;
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
-  background: color-mix(in srgb, var(--bw-surface-panel) 92%, transparent);
-}
-
-.moreActionItem {
-  padding: 0.42rem 0.55rem;
-  font-size: 0.8rem;
-  border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
-  background: color-mix(in srgb, var(--bw-surface-card) 92%, transparent);
-  color: var(--bw-text-title);
-}
-
-.moreActionItem:hover:not(:disabled),
-.moreActionItem:focus-visible:not(:disabled) {
-  background: color-mix(in srgb, var(--bw-surface-panel-strong) 94%, transparent);
-  border-color: var(--bw-border-card);
-}
-
-.moreActionItemDanger {
-  background: color-mix(in srgb, var(--color-error) 12%, var(--bw-surface-card) 88%) !important;
-  border-color: color-mix(in srgb, var(--color-error) 34%, transparent) !important;
-  color: color-mix(in srgb, var(--color-error) 78%, var(--bw-text-title)) !important;
-}
-
-.moreActionItemDanger:hover:not(:disabled),
-.moreActionItemDanger:focus-visible:not(:disabled) {
-  background: color-mix(in srgb, var(--color-error) 16%, var(--bw-surface-card) 84%) !important;
-}
-
-.commissionerPanel .commissionerAdminRow {
-  padding-top: 0.58rem;
-  padding-bottom: 0.58rem;
-  font-size: 0.84rem;
-}
-
-.commissionerPanel .commissionerActionSecondary {
-  font-size: 0.84rem;
-}
-
-.commissionerPanel .squadRailPill.moreActionInlineDanger {
-  background: color-mix(in srgb, var(--color-error) 12%, var(--bw-surface-panel) 88%) !important;
-  border-color: color-mix(in srgb, var(--color-error) 34%, transparent) !important;
-  color: color-mix(in srgb, var(--color-error) 78%, var(--bw-text-title)) !important;
-  box-shadow: none !important;
-}
-
-.commissionerPanel .squadRailPill.moreActionInlineDanger:hover {
-  background: color-mix(in srgb, var(--color-error) 16%, var(--bw-surface-panel) 84%) !important;
-  border-color: color-mix(in srgb, var(--color-error) 48%, transparent) !important;
-}
-
-.summaryCardActionable:active,
-.squadRailPill:active,
-.moreActionItem:active,
-.progressPrimaryAction:active {
-  transform: translateY(0);
-}
-
-.heroStatusChipPending {
-  border-color: color-mix(in srgb, var(--color-text-primary) 42%, transparent);
-  background: color-mix(in srgb, var(--color-black) 14%, transparent);
-  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
-}
-
-.heroStatusChipActive {
-  border-color: color-mix(in srgb, var(--color-primary) 44%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 95%, transparent);
-}
-
-.heroStatusChipComplete {
-  border-color: color-mix(in srgb, var(--color-success) 44%, transparent);
-  background: color-mix(in srgb, var(--color-success) 18%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 94%, transparent);
-}
-
-.heroStatusChipAlert {
-  border-color: color-mix(in srgb, var(--color-primary) 48%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
-  color: color-mix(in srgb, var(--color-text-secondary) 96%, transparent);
-}
-
-.heroStatusAlertIcon {
-  width: 15px;
-  height: 15px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
-  color: color-mix(in srgb, var(--color-danger) 95%, transparent);
-  background: color-mix(in srgb, var(--color-primary) 90%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-text-secondary) 82%, transparent);
-}
-
-.additionalBracketsRow {
-  gap: 0.32rem;
-}
-
-.bracketRulesCard .bracketInfoLabel {
-  text-transform: none;
-  letter-spacing: 0.01em;
-  font-size: 0.84rem;
-  color: color-mix(in srgb, var(--color-text-primary) 90%, transparent);
-}
-
-.bracketRulesCard .bracketInfoRow {
-  min-height: 38px;
-  padding: 0.5rem 0;
-  border-bottom-color: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
-}
-
-.bracketRulesCard .bracketInfoValue {
-  font-weight: 600;
-}
-
-.bracketRulesCard .statusBadge {
-  min-height: 24px;
-}
-
-@media (max-width: 1320px) {
-  .summaryCardsBand {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 960px) {
-  .summaryCardsBand {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .additionalBracketsRow {
-    grid-template-columns: 1fr;
-  }
-
-  .additionalBracketsRow .bracketInfoValue {
-    justify-self: start;
-    text-align: left;
-  }
-
-  .bracketInfoRow {
-    grid-template-columns: 1fr;
-    gap: 0.3rem;
-  }
-
-  .bracketInfoValue,
-  .statusBadge {
-    justify-self: start;
-    text-align: left;
-  }
-}
-
-@media (max-width: 1100px) {
-  .bracketRulesCard .additionalBracketsRow {
-    grid-template-columns: 1fr;
-  }
-
-  .bracketRulesCard .additionalBracketsRow .bracketInfoValue {
-    justify-self: start;
-    text-align: left;
-  }
-}
-
-@media (max-width: 640px) {
-  .summaryCardsBand {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 1fr;
-    align-items: stretch;
-  }
-
-  .summaryCard {
-    min-height: 112px;
-    width: 100%;
-    height: 100%;
-  }
-
-  .summaryCardsBand .statTile {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    padding: 10px 8px;
-    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
-    border-color: color-mix(in srgb, var(--bw-border-subtle) 86%, transparent);
-  }
-
-  .summaryCardsBand .statTile .statLabel {
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-  }
-
-  .summaryCardsBand .statTile .statValue {
-    font-size: 1.6rem;
-    line-height: 1.02;
-  }
-
-  .summaryCardsBand .statTile .statCaption,
-  .summaryCardsBand .statTile .statCaptionMuted {
-    font-size: 0.65rem;
-    line-height: 1.25;
-  }
-
-  .heroMetaCompact,
-  .heroSummaryLine {
-    gap: 0.3rem;
-    font-size: 0.76rem;
-  }
-
-  .bracketInfoRow {
-    grid-template-columns: minmax(104px, 0.95fr) minmax(0, 1.05fr);
-    gap: 0.5rem;
-    padding: 0.48rem 0.58rem;
-    border: 1px solid color-mix(in srgb, var(--bw-border-subtle) 88%, transparent);
-    border-radius: 11px;
-    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent);
-  }
-
-  .bracketInfoValue,
-  .statusBadge {
-    justify-self: end;
-    text-align: right;
-  }
-
-  .bracketInfoLabel {
-    font-size: 0.67rem;
-    letter-spacing: 0.07em;
-    color: color-mix(in srgb, var(--bw-text-muted) 84%, transparent);
-  }
-
-  .bracketInfoValue {
-    font-size: 0.84rem;
-  }
-
-  .prizeSectionGroup {
-    gap: 0.42rem;
-  }
-
-  .prizeSectionGroup .bracketInfoRow {
-    border-color: color-mix(in srgb, var(--bw-border-card) 70%, transparent);
-    background: color-mix(in srgb, var(--bw-surface-panel-strong) 90%, transparent);
-  }
-
-  .commissionerPanel .squadRailPill {
-    border-radius: 10px;
-    padding: 0.5rem 0.6rem;
-    min-height: 36px;
-    background: color-mix(in srgb, var(--bw-surface-panel) 90%, transparent) !important;
-    border-color: color-mix(in srgb, var(--bw-border-subtle) 88%, transparent) !important;
-  }
-
-  .commissionerPanel .commissionerSectionTitle {
-    margin-top: 2px;
-    margin-bottom: 2px;
-    font-size: 0.58rem;
-    letter-spacing: 0.1em;
-  }
-
-  .commissionerPanel .squadRailList {
-    gap: 0.35rem;
-  }
-
-  .progressCard {
-    padding: 0.68rem;
-  }
-
-  .progressPrimaryAction {
-    justify-self: stretch;
-    width: 100%;
-  }
-}
-
-@media (max-width: 420px) {
-  .summaryCardsBand {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
-  }
-
-  .summaryCard {
-    min-height: 108px;
-  }
-
-  .bracketInfoRow {
-    grid-template-columns: 1fr;
-    gap: 0.3rem;
-  }
-
-  .bracketInfoValue,
-  .statusBadge {
-    justify-self: start;
-    text-align: left;
-  }
-}
-
-@media (max-width: 400px) {
-  .bracketRulesCard .bracketInfoGrid {
-    gap: 0.22rem;
-  }
-
-  .bracketRulesCard .bracketInfoRow {
-    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
-    align-items: center;
-    min-height: 40px;
-    padding: 0.34rem 0.54rem;
-    gap: 0.22rem;
-    border-radius: 12px;
-  }
-
-  .bracketRulesCard .bracketInfoLabel {
-    font-size: 0.74rem;
-    line-height: 1.2;
-    white-space: nowrap;
-  }
-
-  .bracketRulesCard .bracketInfoValue {
-    justify-self: end;
-    text-align: right;
-    font-size: 0.9rem;
-    line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .bracketRulesCard .statusBadge {
-    justify-self: end;
-    text-align: right;
-    min-height: 22px;
-    padding: 0.06rem 0.5rem;
-    font-size: 0.66rem;
-    line-height: 1.15;
-    white-space: nowrap;
-  }
-
-  .bracketRulesCard .additionalBracketsRow {
-    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
-  }
-
-  .prizeBreakdownCard .bracketInfoRow {
-    grid-template-columns: minmax(108px, 0.92fr) minmax(0, 1.08fr);
-    align-items: center;
-    min-height: 40px;
-    padding: 0.34rem 0.54rem;
-    gap: 0.22rem;
-    border-radius: 12px;
-  }
-
-  .prizeBreakdownCard .bracketInfoLabel {
-    font-size: 0.74rem;
-    line-height: 1.2;
-    white-space: nowrap;
-  }
-
-  .prizeBreakdownCard .bracketInfoValue {
-    justify-self: end;
-    text-align: right;
-    font-size: 0.9rem;
-    line-height: 1.15;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .prizeBreakdownCard .prizeSectionGroup {
-    gap: 0.2rem;
-  }
-}
-
-@media (max-width: 330px) {
-  .summaryCardsBand {
-    grid-template-columns: 1fr;
-  }
-}
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .commandCenterGrid,
-  .dashboardPanelsGrid,
-  .financialGrid,
-  .settingsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .settingsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 }
 
 @media (max-width: 767px) {
-  .commandCenterGrid,
-  .dashboardPanelsGrid,
-  .dashboardGrid,
-  .financialGrid,
   .settingsGrid,
   .settingsModalGrid,
   .settingsProgramsGrid,
   .advancedGrid,
-  .formGrid,
-  .tournamentFormFields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .tournamentFormFields { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
 
-  .dashboardHeaderActions,
-  .tournamentActions,
-  .settingsModalFooterActions,
-  .tournamentModalFooterActions { width: 100%; align-items: stretch; flex-direction: column; gap: 12px; }
+  .tournamentModalFooterActions { width: 100%; align-items: stretch; flex-direction: column; gap: var(--space-3); }
 
-  .dashboardHeaderActions > :where(button, a),
-  .tournamentActions > :where(button, a),
-  .settingsModalFooterActions > button,
-  .tournamentModalFooterActions > button { width: 100%; min-height: 40px; justify-content: center; }
+  .tournamentModalFooterActions > button { width: 100%; min-height: var(--space-10); justify-content: center; }
 }
 
 /* Current app treatment for the embedded Tournament Settings modal. */
 .settingsModalTitle {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .settingsModalTitle svg {
-  width: 22px;
-  height: 22px;
+  width: var(--space-6);
+  height: var(--space-6);
   color: var(--color-primary);
   stroke-width: 2;
 }
 
 .settingsModalGrid .settingsTitleBlock {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: var(--space-8) minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .settingsModalGrid .settingsTitleCopy {
   display: grid;
   min-width: 0;
-  gap: 3px;
+  gap: var(--space-1);
 }
 
 .settingsModalGrid .settingsHeaderIcon {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   border: 1px solid var(--color-border-primary);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   color: var(--color-primary);
   background: var(--color-surface-primary);
 }
 
 .settingsModalGrid .settingsHeaderIcon svg {
-  width: 17px;
-  height: 17px;
+  width: var(--space-4);
+  height: var(--space-4);
   stroke-width: 1.9;
 }
 
 @media (min-width: 641px) {
   .modalOverlay.settingsModalOverlay {
     z-index: var(--z-modal);
-    padding: 20px;
+    padding: var(--space-5);
     background: color-mix(in srgb, var(--color-black) 82%, transparent);
     backdrop-filter: blur(8px);
   }
 
   .modalCard.settingsModalCard {
-    width: min(1200px, calc(100vw - 40px));
-    max-height: min(calc(100dvh - 48px), 740px);
+    width: min(var(--size-8xl), calc(100vw - var(--space-10)));
+    max-height: min(calc(100dvh - var(--space-12)), var(--size-3xl));
     min-width: 0;
     border: 1px solid var(--color-border-primary) !important;
-    border-radius: 18px;
+    border-radius: var(--radius-2xl);
     background: var(--color-bg-primary) !important;
     box-shadow: 0 24px 64px color-mix(in srgb, var(--color-black) 48%, transparent) !important;
   }
 
   .settingsModalCard > .modalHeader {
-    padding: 20px 60px 16px 22px;
+    padding: var(--space-5) var(--space-16) var(--space-4) var(--space-6);
     background: var(--color-surface-primary) !important;
     border-bottom: 1px solid var(--color-border-primary) !important;
   }
 
   .settingsModalCard > .modalHeader .modalTitle {
     color: var(--color-text-primary);
-    font-size: 26px;
+    font-size: var(--font-size-5xl);
   }
 
   .settingsModalCard > .modalHeader .modalSubtitle {
-    margin-top: 5px;
+    margin-top: var(--space-1-5);
     color: var(--color-text-secondary);
-    font-size: 14px;
+    font-size: var(--font-size-md);
   }
 
   .modalScrollBody.settingsModalScrollBody {
-    padding: 10px;
+    padding: var(--space-2-5);
     background: var(--color-bg-primary);
   }
 
   .settingsModalGrid {
     width: 100%;
     margin: 0;
-    gap: 10px;
+    gap: var(--space-2-5);
     align-items: start;
   }
 
   .settingsModalGrid .bracketSettingsCard,
   .settingsModalGrid .mainBracketSettingsCard,
-  .settingsModalGrid .optionalBracketsCard,
-  .settingsModalGrid .byeSettingsCard,
   .settingsModalGrid .sidePotsCard {
     width: 100%;
     height: fit-content;
     min-height: 0 !important;
     align-self: start;
     border: 1px solid var(--color-border-primary);
-    border-radius: 14px;
+    border-radius: var(--radius-xl);
     background: var(--color-surface-primary);
     box-shadow: none;
   }
 
   .settingsModalGrid .settingsHeader {
-    padding: 8px 10px;
+    padding: var(--space-2) var(--space-2-5);
     background: var(--color-surface-primary);
     border-bottom-color: var(--color-border-primary);
   }
@@ -4860,17 +1946,16 @@
 
   .settingsModalGrid .settingsTitle {
     color: var(--color-text-primary);
-    font-size: 16px;
+    font-size: var(--font-size-xl);
   }
 
   .settingsModalGrid .settingsMeta,
-  .settingsSectionHint,
-  .settingsFieldHint {
+  .settingsSectionHint {
     color: var(--color-text-secondary);
   }
 
   .settingsModalGrid .settingsContent {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsColumn,
@@ -4882,7 +1967,7 @@
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsColumn {
-    padding: 6px;
+    padding: var(--space-1-5);
     height: fit-content;
     min-height: 0;
     align-self: start;
@@ -4898,29 +1983,23 @@
     min-height: 0;
   }
 
-  .settingsModalGrid .compactSelect:focus,
-  .settingsModalGrid .compactInput:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
-  }
-
   .settingsModalGrid .programCardChecked {
     border-color: color-mix(in srgb, var(--color-primary) 62%, var(--color-border-primary));
     background: var(--color-border-primary);
   }
 
   .settingsModalGrid .programCard {
-    padding: 5px 7px;
+    padding: var(--space-1-5) var(--space-2);
   }
 
   .settingsModalGrid .programList,
   .settingsModalGrid .programListTwoColumn {
-    gap: 5px;
+    gap: var(--space-1-5);
   }
 
   .settingsModalGrid .checkboxLabel {
-    gap: 8px;
-    font-size: 12px;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
   }
 
   .settingsModalGrid .checkboxInput {
@@ -4932,30 +2011,6 @@
     background: var(--color-border-primary);
     border-color: var(--color-primary);
   }
-
-  .settingsModalFooter {
-    padding: 8px 2px 0;
-    border-top-color: var(--color-border-primary);
-    background: var(--color-bg-primary);
-    backdrop-filter: none;
-  }
-
-  .settingsFooterCancelButton {
-    color: var(--color-text-primary);
-    background: var(--color-surface-primary);
-    border-color: var(--color-border-primary);
-  }
-
-  .settingsFooterCancelButton:hover:not(:disabled) {
-    background: var(--color-border-primary);
-    border-color: var(--color-text-disabled);
-  }
-
-  .settingsFooterSaveButtonActive {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    box-shadow: none;
-  }
 }
 
 @media (min-width: 981px) {
@@ -4964,8 +2019,8 @@
   }
 
   .settingsModalGrid .settingsProgramsGrid {
-    grid-template-columns: minmax(140px, 0.7fr) minmax(0, 1.3fr);
-    gap: 10px;
+    grid-template-columns: minmax(var(--space-36), 0.7fr) minmax(0, 1.3fr);
+    gap: var(--space-2-5);
   }
 
   .settingsModalGrid .programListTwoColumn {
@@ -4975,23 +2030,23 @@
 
 /* Edit tournament modal */
 .tournamentModalContent {
-  width: min(960px, calc(100vw - 28px));
-  max-height: min(94vh, 980px);
-  border-radius: 24px;
+  width: min(var(--size-6xl), calc(100vw - var(--space-7)));
+  max-height: min(94vh, var(--size-6xl));
+  border-radius: var(--radius-3xl);
 }
 
 .tournamentModalContent > .modalHeader {
-  padding: 30px 78px 24px 32px;
+  padding: var(--space-8) var(--space-20) var(--space-6) var(--space-8);
   border-bottom: 1px solid var(--bw-border-subtle) !important;
 }
 
 .tournamentModalContent > .modalHeader .modalTitle {
-  font-size: clamp(28px, 3vw, 36px);
+  font-size: clamp(var(--font-size-5xl), 3vw, var(--font-size-6xl));
 }
 
 .tournamentModalContent > .modalHeader .modalSubtitle {
-  margin-top: 8px;
-  font-size: 16px;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xl);
 }
 
 .tournamentModalContent .tournamentFormBody {
@@ -5001,43 +2056,43 @@
 .tournamentModalContent .tournamentSectionLabel {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   margin: 0;
-  padding: 28px 32px 16px;
-  font-size: 15px;
+  padding: var(--space-7) var(--space-8) var(--space-4);
+  font-size: var(--font-size-lg);
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .tournamentModalContent .tournamentSectionLabel svg,
 .tournamentModalContent .squadTimesTitle svg {
-  width: 22px;
-  height: 22px;
+  width: var(--space-6);
+  height: var(--space-6);
 }
 
 .tournamentModalContent .tournamentFormFields {
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 .tournamentModalContent .tournamentFormFields > :global(.form-field) {
-  margin: 0 32px;
+  margin: 0 var(--space-8);
 }
 
 .tournamentModalContent .tournamentFormFields > .tournamentSectionLabel {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   border-top: 1px solid var(--bw-border-subtle);
 }
 
 .tournamentModalContent .tournamentInput {
-  min-height: 54px;
-  padding-inline: 18px;
-  border-radius: 12px !important;
-  font-size: 16px;
+  min-height: var(--space-14);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-lg) !important;
+  font-size: var(--font-size-xl);
 }
 
 .tournamentModalContent .tournamentDateRow {
-  gap: 24px;
-  padding: 0 32px 28px;
+  gap: var(--space-6);
+  padding: 0 var(--space-8) var(--space-7);
 }
 
 .tournamentModalContent .tournamentDateRow > :global(.form-field) {
@@ -5046,20 +2101,20 @@
 
 .tournamentModalContent .squadTimesSection {
   margin-top: 0;
-  padding: 24px 32px 30px;
+  padding: var(--space-6) var(--space-8) var(--space-8);
   border-top: 1px solid var(--bw-border-subtle);
 }
 
 .tournamentModalContent .squadTimesHeadingRow {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .tournamentModalContent .squadTimesTitle {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--space-3);
   color: var(--bw-text-accent);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -5071,141 +2126,141 @@
 }
 
 .tournamentModalContent .squadDayLabel {
-  margin-bottom: 12px;
-  font-size: 16px;
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-xl);
 }
 
 .tournamentModalContent .squadTimesList {
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .tournamentModalContent .squadTimeEntry {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 90px;
-  padding: 16px 18px;
-  border-radius: 14px;
+  gap: var(--space-4);
+  min-height: var(--space-24);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-xl);
 }
 
 .squadTimeIcon {
   display: grid;
   place-items: center;
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
+  flex: 0 0 var(--space-10);
+  width: var(--space-10);
+  height: var(--space-10);
   color: var(--bw-text-accent);
 }
 
 .squadTimeIcon svg {
-  width: 25px;
-  height: 25px;
+  width: var(--space-6);
+  height: var(--space-6);
 }
 
 .squadTimeDetails {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--space-2);
 }
 
 .squadTimeDetails strong {
   color: var(--bw-text-title);
-  font-size: 16px;
+  font-size: var(--font-size-xl);
 }
 
 .tournamentModalContent .squadTimeText {
   color: var(--bw-text-muted);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
 }
 
 .tournamentModalContent .squadTimeRemove {
   display: grid;
   place-items: center;
-  min-width: 46px;
-  min-height: 46px;
+  min-width: var(--space-12);
+  min-height: var(--space-12);
   padding: 0;
   color: var(--color-error) !important;
 }
 
 .tournamentModalContent .squadTimeRemove svg {
-  width: 24px;
-  height: 24px;
+  width: var(--space-6);
+  height: var(--space-6);
 }
 
 .tournamentModalContent .squadTimeAddRow {
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .tournamentModalContent .squadTimeAddBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 52px;
-  padding: 0 20px;
+  gap: var(--space-2);
+  min-height: var(--space-14);
+  padding: 0 var(--space-5);
 }
 
 .tournamentModalContent .squadTimeAddBtn svg {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 .tournamentModalContent .tournamentModalFooter {
-  padding: 16px 32px;
+  padding: var(--space-4) var(--space-8);
   background: color-mix(in srgb, var(--bw-surface-card) 98%, transparent);
 }
 
 .tournamentModalContent .tournamentSaveStatus {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: var(--space-2-5);
+  font-size: var(--font-size-md);
 }
 
 .tournamentModalContent .tournamentSaveStatus svg {
-  width: 21px;
-  height: 21px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 .tournamentModalContent .tournamentCancelButton,
 .tournamentModalContent .tournamentSaveButton {
-  min-height: 50px;
-  padding: 0 22px;
-  font-size: 15px;
+  min-height: var(--space-12);
+  padding: 0 var(--space-6);
+  font-size: var(--font-size-lg);
 }
 
 @media (max-width: 720px) {
   .tournamentModalContent > .modalHeader {
-    padding: 26px 62px 22px 24px;
+    padding: var(--space-7) var(--space-16) var(--space-6) var(--space-6);
   }
 
   .tournamentModalContent > .modalHeader .modalSubtitle {
-    font-size: 16px;
+    font-size: var(--font-size-xl);
   }
 
   .tournamentModalContent .tournamentSectionLabel {
-    padding: 28px 20px 16px;
+    padding: var(--space-7) var(--space-5) var(--space-4);
   }
 
   .tournamentModalContent .tournamentFormFields > :global(.form-field) {
-    margin-inline: 20px;
+    margin-inline: var(--space-5);
   }
 
   .tournamentModalContent .tournamentDateRow {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 0 20px 28px;
+    gap: var(--space-5);
+    padding: 0 var(--space-5) var(--space-7);
   }
 
   .tournamentModalContent .squadTimesSection {
-    padding: 26px 20px;
+    padding: var(--space-7) var(--space-5);
   }
 
   .tournamentModalContent .tournamentModalFooter {
     align-items: stretch;
     flex-direction: column;
-    padding: 18px 20px;
+    padding: var(--space-5) var(--space-5);
   }
 
   .tournamentModalContent .tournamentModalFooterActions {
@@ -5215,152 +2270,131 @@
   .tournamentModalContent .tournamentCancelButton,
   .tournamentModalContent .tournamentSaveButton {
     flex: 1;
-    padding-inline: 12px;
+    padding-inline: var(--space-3);
   }
 }
 
 @media (min-width: 721px) {
   .tournamentModalContent {
-    width: min(600px, calc(100vw - 32px));
-    max-height: min(88vh, 720px);
-    border-radius: 18px;
+    width: min(var(--size-xl), calc(100vw - var(--space-8)));
+    max-height: min(88vh, var(--size-3xl));
+    border-radius: var(--radius-2xl);
   }
 
   .tournamentModalContent > .modalHeader {
-    padding: 20px 60px 16px 22px;
+    padding: var(--space-5) var(--space-16) var(--space-4) var(--space-6);
   }
 
   .tournamentModalContent > .modalHeader .modalTitle {
-    font-size: 26px;
+    font-size: var(--font-size-5xl);
   }
 
   .tournamentModalContent > .modalHeader .modalSubtitle {
-    margin-top: 5px;
-    font-size: 14px;
+    margin-top: var(--space-1-5);
+    font-size: var(--font-size-md);
   }
 
   .tournamentModalContent .tournamentSectionLabel {
-    gap: 8px;
-    padding: 18px 22px 10px;
-    font-size: 12px;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-6) var(--space-2-5);
+    font-size: var(--font-size-sm);
   }
 
   .tournamentModalContent .tournamentSectionLabel svg,
   .tournamentModalContent .squadTimesTitle svg {
-    width: 18px;
-    height: 18px;
+    width: var(--space-5);
+    height: var(--space-5);
   }
 
   .tournamentModalContent .tournamentFormFields {
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .tournamentModalContent .tournamentFormFields > :global(.form-field) {
-    margin-inline: 22px;
+    margin-inline: var(--space-6);
   }
 
   .tournamentModalContent .tournamentFormFields > .tournamentSectionLabel {
-    margin-top: 6px;
+    margin-top: var(--space-1-5);
   }
 
   .tournamentModalContent .tournamentInput {
-    min-height: 44px;
-    padding-inline: 14px;
-    font-size: 14px;
+    min-height: var(--space-11);
+    padding-inline: var(--space-3-5);
+    font-size: var(--font-size-md);
   }
 
   .tournamentModalContent .tournamentDateRow {
-    gap: 16px;
-    padding: 0 22px 18px;
+    gap: var(--space-4);
+    padding: 0 var(--space-6) var(--space-5);
   }
 
   .tournamentModalContent .squadTimesSection {
-    padding: 18px 22px 20px;
+    padding: var(--space-5) var(--space-6) var(--space-5);
   }
 
   .tournamentModalContent .squadTimesHeadingRow {
-    margin-bottom: 10px;
+    margin-bottom: var(--space-2-5);
   }
 
   .tournamentModalContent .squadTimesTitle {
-    gap: 8px;
-    font-size: 12px;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
   }
 
   .tournamentModalContent .squadDayLabel {
-    margin-bottom: 8px;
-    font-size: 14px;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-md);
   }
 
   .tournamentModalContent .squadTimesList {
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .tournamentModalContent .squadTimeEntry {
-    gap: 12px;
-    min-height: 64px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    gap: var(--space-3);
+    min-height: var(--space-16);
+    padding: var(--space-2-5) var(--space-3);
+    border-radius: var(--radius-lg);
   }
 
   .tournamentModalContent .squadTimeText {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   .tournamentModalContent .squadTimeRemove {
-    min-width: 38px;
-    min-height: 38px;
+    min-width: var(--space-10);
+    min-height: var(--control-height);
   }
 
   .tournamentModalContent .squadTimeRemove svg {
-    width: 19px;
-    height: 19px;
+    width: var(--space-5);
+    height: var(--space-5);
   }
 
   .tournamentModalContent .squadTimeAddBtn {
-    min-height: 42px;
-    padding-inline: 14px;
+    min-height: var(--space-11);
+    padding-inline: var(--space-3-5);
   }
 
   .tournamentModalContent .tournamentModalFooter {
-    padding: 10px 22px;
+    padding: var(--space-2-5) var(--space-6);
   }
 
   .tournamentModalContent .tournamentSaveStatus {
-    gap: 7px;
-    font-size: 12px;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
   }
 
   .tournamentModalContent .tournamentCancelButton,
   .tournamentModalContent .tournamentSaveButton {
-    min-height: 42px;
-    padding-inline: 16px;
-    font-size: 13px;
+    min-height: var(--space-11);
+    padding-inline: var(--space-4);
+    font-size: var(--font-size-base);
   }
 }
 
 /* Final safety override for Entries Overview tile layout */
-@media (max-width: 1023px) {
-  .summaryCardsBand {
-    display: grid !important;
-    width: 100% !important;
-    justify-content: stretch !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .summaryCardsBand > .statTile,
-  .summaryCardsBand > .summaryCard {
-    min-width: 0 !important;
-    max-width: none !important;
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 330px) {
-  .summaryCardsBand {
-    grid-template-columns: 1fr !important;
-  }
-}
 
 /* Phone-first settings modal pass */
 @media (max-width: 640px) {
@@ -5383,20 +2417,20 @@
 
   .modalHeader {
     border-radius: 0;
-    padding: 14px 44px 10px 14px;
+    padding: var(--space-3-5) var(--space-11) var(--space-2-5) var(--space-3-5);
   }
 
   .modalTitle {
-    font-size: 18px;
+    font-size: var(--font-size-2xl);
   }
 
   .modalSubtitle {
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     line-height: 1.35;
   }
 
   .modalScrollBody.settingsModalScrollBody {
-    padding: 10px 10px 72px;
+    padding: var(--space-2-5) var(--space-2-5) var(--space-18);
   }
 
   .settingsModalCloseFooter {
@@ -5404,29 +2438,27 @@
     position: sticky;
     bottom: 0;
     z-index: 5;
-    padding: 8px 10px 10px;
+    padding: var(--space-2) var(--space-2-5) var(--space-2-5);
     background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 68%, transparent), color-mix(in srgb, var(--bw-surface-card) 96%, transparent));
     backdrop-filter: blur(8px);
   }
 
   .settingsModalCloseFooterButton {
     width: 100%;
-    min-height: 42px;
-    font-size: 14px;
+    min-height: var(--space-11);
+    font-size: var(--font-size-md);
   }
 
   .settingsModalGrid {
     display: grid !important;
     grid-template-columns: 1fr !important;
-    gap: 12px !important;
+    gap: var(--space-3) !important;
     width: 100% !important;
     margin: 0 !important;
   }
 
   .settingsModalGrid .bracketSettingsCard,
   .settingsModalGrid .mainBracketSettingsCard,
-  .settingsModalGrid .optionalBracketsCard,
-  .settingsModalGrid .byeSettingsCard,
   .settingsModalGrid .sidePotsCard {
     width: 100% !important;
     min-width: 0 !important;
@@ -5436,36 +2468,34 @@
   }
 
   .settingsModalGrid .settingsHeader {
-    padding: 10px 12px 8px;
+    padding: var(--space-2-5) var(--space-3) var(--space-2);
   }
 
   .settingsModalGrid .settingsTitle {
-    font-size: 16px;
+    font-size: var(--font-size-xl);
   }
 
   .settingsModalGrid .settingsMeta,
-  .settingsSectionHint,
-  .settingsFieldHint {
-    font-size: 11px;
+  .settingsSectionHint {
+    font-size: var(--font-size-xs);
     line-height: 1.35;
   }
 
   .settingsModalGrid .settingsContent {
-    padding: 10px 12px 12px;
-    gap: 8px;
+    padding: var(--space-2-5) var(--space-3) var(--space-3);
+    gap: var(--space-2);
   }
 
   .settingsModalGrid .sectionHeader {
-    margin-bottom: 4px;
+    margin-bottom: var(--space-1);
   }
 
   .settingsModalGrid .sectionTitle {
-    font-size: 13px;
+    font-size: var(--font-size-base);
   }
 
   .settingsModalGrid .mainBracketSettingsCard .settingsGrid,
   .settingsModalGrid .sidePotSharedFee,
-  .settingsModalGrid .byeSettingsCard .programList,
   .settingsProgramsGrid,
   .programListTwoColumn {
     grid-template-columns: 1fr !important;
@@ -5473,139 +2503,42 @@
 
   .settingsModalGrid .fieldGroup,
   .settingsModalGrid .settingsProgramsGrid {
-    gap: 8px;
-  }
-
-  .settingsModalGrid .compactSelect,
-  .settingsModalGrid .compactInput {
-    min-height: 42px;
-    font-size: 16px;
-    border-radius: 10px;
+    gap: var(--space-2);
   }
 
   .settingsModalGrid .compactLabel {
-    font-size: 11px;
+    font-size: var(--font-size-xs);
   }
 
   .settingsModalGrid .programCard {
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: var(--space-2) var(--space-2-5);
+    border-radius: var(--radius-lg);
   }
 
   .settingsModalGrid .checkboxLabel {
-    font-size: 12px;
-    gap: 8px;
+    font-size: var(--font-size-sm);
+    gap: var(--space-2);
   }
 
   .settingsModalGrid .checkboxInput {
-    width: 16px;
-    height: 16px;
-    border-radius: 5px;
-  }
-
-  .settingsModalFooter {
-    position: sticky;
-    bottom: 0;
-    gap: 8px;
-    padding: 10px 8px 8px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--bw-surface-card) 66%, transparent), color-mix(in srgb, var(--bw-surface-card) 96%, transparent));
-  }
-
-  .settingsModalFooterActions {
-    gap: 8px;
-  }
-
-  .settingsFooterCancelButton,
-  .settingsFooterSaveButton {
-    min-width: 0;
-    padding: 10px 12px;
-    font-size: 12px;
+    width: var(--space-4);
+    height: var(--space-4);
+    border-radius: var(--radius-sm);
   }
 }
 
 @media (max-width: 420px) {
   .settingsModalGrid .settingsTitle {
-    font-size: 15px;
-  }
-
-  .settingsModalGrid .compactSelect,
-  .settingsModalGrid .compactInput {
-    font-size: 15px;
+    font-size: var(--font-size-lg);
   }
 
   .settingsModalGrid .settingsHeader {
-    padding: 9px 10px 7px;
+    padding: var(--space-2-5) var(--space-2-5) var(--space-2);
   }
 
   .settingsModalGrid .settingsContent {
-    padding: 9px 10px 10px;
+    padding: var(--space-2-5) var(--space-2-5) var(--space-2-5);
   }
 }
 
 /* Mobile/tablet dashboard layout stabilization */
-@media (max-width: 1023px) {
-  .commandCenterGrid {
-    grid-template-columns: 1fr;
-    justify-content: stretch;
-    gap: 12px;
-  }
-
-  .gridHero,
-  .gridTools,
-  .gridSummary {
-    grid-column: 1 / -1;
-    width: 100%;
-    max-width: none;
-    justify-self: stretch;
-  }
-
-  .liveBoardCard,
-  .squadRailCard,
-  .entriesOverviewCard,
-  .entriesOverviewStandalone,
-  .commissionerPanel {
-    width: 100%;
-    max-width: none;
-    justify-self: stretch;
-    box-sizing: border-box;
-  }
-
-  .bracketPreview {
-    grid-template-columns: 1fr;
-    width: 100%;
-    max-width: none;
-  }
-
-  .bracketRound {
-    min-width: 0;
-  }
-
-  .summaryCardsBand {
-    width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .summaryCardsBand .statTile {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .summaryCardsBand {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .summaryCardsBand .statTile {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-  }
-}
-
-@media (max-width: 330px) {
-  .summaryCardsBand {
-    grid-template-columns: 1fr;
-  }
-}

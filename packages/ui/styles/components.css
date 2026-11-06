@@ -94,7 +94,7 @@
 .bw-table th {
   background: var(--bw-surface-panel);
   color: var(--bw-text-muted);
-  font-size: 0.68rem;
+  font-size: var(--font-size-xs);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -124,10 +124,10 @@
 
 .bw-sr-only {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  width: var(--space-px);
+  height: var(--space-px);
   padding: 0;
-  margin: -1px;
+  margin: calc(var(--space-px) * -1);
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;

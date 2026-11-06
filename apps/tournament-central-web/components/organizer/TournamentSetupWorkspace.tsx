@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpDown, CalendarDays, ChevronUp, CircleAlert, CircleCheck, ClipboardList, Clock3, Download, Eye, FileJson, Filter, Globe, GripVertical, Headphones, Layers, Link2, ListOrdered, Lock, MapPin, MoreHorizontal, PencilLine, Plus, RotateCcw, Save, Trash2, Trophy, Upload, Users, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ import ConfigDrawer from './ConfigDrawer';
 import { useConfirmation } from './useConfirmation';
 import { registrationDateErrors } from '@/lib/registrationDates';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
+import { TOURNAMENT_SUMMARY_PRINT_CSS } from '@/lib/printTheme';
 import PublishValidationSummary from './PublishValidationSummary';
 import { getTournament, listMyOrganizerSetupStates, listMyTournaments, resolveTcVenue } from './organizerApi';
 import { organizerRoutes } from './organizerRoutes';
@@ -94,7 +95,8 @@ import type {
   TournamentWritePayload,
   UserTournamentSummary,
 } from './setupTypes';
-import styles from './tournament-setup.module.css';
+import styles from './tournament-setup.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type DrawerState =
   | { kind: 'event'; id?: string }
@@ -899,7 +901,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const location = [details.bowlingCenter, details.venueAddressLine1, details.city, details.state, details.venueZip].filter(Boolean).join(', ');
     const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>${escapeHtml(details.name || 'Tournament')} - Tournament Summary</title>
-<style>body{margin:0;background:#f4f4f2;color:#1b1b1b;font:14px/1.5 Arial,sans-serif}.page{max-width:900px;margin:32px auto;background:#fff;padding:42px;box-sizing:border-box}h1,h2{margin:0;color:#171717}h1{font-size:30px}h2{font-size:18px;margin-top:32px;border-bottom:2px solid #ff7a00;padding-bottom:6px}.eyebrow{color:#a84f00;font-size:11px;font-weight:bold;letter-spacing:.1em;text-transform:uppercase}.meta{color:#565656;margin:8px 0 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.fact{border:1px solid #ddd;padding:12px}.fact b{display:block;font-size:11px;letter-spacing:.08em;color:#666}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{background:#191919;color:#fff;font-size:11px;letter-spacing:.05em;text-transform:uppercase}.footer{margin-top:32px;color:#777;font-size:12px}@media print{body{background:#fff}.page{margin:0;max-width:none;padding:0}}</style></head>
+<style>${TOURNAMENT_SUMMARY_PRINT_CSS}</style></head>
 <body><main class="page"><p class="eyebrow">Tournament Central | Tournament Summary</p><h1>${escapeHtml(details.name || 'Untitled Tournament')}</h1><p class="meta">${escapeHtml(details.subtitle || details.organizer || 'Tournament configuration export')}</p>
 <section class="grid"><div class="fact"><b>DATES</b>${escapeHtml([details.startDateIso, details.endDateIso].filter(Boolean).join(' to ') || 'Not set')}</div><div class="fact"><b>LOCATION</b>${escapeHtml(location || 'Not set')}</div><div class="fact"><b>ORGANIZER</b>${escapeHtml(details.organizer || 'Not set')}</div><div class="fact"><b>REGISTRATION</b>${escapeHtml([details.registrationOpenIso, details.registrationCloseIso].filter(Boolean).join(' to ') || 'Not set')}</div></section>
 <h2>Events</h2><table><thead><tr><th>Event</th><th>Format</th><th>Players</th><th>Entry Fee</th></tr></thead><tbody>${rows(events.filter((event) => event.enabled).map((event) => [event.name || 'Untitled Event', event.scoring, `${event.minPlayers}-${event.maxPlayers}`, formatCurrency(event.entryFeeCents)])) || '<tr><td colspan="4">No events configured.</td></tr>'}</tbody></table>
@@ -1741,7 +1743,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     ? Math.min(Math.round((totalRegisteredSpots / totalSquadCapacity) * 100), 100)
     : 0;
   const fillGaugeStyle = {
-    background: `conic-gradient(#22c55e ${fillPercent * 3.6}deg, color-mix(in srgb, var(--bw-border-subtle) 75%, transparent) 0deg 360deg)`,
+    background: `conic-gradient(var(--color-success) ${fillPercent * 3.6}deg, color-mix(in srgb, var(--bw-border-subtle) 75%, transparent) 0deg 360deg)`,
   };
 
 
@@ -2481,7 +2483,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               onChange={(event) => { void handleImportTemplate(event); }}
             />
             <details ref={builderActionsMenuRef} className={styles.builderActionsMenu}>
-              <summary><MoreHorizontal size={15} /> More</summary>
+              <summary><MoreHorizontal size={ICON_SIZE.md} /> More</summary>
               <div
                 className={styles.builderActionsMenuPanel}
                 onClick={() => {
@@ -2490,14 +2492,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   }
                 }}
               >
-                <button type="button" onClick={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}><RotateCcw size={14} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}</button>
-                <button type="button" onClick={() => templateInputRef.current?.click()}><Upload size={14} /> Import Template</button>
-                <button type="button" onClick={handleExportReport}><Download size={14} /> Download Summary</button>
-                <button type="button" onClick={handleExportTemplate}><FileJson size={14} /> Export Template</button>
+                <button type="button" onClick={() => { void handleOpenTournamentModal(); }} disabled={isLoadingTournamentLibrary}><RotateCcw size={ICON_SIZE.sm} /> {isLoadingTournamentLibrary ? 'Loading...' : 'Load Tournament'}</button>
+                <button type="button" onClick={() => templateInputRef.current?.click()}><Upload size={ICON_SIZE.sm} /> Import Template</button>
+                <button type="button" onClick={handleExportReport}><Download size={ICON_SIZE.sm} /> Download Summary</button>
+                <button type="button" onClick={handleExportTemplate}><FileJson size={ICON_SIZE.sm} /> Export Template</button>
               </div>
             </details>
             <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
-              <Save size={15} /> {isSavingDraft ? 'Saving...' : 'Save'}
+              <Save size={ICON_SIZE.md} /> {isSavingDraft ? 'Saving...' : 'Save'}
             </button>
             <button type="button" className={styles.primaryAction} onClick={() => setActiveSection('review-publish')}>
               Review & Publish
@@ -2524,10 +2526,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               <strong>{completion}% complete</strong>
               <span>{completedSectionCount} of {setupSections.length} sections ready</span>
             </div>
-            <div className={styles.builderProgressTrack} aria-label={`${completion}% of tournament setup complete`}>
-              <span style={{ width: `${completion}%` }} />
-            </div>
-            <span className={styles.builderSaveState}><CircleCheck size={13} /> {autosaveStatusLabel}</span>
+            <progress
+              className={styles.builderProgressTrack}
+              value={completion}
+              max={100}
+              aria-label={`${completion}% of tournament setup complete`}
+            />
+            <span className={styles.builderSaveState}><CircleCheck size={ICON_SIZE.sm} /> {autosaveStatusLabel}</span>
           </div>
         </div>
       </section>
@@ -2621,7 +2626,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       <div className={styles.evDivListCard}>
                         <div className={styles.evDivListHead}>
                           <div className={styles.evDivListHeadText}>
-                            <span className={styles.evDivListHeadIcon}><Trophy size={14} /></span>
+                            <span className={styles.evDivListHeadIcon}><Trophy size={ICON_SIZE.sm} /></span>
                             <h2>Events</h2>
                             <p>Define what bowlers can enter.</p>
                           </div>
@@ -2639,7 +2644,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 void persistOrganizerChanges({ events: nextEvents });
                               }}
                             >
-                              <Plus size={14} /> Add Event
+                              <Plus size={ICON_SIZE.sm} /> Add Event
                             </button>
                           </div>
                         </div>
@@ -2673,7 +2678,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   }
                                 }}
                               >
-                                <div className={styles.dragHandle}><GripVertical size={15} /></div>
+                                <div className={styles.dragHandle}><GripVertical size={ICON_SIZE.md} /></div>
                                 <div className={styles.evCardMain}>
                                   <div className={styles.evCardTitle}>
                                     <strong>{ev.name || 'Untitled Event'}</strong>
@@ -2685,7 +2690,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   <p className={styles.evCardFee}>{formatMoney(ev.entryFeeCents)} Entry Fee</p>
                                 </div>
                                 <div className={styles.cardActions}>
-                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedEventId(ev.id); }} aria-label="Edit event"><PencilLine size={14} /></button>
+                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedEventId(ev.id); }} aria-label="Edit event"><PencilLine size={ICON_SIZE.sm} /></button>
                                   <button
                                     type="button"
                                     className={styles.iconButton}
@@ -2695,7 +2700,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                     }}
                                     aria-label="More actions"
                                   >
-                                    <MoreHorizontal size={14} />
+                                    <MoreHorizontal size={ICON_SIZE.sm} />
                                   </button>
                                   {openCardMenu?.kind === 'event' && openCardMenu.id === ev.id ? (
                                     <div className={styles.cardMenu} onClick={(e) => e.stopPropagation()}>
@@ -2715,7 +2720,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       <div className={styles.evDivListCard}>
                         <div className={styles.evDivListHead}>
                           <div className={styles.evDivListHeadText}>
-                            <span className={styles.evDivListHeadIcon}><ListOrdered size={14} /></span>
+                            <span className={styles.evDivListHeadIcon}><ListOrdered size={ICON_SIZE.sm} /></span>
                             <h2>Divisions</h2>
                             <p>Define optional eligibility groups used by events.</p>
                           </div>
@@ -2733,7 +2738,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 void persistOrganizerChanges({ divisions: nextDivisions });
                               }}
                             >
-                              <Plus size={14} /> Add Division
+                              <Plus size={ICON_SIZE.sm} /> Add Division
                             </button>
                           </div>
                         </div>
@@ -2769,7 +2774,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   }
                                 }}
                               >
-                                <div className={styles.dragHandle}><ListOrdered size={15} /></div>
+                                <div className={styles.dragHandle}><ListOrdered size={ICON_SIZE.md} /></div>
                                 <div className={styles.evCardMain}>
                                   <div className={styles.evCardTitle}>
                                     <strong className={styles.evCardDivName}>{div.name || 'Untitled Division'}</strong>
@@ -2783,7 +2788,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   )}
                                 </div>
                                 <div className={styles.cardActions}>
-                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedDivisionId(div.id); }} aria-label="Edit division"><PencilLine size={14} /></button>
+                                  <button type="button" className={styles.iconButton} onClick={(e) => { e.stopPropagation(); setSelectedDivisionId(div.id); }} aria-label="Edit division"><PencilLine size={ICON_SIZE.sm} /></button>
                                   <button
                                     type="button"
                                     className={styles.iconButton}
@@ -2793,7 +2798,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                     }}
                                     aria-label="More actions"
                                   >
-                                    <MoreHorizontal size={14} />
+                                    <MoreHorizontal size={ICON_SIZE.sm} />
                                   </button>
                                   {openCardMenu?.kind === 'division' && openCardMenu.id === div.id ? (
                                     <div className={styles.cardMenu} onClick={(e) => e.stopPropagation()}>
@@ -2818,14 +2823,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               <div className={styles.editorModalBox}>
                 <div className={styles.editorModalHead}>
                   <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Trophy size={14} /></span>
+                    <span className={styles.divisionEditorHeadBadge}><Trophy size={ICON_SIZE.sm} /></span>
                     <div className={styles.divisionEditorHeadText}>
                       <span className={styles.editorModalTitle}>Event Details</span>
                       <small className={styles.divisionEditorHeadSubtitle}>{events.find((e) => e.id === selectedEventId)!.name || 'New Event'}</small>
                     </div>
                   </div>
                   <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedEventId(null)} aria-label="Close">
-                    <X size={16} />
+                    <X size={ICON_SIZE.md} />
                   </button>
                 </div>
                 <div className={styles.editorModalBody}>
@@ -2852,14 +2857,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               <div className={styles.editorModalBox}>
                 <div className={styles.editorModalHead}>
                   <div className={styles.divisionEditorHeadBlock}>
-                    <span className={styles.divisionEditorHeadBadge}><Layers size={14} /></span>
+                    <span className={styles.divisionEditorHeadBadge}><Layers size={ICON_SIZE.sm} /></span>
                     <div className={styles.divisionEditorHeadText}>
                       <span className={styles.editorModalTitle}>Division Details</span>
                       <small className={styles.divisionEditorHeadSubtitle}>{divisions.find((d) => d.id === selectedDivisionId)!.name || 'New Division'}</small>
                     </div>
                   </div>
                   <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setSelectedDivisionId(null)} aria-label="Close">
-                    <X size={16} />
+                    <X size={ICON_SIZE.md} />
                   </button>
                 </div>
                 <div className={styles.editorModalBody}>
@@ -2894,10 +2899,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <span className={styles.evDivCountPill}>{squads.length} squads</span>
                     <div className={styles.squadDashActions}>
                     <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection('registration-setup')}>
-                      <Eye size={14} /> Preview Registration
+                      <Eye size={ICON_SIZE.sm} /> Preview Registration
                     </button>
                     <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                      <Plus size={14} /> Add Squad
+                      <Plus size={ICON_SIZE.sm} /> Add Squad
                     </button>
                     </div>
                   </div>
@@ -2905,39 +2910,39 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
                 {squads.length === 0 ? (
                   <div className={styles.squadEmptyState}>
-                    <span className={styles.squadEmptyIcon}><CalendarDays size={22} /></span>
+                    <span className={styles.squadEmptyIcon}><CalendarDays size={ICON_SIZE['2xl']} /></span>
                     <h3>No squads are needed yet</h3>
                     <p>Squads are optional. Add them when your tournament offers specific bowling times or needs capacity limits.</p>
                     <button type="button" className={styles.primaryAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                      <Plus size={14} /> Add First Squad
+                      <Plus size={ICON_SIZE.sm} /> Add First Squad
                     </button>
                   </div>
                 ) : (
                   <>
                 <div className={styles.squadMetricGrid}>
                   <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><Users size={14} /></span>
+                    <span className={styles.squadMetricIcon}><Users size={ICON_SIZE.sm} /></span>
                     <div>
                       <small>Total Squads</small>
                       <strong>{squads.length}</strong>
                     </div>
                   </article>
                   <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><CalendarDays size={14} /></span>
+                    <span className={styles.squadMetricIcon}><CalendarDays size={ICON_SIZE.sm} /></span>
                     <div>
                       <small>Dates</small>
                       <strong>{groupsByDate.length}</strong>
                     </div>
                   </article>
                   <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><Users size={14} /></span>
+                    <span className={styles.squadMetricIcon}><Users size={ICON_SIZE.sm} /></span>
                     <div>
                       <small>Total Capacity</small>
                       <strong>{totalSquadCapacity}</strong>
                     </div>
                   </article>
                   <article className={styles.squadMetricCard}>
-                    <span className={styles.squadMetricIcon}><CircleCheck size={14} /></span>
+                    <span className={styles.squadMetricIcon}><CircleCheck size={ICON_SIZE.sm} /></span>
                     <div>
                       <small>Spots Filled</small>
                       <strong>{totalRegisteredSpots}</strong>
@@ -2955,11 +2960,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   {squadGroups.map((group) => (
                     <section key={group.key} className={styles.squadGroupBlock}>
                       <header className={styles.squadGroupHead}>
-                        <h3><CalendarDays size={14} /> {group.label}</h3>
+                        <h3><CalendarDays size={ICON_SIZE.sm} /> {group.label}</h3>
                         <div className={styles.squadGroupHeadMeta}>
                           <span>{group.squads.length} squads - {group.squads.reduce((sum, squad) => sum + squad.capacity, 0)} capacity - {group.squads.reduce((sum, squad) => sum + squad.registeredCount, 0)} filled</span>
                           <button type="button" className={styles.squadChevronButton} aria-label="Collapse date group" disabled>
-                            <ChevronUp size={13} />
+                            <ChevronUp size={ICON_SIZE.sm} />
                           </button>
                         </div>
                       </header>
@@ -2996,8 +3001,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                               <div className={styles.squadRowMain}>
                                 <strong>{squad.name}</strong>
                                 <p className={styles.squadRowMeta}>
-                                  <span><Clock3 size={12} /> Check-in {formatSquadTimeLabel(squad.checkInTime)}</span>
-                                  <span><MapPin size={12} /> {details.bowlingCenter || 'Location TBD'}</span>
+                                  <span><Clock3 size={ICON_SIZE.xs} /> Check-in {formatSquadTimeLabel(squad.checkInTime)}</span>
+                                  <span><MapPin size={ICON_SIZE.xs} /> {details.bowlingCenter || 'Location TBD'}</span>
                                 </p>
                                 <div className={styles.metaChips}>
                                   <span className={styles.chip}>{availabilityLabel}</span>
@@ -3017,7 +3022,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
                               <div className={styles.squadRowActions}>
                                 <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'squad', id: squad.id })} aria-label={`Edit ${squad.name}`}>
-                                  <PencilLine size={14} /> Edit
+                                  <PencilLine size={ICON_SIZE.sm} /> Edit
                                 </button>
                               </div>
                             </article>
@@ -3029,7 +3034,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </div>
 
                 <button type="button" className={styles.squadAddDateAction} onClick={() => setDrawerState({ kind: 'squad' })}>
-                  <span className={styles.squadAddDateTitle}><Plus size={14} /> Add Squad to New Date</span>
+                  <span className={styles.squadAddDateTitle}><Plus size={ICON_SIZE.sm} /> Add Squad to New Date</span>
                   <small>Create a new date and add squads</small>
                 </button>
                   </>
@@ -3046,13 +3051,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 <section className={`${styles.sectionCard} ${styles.registrationFieldsSection}`}>
                   <div className={styles.sectionHeader}>
                     <div>
-                      <h2 className={styles.registrationFieldsHeading}><span className={styles.registrationFieldsIcon}><ClipboardList size={16} /></span>Registration Fields</h2>
+                      <h2 className={styles.registrationFieldsHeading}><span className={styles.registrationFieldsIcon}><ClipboardList size={ICON_SIZE.md} /></span>Registration Fields</h2>
                       <p>Configure the built-in bowler information fields.</p>
                     </div>
                     <div className={styles.registrationHeaderActions}>
                       <span className={styles.evDivCountPill}>{askedFields.length} active</span>
                       <SetupStatusBadge status={statusBySection['registration-setup']} />
-                      <button type="button" className={styles.secondaryAction} onClick={() => setShowRegistrationPreview(true)}><Eye size={14} /> Preview Registration</button>
+                      <button type="button" className={styles.secondaryAction} onClick={() => setShowRegistrationPreview(true)}><Eye size={ICON_SIZE.sm} /> Preview Registration</button>
                     </div>
                   </div>
 
@@ -3073,7 +3078,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           onDragEnd={handleFieldDragEnd}
                         >
                           <div className={styles.dragHandle} aria-hidden="true">
-                            <GripVertical size={14} />
+                            <GripVertical size={ICON_SIZE.sm} />
                           </div>
                           <div className={styles.cardMain}>
                             <div className={styles.registrationFieldTitleRow}>
@@ -3113,7 +3118,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   aria-label={`Hide ${field.customLabel || field.label}`}
                                   title="Hide field"
                                 >
-                                  <Trash2 size={15} />
+                                  <Trash2 size={ICON_SIZE.md} />
                                 </button>
                               ) : !builtInRegistrationFieldKeys.has(field.key) ? (
                                 <button
@@ -3123,7 +3128,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   aria-label={`Delete ${field.customLabel || field.label}`}
                                   title="Delete field"
                                 >
-                                  <Trash2 size={15} />
+                                  <Trash2 size={ICON_SIZE.md} />
                                 </button>
                               ) : null}
                             </div>
@@ -3146,7 +3151,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                             className={`${styles.configCard} ${styles.registrationFieldCard} ${styles.registrationFieldCardMuted}`}
                           >
                             <div className={styles.dragHandle} aria-hidden="true">
-                              <GripVertical size={14} />
+                              <GripVertical size={ICON_SIZE.sm} />
                             </div>
                             <div className={styles.cardMain}>
                               <div className={styles.registrationFieldTitleRow}>
@@ -3183,7 +3188,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   onClick={() => setDrawerState({ kind: 'field', id: field.id })}
                                   aria-label={`Edit ${field.label}`}
                                 >
-                                  <PencilLine size={15} /> Edit
+                                  <PencilLine size={ICON_SIZE.md} /> Edit
                                 </button>
                               </div>
                             </div>
@@ -3195,7 +3200,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 
                   <div className={styles.registrationFieldFooterActions}>
                     <button type="button" className={styles.registrationFieldFooterPrimary} onClick={() => setDrawerState({ kind: 'field' })}>
-                      <Plus size={14} /> Add Field
+                      <Plus size={ICON_SIZE.sm} /> Add Field
                     </button>
                   </div>
                 </section>
@@ -3233,7 +3238,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <div className={styles.registrationQuestionHeaderActions}>
                       <span className={styles.evDivCountPill}>{enabledQuestions.length} active</span>
                       <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}>
-                        <Plus size={14} /> Add Question
+                        <Plus size={ICON_SIZE.sm} /> Add Question
                       </button>
                     </div>
                   </div>
@@ -3246,7 +3251,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                       <div className={styles.registrationEmptyState}>
                         <strong>No custom questions</strong>
                         <p>The standard registration fields may be all you need.</p>
-                        <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}><Plus size={14} /> Add Custom Question</button>
+                        <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'question' })}><Plus size={ICON_SIZE.sm} /> Add Custom Question</button>
                       </div>
                     ) : null}
                     {enabledQuestions.map((question) => (
@@ -3260,7 +3265,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         onDragEnd={handleQuestionDragEnd}
                       >
                         <div className={styles.dragHandle} aria-hidden="true">
-                          <GripVertical size={14} />
+                          <GripVertical size={ICON_SIZE.sm} />
                         </div>
                         <div className={styles.cardMain}>
                           <strong>{question.label || 'Untitled question'}</strong>
@@ -3274,7 +3279,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         <div className={styles.questionCardActions}>
                           <select className={styles.registrationModeSelect} value={question.required ? 'required' : 'optional'} onChange={(event) => event.target.value === 'dont-ask' ? handleSetQuestionEnabled(question.id, false) : handleSetQuestionRequired(question.id, event.target.value === 'required')} aria-label={`Requirement setting for ${question.label || 'Untitled question'}`}><option value="required">Required</option><option value="optional">Optional</option><option value="dont-ask">Don&apos;t Ask</option></select>
                           <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
-                            <PencilLine size={15} />
+                            <PencilLine size={ICON_SIZE.md} />
                           </button>
                         </div>
                       </article>
@@ -3291,7 +3296,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         {disabledQuestions.map((question) => (
                           <article key={question.id} className={`${styles.configCard} ${styles.registrationQuestionCard} ${styles.questionCardDisabled}`}>
                             <div className={styles.dragHandle} aria-hidden="true">
-                              <GripVertical size={14} />
+                              <GripVertical size={ICON_SIZE.sm} />
                             </div>
                             <div className={styles.cardMain}>
                               <strong>{question.label || 'Untitled question'}</strong>
@@ -3306,7 +3311,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                 Ask Question
                               </button>
                               <button type="button" className={styles.iconButton} onClick={() => setDrawerState({ kind: 'question', id: question.id })} aria-label="Edit question">
-                                <PencilLine size={15} />
+                                <PencilLine size={ICON_SIZE.md} />
                               </button>
                             </div>
                           </article>
@@ -3329,7 +3334,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <div className={styles.feesHeaderActions}>
                     <span className={styles.evDivCountPill}>{addOnFees.length} active</span>
                     <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}>
-                      <Plus size={14} /> Add Add-on
+                      <Plus size={ICON_SIZE.sm} /> Add Add-on
                     </button>
                   </div>
                 </div>
@@ -3338,10 +3343,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                     <article key={fee.id} className={styles.addOnRow}>
                       <div><strong>{fee.name || 'Untitled Add-on'}</strong><span>Optional during registration</span></div>
                       <strong>{formatMoney(fee.amountCents)}</strong>
-                      <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee', id: fee.id })}><PencilLine size={14} /> Edit</button>
+                      <button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee', id: fee.id })}><PencilLine size={ICON_SIZE.sm} /> Edit</button>
                     </article>
                   ))}
-                  {addOnFees.length === 0 ? <div className={styles.simpleOptionalEmpty}><strong>No add-ons configured</strong><p>Add-ons are optional and can be used for brackets, donations, merchandise, or other extras.</p><button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}><Plus size={14} /> Add First Add-on</button></div> : null}
+                  {addOnFees.length === 0 ? <div className={styles.simpleOptionalEmpty}><strong>No add-ons configured</strong><p>Add-ons are optional and can be used for brackets, donations, merchandise, or other extras.</p><button type="button" className={styles.inlineAction} onClick={() => setDrawerState({ kind: 'fee' })}><Plus size={ICON_SIZE.sm} /> Add First Add-on</button></div> : null}
                 </div>
               </section>
 
@@ -3357,9 +3362,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   </div>
                 </div>
                 <div className={styles.paymentFacts}>
-                  <span><CircleCheck size={15} /> No payment processor required</span>
-                  <span><CircleCheck size={15} /> No online transaction fees</span>
-                  <span><CircleCheck size={15} /> Payment is collected at check-in</span>
+                  <span><CircleCheck size={ICON_SIZE.md} /> No payment processor required</span>
+                  <span><CircleCheck size={ICON_SIZE.md} /> No online transaction fees</span>
+                  <span><CircleCheck size={ICON_SIZE.md} /> Payment is collected at check-in</span>
                 </div>
               </section>
 
@@ -3378,7 +3383,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               <div className={`${styles.editorModalBox} ${styles.registrationPreviewModal}`} onClick={(event) => event.stopPropagation()}>
                 <div className={styles.editorModalHead}>
                   <div><span className={styles.editorModalTitle}>Registration Preview</span><small className={styles.divisionEditorHeadSubtitle}>Preview only · Changes update automatically</small></div>
-                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setShowRegistrationPreview(false)} aria-label="Close preview"><X size={16} /></button>
+                  <button type="button" className={`${styles.iconButton} ${styles.modalCloseButton}`} onClick={() => setShowRegistrationPreview(false)} aria-label="Close preview"><X size={ICON_SIZE.md} /></button>
                 </div>
                 <div className={styles.editorModalBody}>
                   <TournamentRegistrationForm rulesText={details.rulesText} tournamentName={details.name || 'Tournament Name'} squads={enabledSquads} events={eventsForSelectedPreviewSquad} divisions={enabledDivisions} fields={askedFields} questions={enabledQuestions} requiredBowlerCount={requiredPreviewBowlerCount} formState={signupPreviewForm} setFormState={setSignupPreviewForm} submitMessage={signupPreviewSubmitMessage} isSubmitting={isSubmittingSignupPreview} onSubmit={() => { void handleSignupPreviewSubmit(); }} footerHint="Preview only. No registration will be submitted." />
@@ -3394,7 +3399,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                   <h2>Review & Publish</h2>
                   <p>Run a final preflight check and resolve anything that could prevent registration.</p>
                 </div>
-                <div className={styles.reviewHeaderActions}><SetupStatusBadge status={statusBySection['review-publish']} /><button type="button" className={styles.secondaryAction} onClick={() => setLastPreflightRunAt(new Date().toISOString())}><RotateCcw size={14} /> Run Checks Again</button></div>
+                <div className={styles.reviewHeaderActions}><SetupStatusBadge status={statusBySection['review-publish']} /><button type="button" className={styles.secondaryAction} onClick={() => setLastPreflightRunAt(new Date().toISOString())}><RotateCcw size={ICON_SIZE.sm} /> Run Checks Again</button></div>
               </div>
               <div className={styles.preflightIntro}><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing is blocked' : 'Tournament is ready to publish'}</strong><span>{lastPreflightRunAt ? `Last checked ${new Date(lastPreflightRunAt).toLocaleTimeString()}` : 'Checks update automatically as setup changes.'}</span></div>
               <PublishValidationSummary
@@ -3405,9 +3410,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
               <div className={styles.reviewStatusRecommendation}>
                 <div><strong>Visibility</strong><p>{visibilitySummary}</p></div>
                 <div className={styles.visibilityGroup}>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'public' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'public' }))}><Globe size={15} /><span>Public</span></button>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'unlisted' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'unlisted' }))}><Link2 size={15} /><span>Unlisted</span></button>
-                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'private' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'private' }))}><Lock size={15} /><span>Private</span></button>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'public' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'public' }))}><Globe size={ICON_SIZE.md} /><span>Public</span></button>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'unlisted' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'unlisted' }))}><Link2 size={ICON_SIZE.md} /><span>Unlisted</span></button>
+                  <button type="button" className={`${styles.visibilityOpt} ${details.visibility === 'private' ? styles.visibilityOptActive : ''}`} onClick={() => setDetails((prev) => ({ ...prev, visibility: 'private' }))}><Lock size={ICON_SIZE.md} /><span>Private</span></button>
                 </div>
               </div>
               <section className={styles.launchSummaryCard}>
@@ -3427,14 +3432,14 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 <div><strong>{validationIssues.some((issue) => issue.severity === 'error') ? 'Publishing Blocked' : 'Ready to Publish'}</strong><p>{validationIssues.some((issue) => issue.severity === 'error') ? `Resolve ${validationIssues.filter((issue) => issue.severity === 'error').length} required issue${validationIssues.filter((issue) => issue.severity === 'error').length === 1 ? '' : 's'} before publishing.` : 'Publishing will make this tournament available according to the selected visibility.'}</p></div>
                 <div className={styles.publishActionsRow}>
                   <button type="button" className={styles.secondaryAction} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>{isSavingDraft ? 'Saving...' : 'Save'}</button>
-                  <button type="button" className={styles.primaryAction} onClick={() => { void handlePublish(); }} disabled={validationIssues.some((issue) => issue.severity === 'error') || isSavingDraft || isPublishing}><CircleCheck size={15} /> {isPublishing ? 'Publishing...' : 'Publish Tournament'}</button>
+                  <button type="button" className={styles.primaryAction} onClick={() => { void handlePublish(); }} disabled={validationIssues.some((issue) => issue.severity === 'error') || isSavingDraft || isPublishing}><CircleCheck size={ICON_SIZE.md} /> {isPublishing ? 'Publishing...' : 'Publish Tournament'}</button>
                 </div>
               </div>
             </section>
           )}
           <nav className={styles.setupStepFooter} aria-label="Setup step navigation">
-            {setupSections.findIndex((section) => section.key === activeSection) > 0 ? <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].key)}>← {setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].label}</button> : <span />}
-            {setupSections.findIndex((section) => section.key === activeSection) < setupSections.length - 1 ? <button type="button" className={styles.primaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].key)}>{setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].label} →</button> : null}
+            {setupSections.findIndex((section) => section.key === activeSection) > 0 ? <button type="button" className={styles.secondaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].key)}><ArrowLeft aria-hidden="true" size={ICON_SIZE.sm} /> {setupSections[setupSections.findIndex((section) => section.key === activeSection) - 1].label}</button> : <span />}
+            {setupSections.findIndex((section) => section.key === activeSection) < setupSections.length - 1 ? <button type="button" className={styles.primaryAction} onClick={() => setActiveSection(setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].key)}>{setupSections[setupSections.findIndex((section) => section.key === activeSection) + 1].label} <ArrowRight aria-hidden="true" size={ICON_SIZE.sm} /></button> : null}
           </nav>
         </main>
       </div>
@@ -3459,7 +3464,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 aria-label="Close tournament list"
                 onClick={() => setIsTournamentModalOpen(false)}
               >
-                <X size={16} />
+                <X size={ICON_SIZE.md} />
               </button>
             </header>
 
@@ -3480,7 +3485,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                         <article className={styles.tournamentCard}>
                           <div className={styles.tournamentCardMain}>
                             <span className={styles.tournamentIconWrap}>
-                              <Trophy size={16} />
+                              <Trophy size={ICON_SIZE.md} />
                             </span>
                             <div className={styles.tournamentCardText}>
                               <div className={styles.tournamentCardTitleRow}>
@@ -3504,7 +3509,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                               onClick={() => { void handleLoadExistingTournament(tournament.id); }}
                               disabled={loadingTournamentId === tournament.id || deletingTournamentId === tournament.id}
                             >
-                              <RotateCcw size={14} /> {loadingTournamentId === tournament.id ? 'Loading...' : 'Edit'}
+                              <RotateCcw size={ICON_SIZE.sm} /> {loadingTournamentId === tournament.id ? 'Loading...' : 'Edit'}
                             </button>
                             <button
                               type="button"
@@ -3512,7 +3517,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                               onClick={() => { void handleDeleteTournament(tournament.id); }}
                               disabled={loadingTournamentId === tournament.id || deletingTournamentId === tournament.id}
                             >
-                              <Trash2 size={14} /> {deletingTournamentId === tournament.id ? 'Deleting...' : 'Delete'}
+                              <Trash2 size={ICON_SIZE.sm} /> {deletingTournamentId === tournament.id ? 'Deleting...' : 'Delete'}
                             </button>
                           </div>
                         </article>

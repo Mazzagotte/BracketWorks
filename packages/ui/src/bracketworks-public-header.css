@@ -7,13 +7,13 @@
 }
 
 .bw-public-header-inner {
-  width: min(calc(100% - 40px), 1360px);
+  width: min(calc(100% - var(--space-10)), var(--size-10xl));
   margin-inline: auto;
-  min-height: 64px;
+  min-height: var(--space-16);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .bw-public-brand-link {
@@ -29,7 +29,7 @@
 .bw-public-brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--space-2-5);
   white-space: nowrap;
 }
 
@@ -40,7 +40,7 @@
 
 .bw-public-brand-text strong {
   color: var(--bw-text-title);
-  font-size: 20px;
+  font-size: var(--font-size-3xl);
   line-height: 1;
   letter-spacing: -0.6px;
 }
@@ -50,18 +50,18 @@
 }
 
 .bw-public-brand-text small {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--bw-text-muted);
-  font-size: 8px;
+  font-size: var(--font-size-3xs);
   letter-spacing: 0.7px;
   text-transform: uppercase;
 }
 
 .bw-public-nav {
   display: flex;
-  gap: 24px;
+  gap: var(--space-6);
   color: var(--bw-text-body);
-  font-size: 13px;
+  font-size: var(--font-size-base);
   font-weight: 650;
 }
 
@@ -78,20 +78,20 @@
 .bw-public-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .bw-public-primary-btn,
 .bw-public-secondary-btn {
-  min-height: 38px;
-  padding: 0 16px;
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
   font-weight: 800;
   text-decoration: none;
   transition: background-color 0.15s, border-color 0.15s;
@@ -121,18 +121,18 @@
 
 @media (max-width: 960px) {
   .bw-public-header-inner {
-    width: min(calc(100% - 20px), 1360px);
+    width: min(calc(100% - var(--space-5)), var(--size-10xl));
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px 0;
+    gap: var(--space-2-5);
+    padding: var(--space-3-5) 0;
   }
 
   .bw-public-nav {
     order: 3;
     width: 100%;
     justify-content: space-between;
-    gap: 8px;
+    gap: var(--space-2);
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom: var(--space-1);
   }
 }

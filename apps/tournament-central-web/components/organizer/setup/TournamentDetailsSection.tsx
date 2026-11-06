@@ -15,7 +15,8 @@ import SetupStatusBadge from '../SetupStatusBadge';
 import type { SetupSectionKey, SetupStatus } from '../types';
 import type { TournamentDetails } from '../setupTypes';
 import styles from '../tournament-setup.module.css';
-import { registrationDateErrors } from '@/lib/registrationDates';
+import { registrationDateErrors } from '@/lib/registrationDates';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 type TimezoneOption = { value: string; label: string };
 type UsStateOption = { code: string; name: string };
@@ -176,7 +177,7 @@ export default function TournamentDetailsSection({
           <div className={styles.detailsGrid}>
             <article id="details-identity" className={`${styles.detailsCard} ${styles.identityCard}`}>
               <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><Trophy size={15} /></span>
+                <span className={styles.detailsCardIcon}><Trophy size={ICON_SIZE.md} /></span>
                 <div className={styles.detailsCardHeadText}>
                   <h3>Tournament Identity</h3>
                   <p>Name, organizer, tournament type, and branding.</p>
@@ -289,7 +290,7 @@ export default function TournamentDetailsSection({
                             <img src={logoPreviewUrl} alt="Tournament logo preview" className={styles.logoPreviewImage} onLoad={(event) => setLogoDimensions(`${event.currentTarget.naturalWidth} × ${event.currentTarget.naturalHeight}px`)} />
                           </div>
                         ) : (
-                          <span className={styles.logoUploadIcon}><Upload size={15} /></span>
+                          <span className={styles.logoUploadIcon}><Upload size={ICON_SIZE.md} /></span>
                         )}
                         <div className={styles.logoUploadText}>
                           <span className={styles.logoUploadMain}>{logoAssetName}</span>
@@ -305,7 +306,7 @@ export default function TournamentDetailsSection({
                               logoInputRef.current?.click();
                             }}
                           >
-                            <PencilLine size={13} /> Replace
+                            <PencilLine size={ICON_SIZE.sm} /> Replace
                           </button>
                           <button
                             type="button"
@@ -316,13 +317,13 @@ export default function TournamentDetailsSection({
                               void clearLogo();
                             }}
                           >
-                            <Trash2 size={13} /> Remove
+                            <Trash2 size={ICON_SIZE.sm} /> Remove
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className={styles.logoUploadInner}>
-                        <span className={styles.logoUploadIcon}><Upload size={16} /></span>
+                        <span className={styles.logoUploadIcon}><Upload size={ICON_SIZE.md} /></span>
                         <div className={styles.logoUploadText}>
                           <span className={styles.logoUploadMain}>Upload Tournament Logo</span>
                           <small className={styles.logoUploadHint}>PNG or JPG · Maximum 5 MB</small>
@@ -343,7 +344,7 @@ export default function TournamentDetailsSection({
 
             <article id="details-schedule" className={styles.detailsCard}>
               <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><CalendarDays size={15} /></span>
+                <span className={styles.detailsCardIcon}><CalendarDays size={ICON_SIZE.md} /></span>
                 <div className={styles.detailsCardHeadText}>
                   <h3>Tournament Dates</h3>
                   <p>Tournament schedule, registration window, and timezone.</p>
@@ -426,13 +427,13 @@ export default function TournamentDetailsSection({
                     ))}
                   </select>
                 </label>
-                <p className={styles.detailNote}><Info size={13} /> All dates and times will be displayed in the selected timezone.</p>
+                <p className={styles.detailNote}><Info size={ICON_SIZE.sm} /> All dates and times will be displayed in the selected timezone.</p>
               </div>
             </article>
 
             <article id="details-location" className={styles.detailsCard}>
               <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><MapPin size={15} /></span>
+                <span className={styles.detailsCardIcon}><MapPin size={ICON_SIZE.md} /></span>
                 <div className={styles.detailsCardHeadText}>
                   <h3>Location</h3>
                   <p>Bowling center and tournament location.</p>
@@ -440,7 +441,7 @@ export default function TournamentDetailsSection({
               </div>
               <div className={styles.detailsCardBody}>
                 <div className={styles.locationModeTabs} aria-label="Location entry method">
-                  <button type="button" className={`${styles.locationModeTab} ${locationMode === 'search' ? styles.locationModeTabActive : ''}`} onClick={() => setLocationMode('search')}><MapPin size={13} /> Search for Venue</button>
+                  <button type="button" className={`${styles.locationModeTab} ${locationMode === 'search' ? styles.locationModeTabActive : ''}`} onClick={() => setLocationMode('search')}><MapPin size={ICON_SIZE.sm} /> Search for Venue</button>
                   <button type="button" className={`${styles.locationModeTab} ${locationMode === 'manual' ? styles.locationModeTabActive : ''}`} onClick={() => {
                     setLocationMode('manual');
                     setVenueSearchResults([]);
@@ -450,7 +451,7 @@ export default function TournamentDetailsSection({
                 {locationMode === 'search' ? <>
                 {hasSelectedVenue ? (
                   <div className={styles.locationSelectedCard}>
-                    <div className={styles.locationSelectedIcon}><MapPin size={18} /></div>
+                    <div className={styles.locationSelectedIcon}><MapPin size={ICON_SIZE.lg} /></div>
                     <div className={styles.locationSelectedText}><span>Selected Venue</span><strong>{details.bowlingCenter}</strong><small>{[details.venueAddressLine1, details.city, details.state, details.venueZip].filter(Boolean).join(', ')}</small></div>
                     <div className={styles.locationSelectedActions}>
                       <button type="button" className={styles.inlineAction} onClick={() => setDetails((prev) => ({ ...prev, venueId: null, venueExternalProvider: '', venueExternalPlaceId: '', venueLatitude: null, venueLongitude: null }))}>Change Venue</button>
@@ -566,7 +567,7 @@ export default function TournamentDetailsSection({
 
             <article id="details-support" className={styles.detailsCard}>
               <div className={styles.detailsCardHead}>
-                <span className={styles.detailsCardIcon}><Headphones size={15} /></span>
+                <span className={styles.detailsCardIcon}><Headphones size={ICON_SIZE.md} /></span>
                 <div className={styles.detailsCardHeadText}>
                   <h3>Participant Contact</h3>
                   <p>Contact information shown to bowlers for registration and tournament questions.</p>

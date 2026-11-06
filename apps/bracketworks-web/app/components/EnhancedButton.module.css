@@ -45,8 +45,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
   background-color: var(--color-border-hover);
   animation: ping 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
 }
@@ -65,7 +65,7 @@
   inset: 0;
   opacity: 0;
   transition: opacity 0.3s;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--opacity-white-10);
   pointer-events: none;
 }
@@ -84,5 +84,5 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }

@@ -1,16 +1,13 @@
-export const designTokens = {
-  colors: {
-    brand: '#0f172a',
-    accent: '#2563eb',
-  },
-  spacing: {
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-  },
-};
-
-export const availableThemes = ['bracketworks-theme'] as const;
+/** Standard icon sizes (px) shared by both apps. Use these instead of numeric icon `size` props. */
+export const ICON_SIZE = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 28,
+} as const;
 
 export function capitalizeFirstLetter(value: string): string {
   const firstLetterIndex = value.search(/\S/);

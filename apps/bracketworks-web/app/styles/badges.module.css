@@ -2,13 +2,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 1.58rem;
-  padding: 0.26rem 0.6rem;
+  min-height: var(--space-6);
+  padding: var(--space-1) var(--space-2-5);
   border: 1px solid var(--bw-border-subtle);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--bw-surface-panel-strong);
   color: var(--bw-text-body);
-  font-size: 0.72rem;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0;
@@ -16,9 +16,9 @@
 }
 
 .compact {
-  min-height: 20px;
-  padding: 0 8px;
-  font-size: 10px;
+  min-height: var(--space-5);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-2xs);
 }
 
 .success {
@@ -47,13 +47,13 @@
 }
 
 .placement {
-  width: 30px;
-  height: 30px;
-  min-height: 30px;
+  width: var(--space-8);
+  height: var(--space-8);
+  min-height: var(--space-8);
   padding: 0;
   border-radius: 50%;
   flex-shrink: 0;
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
 }
 
 .placeFirst {

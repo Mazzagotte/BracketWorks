@@ -1,11 +1,11 @@
 .body {
-  padding: 18px 24px 24px;
+  padding: var(--space-5) var(--space-6) var(--space-6);
 }
 
 .title {
   color: var(--color-text-primary);
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--font-size-3xl);
   line-height: 1.2;
   font-weight: 700;
 }
@@ -13,12 +13,12 @@
 .message {
   color: var(--color-text-primary);
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--font-size-lg);
   line-height: 1.45;
 }
 
 .actions {
-  margin-top: 22px;
+  margin-top: var(--space-6);
   display: flex;
   justify-content: flex-end;
 }
@@ -27,10 +27,10 @@
   background: var(--color-primary);
   color: var(--color-white);
   border: none;
-  border-radius: 8px;
-  min-height: 44px;
-  padding: 10px 22px;
-  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  min-height: var(--space-11);
+  padding: var(--space-2-5) var(--space-6);
+  font-size: var(--font-size-lg);
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
@@ -48,11 +48,11 @@
 @media (max-width: 640px) {
 
   .title {
-    font-size: 1.125rem;
+    font-size: var(--font-size-2xl);
   }
 
   .body {
-    padding: 16px 18px 18px;
+    padding: var(--space-4) var(--space-5) var(--space-5);
   }
 
   .actions {
@@ -73,7 +73,7 @@
 
 .title {
   color: var(--bw-text-title);
-  font-size: 1rem;
+  font-size: var(--font-size-xl);
   line-height: 1.2;
   font-weight: 800;
   letter-spacing: 0;
@@ -81,7 +81,7 @@
 
 .message {
   color: var(--bw-text-muted);
-  font-size: 0.86rem;
+  font-size: var(--font-size-md);
 }
 
 .actions {
@@ -90,12 +90,12 @@
 
 .okButton {
   min-height: var(--control-height);
-  border-radius: 11px;
-  padding: 0.42rem 0.9rem;
+  border-radius: var(--radius-lg);
+  padding: var(--space-1-5) var(--space-3-5);
   color: var(--bw-text-title);
   background: color-mix(in srgb, var(--color-primary) 20%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
-  font-size: 0.78rem;
+  font-size: var(--font-size-sm);
   font-weight: 800;
   letter-spacing: 0;
   box-shadow: none;
@@ -109,20 +109,20 @@
 
 @media (max-width: 640px) {
   .body {
-    padding: 0.82rem;
+    padding: var(--space-3-5);
   }
 
   .message {
-    font-size: 0.82rem;
+    font-size: var(--font-size-base);
     line-height: 1.45;
   }
 
   .actions {
-    margin-top: 0.82rem;
+    margin-top: var(--space-3-5);
   }
 
   .okButton {
-    min-height: 40px;
-    font-size: 0.76rem;
+    min-height: var(--space-10);
+    font-size: var(--font-size-sm);
   }
 }

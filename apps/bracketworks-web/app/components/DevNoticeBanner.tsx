@@ -7,7 +7,8 @@ import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import DevNoticeModal from './DevNoticeModal';
 import ChangelogModal from './ChangelogModal';
-import styles from './DevNoticeBanner.module.css';
+import styles from './DevNoticeBanner.module.css';
+import { ICON_SIZE } from '@bracketworks/ui';
 
 export const CURRENT_NOTICE_VERSION = '1.1';
 
@@ -64,7 +65,7 @@ export default function DevNoticeBanner() {
     <>
       {state === 'default' && (
         <div className={`${styles.banner} ${styles.bannerDefault}`} role="status">
-          <AlertTriangle size={15} className={styles.icon} aria-hidden="true" />
+          <AlertTriangle size={ICON_SIZE.md} className={styles.icon} aria-hidden="true" />
           <p className={styles.text}>
             <strong className={styles.label}>Development Preview</strong>{' '}
             BracketWorks is still in active development. Verify all tournament data before
@@ -82,7 +83,7 @@ export default function DevNoticeBanner() {
 
       {state === 'update-required' && (
         <div className={`${styles.banner} ${styles.bannerUpdate}`} role="alert">
-          <AlertTriangle size={15} className={styles.iconAlert} aria-hidden="true" />
+          <AlertTriangle size={ICON_SIZE.md} className={styles.iconAlert} aria-hidden="true" />
           <p className={styles.text}>
             <strong className={styles.labelAlert}>Important Update</strong>{' '}
             Our development notice has been updated. Please review and accept the new notice.

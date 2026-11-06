@@ -17,6 +17,6 @@
 }
 
 .continueButton {
-  min-height: 40px;
+  min-height: var(--space-10);
   margin-top: var(--space-1);
 }
