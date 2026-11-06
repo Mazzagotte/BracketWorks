@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Card, CardHeader, CheckboxField, FormGrid, Notice, Page, PageHeader, TextField } from '@bracketworks/ui';
 
 import {
   changeMyPassword,
@@ -132,135 +133,92 @@ export default function OrganizerAccountSettingsPage() {
     }
   };
 
-  return (
-    <main className={styles.shell}>
-      <header className={styles.header}>
-        <h1>Account Settings</h1>
-        <p>Manage your profile information and password.</p>
-      </header>
+  const setProfileField = (key: keyof ProfileForm) => (event: { target: { value: string } }) => {
+    const { value } = event.target;
+    setProfileForm((current) => ({ ...current, [key]: value }));
+  };
 
-      {loadError ? <p className={styles.error} role="alert">{loadError}</p> : null}
-      {isLoading ? <section className={styles.loading}>Loading account settings...</section> : null}
+  return (
+    <Page width="narrow">
+      <PageHeader title="Account settings" description="Manage your profile information and password." />
+
+      {loadError ? <Notice tone="danger" role="alert">{loadError}</Notice> : null}
+      {isLoading ? <Notice tone="info">Loading account settings...</Notice> : null}
 
       {!isLoading && !loadError ? (
         <>
-          <section className={styles.card} aria-label="Profile">
-            <h2>Profile</h2>
-            {profile && !profile.email_verified ? (
-              <p className={styles.infoBanner} role="status">Your email address is not verified.</p>
-            ) : null}
+          <Card aria-label="Profile">
+            <CardHeader title="Profile" />
             <form onSubmit={handleProfileSubmit} className={styles.form}>
-              {profileError ? <p className={styles.error} role="alert">{profileError}</p> : null}
-              {profileMessage ? <p className={styles.success} role="status">{profileMessage}</p> : null}
-              <div className={styles.grid}>
-                <label>
-                  First name
-                  <input
-                    value={profileForm.firstName}
-                    onChange={(event) => setProfileForm((current) => ({ ...current, firstName: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Last name
-                  <input
-                    value={profileForm.lastName}
-                    onChange={(event) => setProfileForm((current) => ({ ...current, lastName: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label>
-                  Username
-                  <input
-                    value={profileForm.username}
-                    onChange={(event) => setProfileForm((current) => ({ ...current, username: event.target.value }))}
-                    required
-                    minLength={3}
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    value={profileForm.email}
-                    onChange={(event) => setProfileForm((current) => ({ ...current, email: event.target.value }))}
-                    required
-                  />
-                </label>
-                <label className={styles.gridFull}>
-                  Organization
-                  <input
-                    value={profileForm.organization}
-                    onChange={(event) => setProfileForm((current) => ({ ...current, organization: event.target.value }))}
-                    placeholder="Optional"
-                  />
-                </label>
-              </div>
-              <div className={styles.formActions}>
-                <button type="submit" className={styles.primaryButton} disabled={isSavingProfile}>
-                  {isSavingProfile ? 'Saving...' : 'Save Profile'}
-                </button>
+              {profile && !profile.email_verified ? (
+                <Notice tone="warning" role="status">Your email address is not verified.</Notice>
+              ) : null}
+              {profileError ? <Notice tone="danger" role="alert">{profileError}</Notice> : null}
+              {profileMessage ? <Notice tone="success" role="status">{profileMessage}</Notice> : null}
+              <FormGrid>
+                <TextField label="First name" value={profileForm.firstName} onChange={setProfileField('firstName')} autoComplete="given-name" required />
+                <TextField label="Last name" value={profileForm.lastName} onChange={setProfileField('lastName')} autoComplete="family-name" required />
+                <TextField label="Username" value={profileForm.username} onChange={setProfileField('username')} autoComplete="username" required minLength={3} />
+                <TextField label="Email" type="email" value={profileForm.email} onChange={setProfileField('email')} autoComplete="email" required />
+                <TextField label="Organization" optional fullRow value={profileForm.organization} onChange={setProfileField('organization')} autoComplete="organization" />
+              </FormGrid>
+              <div className={styles.actions}>
+                <Button type="submit" variant="primary" disabled={isSavingProfile}>
+                  {isSavingProfile ? 'Saving...' : 'Save profile'}
+                </Button>
               </div>
             </form>
-          </section>
+          </Card>
 
-          <section className={styles.card} aria-label="Change password">
-            <h2>Change Password</h2>
+          <Card aria-label="Change password">
+            <CardHeader title="Change password" description="All other devices are signed out when you change your password." />
             <form onSubmit={handlePasswordSubmit} className={styles.form}>
-              {passwordError ? <p className={styles.error} role="alert">{passwordError}</p> : null}
-              {passwordMessage ? <p className={styles.success} role="status">{passwordMessage}</p> : null}
-              <div className={styles.grid}>
-                <label className={styles.gridFull}>
-                  Current password
-                  <input
-                    type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
-                    autoComplete="current-password"
-                    required
-                  />
-                </label>
-                <label>
-                  New password
-                  <input
-                    type="password"
-                    value={passwordForm.newPassword}
-                    onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-                </label>
-                <label>
-                  Confirm new password
-                  <input
-                    type="password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-                    autoComplete="new-password"
-                    minLength={8}
-                    required
-                  />
-                </label>
-              </div>
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={passwordForm.signOutThisDevice}
-                  onChange={(event) => setPasswordForm((current) => ({ ...current, signOutThisDevice: event.target.checked }))}
+              {passwordError ? <Notice tone="danger" role="alert">{passwordError}</Notice> : null}
+              {passwordMessage ? <Notice tone="success" role="status">{passwordMessage}</Notice> : null}
+              <FormGrid>
+                <TextField
+                  label="Current password"
+                  type="password"
+                  fullRow
+                  value={passwordForm.currentPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
+                  autoComplete="current-password"
+                  required
                 />
-                Also sign out this device
-              </label>
-              <p className={styles.hint}>All other devices are always signed out when you change your password.</p>
-              <div className={styles.formActions}>
-                <button type="submit" className={styles.primaryButton} disabled={isSavingPassword}>
-                  {isSavingPassword ? 'Saving...' : 'Update Password'}
-                </button>
+                <TextField
+                  label="New password"
+                  type="password"
+                  helper="At least 8 characters."
+                  value={passwordForm.newPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
+                <TextField
+                  label="Confirm new password"
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                  autoComplete="new-password"
+                  minLength={8}
+                  required
+                />
+              </FormGrid>
+              <CheckboxField
+                label="Also sign out this device"
+                checked={passwordForm.signOutThisDevice}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, signOutThisDevice: event.target.checked }))}
+              />
+              <div className={styles.actions}>
+                <Button type="submit" variant="primary" disabled={isSavingPassword}>
+                  {isSavingPassword ? 'Saving...' : 'Update password'}
+                </Button>
               </div>
             </form>
-          </section>
+          </Card>
         </>
       ) : null}
-    </main>
+    </Page>
   );
 }
