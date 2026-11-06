@@ -1,24 +1,33 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { ArrowDownToLine, CircleDollarSign, MoreHorizontal, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
 import {
-  ArrowDown,
-  ArrowDownToLine,
-  ArrowLeft,
-  CalendarDays,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleDollarSign,
-  Clock3,
-  Filter,
-  Search,
-  UserPlus,
-  Users,
-  X,
-} from 'lucide-react';
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  DataTable,
+  EmptyState,
+  FormGrid,
+  ICON_SIZE,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  Modal,
+  Notice,
+  Page,
+  PageHeader,
+  Pagination,
+  SearchField,
+  SelectField,
+  StatGroup,
+  TableToolbar,
+  TextAreaField,
+  TextField,
+  useModalFocus,
+} from '@bracketworks/ui';
 
 import {
   deleteTournamentEntry,
@@ -31,11 +40,10 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney } from '@/components/organizer/organizerFormatting';
-import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
-import styles from '../page.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import publicStyles from '@/app/page.module.css';
+import styles from './registrations.module.css';
 
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
 
@@ -141,7 +149,6 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [eventFilter, setEventFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
   const [editForm, setEditForm] = useState<EntryEditForm | null>(null);
   const [isMutating, setIsMutating] = useState(false);
@@ -355,7 +362,6 @@ export default function OrganizerTournamentRegistrationsPage() {
       notes: registration.notes ?? registration.form?.notes ?? '',
       bowlers: entry.bowlers ?? [],
     });
-    setActiveActionId(null);
   };
 
   const handleSaveEntry = async () => {
@@ -404,7 +410,6 @@ export default function OrganizerTournamentRegistrationsPage() {
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to delete entry.');
     } finally {
       setIsMutating(false);
-      setActiveActionId(null);
     }
   };
 
@@ -420,7 +425,6 @@ export default function OrganizerTournamentRegistrationsPage() {
       setError(caughtError instanceof Error ? caughtError.message : 'Unable to mark registration as paid.');
     } finally {
       setIsMutating(false);
-      setActiveActionId(null);
     }
   };
 
@@ -541,279 +545,347 @@ export default function OrganizerTournamentRegistrationsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const updateEditField = (key: Exclude<keyof EntryEditForm, 'bowlers'>) => (
+    event: { target: { value: string } },
+  ) => {
+    const { value } = event.target;
+    setEditForm((current) => (current ? { ...current, [key]: value } : current));
+  };
+
+  const updateBowler = (bowlerId: EditableBowler['id'], changes: Partial<EditableBowler>) => {
+    setEditForm((current) => (current
+      ? { ...current, bowlers: current.bowlers.map((item) => (item.id === bowlerId ? { ...item, ...changes } : item)) }
+      : current));
+  };
+
+  const closeManualRegistration = () => setIsManualRegistrationOpen(false);
+  const pageError = error || tournamentError || registrationsError;
+  const isFormOpen = isManualRegistrationOpen && Boolean(manualRegistrationConfig);
+
   return (
-    <main className={styles.registrationPage}>
-      <header className={styles.registrationHeader}>
-        <div>
-          <span className={styles.registrationEyebrow}>Tournament registrations</span>
-          <h1>Manage Registrations</h1>
-          <p>Review bowlers, payments, events, and squad assignments for {tournamentName}.</p>
-        </div>
-        <Link href={organizerRoutes.overview(tournamentId)} className={styles.registrationBackButton}>
-          <ArrowLeft size={ICON_SIZE.sm} aria-hidden="true" /> Back to Overview
-        </Link>
-      </header>
+    <Page>
+      <PageHeader
+        overline="Tournament registrations"
+        title="Registrations"
+        description={`Review bowlers, payments, events, and squad assignments for ${tournamentName}.`}
+      />
 
-      {error || tournamentError || registrationsError ? <p className={styles.error} role="alert">{error || tournamentError || registrationsError}</p> : null}
-      {isRegistrationsLoading ? <section className={styles.registrationLoading}>Loading registrations...</section> : null}
-      {!error && !tournamentError && !registrationsError && !isRegistrationsLoading ? (
+      {pageError ? <Notice tone="danger" role="alert">{pageError}</Notice> : null}
+      {isRegistrationsLoading ? <Notice tone="info" role="status">Loading registrations...</Notice> : null}
+
+      {!pageError && !isRegistrationsLoading ? (
         <>
-          <section className={styles.registrationMetricGrid} aria-label="Registration summary">
-            <MetricCard icon={<Users />} tone="purple" label="Total Registrations" value={metrics.total} detail="All time" />
-            <MetricCard icon={<Check />} tone="green" label="Confirmed" value={metrics.confirmed} detail={`${metrics.confirmedPercent.toFixed(1)}%`} />
-            <MetricCard icon={<Clock3 />} tone="orange" label="Pending" value={metrics.pending} detail={`${metrics.pendingPercent.toFixed(1)}%`} />
-            <MetricCard icon={<X />} tone="red" label="Cancelled" value={metrics.cancelled} detail={`${metrics.cancelledPercent.toFixed(1)}%`} />
-            <MetricCard icon={<CalendarDays />} tone="blue" label="Avg. per Day" value={metrics.averagePerDay.toFixed(2)} detail="Since published" />
-            <MetricCard icon={<CircleDollarSign />} tone="green" label="Total Paid" value={formatMoney(metrics.paid)} detail="Collected" />
-          </section>
+          <StatGroup
+            label="Registration summary"
+            items={[
+              { label: 'Registrations', value: String(metrics.total) },
+              { label: 'Confirmed', value: String(metrics.confirmed), detail: `${metrics.confirmedPercent.toFixed(0)}% of total` },
+              { label: 'Pending', value: String(metrics.pending), detail: 'Includes waitlisted' },
+              { label: 'Cancelled', value: String(metrics.cancelled), detail: `${metrics.cancelledPercent.toFixed(0)}% of total` },
+              { label: 'Collected', value: formatMoney(metrics.paid) },
+            ]}
+          />
 
-          <div className={styles.registrationDashboardGrid}>
-            <section className={styles.registrationTableCard} aria-label="Registration list">
-              <div className={styles.registrationPanelHeading}>
-                <div>
-                  <h2>Registration List</h2>
-                  <p>{filteredRegistrations.length} of {metrics.total} registrations shown</p>
-                </div>
-                <button type="button" className={styles.manualRegistrationButton} onClick={() => { void openManualRegistration(); }} disabled={isManualRegistrationLoading}>
-                  <UserPlus size={ICON_SIZE.sm} aria-hidden="true" /> Manual Registration
-                </button>
+          <Card padding="flush" aria-label="Registration list">
+            <CardHeader
+              title="Registration list"
+              description={`${filteredRegistrations.length} of ${metrics.total} registrations shown`}
+              actions={(
+                <Button
+                  variant="primary"
+                  icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
+                  onClick={() => { void openManualRegistration(); }}
+                  disabled={isManualRegistrationLoading}
+                >
+                  Manual registration
+                </Button>
+              )}
+            />
+            <TableToolbar
+              search={(
+                <SearchField
+                  label="Search registrations"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by name, email, or confirmation number"
+                />
+              )}
+            >
+              <SelectField label="Status" hideLabel value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as FilterValue)}>
+                <option value="all">All statuses</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="pending">Pending</option>
+                <option value="cancelled">Cancelled</option>
+              </SelectField>
+              <SelectField label="Squad" hideLabel value={squadFilter} onChange={(event) => setSquadFilter(event.target.value)}>
+                <option value="all">All squads</option>
+                {squadOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </SelectField>
+              <SelectField label="Event" hideLabel value={eventFilter} onChange={(event) => setEventFilter(event.target.value)}>
+                <option value="all">All events</option>
+                {eventOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </SelectField>
+              <Button variant="secondary" icon={<ArrowDownToLine size={ICON_SIZE.md} aria-hidden="true" />} onClick={exportRegistrations}>
+                Export
+              </Button>
+            </TableToolbar>
+
+            {selectedIds.size > 0 ? (
+              <div className={styles.selectionBar} role="status">
+                <span>{selectedIds.size} selected</span>
+                <Button size="sm" variant="secondary" icon={<CircleDollarSign size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleBulkMarkPaid} disabled={isMutating}>
+                  Mark {selectedIds.size} as paid
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Clear selection</Button>
               </div>
-              <div className={styles.registrationToolbar}>
-                <label className={styles.registrationSearch}>
-                  <Search size={ICON_SIZE.sm} aria-hidden="true" />
-                  <span className={styles.srOnly}>Search registrations</span>
-                  <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name, email, or confirmation #..." />
-                </label>
-                <FilterSelect label="Status" value={statusFilter} onChange={(value) => setStatusFilter(value as FilterValue)} options={[['all', 'All'], ['confirmed', 'Confirmed'], ['pending', 'Pending'], ['cancelled', 'Cancelled']]} />
-                <FilterSelect label="Squad" value={squadFilter} onChange={setSquadFilter} options={[["all", 'All'], ...squadOptions]} />
-                <FilterSelect label="Event" value={eventFilter} onChange={setEventFilter} options={[["all", 'All'], ...eventOptions]} />
-                <button type="button" className={styles.registrationExportButton} onClick={exportRegistrations}><ArrowDownToLine size={ICON_SIZE.sm} /> Export</button>
-              </div>
+            ) : null}
 
-              {selectedIds.size > 0 ? (
-                <div className={styles.registrationToolbar}>
-                  <span>{selectedIds.size} selected</span>
-                  <button type="button" className={styles.manualRegistrationButton} onClick={handleBulkMarkPaid} disabled={isMutating}>
-                    <CircleDollarSign size={ICON_SIZE.sm} aria-hidden="true" /> Mark {selectedIds.size} as Paid
-                  </button>
-                  <button type="button" className={styles.registrationExportButton} onClick={() => setSelectedIds(new Set())}>Clear selection</button>
-                </div>
-              ) : null}
-
-              <div className={styles.registrationTableWrap} tabIndex={0} role="region" aria-label="Registrations table, scroll horizontally for more columns">
-                <table className={styles.registrationTable}>
-                  <thead>
-                    <tr>
-                      <th>
-                        <span className={styles.srOnly}>Select</span>
-                        <input
-                          type="checkbox"
-                          aria-label="Select all unpaid registrations on this page"
-                          checked={unpaidVisibleIds.length > 0 && unpaidVisibleIds.every((id) => selectedIds.has(id))}
-                          onChange={(event) => {
-                            setSelectedIds((current) => {
-                              const next = new Set(current);
-                              if (event.target.checked) {
-                                unpaidVisibleIds.forEach((id) => next.add(id));
-                              } else {
-                                unpaidVisibleIds.forEach((id) => next.delete(id));
-                              }
-                              return next;
-                            });
-                          }}
-                          disabled={unpaidVisibleIds.length === 0}
-                        />
-                      </th>
-                      <th>Confirmation #</th><th>Contact</th><th>Events</th><th>Squad</th><th>Status</th><th>Payment</th><th>Total</th><th>Date <ArrowDown aria-hidden="true" size={ICON_SIZE.xs} /></th><th>Actions</th></tr>
-                  </thead>
-                  <tbody>
-                    {visibleRegistrations.map((registration) => {
-                      const entry = registration.entries?.[0];
-                      const submitted = formatSubmittedAt(registration.submitted_at);
-                      const name = `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim() || 'Unnamed bowler';
-                      const status = registration.status ?? 'pending';
-                      const payment = registration.payment_status ?? 'unpaid';
-                      const registrationId = Number(registration.id);
-                      const actionId = `${registration.id}-${entry?.id ?? 'none'}`;
-                      return (
-                        <tr key={registration.id}>
-                          <td>
-                            {payment !== 'paid' && Number.isInteger(registrationId) ? (
-                              <input
-                                type="checkbox"
-                                aria-label={`Select registration for ${name}`}
-                                checked={selectedIds.has(registrationId)}
-                                onChange={() => toggleSelected(registrationId)}
-                              />
-                            ) : null}
-                          </td>
-                          <td className={styles.confirmationCell}>{registration.confirmation_code ?? registration.id}</td>
-                          <td><strong>{name}</strong><span>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span></td>
-                          <td>{registration.entries?.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
-                          <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
-                          <td><div className={styles.registrationStatusCell}><OrganizerStatusBadge status={status} /></div></td>
-                          <td><div className={styles.registrationPaymentCell}><OrganizerStatusBadge status={payment} /></div></td>
-                          <td>{formatMoney(registration.total_cents, registration.currency)}</td>
-                          <td><strong>{submitted.date}</strong><span>{submitted.time}</span></td>
-                          <td className={styles.registrationActionsCell}>
-                            <button type="button" className={styles.registrationMoreButton} aria-label={`Open actions for ${name}`} onClick={() => setActiveActionId((current) => current === actionId ? null : actionId)} disabled={isMutating}>
-                              <span className={styles.moreDots} aria-hidden="true">⋮</span>
-                            </button>
-                            {activeActionId === actionId && registration.entries?.length ? (
-                              <div className={styles.entryActionModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveActionId(null); }}>
-                                <section className={styles.entryActionModal} role="dialog" aria-modal="true" aria-labelledby={`entry-actions-${registration.id}`}>
-                                  <header><div><span>Registration Actions</span><h2 id={`entry-actions-${registration.id}`}>{name}</h2></div><button type="button" onClick={() => setActiveActionId(null)} aria-label="Close actions"><X size={ICON_SIZE.md} /></button></header>
-                                  <div className={styles.entryActionModalBody}>
-                                    {registration.entries.map((registrationEntry) => (
-                                      <div key={registrationEntry.id} className={styles.entryActionGroup}>
-                                        <strong>{entryLabel(registrationEntry, 'event')}</strong>
-                                        <span>{entryLabel(registrationEntry, 'squad')}</span>
-                                        <button type="button" onClick={() => Number.isInteger(registrationId) && openEntryEditor(registrationEntry, registration)}>Edit Entry</button>
-                                        <button type="button" className={styles.modalDeleteAction} onClick={() => setPendingDeleteEntry(registrationEntry)}>Delete Entry</button>
-                                      </div>
-                                    ))}
-                                    {payment !== 'paid' ? <button type="button" className={styles.modalPaidAction} onClick={() => handleMarkPaid(registration)}>Mark as Paid</button> : null}
-                                  </div>
-                                </section>
-                              </div>
-                            ) : null}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {visibleRegistrations.length === 0 ? <p className={styles.emptyRegistrations}>No registrations match these filters.</p> : null}
-              </div>
-
-              <footer className={styles.registrationPagination}>
-                <div className={styles.paginationButtons}>
-                  <button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}><ChevronLeft size={ICON_SIZE.sm} /></button>
-                  {Array.from({ length: Math.min(pageCount, 3) }, (_, index) => index + 1).map((number) => <button type="button" key={number} className={number === page ? styles.paginationActive : ''} onClick={() => setPage(number)}>{number}</button>)}
-                  {pageCount > 3 ? <span>...</span> : null}
-                  {pageCount > 3 ? <button type="button" onClick={() => setPage(pageCount)}>{pageCount}</button> : null}
-                  <button type="button" aria-label="Next page" disabled={page === pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}><ChevronRight size={ICON_SIZE.sm} /></button>
-                </div>
-                <span>Showing {pageStart} to {pageEnd} of {filteredRegistrations.length} registrations</span>
-                <label className={styles.pageSizeSelect}>10 / page <ChevronDown size={ICON_SIZE.xs} /></label>
-              </footer>
-            </section>
-
-          </div>
-
-        </>
-      ) : null}
-      {isManualRegistrationOpen ? (
-        <div
-          className={styles.detailsModalBackdrop}
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setIsManualRegistrationOpen(false);
-          }}
-        >
-          <section
-            className={styles.registrationModalCard}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Manual registration for ${tournamentName}`}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                event.preventDefault();
-                setIsManualRegistrationOpen(false);
-              }
-            }}
-          >
-            {manualRegistrationConfig ? (
-              <TournamentRegistrationForm
-                tournamentName={manualRegistrationConfig.tournament_name || tournamentName}
-                tournamentDate={[tournament?.start_date, tournament?.end_date].filter(Boolean).join(' - ')}
-                tournamentLocation={tournament?.location || 'TBD'}
-                tournamentLogoUrl={tournament?.has_logo ? `/api/v1/tc/tournaments/${tournamentId}/logo` : null}
-                squads={manualSquadsForEvent}
-                events={manualEventsForSquad}
-                divisions={manualDivisionsForEvent}
-                fields={manualFields}
-                questions={manualQuestions}
-                requiredBowlerCount={manualRequiredBowlerCount}
-                formState={manualRegistrationForm}
-                setFormState={setManualRegistrationForm}
-                submitMessage={manualRegistrationError || manualRegistrationMessage}
-                isSubmitting={isManualRegistrationSubmitting}
-                onSubmit={() => { void handleManualRegistrationSubmit(); }}
-                onClose={() => setIsManualRegistrationOpen(false)}
-                footerHint="Entered by tournament staff on behalf of the participant."
+            {visibleRegistrations.length === 0 ? (
+              <EmptyState
+                icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                title={metrics.total === 0 ? 'No registrations yet' : 'No registrations match these filters'}
+                description={metrics.total === 0 ? 'Registrations appear here as bowlers sign up.' : 'Try a different search or clear the filters.'}
               />
             ) : (
-              <>
-                <header className={`${styles.detailsModalHeader} ${styles.registrationModalHeader}`}>
-                  <h4>Manual Registration</h4>
-                  <button type="button" className={styles.detailsModalClose} onClick={() => setIsManualRegistrationOpen(false)} aria-label="Close manual registration">
-                    <X size={ICON_SIZE.lg} strokeWidth={2.25} aria-hidden="true" />
-                  </button>
-                </header>
-                <div className={styles.registrationModalBody}>
-                  {isManualRegistrationLoading
-                    ? <p className={styles.detailsModalHint}>Loading registration settings...</p>
-                    : <p className={styles.registrationError} role="alert">{manualRegistrationError || 'Registration settings are unavailable.'}</p>}
-                </div>
-                <footer className={`${styles.detailsModalFooter} ${styles.registrationModalFooter}`}>
-                  <span className={styles.detailsModalHint}>Registration will be submitted under this tournament.</span>
-                  {!isManualRegistrationLoading ? <button type="button" className={styles.registrationSubmitButton} onClick={() => setIsManualRegistrationOpen(false)}>Close</button> : null}
-                </footer>
-              </>
+              <DataTable caption="Registrations" className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <input
+                        type="checkbox"
+                        aria-label="Select all unpaid registrations on this page"
+                        checked={unpaidVisibleIds.length > 0 && unpaidVisibleIds.every((id) => selectedIds.has(id))}
+                        onChange={(event) => {
+                          const { checked } = event.target;
+                          setSelectedIds((current) => {
+                            const next = new Set(current);
+                            unpaidVisibleIds.forEach((id) => (checked ? next.add(id) : next.delete(id)));
+                            return next;
+                          });
+                        }}
+                        disabled={unpaidVisibleIds.length === 0}
+                      />
+                    </th>
+                    <th scope="col">Confirmation</th>
+                    <th scope="col">Contact</th>
+                    <th scope="col">Events</th>
+                    <th scope="col">Squad</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Payment</th>
+                    <th scope="col" data-align="right">Total</th>
+                    <th scope="col" aria-sort="descending">Submitted</th>
+                    <th scope="col"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRegistrations.map((registration) => {
+                    const entry = registration.entries?.[0];
+                    const entries = registration.entries ?? [];
+                    const submitted = formatSubmittedAt(registration.submitted_at);
+                    const name = `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim() || 'Unnamed bowler';
+                    const payment = registration.payment_status ?? 'unpaid';
+                    const registrationId = Number(registration.id);
+                    const isSelected = selectedIds.has(registrationId);
+                    return (
+                      <tr key={registration.id} aria-selected={isSelected || undefined}>
+                        <td>
+                          {payment !== 'paid' && Number.isInteger(registrationId) ? (
+                            <input
+                              type="checkbox"
+                              aria-label={`Select registration for ${name}`}
+                              checked={isSelected}
+                              onChange={() => toggleSelected(registrationId)}
+                            />
+                          ) : null}
+                        </td>
+                        <td className={styles.code}>{registration.confirmation_code ?? registration.id}</td>
+                        <td>
+                          <span className={styles.stack}>
+                            <span className={styles.primaryText}>{name}</span>
+                            <span className={styles.secondaryText}>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span>
+                          </span>
+                        </td>
+                        <td>{entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
+                        <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
+                        <td><OrganizerStatusBadge status={registration.status ?? 'pending'} /></td>
+                        <td><OrganizerStatusBadge status={payment} /></td>
+                        <td data-align="right">{formatMoney(registration.total_cents, registration.currency)}</td>
+                        <td>
+                          <span className={styles.stack}>
+                            <span>{submitted.date}</span>
+                            <span className={styles.secondaryText}>{submitted.time}</span>
+                          </span>
+                        </td>
+                        <td data-align="right">
+                          {entries.length > 0 || payment !== 'paid' ? (
+                            <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                              {entries.map((registrationEntry) => (
+                                <MenuItem
+                                  key={`edit-${registrationEntry.id}`}
+                                  icon={<Pencil size={ICON_SIZE.md} />}
+                                  onSelect={() => Number.isInteger(registrationId) && openEntryEditor(registrationEntry, registration)}
+                                  disabled={isMutating}
+                                >
+                                  {entries.length > 1 ? `Edit ${entryLabel(registrationEntry, 'event')}` : 'Edit entry'}
+                                </MenuItem>
+                              ))}
+                              {payment !== 'paid' ? (
+                                <MenuItem icon={<CircleDollarSign size={ICON_SIZE.md} />} onSelect={() => { void handleMarkPaid(registration); }} disabled={isMutating}>
+                                  Mark as paid
+                                </MenuItem>
+                              ) : null}
+                              {entries.length > 0 ? <MenuDivider /> : null}
+                              {entries.map((registrationEntry) => (
+                                <MenuItem
+                                  key={`delete-${registrationEntry.id}`}
+                                  tone="danger"
+                                  icon={<Trash2 size={ICON_SIZE.md} />}
+                                  onSelect={() => setPendingDeleteEntry(registrationEntry)}
+                                  disabled={isMutating}
+                                >
+                                  {entries.length > 1 ? `Delete ${entryLabel(registrationEntry, 'event')}` : 'Delete entry'}
+                                </MenuItem>
+                              ))}
+                            </Menu>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </DataTable>
             )}
-          </section>
-        </div>
+
+            <Pagination
+              page={page}
+              pageCount={pageCount}
+              onPageChange={setPage}
+              summary={`Showing ${pageStart}-${pageEnd} of ${filteredRegistrations.length}`}
+            />
+          </Card>
+        </>
       ) : null}
-      {editingEntry && editForm ? (
-        <div className={styles.entryModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditingEntry(null); }}>
-          <section className={styles.entryModal} role="dialog" aria-modal="true" aria-labelledby="edit-entry-title">
-            <header>
-              <div><span>Edit Entry</span><h2 id="edit-entry-title">{entryLabel(editingEntry.entry, 'event')}</h2></div>
-              <button type="button" className={styles.entryModalClose} onClick={() => setEditingEntry(null)} aria-label="Close edit entry dialog"><X size={ICON_SIZE.md} /></button>
-            </header>
-            <div className={styles.entryModalFields}>
-              <div className={styles.entryEditSection}><strong>Contact</strong><div className={styles.entryEditGrid}>
-                <label>First name<input value={editForm.firstName} onChange={(event) => setEditForm((current) => current ? { ...current, firstName: event.target.value } : current)} /></label>
-                <label>Last name<input value={editForm.lastName} onChange={(event) => setEditForm((current) => current ? { ...current, lastName: event.target.value } : current)} /></label>
-                <label>Email<input type="email" value={editForm.email} onChange={(event) => setEditForm((current) => current ? { ...current, email: event.target.value } : current)} /></label>
-                <label>Phone<input value={editForm.phone} onChange={(event) => setEditForm((current) => current ? { ...current, phone: event.target.value } : current)} /></label>
-              </div></div>
-              <div className={styles.entryEditSection}><strong>Competition Entry</strong><div className={styles.entryEditGrid}>
-                <label>Event ID<input value={editForm.eventConfigId} onChange={(event) => setEditForm((current) => current ? { ...current, eventConfigId: event.target.value } : current)} /></label>
-                <label>Event name<input value={editForm.eventName} onChange={(event) => setEditForm((current) => current ? { ...current, eventName: event.target.value } : current)} /></label>
-                <label>Division ID<input value={editForm.divisionConfigId} onChange={(event) => setEditForm((current) => current ? { ...current, divisionConfigId: event.target.value } : current)} /></label>
-                <label>Division name<input value={editForm.divisionName} onChange={(event) => setEditForm((current) => current ? { ...current, divisionName: event.target.value } : current)} /></label>
-                <label>Squad ID<input value={editForm.squadConfigId} onChange={(event) => setEditForm((current) => current ? { ...current, squadConfigId: event.target.value } : current)} /></label>
-                <label>Squad name<input value={editForm.squadName} onChange={(event) => setEditForm((current) => current ? { ...current, squadName: event.target.value } : current)} /></label>
-                <label>Squad date<input value={editForm.squadDate} onChange={(event) => setEditForm((current) => current ? { ...current, squadDate: event.target.value } : current)} /></label>
-                <label>Squad time<input value={editForm.squadTime} onChange={(event) => setEditForm((current) => current ? { ...current, squadTime: event.target.value } : current)} /></label>
-                <label>Status<select value={editForm.status} onChange={(event) => setEditForm((current) => current ? { ...current, status: event.target.value } : current)}><option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="waitlisted">Waitlisted</option><option value="cancelled">Cancelled</option></select></label>
-                <label>Entry number<input type="number" min="1" value={editForm.entryNumber} onChange={(event) => setEditForm((current) => current ? { ...current, entryNumber: event.target.value } : current)} placeholder="Not assigned" /></label>
-                <label>Entry fee<input type="number" min="0" step="0.01" value={editForm.entryFee} onChange={(event) => setEditForm((current) => current ? { ...current, entryFee: event.target.value } : current)} /></label>
-              </div></div>
-              <div className={styles.entryEditSection}><strong>Notes</strong><label><textarea value={editForm.notes} onChange={(event) => setEditForm((current) => current ? { ...current, notes: event.target.value } : current)} rows={3} /></label></div>
-              <div className={styles.entryEditSection}><strong>Bowlers</strong><div className={styles.entryBowlerList}>
-                {editForm.bowlers.map((bowler, index) => <div key={bowler.id} className={styles.entryBowlerCard}><span>Bowler {index + 1}</span><div className={styles.entryEditGrid}>
-                  <label>First name<input value={bowler.first_name} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, first_name: event.target.value } : item) } : current)} /></label>
-                  <label>Last name<input value={bowler.last_name} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, last_name: event.target.value } : item) } : current)} /></label>
-                  <label>Email<input value={bowler.email ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, email: event.target.value } : item) } : current)} /></label>
-                  <label>Phone<input value={bowler.phone ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, phone: event.target.value } : item) } : current)} /></label>
-                  <label>USBC number<input value={bowler.usbc_number ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, usbc_number: event.target.value } : item) } : current)} /></label>
-                  <label>Average<input type="number" value={bowler.average ?? ''} onChange={(event) => setEditForm((current) => current ? { ...current, bowlers: current.bowlers.map((item) => item.id === bowler.id ? { ...item, average: event.target.value ? Number(event.target.value) : null } : item) } : current)} /></label>
-                </div></div>)}
-              </div></div>
-            </div>
-            <footer><button type="button" className={styles.entryModalCancel} onClick={() => setEditingEntry(null)}>Cancel</button><button type="button" className={styles.entryModalSave} onClick={handleSaveEntry} disabled={isMutating}>Save Entry</button></footer>
-          </section>
-        </div>
+
+      {isFormOpen && manualRegistrationConfig ? (
+        <ManualRegistrationSurface onClose={closeManualRegistration} label={`Manual registration for ${tournamentName}`}>
+          <TournamentRegistrationForm
+            tournamentName={manualRegistrationConfig.tournament_name || tournamentName}
+            tournamentDate={[tournament?.start_date, tournament?.end_date].filter(Boolean).join(' - ')}
+            tournamentLocation={tournament?.location || 'TBD'}
+            tournamentLogoUrl={tournament?.has_logo ? `/api/v1/tc/tournaments/${tournamentId}/logo` : null}
+            squads={manualSquadsForEvent}
+            events={manualEventsForSquad}
+            divisions={manualDivisionsForEvent}
+            fields={manualFields}
+            questions={manualQuestions}
+            requiredBowlerCount={manualRequiredBowlerCount}
+            formState={manualRegistrationForm}
+            setFormState={setManualRegistrationForm}
+            submitMessage={manualRegistrationError || manualRegistrationMessage}
+            isSubmitting={isManualRegistrationSubmitting}
+            onSubmit={() => { void handleManualRegistrationSubmit(); }}
+            onClose={closeManualRegistration}
+            footerHint="Entered by tournament staff on behalf of the participant."
+          />
+        </ManualRegistrationSurface>
       ) : null}
+
+      <Modal
+        open={isManualRegistrationOpen && !manualRegistrationConfig}
+        onClose={closeManualRegistration}
+        title="Manual registration"
+        size="sm"
+        closeLabel="Close manual registration"
+        footer={!isManualRegistrationLoading ? <Button variant="secondary" onClick={closeManualRegistration}>Close</Button> : undefined}
+      >
+        {isManualRegistrationLoading
+          ? <p className={styles.bodyText}>Loading registration settings...</p>
+          : <Notice tone="danger" role="alert">{manualRegistrationError || 'Registration settings are unavailable.'}</Notice>}
+      </Modal>
+
+      <Modal
+        open={Boolean(editingEntry && editForm)}
+        onClose={() => setEditingEntry(null)}
+        title={editingEntry ? `Edit entry: ${entryLabel(editingEntry.entry, 'event')}` : 'Edit entry'}
+        size="lg"
+        closeLabel="Close edit entry dialog"
+        dismissible={!isMutating}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setEditingEntry(null)} disabled={isMutating}>Cancel</Button>
+            <Button variant="primary" onClick={() => { void handleSaveEntry(); }} disabled={isMutating}>
+              {isMutating ? 'Saving...' : 'Save entry'}
+            </Button>
+          </>
+        )}
+      >
+        {editForm ? (
+          <div className={styles.editForm}>
+            <section className={styles.editSection} aria-labelledby="edit-entry-contact">
+              <h3 id="edit-entry-contact" className={styles.subsectionTitle}>Contact</h3>
+              <FormGrid>
+                <TextField label="First name" value={editForm.firstName} onChange={updateEditField('firstName')} />
+                <TextField label="Last name" value={editForm.lastName} onChange={updateEditField('lastName')} />
+                <TextField label="Email" type="email" value={editForm.email} onChange={updateEditField('email')} />
+                <TextField label="Phone" value={editForm.phone} onChange={updateEditField('phone')} />
+              </FormGrid>
+            </section>
+            <CardDivider />
+            <section className={styles.editSection} aria-labelledby="edit-entry-competition">
+              <h3 id="edit-entry-competition" className={styles.subsectionTitle}>Competition entry</h3>
+              <FormGrid>
+                <TextField label="Event name" value={editForm.eventName} onChange={updateEditField('eventName')} />
+                <TextField label="Event ID" value={editForm.eventConfigId} onChange={updateEditField('eventConfigId')} />
+                <TextField label="Division name" value={editForm.divisionName} onChange={updateEditField('divisionName')} />
+                <TextField label="Division ID" value={editForm.divisionConfigId} onChange={updateEditField('divisionConfigId')} />
+                <TextField label="Squad name" value={editForm.squadName} onChange={updateEditField('squadName')} />
+                <TextField label="Squad ID" value={editForm.squadConfigId} onChange={updateEditField('squadConfigId')} />
+                <TextField label="Squad date" value={editForm.squadDate} onChange={updateEditField('squadDate')} />
+                <TextField label="Squad time" value={editForm.squadTime} onChange={updateEditField('squadTime')} />
+                <SelectField label="Status" value={editForm.status} onChange={updateEditField('status')}>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="cancelled">Cancelled</option>
+                </SelectField>
+                <TextField label="Entry number" optional type="number" min="1" value={editForm.entryNumber} onChange={updateEditField('entryNumber')} placeholder="Not assigned" />
+                <TextField label="Entry fee" type="number" min="0" step="0.01" value={editForm.entryFee} onChange={updateEditField('entryFee')} />
+              </FormGrid>
+            </section>
+            <CardDivider />
+            <section className={styles.editSection} aria-labelledby="edit-entry-notes">
+              <h3 id="edit-entry-notes" className={styles.subsectionTitle}>Notes</h3>
+              <TextAreaField label="Notes" hideLabel optional value={editForm.notes} onChange={updateEditField('notes')} rows={3} />
+            </section>
+            {editForm.bowlers.map((bowler, index) => (
+              <section key={bowler.id} className={styles.editSection} aria-labelledby={`edit-entry-bowler-${bowler.id}`}>
+                <CardDivider />
+                <h3 id={`edit-entry-bowler-${bowler.id}`} className={styles.subsectionTitle}>Bowler {index + 1}</h3>
+                <FormGrid>
+                  <TextField label="First name" value={bowler.first_name} onChange={(event) => updateBowler(bowler.id, { first_name: event.target.value })} />
+                  <TextField label="Last name" value={bowler.last_name} onChange={(event) => updateBowler(bowler.id, { last_name: event.target.value })} />
+                  <TextField label="Email" optional value={bowler.email ?? ''} onChange={(event) => updateBowler(bowler.id, { email: event.target.value })} />
+                  <TextField label="Phone" optional value={bowler.phone ?? ''} onChange={(event) => updateBowler(bowler.id, { phone: event.target.value })} />
+                  <TextField label="USBC number" optional value={bowler.usbc_number ?? ''} onChange={(event) => updateBowler(bowler.id, { usbc_number: event.target.value })} />
+                  <TextField
+                    label="Average"
+                    optional
+                    type="number"
+                    value={bowler.average ?? ''}
+                    onChange={(event) => updateBowler(bowler.id, { average: event.target.value ? Number(event.target.value) : null })}
+                  />
+                </FormGrid>
+              </section>
+            ))}
+          </div>
+        ) : null}
+      </Modal>
 
       <ConfirmDialog
         open={Boolean(pendingDeleteEntry)}
         title="Delete this entry?"
         message="This cannot be undone."
-        confirmLabel="Delete"
+        confirmLabel="Delete entry"
         tone="danger"
         onConfirm={() => {
           if (pendingDeleteEntry) void handleDeleteEntry(pendingDeleteEntry);
@@ -821,14 +893,21 @@ export default function OrganizerTournamentRegistrationsPage() {
         }}
         onCancel={() => setPendingDeleteEntry(null)}
       />
-    </main>
+    </Page>
   );
 }
 
-function MetricCard({ icon, tone, label, value, detail }: { icon: React.ReactNode; tone: string; label: string; value: string | number; detail: string }) {
-  return <article className={styles.registrationMetricCard}><span className={`${styles.metricIcon} ${styles[`metric${tone}`]}`}>{icon}</span><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></article>;
-}
-
-function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]> }) {
-  return <label className={styles.registrationFilter}><span className={styles.srOnly}>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{label}: {optionLabel}</option>)}</select><ChevronDown size={ICON_SIZE.xs} aria-hidden="true" /></label>;
+/**
+ * Frame for the shared registration form, which draws its own header and footer. It matches the
+ * public site's registration dialog; both move to the shared Modal when the public pages migrate.
+ */
+function ManualRegistrationSurface({ onClose, label, children }: { onClose: () => void; label: string; children: ReactNode }) {
+  const dialogRef = useModalFocus<HTMLElement>(true, onClose);
+  return (
+    <div className={publicStyles.detailsModalBackdrop} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section ref={dialogRef} tabIndex={-1} className={publicStyles.registrationModalCard} role="dialog" aria-modal="true" aria-label={label}>
+        {children}
+      </section>
+    </div>
+  );
 }

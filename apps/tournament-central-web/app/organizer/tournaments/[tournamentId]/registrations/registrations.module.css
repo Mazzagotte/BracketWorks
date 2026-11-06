@@ -1,0 +1,68 @@
+/* Registrations page: table cell layouts, the selection bar, and the edit entry form. */
+
+.table td {
+  white-space: nowrap;
+}
+
+.code {
+  font-family: var(--font-family-code);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.primaryText {
+  font-weight: var(--font-weight-semibold);
+}
+
+.secondaryText {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.selectionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+.selectionBar > span {
+  margin-right: auto;
+}
+
+.bodyText {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.editSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.subsectionTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+@media (max-width: 767px) {
+  .selectionBar {
+    padding: var(--space-4) var(--space-4) 0;
+  }
+}
