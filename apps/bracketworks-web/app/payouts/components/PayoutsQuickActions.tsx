@@ -1,62 +1,42 @@
 import { BookOpen, FileSpreadsheet, FileText } from 'lucide-react'
+import { Button, Card, CardHeader, ICON_SIZE } from '@bracketworks/ui'
 
-import { QuickActions } from '../../components/primitives'
-import buttonStyles from '../../styles/buttons.module.css'
-import styles from '../payouts.module.css'
+import styles from './Payouts.module.css'
 
 type PayoutsQuickActionsProps = {
   hasRows: boolean
   isLoading: boolean
   isExportingExcel: boolean
   isExportingPdf: boolean
-  isMobileView: boolean
   onOpenGuide: () => void
   onExportToExcel: () => void
   onExportToPdf: () => void
 }
 
+/** Payout exports and the guide: all secondary, no row of orange buttons. */
 export default function PayoutsQuickActions({
   hasRows,
   isLoading,
   isExportingExcel,
   isExportingPdf,
-  isMobileView,
   onOpenGuide,
   onExportToExcel,
   onExportToPdf,
 }: PayoutsQuickActionsProps) {
   return (
-    <QuickActions
-      className={styles.quickActionsContent}
-      left={(
-        <button
-          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-          onClick={onOpenGuide}
-        >
-          <BookOpen aria-hidden="true" />
-          Payouts Guide
-        </button>
-      )}
-      right={(
-        <>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-            onClick={onExportToExcel}
-            disabled={isLoading || isExportingExcel || !hasRows}
-          >
-            <FileSpreadsheet aria-hidden="true" />
-            {isExportingExcel ? 'Exporting...' : isMobileView ? 'Excel' : 'Export to Excel'}
-          </button>
-          <button
-            className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`}
-            onClick={onExportToPdf}
-            disabled={isLoading || isExportingPdf || !hasRows}
-          >
-            <FileText aria-hidden="true" />
-            {isExportingPdf ? 'Exporting...' : isMobileView ? 'PDF' : 'Export to PDF'}
-          </button>
-        </>
-      )}
-    />
+    <Card aria-label="Quick actions">
+      <CardHeader title="Quick actions" />
+      <div className={styles.actionRow}>
+        <Button variant="secondary" icon={<FileSpreadsheet size={ICON_SIZE.md} aria-hidden="true" />} onClick={onExportToExcel} disabled={isLoading || isExportingExcel || !hasRows}>
+          {isExportingExcel ? 'Exporting...' : 'Export to Excel'}
+        </Button>
+        <Button variant="secondary" icon={<FileText size={ICON_SIZE.md} aria-hidden="true" />} onClick={onExportToPdf} disabled={isLoading || isExportingPdf || !hasRows}>
+          {isExportingPdf ? 'Exporting...' : 'Export to PDF'}
+        </Button>
+        <Button variant="ghost" icon={<BookOpen size={ICON_SIZE.md} aria-hidden="true" />} onClick={onOpenGuide}>
+          Payouts guide
+        </Button>
+      </div>
+    </Card>
   )
 }

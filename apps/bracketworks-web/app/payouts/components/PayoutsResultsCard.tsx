@@ -1,11 +1,9 @@
-import { ListChecks } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { Badge, Button, Card, CardHeader, EmptyState, ICON_SIZE } from '@bracketworks/ui'
 
-import badgeStyles from '../../styles/badges.module.css'
-import buttonStyles from '../../styles/buttons.module.css'
-import cardStyles from '../../styles/cards.module.css'
 import { formatCurrency } from '../../lib/formatters'
 import { AggregatedWinner, SidePotByPlayer } from '../utils/payoutExportRows'
-import styles from '../payouts.module.css'
+import styles from './Payouts.module.css'
 
 type PayoutsResultsCardProps = {
   displayedTotalPrizePool: number
@@ -15,21 +13,20 @@ type PayoutsResultsCardProps = {
   sidePotByPlayer: SidePotByPlayer
   onToggleExpanded: (key: string) => void
   onTogglePaid: (key: string) => void
+  onClearSearch: () => void
 }
 
-function placeBadgeClass(place: number): string {
-  if (place === 1) {
-    return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeFirst} ${styles.placementBadge}`
+function groupWinnings(winnings: AggregatedWinner['winnings']) {
+  const grouped: Record<string, AggregatedWinner['winnings']> = {}
+  for (const payout of winnings) {
+    const type = payout.bracket_name.replace(/ Bracket \d+$/, '').trim()
+    if (!grouped[type]) grouped[type] = []
+    grouped[type].push(payout)
   }
-  if (place === 2) {
-    return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeSecond} ${styles.placementBadge}`
-  }
-  if (place === 3) {
-    return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.placeThird} ${styles.placementBadge}`
-  }
-  return `${badgeStyles.badge} ${badgeStyles.placement} ${badgeStyles.muted} ${styles.placementBadge}`
+  return Object.entries(grouped)
 }
 
+/** Payout results as divider rows: place, bowler, amount, and one action (Mark paid). */
 export default function PayoutsResultsCard({
   displayedTotalPrizePool,
   winners,
@@ -38,107 +35,91 @@ export default function PayoutsResultsCard({
   sidePotByPlayer,
   onToggleExpanded,
   onTogglePaid,
+  onClearSearch,
 }: PayoutsResultsCardProps) {
   return (
-    <div className={`${cardStyles.card} ${styles.tableCard}`}>
-      <div className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.cardHeaderRow} ${styles.tableCardHeader}`}>
-        <span className={styles.sectionTitle}><ListChecks aria-hidden="true" />Payout Results</span>
-        <span className={styles.headerPool}>Total Payouts: {formatCurrency(displayedTotalPrizePool)}</span>
-      </div>
-      <div className={styles.bracketGroup}>
-        {winners.length === 0 ? (
-          <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
-            <div className={styles.emptyTitle}>No results</div>
-            <div className={styles.emptyMessage}>No players match your search.</div>
-          </div>
-        ) : (
-          winners.map((winner, index) => {
+    <Card padding="flush" aria-label="Payout results">
+      <CardHeader title="Payout results" description={`Total payouts ${formatCurrency(displayedTotalPrizePool)}`} />
+      {winners.length === 0 ? (
+        <EmptyState
+          icon={<Search size={ICON_SIZE['2xl']} aria-hidden="true" />}
+          title="No matching winners"
+          description="Try a different first or last name."
+          action={<Button variant="secondary" onClick={onClearSearch}>Clear search</Button>}
+        />
+      ) : (
+        <ol className={styles.resultList}>
+          {winners.map((winner, index) => {
             const winnerKey = String(winner.player_id ?? winner.player_name)
             const isPaid = paidKeys.has(winnerKey)
+            const isExpanded = expandedKeys.has(winnerKey)
+            const sidePots = sidePotByPlayer[String(winner.player_id)] ?? []
+            const detailsId = `payout-details-${winnerKey}`
+            const meta = [
+              `${winner.winnings.length} bracket${winner.winnings.length !== 1 ? 's' : ''} won`,
+              ...sidePots.map(pot => pot.name),
+            ].join(' · ')
 
             return (
-              <div
-                key={winnerKey}
-                className={`${styles.winnerRow} ${index === 0 ? styles.firstPlace : ''} ${isPaid ? styles.isPaid : ''}`}
-              >
-                <div className={placeBadgeClass(index + 1)}>{index + 1}</div>
-
-                <div className={styles.winnerInfo}>
-                  <div className={styles.winnerName}>
-                    {winner.player_name}
-                    <span className={styles.bracketCount}>
-                      {winner.winnings.length} bracket{winner.winnings.length !== 1 ? 's' : ''} won
-                    </span>
-                    <button
-                      className={styles.toggleDetailsBtn}
-                      onClick={() => onToggleExpanded(winnerKey)}
-                      aria-label={expandedKeys.has(winnerKey) ? 'Hide details' : 'Show details'}
-                    >
-                      {expandedKeys.has(winnerKey) ? 'Hide details' : 'Show details'}
-                    </button>
-                    {(sidePotByPlayer[String(winner.player_id)] ?? []).map((pot) => (
-                      <span key={pot.name} className={styles.sidePotPill}>{pot.name}</span>
-                    ))}
+              <li key={winnerKey} className={styles.resultRow}>
+                <div className={styles.resultMain}>
+                  <Badge tone="neutral">{index + 1}</Badge>
+                  <div className={styles.resultIdentity}>
+                    <span className={styles.resultName}>{winner.player_name}</span>
+                    <span className={styles.meta}>{meta}</span>
                   </div>
+                  <span className={styles.resultAmount}>{formatCurrency(winner.total_won)}</span>
+                  <div className={styles.resultActions}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      iconOnly
+                      icon={isExpanded ? <ChevronUp size={ICON_SIZE.md} aria-hidden="true" /> : <ChevronDown size={ICON_SIZE.md} aria-hidden="true" />}
+                      aria-label={`${isExpanded ? 'Hide' : 'Show'} payouts for ${winner.player_name}`}
+                      aria-expanded={isExpanded}
+                      aria-controls={detailsId}
+                      onClick={() => onToggleExpanded(winnerKey)}
+                    />
+                    {isPaid ? (
+                      <button
+                        type="button"
+                        className={styles.paidToggle}
+                        onClick={() => onTogglePaid(winnerKey)}
+                        aria-label={`Mark ${winner.player_name} as unpaid`}
+                      >
+                        <Badge tone="success">Paid</Badge>
+                      </button>
+                    ) : (
+                      <Button size="sm" variant="accent-outline" onClick={() => onTogglePaid(winnerKey)} aria-label={`Mark ${winner.player_name} as paid`}>
+                        Mark paid
+                      </Button>
+                    )}
+                  </div>
+                </div>
 
-                  {expandedKeys.has(winnerKey) && (() => {
-                    const grouped: Record<string, typeof winner.winnings> = {}
-
-                    for (const payout of winner.winnings) {
-                      const type = payout.bracket_name.replace(/ Bracket \d+$/, '').trim()
-                      if (!grouped[type]) {
-                        grouped[type] = []
-                      }
-                      grouped[type].push(payout)
-                    }
-
-                    return (
-                      <div className={styles.winnerMeta}>
-                        {Object.entries(grouped).map(([type, payouts]) => (
-                          <div key={type} className={styles.winnerMetaGroup}>
-                            <div className={styles.winnerMetaGroupLabel}>{type}</div>
-                            {payouts.map((payout) => {
-                              const bracketShort = payout.bracket_name.replace(/^.* (Bracket \d+)$/, '$1')
-                              return (
-                                <div key={payout.bracket_name} className={styles.winnerMetaRow}>
-                                  {bracketShort} — {payout.position} — {formatCurrency(payout.payout_amount)}{payout.split_pot ? ' (split)' : ''}
-                                </div>
-                              )
-                            })}
-                          </div>
+                {isExpanded ? (
+                  <div id={detailsId} className={styles.resultDetails}>
+                    {groupWinnings(winner.winnings).map(([type, payouts]) => (
+                      <div key={type} className={styles.resultGroup}>
+                        <span className={styles.resultGroupTitle}>{type}</span>
+                        {payouts.map(payout => (
+                          <span key={payout.bracket_name} className={styles.meta}>
+                            {[
+                              payout.bracket_name.replace(/^.* (Bracket \d+)$/, '$1'),
+                              payout.position,
+                              `${formatCurrency(payout.payout_amount)}${payout.split_pot ? ' (split)' : ''}`,
+                            ].join(' · ')}
+                          </span>
                         ))}
                       </div>
-                    )
-                  })()}
-                </div>
-
-                <div className={styles.payoutCol}>
-                  <div className={styles.payoutAmount}>{formatCurrency(winner.total_won)}</div>
-                  {winner.winnings.length > 1 && (
-                    <div className={styles.payoutPct}>{winner.winnings.length} brackets</div>
-                  )}
-                </div>
-
-                {isPaid ? (
-                  <button
-                    className={`${badgeStyles.badge} ${badgeStyles.success} ${styles.paidBadge}`}
-                    onClick={() => onTogglePaid(winnerKey)}
-                  >
-                    Paid
-                  </button>
-                ) : (
-                  <button
-                    className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.primary} ${styles.markPaidBtn}`}
-                    onClick={() => onTogglePaid(winnerKey)}
-                  >
-                    Mark Paid
-                  </button>
-                )}
-              </div>
+                    ))}
+                  </div>
+                ) : null}
+              </li>
             )
-          })
-        )}
-      </div>
-    </div>
+          })}
+        </ol>
+      )}
+    </Card>
   )
 }

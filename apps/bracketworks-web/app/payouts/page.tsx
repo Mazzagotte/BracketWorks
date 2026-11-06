@@ -13,18 +13,15 @@ import NoTournamentState from '../components/NoTournamentState'
 import { storage } from '../lib/storage'
 import { getMemoryAccessToken } from '../lib/api'
 import Link from 'next/link'
-import styles from './payouts.module.css'
-import cardStyles from '../styles/cards.module.css'
-import buttonStyles from '../styles/buttons.module.css'
-import shellStyles from '../styles/page-shell.module.css'
+import { Trophy } from 'lucide-react'
+import { Card, EmptyState, ICON_SIZE, Notice, Page, PageHeader, buttonClassName } from '@bracketworks/ui'
+import styles from './components/Payouts.module.css'
 import ExplainPayoutsModal from './ExplainPayoutsModal'
 import { useToast } from '../components/Toast'
-import { formatCurrency } from '../lib/formatters'
 import { logger } from '../lib/logger'
 import { getSelectedTournamentId } from '../lib/selection-session'
 import { getPayoutUnlockKey } from '../lib/storageKeys'
-import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
-import { useMediaQuery } from '../hooks/useMediaQuery'
+import { formatSquadDate } from '../lib/squadDate'
 import { aggregateWinnersByPlayer, buildPaymentSummary, filterWinnersByName } from './utils/payoutViewModel'
 import PayoutsQuickActions from './components/PayoutsQuickActions'
 import PayoutsSummaryCard from './components/PayoutsSummaryCard'
@@ -50,7 +47,6 @@ export default function PayoutsPage() {
   const [, setScoreRows] = useState<ScoreRow[]>([])
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
   const [isUnlocked, setIsUnlocked] = useState(false)
-  const isMobileView = useMediaQuery(MOBILE_VIEWPORT_QUERY)
   const [isPayoutsGuideOpen, setIsPayoutsGuideOpen] = useState(false)
 
   useEffect(() => {
@@ -195,35 +191,30 @@ export default function PayoutsPage() {
   const displayedTotalPrizePool = (payoutData?.total_prize_pool ?? 0) + sidePotAccounting.totalPool
 
   const hasActiveSession = Boolean(effectiveAuthToken)
+  const clearSearch = () => {
+    setSearchFirstName('')
+    setSearchLastName('')
+  }
 
   if (!isAuthInitialized) {
-    return (
-      <div className={styles.loadingRow}>
-        <div className={styles.loadingSpinner} />
-        <span role="status">Loading payouts...</span>
-      </div>
-    )
+    return <Page><p className={styles.status} role="status">Loading payouts...</p></Page>
   }
 
   if (!isUserAuthenticated && !hasActiveSession) {
     return (
-      <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
-        <div className={styles.emptyTitle}>Please log in</div>
-        <div className={styles.emptyMessage}>Sign in to view payout information.</div>
-      </div>
+      <Page>
+        <Card>
+          <EmptyState title="Log in to see payouts" description="Sign in to view payout information." />
+        </Card>
+      </Page>
     )
   }
 
   if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
-        title="Payout Desk Waiting"
+        title="Payout desk waiting"
         description="Load a tournament to review prize pools, verify winners, and track payout completion."
-        cards={[
-          { title: 'Review Prize Pools', text: 'See scratch and handicap totals calculated from paid bracket entries.' },
-          { title: 'Confirm Winners', text: 'Validate placements and earnings before payments are distributed.' },
-          { title: 'Track Completion', text: 'Mark payouts as paid so end-of-day settlement stays clean and auditable.' },
-        ]}
       />
     )
   }
@@ -231,45 +222,34 @@ export default function PayoutsPage() {
   if (!isUnlocked) {
     return (
       <NoTournamentState
-        title="Payouts Not Yet Calculated"
-        description="Go to Scores and run Calculate Payouts after score review. This locks in final results before distribution."
+        title="Payouts not calculated yet"
+        description="Go to Scores and run Calculate payouts after score review. This locks in final results before distribution."
         actionHref="/scores"
-        actionLabel="Open Scores"
-        cards={[
-          { title: 'Finalize Scoring', text: 'Ensure every bowler score is entered and verified before payout calculation.' },
-          { title: 'Run Calculation', text: 'Calculate Payouts checks for gaps and confirms readiness before processing.' },
-          { title: 'Distribute & Close', text: 'Return here to review winners, publish totals, and mark payouts complete.' },
-        ]}
+        actionLabel="Open scores"
       />
     )
   }
 
+  if (!loading && !selectedTournament) {
+    return (
+      <NoTournamentState
+        description="Load a tournament from the dashboard to review prize pools, winners, payment status, and payout exports."
+      />
+    )
+  }
+
+  const squadLabel = selectedSquad ? `${formatSquadDate(selectedSquad.date)} · ${selectedSquad.time || 'Time pending'} squad` : null
+
   return (
     <ErrorBoundary>
-      <div className={`${shellStyles.page} ${styles.pageContainer}`}>
-        <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.quickActionsCard}`}>
-          <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>
-            Quick Actions
-          </h2>
-          <div className={cardStyles.quickActionsBody}>
-            <PayoutsQuickActions
-              hasRows={filteredWinners.length > 0}
-              isLoading={loading}
-              isExportingExcel={isExportingExcel}
-              isExportingPdf={isExportingPdf}
-              isMobileView={isMobileView}
-              onOpenGuide={() => setIsPayoutsGuideOpen(true)}
-              onExportToExcel={() => {
-                void exportToExcel()
-              }}
-              onExportToPdf={exportToPdf}
-            />
-          </div>
-        </div>
+      <Page>
+        <PageHeader
+          title="Payouts"
+          description={[selectedTournament?.name, squadLabel].filter(Boolean).join(' · ') || undefined}
+        />
 
-        {payoutData && (
+        {payoutData ? (
           <PayoutsSummaryCard
-            payoutData={payoutData}
             programSummaries={programSummaries}
             sidePotSummaries={sidePotAccounting.summaries}
             displayedTotalPrizePool={displayedTotalPrizePool}
@@ -277,65 +257,55 @@ export default function PayoutsPage() {
             totalUniqueWinners={totalUniqueWinners}
             remainingAmount={remainingAmount}
           />
-        )}
+        ) : null}
 
-        {selectedTournament && (
+        <PayoutsQuickActions
+          hasRows={filteredWinners.length > 0}
+          isLoading={loading}
+          isExportingExcel={isExportingExcel}
+          isExportingPdf={isExportingPdf}
+          onOpenGuide={() => setIsPayoutsGuideOpen(true)}
+          onExportToExcel={() => {
+            void exportToExcel()
+          }}
+          onExportToPdf={exportToPdf}
+        />
+
+        {selectedTournament ? (
           <TournamentFinalReview tournamentId={selectedTournament.id} tournamentName={selectedTournament.name} squadId={selectedSquad?.id ?? null} />
-        )}
+        ) : null}
 
-        {error && <div className={`${cardStyles.statePanel} ${cardStyles.dangerPanel} ${styles.errorBanner}`}>{error}</div>}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
-        {payoutData && aggregatedWinners.length > 0 && (
+        {payoutData && aggregatedWinners.length > 0 ? (
           <PayoutsSearchPanel
             searchFirstName={searchFirstName}
             searchLastName={searchLastName}
             onSearchFirstNameChange={setSearchFirstName}
             onSearchLastNameChange={setSearchLastName}
-            onClear={() => {
-              setSearchFirstName('')
-              setSearchLastName('')
-            }}
+            onClear={clearSearch}
           />
-        )}
+        ) : null}
 
-        {loading && (
-          <div className={styles.loadingRow}>
-            <div className={styles.loadingSpinner} />
-            <span>Calculating payouts...</span>
-          </div>
-        )}
-
-        {!loading && !selectedTournament && (
-          <NoTournamentState
-            description="Load a tournament from the dashboard to review prize pools, winners, payment status, and payout exports."
-            cards={[
-              { title: 'Prize Pools', text: 'Review bracket and side-pot prize pools once tournament results are ready.' },
-              { title: 'Winner Review', text: 'See winners by bracket program with payout amounts grouped for quick review.' },
-              { title: 'Payment Tracking', text: 'Mark winners as paid and export payout records for tournament staff.' },
-            ]}
-          />
-        )}
-
-        {!loading && selectedTournament && aggregatedWinners.length === 0 && (
-          <div className={`${cardStyles.card} ${cardStyles.emptyStateCard} ${styles.emptyState}`}>
-            <h2 className={styles.emptyTitle}>
-              No Payouts Calculated Yet
-            </h2>
-            <p className={styles.emptyMessage}>
-              Complete brackets first, then return here to review and mark payouts.
-            </p>
-            <div className={cardStyles.emptyActions}>
-              <Link href="/brackets" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`}>
-                Go to Brackets
-              </Link>
-              <Link href="/dashboard" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`}>
-                Back to Dashboard
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {!loading && aggregatedWinners.length > 0 && (
+        {loading ? (
+          <Card aria-label="Payout results">
+            <p className={styles.status} role="status">Calculating payouts...</p>
+          </Card>
+        ) : aggregatedWinners.length === 0 ? (
+          <Card aria-label="Payout results">
+            <EmptyState
+              icon={<Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />}
+              title="No payouts calculated yet"
+              description="Complete brackets first, then return here to review and mark payouts."
+              action={(
+                <>
+                  <Link href="/brackets" className={buttonClassName({ variant: 'primary' })}>Go to brackets</Link>
+                  <Link href="/dashboard" className={buttonClassName({ variant: 'secondary' })}>Back to dashboard</Link>
+                </>
+              )}
+            />
+          </Card>
+        ) : (
           <PayoutsResultsCard
             displayedTotalPrizePool={displayedTotalPrizePool}
             winners={filteredWinners}
@@ -344,9 +314,10 @@ export default function PayoutsPage() {
             sidePotByPlayer={sidePotByPlayer}
             onToggleExpanded={toggleExpanded}
             onTogglePaid={togglePaid}
+            onClearSearch={clearSearch}
           />
         )}
-      </div>
+      </Page>
 
       <ExplainPayoutsModal
         isOpen={isPayoutsGuideOpen}

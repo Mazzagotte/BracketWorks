@@ -1,9 +1,6 @@
-import { Search } from 'lucide-react'
+import { Button, Card, CardHeader, TextField } from '@bracketworks/ui'
 
-import { SearchPanel } from '../../components/primitives'
-import formStyles from '../../styles/forms.module.css'
-import primitiveStyles from '../../components/primitives/primitives.module.css'
-import styles from '../payouts.module.css'
+import styles from './Payouts.module.css'
 
 type PayoutsSearchPanelProps = {
   searchFirstName: string
@@ -13,6 +10,7 @@ type PayoutsSearchPanelProps = {
   onClear: () => void
 }
 
+/** Filters payout results by first or last name as you type. */
 export default function PayoutsSearchPanel({
   searchFirstName,
   searchLastName,
@@ -23,39 +21,13 @@ export default function PayoutsSearchPanel({
   const hasSearch = searchFirstName.trim().length > 0 || searchLastName.trim().length > 0
 
   return (
-    <SearchPanel
-      className={styles.searchStandalone}
-      title={<span className={styles.sectionTitle}><Search aria-hidden="true" />Search Payouts</span>}
-      useToolbar={false}
-      accented={false}
-      left={(
-        <>
-          <input
-            type="text"
-            placeholder="First name"
-            value={searchFirstName}
-            onChange={(event) => onSearchFirstNameChange(event.target.value)}
-            className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-          />
-          <input
-            type="text"
-            placeholder="Last name"
-            value={searchLastName}
-            onChange={(event) => onSearchLastNameChange(event.target.value)}
-            className={`${formStyles.search} ${formStyles.compactControl} ${styles.searchInput} ${primitiveStyles.searchPanelInput}`}
-          />
-        </>
-      )}
-      right={(
-        <button
-          type="button"
-          className={primitiveStyles.searchPanelClearButton}
-          onClick={onClear}
-          disabled={!hasSearch}
-        >
-          Clear
-        </button>
-      )}
-    />
+    <Card aria-label="Search payouts">
+      <CardHeader title="Search payouts" />
+      <div className={styles.searchForm}>
+        <TextField label="First name" value={searchFirstName} onChange={event => onSearchFirstNameChange(event.target.value)} />
+        <TextField label="Last name" value={searchLastName} onChange={event => onSearchLastNameChange(event.target.value)} />
+        <Button variant="ghost" onClick={onClear} disabled={!hasSearch}>Clear</Button>
+      </div>
+    </Card>
   )
 }

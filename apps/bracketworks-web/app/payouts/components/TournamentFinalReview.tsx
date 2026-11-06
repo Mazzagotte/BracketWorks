@@ -1,14 +1,27 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  ConfirmDialog,
+  ICON_SIZE,
+  Modal,
+  Notice,
+  TextAreaField,
+  TextField,
+} from '@bracketworks/ui'
+
 import { apiClient } from '../../lib/api'
 import { handleApiError } from '../../lib/errors'
 import { ApiError } from '../../lib/errors'
 import { formatCurrency } from '../../lib/formatters'
 import { useToast } from '../../components/Toast'
-import cardStyles from '../../styles/cards.module.css'
-import buttonStyles from '../../styles/buttons.module.css'
-import styles from '../payouts.module.css'
+import styles from './Payouts.module.css'
 
 interface Reconciliation {
   entries: { count: number; missing_averages: number; unpaid: number; duplicates: number }
@@ -32,8 +45,10 @@ interface Lifecycle {
   finalized_at: string | null
 }
 
+type SavedPayout = { id: number; player_name: string; bracket_name: string; payout_amount: number }
+
 interface SavedPayoutHistory {
-  payouts: Array<{ id: number; player_name: string; bracket_name: string; payout_amount: number }>
+  payouts: SavedPayout[]
   adjustments: Array<{ id: number; old_amount: number | null; new_amount: number | null; reason: string; adjusted_by: string; created_at: string }>
 }
 
@@ -45,7 +60,14 @@ export default function TournamentFinalReview({ tournamentId, tournamentName, sq
   const [finalizing, setFinalizing] = useState(false)
   const [reopening, setReopening] = useState(false)
   const [history, setHistory] = useState<SavedPayoutHistory | null>(null)
-  const [adjustingId, setAdjustingId] = useState<number | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false)
+  const [reopenOpen, setReopenOpen] = useState(false)
+  const [reopenReason, setReopenReason] = useState('')
+  const [adjusting, setAdjusting] = useState<SavedPayout | null>(null)
+  const [adjustAmount, setAdjustAmount] = useState('')
+  const [adjustReason, setAdjustReason] = useState('')
+  const [isSavingAdjustment, setIsSavingAdjustment] = useState(false)
 
   const loadHistory = useCallback(async () => {
     try {
@@ -76,15 +98,17 @@ export default function TournamentFinalReview({ tournamentId, tournamentName, sq
 
   useEffect(() => { void loadReview() }, [loadReview])
 
+  const isFinalized = Boolean(lifecycle?.finalized_at)
+
   const finalize = async () => {
-    if (!review?.ready_to_finalize || lifecycle?.finalized_at) return
-    if (!window.confirm(`Finalize ${tournamentName}? Scores and tournament records will become read-only.`)) return
+    if (!review?.ready_to_finalize || isFinalized) return
     setFinalizing(true)
     try {
       const nextLifecycle = await apiClient.post<Lifecycle>(`/api/v1/tournament-lifecycle/${tournamentId}/finalize`, {
         reason: 'Finalized from tournament final review',
       })
       setLifecycle(nextLifecycle)
+      setConfirmFinalizeOpen(false)
       await loadReview()
       addToast({ type: 'success', title: 'Tournament finalized', message: 'Scores and tournament records are now read-only.' })
     } catch (error) {
@@ -94,19 +118,13 @@ export default function TournamentFinalReview({ tournamentId, tournamentName, sq
     }
   }
 
-  const isFinalized = Boolean(lifecycle?.finalized_at)
-
   const reopen = async () => {
-    if (!isFinalized) return
-    if (!window.confirm(`Reopen finalized payouts for ${tournamentName}? Published results may change.`)) return
-    const reason = window.prompt('Reason for reopening finalized payouts:')?.trim()
-    if (!reason) {
-      addToast({ type: 'warning', title: 'Reason required', message: 'Finalized payouts cannot be reopened without a reason.' })
-      return
-    }
+    const reason = reopenReason.trim()
+    if (!isFinalized || !reason) return
     setReopening(true)
     try {
       const result = await apiClient.post<{ results_may_be_affected: boolean }>(`/api/v1/payouts/${tournamentId}/reopen`, { reason })
+      setReopenOpen(false)
       await loadReview()
       addToast({
         type: 'warning',
@@ -120,122 +138,199 @@ export default function TournamentFinalReview({ tournamentId, tournamentName, sq
     }
   }
 
-  const adjustPayout = async (payout: SavedPayoutHistory['payouts'][number]) => {
-    if (isFinalized) {
-      addToast({ type: 'warning', title: 'Reopen payouts first', message: 'Finalized payout values cannot be overwritten.' })
-      return
-    }
-    const amountText = window.prompt(`New payout amount for ${payout.player_name}:`, payout.payout_amount.toFixed(2))
-    if (amountText === null) return
-    const newAmount = Number(amountText)
-    if (!Number.isFinite(newAmount) || newAmount < 0) {
-      addToast({ type: 'error', title: 'Invalid amount', message: 'Enter a valid payout amount of zero or more.' })
-      return
-    }
-    const reason = window.prompt('Reason for this payout adjustment:')?.trim()
-    if (!reason) {
-      addToast({ type: 'warning', title: 'Reason required', message: 'Payout adjustments require a reason.' })
-      return
-    }
-    setAdjustingId(payout.id)
+  const openAdjustment = (payout: SavedPayout) => {
+    setAdjusting(payout)
+    setAdjustAmount(payout.payout_amount.toFixed(2))
+    setAdjustReason('')
+  }
+
+  const newAmount = Number(adjustAmount)
+  const amountError = adjustAmount.trim() === '' || !Number.isFinite(newAmount) || newAmount < 0 ? 'Enter an amount of zero or more.' : undefined
+
+  const saveAdjustment = async () => {
+    const reason = adjustReason.trim()
+    if (!adjusting || amountError || !reason) return
+    setIsSavingAdjustment(true)
     try {
-      await apiClient.patch(`/api/v1/payouts/${tournamentId}/items/${payout.id}`, { new_amount: newAmount, reason })
+      await apiClient.patch(`/api/v1/payouts/${tournamentId}/items/${adjusting.id}`, { new_amount: newAmount, reason })
       await Promise.all([loadReview(), loadHistory()])
-      addToast({ type: 'success', title: 'Payout adjusted', message: `${payout.player_name}'s payout was updated and recorded.` })
+      addToast({ type: 'success', title: 'Payout adjusted', message: `${adjusting.player_name}'s payout was updated and recorded.` })
+      setAdjusting(null)
     } catch (error) {
       addToast({ type: 'error', title: 'Could not adjust payout', message: handleApiError(error).message })
     } finally {
-      setAdjustingId(null)
+      setIsSavingAdjustment(false)
     }
   }
 
+  const statusBadge = isFinalized
+    ? <Badge tone="success">Finalized</Badge>
+    : review?.ready_to_finalize
+      ? <Badge tone="success">Ready</Badge>
+      : review ? <Badge tone="warning">Needs attention</Badge> : null
+
   return (
-    <section className={`${cardStyles.card} ${styles.finalReviewCard}`} aria-labelledby="final-review-title">
-      <div className={styles.finalReviewHeader}>
-        <div>
-          <h2 id="final-review-title" className={styles.finalReviewTitle}>Tournament Final Review</h2>
-          <p className={styles.finalReviewIntro}>Confirm entries, brackets, scores, and money before closing the tournament.</p>
-        </div>
-        <span className={isFinalized ? styles.reviewReady : review?.ready_to_finalize ? styles.reviewReady : styles.reviewWarning}>
-          {isFinalized ? 'Finalized' : review?.ready_to_finalize ? 'Ready' : 'Needs attention'}
-        </span>
-      </div>
+    <Card aria-labelledby="final-review-title">
+      <CardHeader
+        title={<span id="final-review-title">Final review</span>}
+        description="Confirm entries, brackets, scores, and money before closing the tournament."
+        actions={statusBadge}
+      />
 
-      {loading && <p className={styles.finalReviewMessage}>Checking tournament records…</p>}
+      {loading && !review ? <p className={styles.status} role="status">Checking tournament records...</p> : null}
 
-      {!loading && review && (
-        <>
-          <div className={styles.reviewGrid}>
-            <div><strong>{review.entries.count}</strong><span>Entries</span></div>
-            <div><strong>{review.brackets.count}</strong><span>Brackets</span></div>
-            <div><strong>{review.scores.complete}/{review.scores.total}</strong><span>Scores complete</span></div>
-            <div><strong>{review.public_results_ready ? 'Ready' : 'Not ready'}</strong><span>Public results</span></div>
-          </div>
+      {review ? (
+        <div className={styles.reviewBody}>
+          <dl className={styles.reviewFacts}>
+            <div><dt>Entries</dt><dd>{review.entries.count}</dd></div>
+            <div><dt>Brackets</dt><dd>{review.brackets.count}</dd></div>
+            <div><dt>Scores complete</dt><dd>{review.scores.complete} of {review.scores.total}</dd></div>
+            <div><dt>Public results</dt><dd>{review.public_results_ready ? 'Ready' : 'Not ready'}</dd></div>
+          </dl>
 
-          <dl className={styles.moneyReview}>
+          <CardDivider />
+
+          <dl className={styles.moneyRows}>
             <div><dt>Collected</dt><dd>{formatCurrency(review.payouts.collected)}</dd></div>
             <div><dt>Expected payout</dt><dd>{formatCurrency(review.payouts.expected_payout)}</dd></div>
             <div><dt>House retained</dt><dd>{formatCurrency(review.payouts.house_retained)}</dd></div>
-            <div><dt>Difference</dt><dd>{formatCurrency(review.payouts.difference)}</dd></div>
+            <div><dt>Difference</dt><dd className={styles.moneyEmphasis}>{formatCurrency(review.payouts.difference)}</dd></div>
           </dl>
 
-          {review.blocking_errors.length > 0 && (
-            <div className={styles.reviewWarnings}>
+          {review.blocking_errors.length > 0 ? (
+            <Notice tone="danger">
               <strong>Resolve before finalizing</strong>
-              <ul>{review.blocking_errors.map(error => <li key={error}>{error}</li>)}</ul>
-            </div>
-          )}
-          {review.warnings.length > 0 && (
-            <div className={styles.reviewNotices}>
-              <strong>Review notices</strong>
-              <ul>{review.warnings.map(warning => <li key={warning}>{warning}</li>)}</ul>
-            </div>
-          )}
+              <ul className={styles.noticeList}>{review.blocking_errors.map(item => <li key={item}>{item}</li>)}</ul>
+            </Notice>
+          ) : null}
+          {review.warnings.length > 0 ? (
+            <Notice tone="warning">
+              <strong>Review before finalizing</strong>
+              <ul className={styles.noticeList}>{review.warnings.map(item => <li key={item}>{item}</li>)}</ul>
+            </Notice>
+          ) : null}
 
-          <div className={styles.finalReviewActions}>
-            <button
-              type="button"
-              className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`}
+          <div className={styles.reviewActions}>
+            {isFinalized ? (
+              <Button size="sm" variant="ghost-danger" className={styles.pushStart} disabled={reopening} onClick={() => { setReopenReason(''); setReopenOpen(true) }}>
+                Reopen payouts
+              </Button>
+            ) : null}
+            <Button variant="secondary" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} disabled={loading || finalizing} onClick={() => { void loadReview() }}>
+              Refresh review
+            </Button>
+            <Button
+              variant="primary"
               disabled={!review.ready_to_finalize || finalizing || isFinalized}
-              onClick={() => { void finalize() }}
+              onClick={() => setConfirmFinalizeOpen(true)}
             >
-              {isFinalized ? 'Tournament Finalized' : finalizing ? 'Finalizing…' : 'Finalize Tournament'}
-            </button>
-            <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`} disabled={loading || finalizing} onClick={() => { void loadReview() }}>
-              Refresh Review
-            </button>
-            {isFinalized && (
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.medium}`} disabled={reopening} onClick={() => { void reopen() }}>
-                {reopening ? 'Reopening…' : 'Reopen Payouts'}
-              </button>
-            )}
+              {isFinalized ? 'Tournament finalized' : 'Finalize tournament'}
+            </Button>
           </div>
 
-          {history && history.payouts.length > 0 && (
-            <details className={styles.adjustmentDetails}>
-              <summary>Payout adjustments and history</summary>
-              <div className={styles.adjustmentRows}>
-                {history.payouts.map(payout => (
-                  <div key={payout.id}>
-                    <span><strong>{payout.player_name}</strong><small>{payout.bracket_name}</small></span>
-                    <span>{formatCurrency(payout.payout_amount)}</span>
-                    <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} disabled={adjustingId === payout.id || isFinalized} onClick={() => { void adjustPayout(payout) }}>
-                      Adjust
-                    </button>
-                  </div>
-                ))}
+          {history && history.payouts.length > 0 ? (
+            <>
+              <CardDivider />
+              <div className={styles.historyHeader}>
+                <h3 className={styles.subsectionTitle}>Payout history and adjustments</h3>
+                <Button size="sm" variant="ghost" onClick={() => setShowHistory(current => !current)} aria-expanded={showHistory}>
+                  {showHistory ? 'Hide' : 'Show'}
+                </Button>
               </div>
-              {history.adjustments.length > 0 && (
-                <ul className={styles.adjustmentHistory}>
-                  {history.adjustments.slice(0, 10).map(item => (
-                    <li key={item.id}>{item.old_amount == null ? 'Reopened payouts' : `${formatCurrency(item.old_amount)} → ${formatCurrency(item.new_amount ?? 0)}`} — {item.reason} · {item.adjusted_by}</li>
-                  ))}
-                </ul>
-              )}
-            </details>
-          )}
-        </>
-      )}
-    </section>
+              {showHistory ? (
+                <>
+                  <ul className={styles.historyList}>
+                    {history.payouts.map(payout => (
+                      <li key={payout.id} className={styles.historyRow}>
+                        <span className={styles.resultIdentity}>
+                          <span className={styles.resultName}>{payout.player_name}</span>
+                          <span className={styles.meta}>{payout.bracket_name}</span>
+                        </span>
+                        <span className={styles.historyAmount}>{formatCurrency(payout.payout_amount)}</span>
+                        <Button size="sm" variant="ghost" disabled={isFinalized} onClick={() => openAdjustment(payout)} aria-label={`Adjust payout for ${payout.player_name}`}>
+                          Adjust
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  {history.adjustments.length > 0 ? (
+                    <ul className={styles.historyList}>
+                      {history.adjustments.slice(0, 10).map(item => (
+                        <li key={item.id} className={styles.adjustmentRow}>
+                          <span className={styles.resultName}>
+                            {item.old_amount == null ? 'Reopened payouts' : `${formatCurrency(item.old_amount)} to ${formatCurrency(item.new_amount ?? 0)}`}
+                          </span>
+                          <span className={styles.meta}>Reason: {item.reason} · {item.adjusted_by}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        open={confirmFinalizeOpen}
+        title={`Finalize ${tournamentName}?`}
+        description="Scores and tournament records become read-only."
+        confirmLabel="Finalize tournament"
+        busy={finalizing}
+        busyLabel="Finalizing..."
+        onConfirm={() => { void finalize() }}
+        onCancel={() => setConfirmFinalizeOpen(false)}
+      />
+
+      <Modal
+        open={reopenOpen}
+        onClose={() => setReopenOpen(false)}
+        dismissible={!reopening}
+        title="Reopen finalized payouts?"
+        description={`Published results for ${tournamentName} may change. The reason is recorded.`}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setReopenOpen(false)} disabled={reopening}>Cancel</Button>
+            <Button variant="danger" onClick={() => { void reopen() }} disabled={reopening || !reopenReason.trim()}>
+              {reopening ? 'Reopening...' : 'Reopen payouts'}
+            </Button>
+          </>
+        )}
+      >
+        <TextAreaField label="Reason" value={reopenReason} onChange={event => setReopenReason(event.target.value)} rows={3} autoFocus />
+      </Modal>
+
+      <Modal
+        open={adjusting !== null}
+        onClose={() => setAdjusting(null)}
+        dismissible={!isSavingAdjustment}
+        title="Adjust payout"
+        description={adjusting ? `${adjusting.player_name} · ${adjusting.bracket_name}. The change and reason are recorded.` : undefined}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setAdjusting(null)} disabled={isSavingAdjustment}>Cancel</Button>
+            <Button variant="primary" onClick={() => { void saveAdjustment() }} disabled={isSavingAdjustment || Boolean(amountError) || !adjustReason.trim()}>
+              {isSavingAdjustment ? 'Saving...' : 'Save adjustment'}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.modalFields}>
+          <TextField
+            label="New amount"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            value={adjustAmount}
+            onChange={event => setAdjustAmount(event.target.value)}
+            error={adjustAmount.trim() !== '' ? amountError : undefined}
+            autoFocus
+          />
+          <TextAreaField label="Reason" value={adjustReason} onChange={event => setAdjustReason(event.target.value)} rows={3} />
+        </div>
+      </Modal>
+    </Card>
   )
 }

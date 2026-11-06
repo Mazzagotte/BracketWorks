@@ -1,0 +1,261 @@
+/* Payouts page: quick actions, search, final review, and results rows. */
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.searchForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.meta {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.subsectionTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+/* Final review */
+.reviewBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.reviewFacts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.reviewFacts dt,
+.moneyRows dt {
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.reviewFacts dd {
+  margin: var(--space-1) 0 0;
+  font: var(--type-section-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.moneyRows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.moneyRows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.moneyRows > div:last-child {
+  border-bottom: 0;
+}
+
+.moneyRows dt {
+  font: var(--type-body);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.moneyRows dd {
+  margin: 0;
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.moneyRows .moneyEmphasis {
+  font-weight: 700;
+}
+
+.reviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.pushStart {
+  margin-right: auto;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.historyList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyRow,
+.adjustmentRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.adjustmentRow {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.historyAmount {
+  margin-left: auto;
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.noticeList {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-5);
+}
+
+.modalFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Results */
+.resultList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resultRow {
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.resultMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.resultIdentity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.resultName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.resultAmount {
+  font: var(--type-table);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.resultActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-width: calc(var(--space-20) * 1.5);
+}
+
+.paidToggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.resultDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-3);
+  padding-left: calc(var(--space-6) + var(--space-3));
+}
+
+.resultGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.resultGroupTitle {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+@media (max-width: 767px) {
+  .reviewFacts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .searchForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resultRow {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .resultMain {
+    flex-wrap: wrap;
+  }
+
+  .resultActions {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+
+  .resultDetails {
+    padding-left: 0;
+  }
+
+  .reviewActions {
+    flex-direction: column-reverse;
+  }
+
+  .reviewActions > * {
+    width: 100%;
+  }
+}
