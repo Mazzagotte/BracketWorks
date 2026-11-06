@@ -95,7 +95,6 @@ import type {
   TournamentWritePayload,
   UserTournamentSummary,
 } from './setupTypes';
-import styles from './tournament-setup.module.css';
 import layout from './setup/setupLayout.module.css';
 import StepHeader from './setup/StepHeader';
 import {
@@ -3330,7 +3329,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           ? `${drawerState.id ? 'Edit' : 'Add'} ${drawerState.kind === 'fee' ? 'add-on' : drawerState.kind}`
           : ''}
         subtitle={drawerState?.kind === 'squad' && activeSquad
-          ? `${activeSquad.dateIso || 'Date not set'} · ${activeSquad.startTime || 'Time not set'}`
+          ? `${activeSquad.dateIso ? formatDateShort(activeSquad.dateIso) : 'Date not set'} · ${activeSquad.startTime ? formatSquadTimeLabel(activeSquad.startTime) : 'Time not set'}`
           : drawerState ? ({ location: 'Squads and availability', field: 'Registration setup', question: 'Registration setup', fee: 'Add-ons, payments, and documents' } as Record<string, string>)[drawerState.kind] ?? '' : ''}
         onClose={() => setDrawerState(null)}
       >
