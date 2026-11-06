@@ -181,9 +181,9 @@ main h6,
   font-size: var(--bw-type-title-md);
 }
 
-/* Legacy button sizing for pages not yet on the standard. Shared components inside `Page` (.bw-page) are excluded. */
-main button:not(.bw-page *):not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([class*='inlineAction']):not([aria-label*='Close']):not([aria-label*='close']),
-.page-main button:not(.bw-page *):not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([class*='inlineAction']):not([aria-label*='Close']):not([aria-label*='close']) {
+/* Legacy button sizing for pages not yet on the standard. Shared components inside `Page` (.bw-page) or another standard container (.bw-standard) are excluded. */
+main button:not(.bw-page *):not(.bw-standard *):not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([class*='inlineAction']):not([aria-label*='Close']):not([aria-label*='close']),
+.page-main button:not(.bw-page *):not(.bw-standard *):not([class*='iconButton']):not([class*='stepperBtn']):not([class*='modalClose']):not([class*='closeButton']):not([class*='statTile']):not([class*='statCard']):not([class*='squadChangeItem']):not([class*='settingsHeader']):not([class*='inlineAction']):not([aria-label*='Close']):not([aria-label*='close']) {
   min-height: var(--btn-height) !important;
   height: var(--btn-height) !important;
   padding-top: 0 !important;

@@ -1,14 +1,13 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
-import { AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import DevNoticeModal from './DevNoticeModal';
 import ChangelogModal from './ChangelogModal';
-import styles from './DevNoticeBanner.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './DevNoticeBanner.module.css';
+import { Button, Notice } from '@bracketworks/ui';
 
 export const CURRENT_NOTICE_VERSION = '1.1';
 
@@ -63,37 +62,28 @@ export default function DevNoticeBanner() {
 
   return (
     <>
-      {state === 'default' && (
-        <div className={`${styles.banner} ${styles.bannerDefault}`} role="status">
-          <AlertTriangle size={ICON_SIZE.md} className={styles.icon} aria-hidden="true" />
-          <p className={styles.text}>
-            <strong className={styles.label}>Development Preview</strong>{' '}
-            BracketWorks is still in active development. Verify all tournament data before
-            publishing results.{' '}
-            <button className={styles.viewLink} onClick={handleViewNotice}>
-              View notice
-            </button>
-            {' • '}
-            <button className={styles.viewLink} onClick={() => setChangelogOpen(true)}>
-              What&apos;s new
-            </button>
-          </p>
-        </div>
+      {state === 'default' ? (
+        <Notice
+          tone="warning"
+          role="status"
+          action={(
+            <span className={styles.actions}>
+              <Button size="sm" variant="ghost" onClick={handleViewNotice}>View notice</Button>
+              <Button size="sm" variant="ghost" onClick={() => setChangelogOpen(true)}>What&apos;s new</Button>
+            </span>
+          )}
+        >
+          <strong>Development preview.</strong> BracketWorks is still in active development. Verify all tournament data before publishing results.
+        </Notice>
+      ) : (
+        <Notice
+          tone="danger"
+          role="alert"
+          action={<Button size="sm" variant="primary" onClick={handleReviewNow}>Review now</Button>}
+        >
+          <strong>Important update.</strong> The development notice has changed. Please review and accept the new notice.
+        </Notice>
       )}
-
-      {state === 'update-required' && (
-        <div className={`${styles.banner} ${styles.bannerUpdate}`} role="alert">
-          <AlertTriangle size={ICON_SIZE.md} className={styles.iconAlert} aria-hidden="true" />
-          <p className={styles.text}>
-            <strong className={styles.labelAlert}>Important Update</strong>{' '}
-            Our development notice has been updated. Please review and accept the new notice.
-          </p>
-          <button className={styles.reviewBtn} onClick={handleReviewNow}>
-            Review Now
-          </button>
-        </div>
-      )}
-
       <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
 
       <DevNoticeModal

@@ -3,7 +3,6 @@
 import { Suspense, type ReactNode, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { MobileNav } from './MobileNav';
 import TopNav from '../app/components/TopNav';
 import { ErrorBoundary } from '../app/components/ErrorBoundary';
 import { DevAuthStatus } from '../app/components/DevAuthStatus';
@@ -43,10 +42,8 @@ function ClientLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const isMobile = useMediaQuery(NAVIGATION_DRAWER_VIEWPORT_QUERY);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [legalBlocked, setLegalBlocked] = useState(true);
-  const [currentPage, setCurrentPage] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isEmbeddedModalRoute, setIsEmbeddedModalRoute] = useState(false);
   const wasAuthenticated = useRef(false);
@@ -66,10 +63,6 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
     return undefined;
   }, []);
-
-  useEffect(() => {
-    setCurrentPage(currentPath.slice(1) || 'dashboard');
-  }, [currentPath]);
 
   useEffect(() => {
     if (isUserAuthenticated) {
@@ -105,7 +98,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
       };
     }
 
-    if (mobileCompatibilityNotice.isOpen || (isMobile && mobileNavOpen)) {
+    if (mobileCompatibilityNotice.isOpen) {
       setBodyInteractionState({ scrollLocked: true, touchLocked: true });
     } else {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
@@ -114,7 +107,7 @@ function ClientLayout({ children }: { children: ReactNode }) {
     return () => {
       setBodyInteractionState({ scrollLocked: false, touchLocked: false });
     };
-  }, [isMobile, isPublicPath, mobileCompatibilityNotice.isOpen, mobileNavOpen]);
+  }, [isPublicPath, mobileCompatibilityNotice.isOpen]);
 
   useEffect(() => {
     return () => {
@@ -160,37 +153,15 @@ function ClientLayout({ children }: { children: ReactNode }) {
 
   return (
     <ErrorBoundary>
-      {/* Unified top nav — desktop pill bar */}
-      {!isMobile && showAuthenticatedShell && (
-        <TopNav firstName={firstName} />
-      )}
-
-      {/* Mobile top bar */}
-      {isMobile && showAuthenticatedShell && (
-        <TopNav
-          firstName={firstName}
-          isMobile={true}
-          onMobileMenuOpen={() => setMobileNavOpen(true)}
-        />
-      )}
-
-      {/* Mobile slide-in nav drawer */}
-      {isMobile && showAuthenticatedShell && (
-        <MobileNav
-          isOpen={mobileNavOpen}
-          onClose={() => setMobileNavOpen(false)}
-          firstName={firstName}
-          currentPage={currentPage}
-        />
-      )}
+      {showAuthenticatedShell ? <TopNav firstName={firstName} /> : null}
 
       <main
         id="main-content"
-        className={`${styles.main} ${mainLayoutClass} ${isMobile && showAuthenticatedShell ? styles.mainMobileAuth : ''}`}
+        className={`${styles.main} ${mainLayoutClass} ${showAuthenticatedShell ? styles.mainWithNav : ''}`}
       >
         {/* Development notice banner - render at top of main content */}
         {showAuthenticatedShell && !legalBlocked && (
-          <div className={styles.devNoticeWrap}>
+          <div className={`bw-standard ${styles.devNoticeWrap}`}>
             <DevNoticeBanner />
           </div>
         )}
