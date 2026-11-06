@@ -1,16 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, FileUp, Pencil, RotateCcw, Trash2 } from "lucide-react";
-import CloseControl from "../../../components/CloseControl";
-import { useModalBehavior } from "../../hooks/useModalBehavior";
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  ConfirmDialog,
+  DataTable,
+  EmptyState,
+  FormGrid,
+  ICON_SIZE,
+  Menu,
+  MenuItem,
+  Modal,
+  Notice,
+  Pagination,
+  SearchField,
+  SelectField,
+  TableToolbar,
+  TextField,
+} from "@bracketworks/ui";
+import { Archive, Download, FileUp, MoreHorizontal, RotateCcw } from "lucide-react";
 import { useToastHelpers } from "../../components/Toast";
 import { adminApi } from "../services/adminApi";
 import type { BowlerProfileOwner, BowlerProfileRow, BowlerProfilesResponse } from "../types";
 import { formatAdminTimestamp } from "../utils";
-import buttonStyles from "../../styles/buttons.module.css";
-import styles from "../admin.module.css";
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from "../admin.module.css";
 
 type Props = {
   onSuccess: (message: string) => void;
@@ -19,6 +35,7 @@ type Props = {
 type ImportRow = { first_name: string; last_name: string; usbc_number: string | null; average: number | null };
 
 const emptyResponse: BowlerProfilesResponse = { profiles: [], page: 1, page_size: 25, total: 0, total_pages: 1 };
+const COLUMN_COUNT = 7;
 
 export function AdminBowlersSection({ onSuccess }: Props) {
   const { error: showError } = useToastHelpers();
@@ -36,6 +53,8 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const [editAverage, setEditAverage] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<BowlerProfileRow | null>(null);
+  const [archiveSaving, setArchiveSaving] = useState(false);
   const [owners, setOwners] = useState<BowlerProfileOwner[]>([]);
   const [selectedOwnerId, setSelectedOwnerId] = useState("");
   const [importRows, setImportRows] = useState<ImportRow[] | null>(null);
@@ -45,19 +64,6 @@ export function AdminBowlersSection({ onSuccess }: Props) {
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editDialogRef = useRef<HTMLDivElement>(null);
-  const importDialogRef = useRef<HTMLDivElement>(null);
-
-  const { onOverlayClick: onEditOverlayClick } = useModalBehavior({
-    open: Boolean(editingProfile),
-    onClose: () => setEditingProfile(null),
-    dialogRef: editDialogRef,
-  });
-  const { onOverlayClick: onImportOverlayClick } = useModalBehavior({
-    open: Boolean(importRows),
-    onClose: () => setImportRows(null),
-    dialogRef: importDialogRef,
-  });
 
   useEffect(() => {
     let active = true;
@@ -122,7 +128,6 @@ export function AdminBowlersSection({ onSuccess }: Props) {
 
   const changeProfileStatus = async (profile: BowlerProfileRow) => {
     const action = profile.is_active ? "archive" : "reactivate";
-    if (profile.is_active && !window.confirm(`Archive ${profile.first_name} ${profile.last_name}? Tournament history will be preserved.`)) return;
     try {
       if (profile.is_active) await adminApi.archiveBowlerProfile(profile.id);
       else await adminApi.reactivateBowlerProfile(profile.id);
@@ -130,6 +135,17 @@ export function AdminBowlersSection({ onSuccess }: Props) {
       onSuccess(`Bowler profile ${action === "archive" ? "archived" : "reactivated"}.`);
     } catch (err) {
       showError(err instanceof Error ? err.message : `Failed to ${action} bowler profile`);
+    }
+  };
+
+  const confirmArchive = async () => {
+    if (!archiveTarget) return;
+    setArchiveSaving(true);
+    try {
+      await changeProfileStatus(archiveTarget);
+    } finally {
+      setArchiveSaving(false);
+      setArchiveTarget(null);
     }
   };
 
@@ -223,89 +239,200 @@ export function AdminBowlersSection({ onSuccess }: Props) {
     }
   };
 
+  const firstShown = response.profiles.length === 0 ? 0 : (response.page - 1) * response.page_size + 1;
+  const lastShown = response.profiles.length === 0 ? 0 : firstShown + response.profiles.length - 1;
+  const selectedOwner = owners.find(owner => String(owner.id) === selectedOwnerId);
+
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>Reusable Bowler Profiles</h3>
-        <span className={styles.panelSubtle}>{response.total} profiles</span>
-      </div>
-      <div className={styles.toolbarRow}>
-        <div>
-          <input className={styles.toolbarInput} aria-label="Search bowler profiles" placeholder="Search name, USBC, owner" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
-          <select className={styles.toolbarSelect} aria-label="Filter bowler profiles" value={status} onChange={event => { setStatus(event.target.value as typeof status); setPage(1); }}>
-            <option value="active">Active profiles</option><option value="archived">Archived profiles</option><option value="all">All profiles</option>
-          </select>
-        </div>
-        <div>
-          <select className={styles.toolbarSelect} aria-label="Filter and import/export by profile owner" value={selectedOwnerId} onChange={event => { setSelectedOwnerId(event.target.value); setPage(1); }}>
-            <option value="">All profile owners</option>
-            {owners.map(owner => <option value={owner.id} key={owner.id}>{owner.name || owner.username} (@{owner.username})</option>)}
-          </select>
-          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}><Download aria-hidden="true" size={ICON_SIZE.md} /> {exporting ? "Exporting..." : "Export CSV"}</button>
-          <button type="button" className={styles.actionBtn} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}><FileUp aria-hidden="true" size={ICON_SIZE.md} /> Import Excel</button>
-          <input ref={fileInputRef} type="file" accept=".xlsx" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
-        </div>
-      </div>
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead><tr><th>Bowler</th><th>USBC</th><th>Average</th><th>Profile owner</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
-          <tbody>
-            {loading ? <tr><td className={styles.tableState} colSpan={7}><span role="status">Loading bowler profiles...</span></td></tr> : response.profiles.length === 0 ? <tr><td className={styles.tableState} colSpan={7}><strong>No bowler profiles found</strong><span>Try a different search or status filter.</span></td></tr> : response.profiles.map(profile => (
+    <Card padding="flush" aria-label="Reusable bowler profiles">
+      <CardHeader
+        title="Reusable bowler profiles"
+        description={`${response.total} profiles. Choose a profile owner to export or import that account's profiles.`}
+      />
+      <TableToolbar
+        search={(
+          <SearchField label="Search bowler profiles" placeholder="Search name, USBC, owner" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} />
+        )}
+      >
+        <SelectField label="Filter bowler profiles" hideLabel value={status} onChange={event => { setStatus(event.target.value as typeof status); setPage(1); }}>
+          <option value="active">Active profiles</option>
+          <option value="archived">Archived profiles</option>
+          <option value="all">All profiles</option>
+        </SelectField>
+        <SelectField label="Filter and import/export by profile owner" hideLabel value={selectedOwnerId} onChange={event => { setSelectedOwnerId(event.target.value); setPage(1); }}>
+          <option value="">All profile owners</option>
+          {owners.map(owner => <option value={owner.id} key={owner.id}>{owner.name || owner.username} (@{owner.username})</option>)}
+        </SelectField>
+        <Button variant="secondary" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} disabled={!selectedOwnerId || exporting} onClick={() => { void exportSelectedOwnerProfiles(); }}>
+          {exporting ? "Exporting..." : "Export CSV"}
+        </Button>
+        <Button variant="secondary" icon={<FileUp size={ICON_SIZE.md} aria-hidden="true" />} disabled={!selectedOwnerId} onClick={() => fileInputRef.current?.click()}>
+          Import Excel
+        </Button>
+        <input ref={fileInputRef} type="file" accept=".xlsx" hidden onChange={event => { const file = event.target.files?.[0]; if (file) void parseImportFile(file); event.target.value = ""; }} />
+      </TableToolbar>
+
+      <DataTable caption="Reusable bowler profiles">
+        <thead>
+          <tr>
+            <th scope="col">Bowler</th>
+            <th scope="col">USBC</th>
+            <th scope="col" data-align="right">Average</th>
+            <th scope="col">Profile owner</th>
+            <th scope="col">Status</th>
+            <th scope="col">Updated</th>
+            <th scope="col"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr><td className={styles.stateCell} colSpan={COLUMN_COUNT}><span className={styles.helper} role="status">Loading bowler profiles...</span></td></tr>
+          ) : response.profiles.length === 0 ? (
+            <tr>
+              <td className={styles.stateCell} colSpan={COLUMN_COUNT}>
+                <EmptyState title="No bowler profiles found" description="Try a different search or status filter." />
+              </td>
+            </tr>
+          ) : response.profiles.map(profile => {
+            const name = `${profile.first_name} ${profile.last_name}`;
+            return (
               <tr key={profile.id}>
-                <td><strong>{profile.first_name} {profile.last_name}</strong><br /><span className={styles.secondaryText}>Profile #{profile.id}</span></td>
-                <td>{profile.usbc_number || "-"}</td>
-                <td>{profile.average ?? "-"}</td>
-                <td>{profile.owner_name || profile.owner_username}<br /><span className={styles.secondaryText}>@{profile.owner_username} · {profile.owner_email}</span></td>
-                <td><span className={`${styles.statusPill} ${profile.is_active ? styles.statusActive : styles.statusInactive}`}>{profile.is_active ? "Active" : "Archived"}</span></td>
-                <td>{formatAdminTimestamp(profile.updated_at, "Unknown")}</td>
-                <td><div className={styles.rowActions}>
-                  <button type="button" className={styles.actionBtn} aria-label={`Edit ${profile.first_name} ${profile.last_name}`} onClick={() => beginEdit(profile)}><Pencil aria-hidden="true" size={ICON_SIZE.sm} /> Edit</button>
-                  <button type="button" className={`${styles.actionBtn} ${profile.is_active ? styles.actionBtnDanger : ""}`} aria-label={`${profile.is_active ? "Archive" : "Reactivate"} ${profile.first_name} ${profile.last_name}`} onClick={() => { void changeProfileStatus(profile); }}>
-                    {profile.is_active ? <Trash2 aria-hidden="true" size={ICON_SIZE.sm} /> : <RotateCcw aria-hidden="true" size={ICON_SIZE.sm} />}{profile.is_active ? "Archive" : "Reactivate"}
-                  </button>
-                </div></td>
+                <td>
+                  <span className={styles.cellStack}>
+                    <span className={styles.cellTitle}>{name}</span>
+                    <span className={styles.cellMeta}>Profile #{profile.id}</span>
+                  </span>
+                </td>
+                <td data-tone="secondary">{profile.usbc_number || "-"}</td>
+                <td data-align="right">{profile.average ?? "-"}</td>
+                <td>
+                  <span className={styles.cellStack}>
+                    <span>{profile.owner_name || profile.owner_username}</span>
+                    <span className={styles.cellMeta}>@{profile.owner_username} · {profile.owner_email}</span>
+                  </span>
+                </td>
+                <td><Badge tone={profile.is_active ? "success" : "neutral"}>{profile.is_active ? "Active" : "Archived"}</Badge></td>
+                <td data-tone="secondary">{formatAdminTimestamp(profile.updated_at, "Unknown")}</td>
+                <td>
+                  <div className={styles.cellActions}>
+                    <Button variant="accent-outline" size="sm" aria-label={`Edit ${name}`} onClick={() => beginEdit(profile)}>
+                      Edit
+                    </Button>
+                    <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                      {profile.is_active ? (
+                        <MenuItem tone="danger" icon={<Archive size={ICON_SIZE.md} />} onSelect={() => setArchiveTarget(profile)} aria-label={`Archive ${name}`}>
+                          Archive profile
+                        </MenuItem>
+                      ) : (
+                        <MenuItem icon={<RotateCcw size={ICON_SIZE.md} />} onSelect={() => { void changeProfileStatus(profile); }} aria-label={`Reactivate ${name}`}>
+                          Reactivate profile
+                        </MenuItem>
+                      )}
+                    </Menu>
+                  </div>
+                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className={styles.paginationRow}>
-        <button type="button" className={styles.actionBtn} onClick={() => setPage(value => Math.max(1, value - 1))} disabled={page <= 1 || loading}>Prev</button>
-        <span className={styles.secondaryText}>Page {response.page} of {response.total_pages}</span>
-        <button type="button" className={styles.actionBtn} onClick={() => setPage(value => Math.min(response.total_pages, value + 1))} disabled={page >= response.total_pages || loading}>Next</button>
-      </div>
+            );
+          })}
+        </tbody>
+      </DataTable>
 
-      {editingProfile && (
-        <div className={styles.modalOverlay} onClick={onEditOverlayClick}>
-          <div ref={editDialogRef} className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit ${editingProfile.first_name} ${editingProfile.last_name}`} tabIndex={-1}>
-            <div className={styles.modalHeader}><h3 className={styles.modalTitle}>Edit Bowler Profile</h3><CloseControl size="sm" label="Close bowler editor" onClick={() => setEditingProfile(null)} /></div>
-            <div className={styles.modalBody}>
-              {editError && <div className={styles.modalError} role="alert">{editError}</div>}
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-first-name">First name</label><input id="profile-first-name" className={styles.formInput} value={editFirstName} onChange={event => setEditFirstName(event.target.value)} /></div>
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-last-name">Last name</label><input id="profile-last-name" className={styles.formInput} value={editLastName} onChange={event => setEditLastName(event.target.value)} /></div>
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-usbc">USBC number</label><input id="profile-usbc" className={styles.formInput} value={editUsbc} onChange={event => setEditUsbc(event.target.value)} /></div>
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="profile-average">Average</label><input id="profile-average" className={styles.formInput} type="number" min="0" max="300" step="1" value={editAverage} onChange={event => setEditAverage(event.target.value)} /></div>
-              <p className={styles.secondaryText}>{editingProfile.linked_entry_count} tournament entries will keep their history and receive the updated name/USBC.</p>
-            </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditingProfile(null)}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={editSaving || !editFirstName.trim() || !editLastName.trim()} onClick={() => { void saveEdit(); }}>{editSaving ? "Saving..." : "Save changes"}</button></div>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={response.page}
+        pageCount={response.total_pages}
+        onPageChange={setPage}
+        summary={`Showing ${firstShown}-${lastShown} of ${response.total}`}
+      />
 
-      {importRows && (
-        <div className={styles.modalOverlay} onClick={onImportOverlayClick}>
-          <div ref={importDialogRef} className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label="Review bowler profile import" tabIndex={-1}>
-            <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Review Bowler Import</h3><div className={styles.secondaryText}>{importFileName} · {importRows.length} profiles</div></div><CloseControl size="sm" label="Close import preview" onClick={() => setImportRows(null)} /></div>
-            <div className={styles.modalBody}>
-              {importError && <div className={styles.modalError} role="alert">{importError}</div>}
-              {importRows.length > 0 && <div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>First name</th><th>Last name</th><th>USBC</th><th>Average</th></tr></thead><tbody>{importRows.slice(0, 100).map((row, index) => <tr key={`${row.usbc_number || row.first_name}-${index}`}><td>{row.first_name}</td><td>{row.last_name}</td><td>{row.usbc_number || "-"}</td><td>{row.average ?? "-"}</td></tr>)}</tbody></table>{importRows.length > 100 && <p className={styles.secondaryText}>Showing first 100 rows; all {importRows.length} will be imported.</p>}</div>}
-              {importSkippedRows > 0 && <p className={styles.secondaryText}>{importSkippedRows} row{importSkippedRows === 1 ? " was" : "s were"} skipped because the name was incomplete.</p>}
-              <p className={styles.secondaryText}>Owner: {owners.find(owner => String(owner.id) === selectedOwnerId)?.name || "Selected account"}. Existing profiles with matching USBC or name will be skipped.</p>
-            </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setImportRows(null)} disabled={importing}>Cancel</button><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} onClick={() => { void commitImport(); }} disabled={importing || !importRows.length || !selectedOwnerId}>{importing ? "Importing..." : `Import ${importRows.length} profiles`}</button></div>
+      <ConfirmDialog
+        open={Boolean(archiveTarget)}
+        title={`Archive ${archiveTarget ? `${archiveTarget.first_name} ${archiveTarget.last_name}` : "bowler profile"}?`}
+        description="The profile is hidden from new entries. Tournament history is preserved, and you can reactivate it later."
+        confirmLabel="Archive profile"
+        busyLabel="Archiving..."
+        tone="danger"
+        busy={archiveSaving}
+        onConfirm={() => { void confirmArchive(); }}
+        onCancel={() => setArchiveTarget(null)}
+      />
+
+      <Modal
+        open={Boolean(editingProfile)}
+        onClose={() => setEditingProfile(null)}
+        title="Edit bowler profile"
+        closeLabel="Close bowler editor"
+        dismissible={!editSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setEditingProfile(null)} disabled={editSaving}>Cancel</Button>
+            <Button variant="primary" disabled={editSaving || !editFirstName.trim() || !editLastName.trim()} onClick={() => { void saveEdit(); }}>
+              {editSaving ? "Saving..." : "Save changes"}
+            </Button>
+          </>
+        )}
+      >
+        {editingProfile ? (
+          <div className={styles.stack}>
+            {editError ? <Notice tone="danger" role="alert">{editError}</Notice> : null}
+            <FormGrid>
+              <TextField id="profile-first-name" label="First name" value={editFirstName} onChange={event => setEditFirstName(event.target.value)} />
+              <TextField id="profile-last-name" label="Last name" value={editLastName} onChange={event => setEditLastName(event.target.value)} />
+              <TextField id="profile-usbc" label="USBC number" optional value={editUsbc} onChange={event => setEditUsbc(event.target.value)} />
+              <TextField id="profile-average" label="Average" optional type="number" min="0" max="300" step="1" value={editAverage} onChange={event => setEditAverage(event.target.value)} />
+            </FormGrid>
+            <p className={styles.helper}>{editingProfile.linked_entry_count} tournament entries will keep their history and receive the updated name and USBC number.</p>
           </div>
-        </div>
-      )}
-    </section>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(importRows)}
+        onClose={() => setImportRows(null)}
+        title="Review bowler import"
+        description={`${importFileName} · ${importRows?.length ?? 0} profiles`}
+        size="lg"
+        closeLabel="Close import preview"
+        dismissible={!importing}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setImportRows(null)} disabled={importing}>Cancel</Button>
+            <Button variant="primary" onClick={() => { void commitImport(); }} disabled={importing || !importRows?.length || !selectedOwnerId}>
+              {importing ? "Importing..." : `Import ${importRows?.length ?? 0} profiles`}
+            </Button>
+          </>
+        )}
+      >
+        {importRows ? (
+          <div className={styles.stack}>
+            {importError ? <Notice tone="danger" role="alert">{importError}</Notice> : null}
+            {importRows.length > 0 ? (
+              <DataTable caption="Profiles to import">
+                <thead>
+                  <tr>
+                    <th scope="col">First name</th>
+                    <th scope="col">Last name</th>
+                    <th scope="col">USBC</th>
+                    <th scope="col" data-align="right">Average</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importRows.slice(0, 100).map((row, index) => (
+                    <tr key={`${row.usbc_number || row.first_name}-${index}`}>
+                      <td>{row.first_name}</td>
+                      <td>{row.last_name}</td>
+                      <td data-tone="secondary">{row.usbc_number || "-"}</td>
+                      <td data-align="right">{row.average ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </DataTable>
+            ) : null}
+            {importRows.length > 100 ? <p className={styles.helper}>Showing the first 100 rows; all {importRows.length} will be imported.</p> : null}
+            {importSkippedRows > 0 ? <p className={styles.helper}>{importSkippedRows} row{importSkippedRows === 1 ? " was" : "s were"} skipped because the name was incomplete.</p> : null}
+            <p className={styles.helper}>Owner: {selectedOwner?.name || "Selected account"}. Existing profiles with a matching USBC number or name will be skipped.</p>
+          </div>
+        ) : null}
+      </Modal>
+    </Card>
   );
 }

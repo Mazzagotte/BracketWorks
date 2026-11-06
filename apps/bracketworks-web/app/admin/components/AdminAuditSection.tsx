@@ -1,4 +1,17 @@
-import { DataTableToolbar } from "../../components/primitives";
+import {
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  EmptyState,
+  ICON_SIZE,
+  Pagination,
+  SearchField,
+  SelectField,
+  TableToolbar,
+  TextField,
+} from "@bracketworks/ui";
+import { Download } from "lucide-react";
 
 import type { AuditLogsResponse, UserRow } from "../types";
 import styles from "../admin.module.css";
@@ -23,6 +36,8 @@ type AdminAuditSectionProps = {
   onExportAuditCsv: () => void;
 };
 
+const COLUMN_COUNT = 6;
+
 export function AdminAuditSection({
   auditResponse,
   auditLoading,
@@ -42,105 +57,98 @@ export function AdminAuditSection({
   onAuditPageChange,
   onExportAuditCsv,
 }: AdminAuditSectionProps) {
+  const { page, page_size: pageSize, total, total_pages: totalPages, logs } = auditResponse;
+  const firstShown = logs.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastShown = logs.length === 0 ? 0 : firstShown + logs.length - 1;
+
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>Audit Log</h3>
-        <span className={styles.panelSubtle}>{auditResponse.total} entries</span>
-      </div>
-      <DataTableToolbar
-        className={styles.toolbarRow}
-        left={(
-          <input
-            type="text"
-            className={styles.toolbarInput}
-            aria-label="Search audit log"
+    <Card padding="flush" aria-label="Audit log">
+      <CardHeader title="Audit log" description={`${total} entries`} />
+      <TableToolbar
+        search={(
+          <SearchField
+            label="Search audit log"
             value={auditSearch}
             onChange={(event) => onAuditSearchChange(event.target.value)}
             placeholder="Search action, reason, target"
           />
         )}
-        right={(
-          <>
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              aria-label="Filter audit log by action"
-              value={auditAction}
-              onChange={(event) => onAuditActionChange(event.target.value)}
-              placeholder="Action (example: tournament.delete)"
-            />
-            <input
-              type="text"
-              className={styles.toolbarInput}
-              aria-label="Filter audit log by target type"
-              value={auditTargetType}
-              onChange={(event) => onAuditTargetTypeChange(event.target.value)}
-              placeholder="Target type (user, tournament)"
-            />
-            <select className={styles.toolbarSelect} aria-label="Filter audit log by administrator" value={auditAdminUserId} onChange={(event) => onAuditAdminUserIdChange(event.target.value)}>
-              <option value="">All administrators</option>
-              {adminUsers.filter((user) => user.is_admin).map((user) => (
-                <option value={String(user.id)} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>
-              ))}
-            </select>
-            <input type="date" className={styles.toolbarInput} aria-label="Audit start date" value={auditDateFrom} onChange={(event) => onAuditDateFromChange(event.target.value)} />
-            <input type="date" className={styles.toolbarInput} aria-label="Audit end date" value={auditDateTo} onChange={(event) => onAuditDateToChange(event.target.value)} />
-            <button type="button" className={styles.actionBtn} onClick={onExportAuditCsv} disabled={auditResponse.logs.length === 0}>Export CSV</button>
-          </>
-        )}
-      />
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
+      >
+        <TextField
+          label="Filter audit log by action"
+          hideLabel
+          value={auditAction}
+          onChange={(event) => onAuditActionChange(event.target.value)}
+          placeholder="Action (example: tournament.delete)"
+        />
+        <TextField
+          label="Filter audit log by target type"
+          hideLabel
+          value={auditTargetType}
+          onChange={(event) => onAuditTargetTypeChange(event.target.value)}
+          placeholder="Target type (user, tournament)"
+        />
+        <SelectField label="Filter audit log by administrator" hideLabel value={auditAdminUserId} onChange={(event) => onAuditAdminUserIdChange(event.target.value)}>
+          <option value="">All administrators</option>
+          {adminUsers.filter((user) => user.is_admin).map((user) => (
+            <option value={String(user.id)} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>
+          ))}
+        </SelectField>
+        <TextField type="date" label="Audit start date" hideLabel value={auditDateFrom} onChange={(event) => onAuditDateFromChange(event.target.value)} />
+        <TextField type="date" label="Audit end date" hideLabel value={auditDateTo} onChange={(event) => onAuditDateToChange(event.target.value)} />
+        <Button variant="secondary" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} onClick={onExportAuditCsv} disabled={logs.length === 0}>
+          Export CSV
+        </Button>
+      </TableToolbar>
+
+      <DataTable caption="Audit log">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Admin</th>
+            <th scope="col">Action</th>
+            <th scope="col">Target</th>
+            <th scope="col">Reason</th>
+            <th scope="col">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {auditLoading ? (
+            <tr><td className={styles.stateCell} colSpan={COLUMN_COUNT}><span className={styles.helper} role="status">Loading audit log...</span></td></tr>
+          ) : logs.length === 0 ? (
             <tr>
-              <th>When</th>
-              <th>Admin</th>
-              <th>Action</th>
-              <th>Target</th>
-              <th>Reason</th>
-              <th>Details</th>
+              <td className={styles.stateCell} colSpan={COLUMN_COUNT}>
+                <EmptyState title="No audit entries found" description="Try clearing or broadening the audit filters." />
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {auditLoading ? (
-              <tr><td className={styles.tableState} colSpan={6}><span role="status">Loading audit log…</span></td></tr>
-            ) : auditResponse.logs.length === 0 ? (
-              <tr><td className={styles.tableState} colSpan={6}><strong>No audit entries found</strong><span>Try clearing or broadening the audit filters.</span></td></tr>
-            ) : (
-              auditResponse.logs.map((log) => (
-                <tr key={log.id}>
-                  <td>{log.created_at ? new Date(log.created_at).toLocaleString() : "-"}</td>
-                  <td>{log.admin_name || log.admin_username || `User ${log.admin_user_id}`}</td>
-                  <td>{log.action}</td>
-                  <td>{log.target_type || "-"}{log.target_id ? ` #${log.target_id}` : ""}</td>
-                  <td>{log.reason || "-"}</td>
-                  <td>{log.details ? <details className={styles.auditDetails}><summary>View</summary><pre>{JSON.stringify(log.details, null, 2)}</pre></details> : "-"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      <div className={styles.paginationRow}>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={() => onAuditPageChange(Math.max(1, auditResponse.page - 1))}
-          disabled={auditResponse.page <= 1 || auditLoading}
-        >
-          Prev
-        </button>
-        <span className={styles.secondaryText}>Page {auditResponse.page} of {auditResponse.total_pages}</span>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={() => onAuditPageChange(Math.min(auditResponse.total_pages, auditResponse.page + 1))}
-          disabled={auditResponse.page >= auditResponse.total_pages || auditLoading}
-        >
-          Next
-        </button>
-      </div>
-    </section>
+          ) : (
+            logs.map((log) => (
+              <tr key={log.id}>
+                <td data-tone="secondary">{log.created_at ? new Date(log.created_at).toLocaleString() : "-"}</td>
+                <td>{log.admin_name || log.admin_username || `User ${log.admin_user_id}`}</td>
+                <td>{log.action}</td>
+                <td>{log.target_type || "-"}{log.target_id ? ` #${log.target_id}` : ""}</td>
+                <td data-tone="secondary">{log.reason || "-"}</td>
+                <td>
+                  {log.details ? (
+                    <details className={styles.disclosure}>
+                      <summary className={styles.disclosureLink} aria-label={`View details for audit entry ${log.id}`}>View</summary>
+                      <pre className={styles.code}>{JSON.stringify(log.details, null, 2)}</pre>
+                    </details>
+                  ) : "-"}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </DataTable>
+
+      <Pagination
+        page={page}
+        pageCount={totalPages}
+        onPageChange={onAuditPageChange}
+        summary={`Showing ${firstShown}-${lastShown} of ${total}`}
+      />
+    </Card>
   );
 }

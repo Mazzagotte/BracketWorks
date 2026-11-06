@@ -1,85 +1,79 @@
-import { formatShortMonthDayYear } from "../../lib/formatters";
+import type { ReactNode } from "react";
+import { Card, CardHeader, StatGroup } from "@bracketworks/ui";
+import type { StatItem } from "@bracketworks/ui";
 
-import type { AdminOverviewMetric, OverviewResponse } from "../types";
+import { formatShortMonthDayYear } from "../../lib/formatters";
+import type { OverviewResponse } from "../types";
 import styles from "../admin.module.css";
 
 type AdminOverviewSectionProps = {
   overview: OverviewResponse | null;
-  metrics: AdminOverviewMetric[];
+  metrics: StatItem[];
 };
+
+function OverviewList({ empty, children }: { empty: string; children: ReactNode[] }) {
+  if (children.length === 0) return <p className={styles.helper}>{empty}</p>;
+  return <ul className={styles.rows}>{children}</ul>;
+}
 
 export function AdminOverviewSection({ overview, metrics }: AdminOverviewSectionProps) {
   return (
-    <div className={styles.sectionStack}>
-      <div className={styles.metricGrid}>
-        {metrics.map((metric) => (
-          <section key={metric.label} className={`${styles.metricCard} ${styles[`tone${metric.tone.charAt(0).toUpperCase()}${metric.tone.slice(1)}`]}`}>
-            <div className={styles.metricLabel}>{metric.label}</div>
-            <div className={styles.metricValue}>{metric.value}</div>
-          </section>
-        ))}
-      </div>
+    <>
+      {metrics.length > 0 ? <StatGroup label="Platform totals" items={metrics} /> : null}
 
-      <div className={styles.twoColumnGrid}>
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Top Operators</h3>
-            <span className={styles.panelSubtle}>Most tournaments created</span>
-          </div>
-          <div className={styles.listStack}>
+      <div className={styles.twoColumn}>
+        <Card>
+          <CardHeader title="Top operators" description="Most tournaments created" />
+          <OverviewList empty="No operators yet.">
             {(overview?.top_operators || []).map((operator) => (
-              <div key={operator.id} className={styles.listRow}>
-                <div>
-                  <div className={styles.primaryText}>{operator.name || operator.username}</div>
-                  <div className={styles.secondaryText}>@{operator.username}</div>
+              <li key={operator.id} className={styles.row}>
+                <div className={styles.rowText}>
+                  <span className={styles.rowTitle}>{operator.name || operator.username}</span>
+                  <span className={styles.rowMeta}>@{operator.username}</span>
                 </div>
-                <span className={styles.valuePill}>{operator.tournament_count}</span>
-              </div>
+                <span className={styles.rowValue} aria-label={`${operator.tournament_count} tournaments`}>
+                  {operator.tournament_count}
+                </span>
+              </li>
             ))}
-          </div>
-        </section>
+          </OverviewList>
+        </Card>
 
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}>
-            <h3 className={styles.panelTitle}>Recent Tournaments</h3>
-            <span className={styles.panelSubtle}>Latest tournament records</span>
-          </div>
-          <div className={styles.listStack}>
+        <Card>
+          <CardHeader title="Recent tournaments" description="Latest tournament records" />
+          <OverviewList empty="No tournaments yet.">
             {(overview?.recent_tournaments || []).map((tournament) => (
-              <div key={tournament.id} className={styles.listRow}>
-                <div>
-                  <div className={styles.primaryText}>{tournament.name}</div>
-                  <div className={styles.secondaryText}>
+              <li key={tournament.id} className={styles.row}>
+                <div className={styles.rowText}>
+                  <span className={styles.rowTitle}>{tournament.name}</span>
+                  <span className={styles.rowMeta}>
                     {tournament.owner_name || tournament.owner_username}
-                    {tournament.location ? ` - ${tournament.location}` : ""}
-                  </div>
+                    {tournament.location ? ` · ${tournament.location}` : ""}
+                  </span>
                 </div>
-                <span className={styles.valuePill}>#{tournament.id}</span>
-              </div>
+                <span className={styles.rowMeta}>#{tournament.id}</span>
+              </li>
             ))}
-          </div>
-        </section>
+          </OverviewList>
+        </Card>
       </div>
 
-      <section className={styles.panel}>
-        <div className={styles.panelHeader}>
-          <h3 className={styles.panelTitle}>Recent Signups</h3>
-          <span className={styles.panelSubtle}>Newest accounts</span>
-        </div>
-        <div className={styles.listStack}>
+      <Card>
+        <CardHeader title="Recent signups" description="Newest accounts" />
+        <OverviewList empty="No signups yet.">
           {(overview?.recent_signups || []).map((user) => (
-            <div key={user.id} className={styles.listRow}>
-              <div>
-                <div className={styles.primaryText}>{user.name || user.username}</div>
-                <div className={styles.secondaryText}>@{user.username}</div>
+            <li key={user.id} className={styles.row}>
+              <div className={styles.rowText}>
+                <span className={styles.rowTitle}>{user.name || user.username}</span>
+                <span className={styles.rowMeta}>@{user.username}</span>
               </div>
-              <div className={styles.secondaryText}>
+              <span className={styles.rowMeta}>
                 {user.created_at ? formatShortMonthDayYear(new Date(user.created_at)) : "-"}
-              </div>
-            </div>
+              </span>
+            </li>
           ))}
-        </div>
-      </section>
-    </div>
+        </OverviewList>
+      </Card>
+    </>
   );
 }

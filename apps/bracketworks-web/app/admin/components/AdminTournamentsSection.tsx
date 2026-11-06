@@ -1,7 +1,23 @@
-import { Fragment, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
-
-import { DataTableToolbar } from "../../components/primitives";
+import { Fragment } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  DataTable,
+  EmptyState,
+  ICON_SIZE,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  Pagination,
+  SearchField,
+  SelectField,
+  TableToolbar,
+  ButtonLink,
+  capitalizeFirstLetter,
+} from "@bracketworks/ui";
+import { Archive, ArchiveRestore, Download, ExternalLink, MoreHorizontal, NotebookPen, Pencil, Trash2, UserCog } from "lucide-react";
 
 import type {
   TournamentActivityFilter,
@@ -10,6 +26,7 @@ import type {
   TournamentsResponse,
 } from "../types";
 import { formatAdminTimestamp } from "../utils";
+import { AdminDetail } from "./AdminDetail";
 import styles from "../admin.module.css";
 
 type AdminTournamentsSectionProps = {
@@ -33,6 +50,64 @@ type AdminTournamentsSectionProps = {
   onToggleTournamentExpanded: (id: number) => void;
 };
 
+const COLUMN_COUNT = 11;
+
+const humanize = (value: string) => capitalizeFirstLetter(value.replace(/_/g, " "));
+
+function TournamentDetails({ tournament }: { tournament: TournamentRow }) {
+  return (
+    <div className={styles.expanded}>
+      <dl className={styles.details}>
+        <AdminDetail label="Scores">{tournament.score_count}</AdminDetail>
+        <AdminDetail label="Payouts">{tournament.payout_count}</AdminDetail>
+        <AdminDetail label="Snapshots">{tournament.snapshot_count}</AdminDetail>
+        <AdminDetail label="Workflow">{humanize(tournament.workflow_status)}</AdminDetail>
+        <AdminDetail label="Staff">{tournament.staff_count}</AdminDetail>
+        <AdminDetail label="Brackets">{humanize(tournament.bracket_state)}</AdminDetail>
+        <AdminDetail label="Score state">{humanize(tournament.score_state)}{tournament.scores_locked ? " (locked)" : ""}</AdminDetail>
+        <AdminDetail label="Payout state">{humanize(tournament.payout_state)}</AdminDetail>
+        <AdminDetail label="Owner email">{tournament.owner_email}</AdminDetail>
+        <AdminDetail label="Last bracket activity">{formatAdminTimestamp(tournament.last_activity_at, "None")}</AdminDetail>
+        <AdminDetail label="Last admin change">{formatAdminTimestamp(tournament.last_admin_change_at, "None")}</AdminDetail>
+      </dl>
+      {tournament.archive_reason ? <p className={styles.helper}>Archive reason: {tournament.archive_reason}</p> : null}
+      <div className={styles.group}>
+        <h3 className={styles.subsectionTitle}>Tournament staff</h3>
+        {tournament.staff.length === 0 ? (
+          <p className={styles.helper}>Owner only</p>
+        ) : (
+          <ul className={styles.rows}>
+            {tournament.staff.map((member) => (
+              <li key={member.user_id} className={styles.row}>
+                <span className={styles.rowMeta}>{member.name || member.username} (@{member.username}) · {humanize(member.role)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className={styles.group}>
+        <h3 className={styles.subsectionTitle}>Recent tournament activity</h3>
+        {tournament.recent_audit_events.length === 0 ? (
+          <p className={styles.helper}>None recorded</p>
+        ) : (
+          <ul className={styles.rows}>
+            {tournament.recent_audit_events.map((event) => (
+              <li key={event.id} className={styles.row}>
+                <span className={styles.rowMeta}>{formatAdminTimestamp(event.created_at, "Unknown")} · {event.summary} · {event.user_display_name}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div>
+        <ButtonLink variant="secondary" size="sm" href={`/view/${tournament.id}`} target="_blank" rel="noreferrer" icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}>
+          Open bowler view
+        </ButtonLink>
+      </div>
+    </div>
+  );
+}
+
 export function AdminTournamentsSection({
   tournamentsResponse,
   tournamentsLoading,
@@ -53,207 +128,144 @@ export function AdminTournamentsSection({
   onStartDeleteTournament,
   onToggleTournamentExpanded,
 }: AdminTournamentsSectionProps) {
-  const [actionTournament, setActionTournament] = useState<TournamentRow | null>(null);
+  const { page, page_size: pageSize, total, total_pages: totalPages, tournaments } = tournamentsResponse;
+  const firstShown = tournaments.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastShown = tournaments.length === 0 ? 0 : firstShown + tournaments.length - 1;
 
   return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>All Tournaments</h3>
-        <span className={styles.panelSubtle}>{tournamentsResponse.total} total</span>
-      </div>
-
-      <DataTableToolbar
-        className={styles.toolbarRow}
-        left={(
-          <input
-            type="text"
-            className={styles.toolbarInput}
-            aria-label="Search tournaments"
+    <Card padding="flush" aria-label="All tournaments">
+      <CardHeader title="All tournaments" description={`${total} total`} />
+      <TableToolbar
+        search={(
+          <SearchField
+            label="Search tournaments"
             value={tournamentSearch}
             onChange={(event) => onTournamentSearchChange(event.target.value)}
             placeholder="Search ID, name, owner, location"
           />
         )}
-        right={(
-          <>
-            <select
-              className={styles.toolbarSelect}
-              aria-label="Filter tournaments by activity"
-              value={tournamentActivityFilter}
-              onChange={(event) => onTournamentActivityFilterChange(event.target.value as TournamentActivityFilter)}
-            >
-              <option value="all">All activity</option>
-              <option value="has_entries">Has entries</option>
-              <option value="no_entries">No entries</option>
-            </select>
-            <select
-              className={styles.toolbarSelect}
-              aria-label="Sort tournaments"
-              value={tournamentSort}
-              onChange={(event) => onTournamentSortChange(event.target.value as TournamentSortOption)}
-            >
-              <option value="newest">Sort: Newest</option>
-              <option value="oldest">Sort: Oldest</option>
-              <option value="entries_desc">Sort: Most entries</option>
-              <option value="owner_asc">Sort: Owner A-Z</option>
-            </select>
-            <button type="button" className={styles.actionBtn} onClick={onExportTournamentsCsv} disabled={tournamentsResponse.tournaments.length === 0}>Export CSV</button>
-          </>
-        )}
-      />
+      >
+        <SelectField
+          label="Filter tournaments by activity"
+          hideLabel
+          value={tournamentActivityFilter}
+          onChange={(event) => onTournamentActivityFilterChange(event.target.value as TournamentActivityFilter)}
+        >
+          <option value="all">All activity</option>
+          <option value="has_entries">Has entries</option>
+          <option value="no_entries">No entries</option>
+        </SelectField>
+        <SelectField
+          label="Sort tournaments"
+          hideLabel
+          value={tournamentSort}
+          onChange={(event) => onTournamentSortChange(event.target.value as TournamentSortOption)}
+        >
+          <option value="newest">Sort: Newest</option>
+          <option value="oldest">Sort: Oldest</option>
+          <option value="entries_desc">Sort: Most entries</option>
+          <option value="owner_asc">Sort: Owner A-Z</option>
+        </SelectField>
+        <Button variant="secondary" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} onClick={onExportTournamentsCsv} disabled={tournaments.length === 0}>
+          Export CSV
+        </Button>
+      </TableToolbar>
 
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
+      <DataTable caption="All tournaments">
+        <thead>
+          <tr>
+            <th scope="col" data-align="right">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Owner</th>
+            <th scope="col">Location</th>
+            <th scope="col">Start</th>
+            <th scope="col">End</th>
+            <th scope="col" data-align="right">Squads</th>
+            <th scope="col" data-align="right">Entries</th>
+            <th scope="col">Status</th>
+            <th scope="col">Notes</th>
+            <th scope="col"><span className="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {tournamentsLoading ? (
+            <tr><td className={styles.stateCell} colSpan={COLUMN_COUNT}><span className={styles.helper} role="status">Loading tournaments...</span></td></tr>
+          ) : tournaments.length === 0 ? (
             <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Owner</th>
-              <th>Location</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Squads</th>
-              <th>Entries</th>
-              <th>Status</th>
-              <th>Notes</th>
-              <th>Actions</th>
+              <td className={styles.stateCell} colSpan={COLUMN_COUNT}>
+                <EmptyState title="No tournaments found" description="Try changing the search, activity, or sort options." />
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {tournamentsLoading ? (
-              <tr><td className={styles.tableState} colSpan={11}><span role="status">Loading tournaments…</span></td></tr>
-            ) : tournamentsResponse.tournaments.length === 0 ? (
-              <tr><td className={styles.tableState} colSpan={11}><strong>No tournaments found</strong><span>Try changing the search, activity, or sort options.</span></td></tr>
-            ) : (
-              tournamentsResponse.tournaments.map((tournament) => {
-                const expanded = expandedTournamentIds.includes(tournament.id);
-                return (
-                  <Fragment key={tournament.id}>
-                    <tr>
-                      <td>{tournament.id}</td>
-                      <td>{tournament.name}</td>
-                      <td title={tournament.owner_email}>{tournament.owner_name || tournament.owner_username}</td>
-                      <td>{tournament.location || "-"}</td>
-                      <td>{tournament.start_date || "-"}</td>
-                      <td>{tournament.end_date || "-"}</td>
-                      <td>{tournament.squad_count}</td>
-                      <td>{tournament.entry_count}</td>
-                      <td><span className={`${styles.statusPill} ${tournament.status === "current" ? styles.statusActive : styles.statusDraft}`}>{tournament.status}</span></td>
-                      <td><span className={`${styles.statusPill} ${tournament.open_note_count > 0 ? styles.statusDraft : styles.statusActive}`}>{tournament.open_note_count > 0 ? `${tournament.open_note_count} open` : "Clear"}</span></td>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.userActionsTrigger}
-                          aria-label={`Actions for ${tournament.name}`}
-                          onClick={() => setActionTournament(tournament)}
+          ) : (
+            tournaments.map((tournament) => {
+              const expanded = expandedTournamentIds.includes(tournament.id);
+              const detailsId = `admin-tournament-details-${tournament.id}`;
+              return (
+                <Fragment key={tournament.id}>
+                  <tr>
+                    <td data-align="right">{tournament.id}</td>
+                    <td>{tournament.name}</td>
+                    <td title={tournament.owner_email}>{tournament.owner_name || tournament.owner_username}</td>
+                    <td data-tone="secondary">{tournament.location || "-"}</td>
+                    <td data-tone="secondary">{tournament.start_date || "-"}</td>
+                    <td data-tone="secondary">{tournament.end_date || "-"}</td>
+                    <td data-align="right">{tournament.squad_count}</td>
+                    <td data-align="right">{tournament.entry_count}</td>
+                    <td><Badge tone={tournament.status === "current" ? "success" : "neutral"}>{humanize(tournament.status)}</Badge></td>
+                    <td>
+                      <Badge tone={tournament.open_note_count > 0 ? "warning" : "neutral"}>
+                        {tournament.open_note_count > 0 ? `${tournament.open_note_count} open` : "Clear"}
+                      </Badge>
+                    </td>
+                    <td>
+                      <div className={styles.cellActions}>
+                        <Button
+                          variant="accent-outline"
+                          size="sm"
+                          aria-expanded={expanded}
+                          aria-controls={expanded ? detailsId : undefined}
+                          aria-label={`${expanded ? "Hide" : "Show"} details for ${tournament.name}`}
+                          onClick={() => onToggleTournamentExpanded(tournament.id)}
                         >
-                          <MoreHorizontal aria-hidden="true" />
-                          <span>Actions</span>
-                        </button>
+                          {expanded ? "Hide" : "Details"}
+                        </Button>
+                        <Menu triggerLabel={`More actions for ${tournament.name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                          <MenuItem icon={<NotebookPen size={ICON_SIZE.md} />} onSelect={() => onLoadTournamentNotes(tournament)}>Notes</MenuItem>
+                          <MenuItem icon={<Pencil size={ICON_SIZE.md} />} onSelect={() => onStartEditTournament(tournament)}>Edit</MenuItem>
+                          <MenuItem icon={<UserCog size={ICON_SIZE.md} />} onSelect={() => onStartReassignTournament(tournament)}>Reassign owner</MenuItem>
+                          {tournament.archived_at ? (
+                            <MenuItem icon={<ArchiveRestore size={ICON_SIZE.md} />} onSelect={() => onUnarchiveTournament(tournament)}>Unarchive</MenuItem>
+                          ) : (
+                            <MenuItem icon={<Archive size={ICON_SIZE.md} />} onSelect={() => onStartArchiveTournament(tournament)}>Archive</MenuItem>
+                          )}
+                          <MenuDivider />
+                          <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => onStartDeleteTournament(tournament)}>
+                            Delete tournament
+                          </MenuItem>
+                        </Menu>
+                      </div>
+                    </td>
+                  </tr>
+                  {expanded ? (
+                    <tr id={detailsId}>
+                      <td className={styles.expandedCell} colSpan={COLUMN_COUNT}>
+                        <TournamentDetails tournament={tournament} />
                       </td>
                     </tr>
-                    {expanded && (
-                      <tr>
-                        <td colSpan={11}>
-                          <div className={styles.detailCard}>
-                            <div className={styles.detailGrid}>
-                              <div><strong>Scores:</strong> {tournament.score_count}</div>
-                              <div><strong>Payouts:</strong> {tournament.payout_count}</div>
-                              <div><strong>Snapshots:</strong> {tournament.snapshot_count}</div>
-                              <div><strong>Workflow:</strong> {tournament.workflow_status.replace(/_/g, " ")}</div>
-                              <div><strong>Staff:</strong> {tournament.staff_count}</div>
-                              <div><strong>Brackets:</strong> {tournament.bracket_state.replace(/_/g, " ")}</div>
-                              <div><strong>Score state:</strong> {tournament.score_state.replace(/_/g, " ")}{tournament.scores_locked ? " (locked)" : ""}</div>
-                              <div><strong>Payout state:</strong> {tournament.payout_state.replace(/_/g, " ")}</div>
-                              <div><strong>Owner Email:</strong> {tournament.owner_email}</div>
-                              <div><strong>Last bracket activity:</strong> {formatAdminTimestamp(tournament.last_activity_at, "None")}</div>
-                              <div><strong>Last admin change:</strong> {formatAdminTimestamp(tournament.last_admin_change_at, "None")}</div>
-                            </div>
-                            {tournament.archive_reason && (
-                              <div className={styles.detailNote}>Archive reason: {tournament.archive_reason}</div>
-                            )}
-                            <div className={styles.detailNote}>
-                              <strong>Tournament staff</strong>
-                              {tournament.staff.length === 0 ? <div>Owner only</div> : tournament.staff.map(member => <div key={member.user_id}>{member.name || member.username} (@{member.username}) · {member.role.replace(/_/g, " ")}</div>)}
-                            </div>
-                            <div className={styles.detailNote}>
-                              <strong>Recent tournament activity</strong>
-                              {tournament.recent_audit_events.length === 0 ? <div>None recorded</div> : tournament.recent_audit_events.map(event => <div key={event.id}>{formatAdminTimestamp(event.created_at, "Unknown")} · {event.summary} · {event.user_display_name}</div>)}
-                            </div>
-                            <div className={styles.detailLinks}>
-                              <a className={styles.linkBtn} href={`/view/${tournament.id}`} target="_blank" rel="noreferrer">Open Bowler View</a>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                  ) : null}
+                </Fragment>
+              );
+            })
+          )}
+        </tbody>
+      </DataTable>
 
-      <div className={styles.paginationRow}>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={() => onTournamentPageChange(Math.max(1, tournamentsResponse.page - 1))}
-          disabled={tournamentsResponse.page <= 1 || tournamentsLoading}
-        >
-          Prev
-        </button>
-        <span className={styles.secondaryText}>Page {tournamentsResponse.page} of {tournamentsResponse.total_pages}</span>
-        <button
-          type="button"
-          className={styles.actionBtn}
-          onClick={() => onTournamentPageChange(Math.min(tournamentsResponse.total_pages, tournamentsResponse.page + 1))}
-          disabled={tournamentsResponse.page >= tournamentsResponse.total_pages || tournamentsLoading}
-        >
-          Next
-        </button>
-      </div>
-      {actionTournament && (
-        <div className={styles.modalOverlay} onClick={() => setActionTournament(null)}>
-          <div
-            className={`${styles.modal} ${styles.userActionsModal}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tournament-actions-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <div>
-                <h3 id="tournament-actions-title" className={styles.modalTitle}>Tournament actions</h3>
-                <div className={styles.secondaryText}>{actionTournament.name}</div>
-              </div>
-              <button
-                type="button"
-                className={styles.modalClose}
-                aria-label="Close tournament actions"
-                onClick={() => setActionTournament(null)}
-              >
-                X
-              </button>
-            </div>
-            <div className={styles.userActionsModalBody}>
-              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onLoadTournamentNotes(actionTournament); }}>Notes</button>
-              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartEditTournament(actionTournament); }}>Edit</button>
-              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartReassignTournament(actionTournament); }}>Reassign</button>
-              {actionTournament.archived_at ? (
-                <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onUnarchiveTournament(actionTournament); }}>Unarchive</button>
-              ) : (
-                <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onStartArchiveTournament(actionTournament); }}>Archive</button>
-              )}
-              <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => { setActionTournament(null); onStartDeleteTournament(actionTournament); }}>Delete</button>
-              <button type="button" className={styles.actionBtn} onClick={() => { setActionTournament(null); onToggleTournamentExpanded(actionTournament.id); }}>
-                {expandedTournamentIds.includes(actionTournament.id) ? "Hide" : "Details"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
+      <Pagination
+        page={page}
+        pageCount={totalPages}
+        onPageChange={onTournamentPageChange}
+        summary={`Showing ${firstShown}-${lastShown} of ${total}`}
+      />
+    </Card>
   );
 }

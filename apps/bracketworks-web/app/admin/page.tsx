@@ -1,9 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { capitalizeFirstLetter } from "@bracketworks/ui";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  CheckboxField,
+  ConfirmDialog,
+  DataTable,
+  EmptyState,
+  FormGrid,
+  ICON_SIZE,
+  Menu,
+  MenuDivider,
+  MenuItem,
+  Modal,
+  Notice,
+  Page,
+  PageHeader,
+  PasswordField,
+  SelectField,
+  TextAreaField,
+  TextField,
+  capitalizeFirstLetter,
+} from "@bracketworks/ui";
+import type { StatusTone } from "@bracketworks/ui";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ClipboardList, History, Info, Plus, Trash2 } from "lucide-react";
+import { Archive, ArrowDown, ArrowUp, History, MoreHorizontal, Plus, Send, Trash2 } from "lucide-react";
 
 import { apiClient } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
@@ -11,12 +36,12 @@ import { useToastHelpers } from "../components/Toast";
 import { AdminOverviewSection } from "./components/AdminOverviewSection";
 import { AdminAuditSection } from "./components/AdminAuditSection";
 import { AdminBowlersSection } from "./components/AdminBowlersSection";
+import { AdminDetail } from "./components/AdminDetail";
 import { AdminTabNav } from "./components/AdminTabNav";
 import { AdminTournamentsSection } from "./components/AdminTournamentsSection";
 import { AdminUsersSection } from "./components/AdminUsersSection";
 import { useAdminOverviewMetrics } from "./hooks/useAdminOverviewMetrics";
 import { adminApi } from "./services/adminApi";
-import { useModalBehavior } from "../hooks/useModalBehavior";
 import { subscribeToDataChanges } from "../lib/api/dataChanges";
 import {
   EMPTY_CHANGELOG_FORM,
@@ -44,9 +69,15 @@ import {
   type UsersVerificationFilter,
 } from "./types";
 import { formatAdminTimestamp } from "./utils";
-import buttonStyles from "../styles/buttons.module.css";
-import CloseControl from "../../components/CloseControl";
 import styles from "./admin.module.css";
+
+const CHANGELOG_TAGS = ["New", "Improved", "Fixed", "Security", "Admin", "Reliability"] as const;
+
+const FEEDBACK_STATUS_TONE: Record<string, StatusTone> = {
+  open: "warning",
+  in_progress: "info",
+  resolved: "success",
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -139,7 +170,6 @@ export default function AdminPage() {
   const [acknowledgmentUsers, setAcknowledgmentUsers] = useState<AdminAnnouncementAcknowledgment[]>([]);
   const [acknowledgmentsLoading, setAcknowledgmentsLoading] = useState(false);
   const [acknowledgmentsError, setAcknowledgmentsError] = useState<string | null>(null);
-  const acknowledgmentDialogRef = useRef<HTMLDivElement>(null);
   const acknowledgmentRequestIdRef = useRef(0);
   const [feedbackMessages, setFeedbackMessages] = useState<AdminFeedbackMessage[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
@@ -167,6 +197,8 @@ export default function AdminPage() {
   const [deleteUserSaving, setDeleteUserSaving] = useState(false);
   const [deleteUserError, setDeleteUserError] = useState<string | null>(null);
   const [adminRoleSavingUserId, setAdminRoleSavingUserId] = useState<number | null>(null);
+  const [accountConfirm, setAccountConfirm] = useState<{ kind: "role" | "active"; user: UserRow } | null>(null);
+  const [accountConfirmBusy, setAccountConfirmBusy] = useState(false);
 
   const [editTournament, setEditTournament] = useState<TournamentRow | null>(null);
   const [editTournamentName, setEditTournamentName] = useState("");
@@ -496,12 +528,6 @@ export default function AdminPage() {
     }
   }, []);
 
-  const { onOverlayClick: onAcknowledgmentOverlayClick } = useModalBehavior({
-    open: Boolean(acknowledgedAnnouncement),
-    onClose: closeAcknowledgmentDialog,
-    dialogRef: acknowledgmentDialogRef,
-  });
-
   const confirmAnnouncementDelete = useCallback(async (announcement: AdminAnnouncement) => {
     try {
       await adminApi.deleteAnnouncement(announcement.id);
@@ -557,12 +583,6 @@ export default function AdminPage() {
 
   const handleToggleAdminRole = useCallback(async (user: UserRow) => {
     const nextIsAdmin = !user.is_admin;
-    const promptText = nextIsAdmin
-      ? `Grant admin privileges to ${user.username}?`
-      : `Revoke admin privileges from ${user.username}?`;
-
-    if (!window.confirm(promptText)) return;
-
     setAdminRoleSavingUserId(user.id);
     setError(null);
     try {
@@ -577,7 +597,6 @@ export default function AdminPage() {
   }, [refreshAfterMutation, showSuccess]);
 
   const handleToggleUserActive = useCallback(async (user: UserRow) => {
-    if (!window.confirm(`${user.is_active ? "Deactivate" : "Reactivate"} ${user.username}?`)) return;
     try {
       await apiClient.post(`/api/v1/admin/users/${user.id}/set-active`, { is_active: !user.is_active });
       await refreshAfterMutation({ users: true, audit: true });
@@ -779,16 +798,46 @@ export default function AdminPage() {
     };
   }, [deleteTournament]);
 
+  const confirmAccountChange = async () => {
+    if (!accountConfirm) return;
+    setAccountConfirmBusy(true);
+    try {
+      if (accountConfirm.kind === "role") await handleToggleAdminRole(accountConfirm.user);
+      else await handleToggleUserActive(accountConfirm.user);
+    } finally {
+      setAccountConfirmBusy(false);
+      setAccountConfirm(null);
+    }
+  };
+
+  const accountConfirmCopy = (() => {
+    if (!accountConfirm) return null;
+    const { kind, user } = accountConfirm;
+    if (kind === "role") {
+      return user.is_admin
+        ? { title: `Revoke admin privileges from ${user.username}?`, description: "They will lose access to the admin console.", confirmLabel: "Revoke admin", tone: "danger" as const }
+        : { title: `Grant admin privileges to ${user.username}?`, description: "Administrators can manage every account and tournament in the admin console.", confirmLabel: "Grant admin", tone: "default" as const };
+    }
+    return user.is_active
+      ? { title: `Deactivate ${user.username}?`, description: "They will not be able to sign in until the account is reactivated.", confirmLabel: "Deactivate", tone: "danger" as const }
+      : { title: `Reactivate ${user.username}?`, description: "They will be able to sign in again.", confirmLabel: "Reactivate", tone: "default" as const };
+  })();
+
   if (!isAuthInitialized || (overviewLoading && !overviewLoaded)) {
-    return <div className={styles.stateCard}>Loading admin console...</div>;
+    return <Page><p className={styles.stateText} role="status">Loading admin console...</p></Page>;
   }
 
   if (!currentUser?.isAdmin) {
-    return <div className={styles.stateCard}>Redirecting...</div>;
+    return <Page><p className={styles.stateText} role="status">Redirecting...</p></Page>;
   }
+
+  const openFeedbackCount = feedbackMessages.filter(message => message.status !== "resolved").length;
+
   return (
-    <div className={styles.page}>
-      {error && <div className={styles.errorBanner} role="alert">{error}</div>}
+    <Page>
+      <PageHeader title="Admin" description="Manage accounts, tournaments, bowler profiles, and messages to users." />
+
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
       <AdminTabNav
         activeTab={activeTab}
@@ -852,8 +901,8 @@ export default function AdminPage() {
             setResetError(null);
             setTimeout(() => resetPasswordInputRef.current?.focus(), 50);
           }}
-          onToggleAdminRole={(user) => void handleToggleAdminRole(user)}
-          onToggleUserActive={(user) => void handleToggleUserActive(user)}
+          onToggleAdminRole={(user) => setAccountConfirm({ kind: "role", user })}
+          onToggleUserActive={(user) => setAccountConfirm({ kind: "active", user })}
           onStartDeleteUser={(user) => {
             setDeleteUser(user);
             setDeleteUserReason("");
@@ -977,783 +1026,1028 @@ export default function AdminPage() {
       )}
 
       {activeTab === "changelog" && (
-        <section className={`${styles.panel} ${styles.changelogPanel}`}>
-          <div className={styles.changelogPanelHeader}>
-            <span className={styles.changelogHeaderIcon}><ClipboardList aria-hidden="true" /></span>
-            <div className={styles.changelogHeaderCopy}>
-              <h3 className={styles.panelTitle}>{editingChangelogVersion ? "Edit Changelog Entry" : "Manage Changelog"}</h3>
-              <p>Create or update changelog entries to keep users informed about new features and updates.</p>
-            </div>
-            <button
-              type="button"
-              className={styles.historyButton}
-              onClick={() => setShowChangelogHistory((current) => !current)}
-              aria-expanded={showChangelogHistory}
-            >
-              <History aria-hidden="true" />
-              {showChangelogHistory ? "Hide History" : "View History"}
-            </button>
-          </div>
+        <Card aria-label="Changelog">
+          <CardHeader
+            title={editingChangelogVersion ? "Edit changelog entry" : "Manage changelog"}
+            description="Create or update changelog entries so users hear about new features and fixes. Keep entries clear and focused on changes that affect users."
+            actions={(
+              <Button
+                variant="secondary"
+                icon={<History size={ICON_SIZE.md} aria-hidden="true" />}
+                onClick={() => setShowChangelogHistory((current) => !current)}
+                aria-expanded={showChangelogHistory}
+              >
+                {showChangelogHistory ? "Hide history" : "View history"}
+              </Button>
+            )}
+          />
 
-          {changelogError && <div className={styles.modalError} role="alert">{changelogError}</div>}
+          {changelogError ? <Notice tone="danger" role="alert">{changelogError}</Notice> : null}
 
-          <div className={styles.changelogFormSection}>
-            <div className={styles.changelogFormRow}>
-              <label className={styles.formLabel} htmlFor="changelog-version">Version <span aria-hidden="true">*</span></label>
-              <input
-                id="changelog-version"
-                className={styles.formInput}
-                type="text"
-                value={changelogForm.version}
-                onChange={(e) => setChangelogForm({ ...changelogForm, version: e.target.value })}
-                disabled={!!editingChangelogVersion}
-                placeholder="1.0"
-              />
-              <p className={styles.formHelper}>The version number for this changelog entry.</p>
-            </div>
-            <div className={styles.changelogFormRow}>
-              <label className={styles.formLabel} htmlFor="changelog-date">Date (YYYY-MM-DD) <span aria-hidden="true">*</span></label>
-              <input
-                id="changelog-date"
-                className={styles.formInput}
-                type="date"
-                value={changelogForm.date}
-                onChange={(e) => setChangelogForm({ ...changelogForm, date: e.target.value })}
-                placeholder="2026-07-23"
-              />
-              <p className={styles.formHelper}>The date this version is being released.</p>
-            </div>
+          <FormGrid>
+            <TextField
+              id="changelog-version"
+              label="Version"
+              value={changelogForm.version}
+              onChange={(e) => setChangelogForm({ ...changelogForm, version: e.target.value })}
+              disabled={!!editingChangelogVersion}
+              placeholder="1.0"
+              helper="The version number for this changelog entry."
+            />
+            <TextField
+              id="changelog-date"
+              label="Date"
+              type="date"
+              value={changelogForm.date}
+              onChange={(e) => setChangelogForm({ ...changelogForm, date: e.target.value })}
+              helper="The date this version is released."
+            />
             {changelogForm.legacy ? (
-              <div className={styles.changelogFormRow}>
-                <label className={styles.formLabel} htmlFor="changelog-changes">Legacy changes (one per line) <span aria-hidden="true">*</span></label>
-                <textarea id="changelog-changes" className={styles.formTextarea} value={changelogForm.changes} onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })} rows={5} />
-                <p className={styles.formHelper}>This existing entry remains in the legacy bullet-only format.</p>
-              </div>
+              <TextAreaField
+                id="changelog-changes"
+                label="Legacy changes (one per line)"
+                fullRow
+                rows={5}
+                value={changelogForm.changes}
+                onChange={(e) => setChangelogForm({ ...changelogForm, changes: e.target.value })}
+                helper="This existing entry stays in the legacy bullet-only format."
+              />
             ) : (
               <>
-                <div className={styles.changelogFormRow}>
-                  <label className={styles.formLabel} htmlFor="changelog-title-input">Title <span aria-hidden="true">*</span></label>
-                  <input id="changelog-title-input" className={styles.formInput} maxLength={120} value={changelogForm.title} onChange={(e) => setChangelogForm({ ...changelogForm, title: e.target.value })} placeholder="Major Tournament Management Update" />
-                </div>
-                <div className={styles.changelogFormRow}>
-                  <label className={styles.formLabel} htmlFor="changelog-summary">Summary</label>
-                  <textarea id="changelog-summary" className={styles.formTextarea} maxLength={500} rows={2} value={changelogForm.summary} onChange={(e) => setChangelogForm({ ...changelogForm, summary: e.target.value })} placeholder="A short introduction to this release." />
-                </div>
-                <fieldset className={styles.changelogTags}>
-                  <legend>Tags <span>(optional)</span></legend>
-                  {(["New", "Improved", "Fixed", "Security", "Admin", "Reliability"] as const).map((tag) => <label key={tag}><input type="checkbox" checked={changelogForm.tags.includes(tag)} onChange={() => setChangelogForm((form) => ({ ...form, tags: form.tags.includes(tag) ? form.tags.filter((value) => value !== tag) : [...form.tags, tag] }))} />{tag}</label>)}
-                </fieldset>
-                <div className={styles.changelogSections}>
-                  {changelogForm.sections.map((section, sectionIndex) => (
-                    <div className={styles.changelogSectionEditor} key={sectionIndex}>
-                      <div className={styles.changelogSectionHeader}>
-                        <strong>Section {sectionIndex + 1}</strong>
-                        <div>
-                          <button type="button" aria-label="Move section up" disabled={sectionIndex === 0} onClick={() => moveChangelogSection(sectionIndex, -1)}><ArrowUp /></button>
-                          <button type="button" aria-label="Move section down" disabled={sectionIndex === changelogForm.sections.length - 1} onClick={() => moveChangelogSection(sectionIndex, 1)}><ArrowDown /></button>
-                          <button type="button" aria-label="Remove section" disabled={changelogForm.sections.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.filter((_, index) => index !== sectionIndex) }))}><Trash2 /></button>
+                <TextField
+                  id="changelog-title-input"
+                  label="Title"
+                  fullRow
+                  maxLength={120}
+                  value={changelogForm.title}
+                  onChange={(e) => setChangelogForm({ ...changelogForm, title: e.target.value })}
+                  placeholder="Major tournament management update"
+                />
+                <TextAreaField
+                  id="changelog-summary"
+                  label="Summary"
+                  optional
+                  fullRow
+                  maxLength={500}
+                  rows={2}
+                  value={changelogForm.summary}
+                  onChange={(e) => setChangelogForm({ ...changelogForm, summary: e.target.value })}
+                  placeholder="A short introduction to this release."
+                />
+              </>
+            )}
+          </FormGrid>
+
+          {!changelogForm.legacy ? (
+            <>
+              <fieldset className={styles.fieldset}>
+                <legend className={styles.legend}>Tags <span className={styles.optional}>(optional)</span></legend>
+                {CHANGELOG_TAGS.map((tag) => (
+                  <CheckboxField
+                    key={tag}
+                    label={tag}
+                    checked={changelogForm.tags.includes(tag)}
+                    onChange={() => setChangelogForm((form) => ({ ...form, tags: form.tags.includes(tag) ? form.tags.filter((value) => value !== tag) : [...form.tags, tag] }))}
+                  />
+                ))}
+              </fieldset>
+
+              {changelogForm.sections.map((section, sectionIndex) => (
+                <Fragment key={sectionIndex}>
+                  <CardDivider />
+                  <div className={styles.group}>
+                    <div className={styles.groupHeader}>
+                      <h3 className={styles.subsectionTitle}>Section {sectionIndex + 1}</h3>
+                      <div className={styles.iconButtons}>
+                        <Button variant="ghost" size="sm" iconOnly aria-label={`Move section ${sectionIndex + 1} up`} disabled={sectionIndex === 0} onClick={() => moveChangelogSection(sectionIndex, -1)} icon={<ArrowUp size={ICON_SIZE.md} />} />
+                        <Button variant="ghost" size="sm" iconOnly aria-label={`Move section ${sectionIndex + 1} down`} disabled={sectionIndex === changelogForm.sections.length - 1} onClick={() => moveChangelogSection(sectionIndex, 1)} icon={<ArrowDown size={ICON_SIZE.md} />} />
+                        <Button variant="ghost-danger" size="sm" iconOnly aria-label={`Remove section ${sectionIndex + 1}`} disabled={changelogForm.sections.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.filter((_, index) => index !== sectionIndex) }))} icon={<Trash2 size={ICON_SIZE.md} />} />
+                      </div>
+                    </div>
+                    <TextField
+                      label="Section heading"
+                      maxLength={80}
+                      value={section.heading}
+                      onChange={(e) => updateChangelogSection(sectionIndex, e.target.value)}
+                      placeholder="Section heading"
+                    />
+                    {section.items.map((item, itemIndex) => (
+                      <div className={styles.bulletRow} key={itemIndex}>
+                        <TextField
+                          label={`Bullet ${itemIndex + 1}`}
+                          maxLength={300}
+                          value={item}
+                          onChange={(e) => updateChangelogBullet(sectionIndex, itemIndex, e.target.value)}
+                          placeholder="Bullet item"
+                          aria-label={`Section ${sectionIndex + 1} bullet ${itemIndex + 1}`}
+                        />
+                        <div className={styles.iconButtons}>
+                          <Button variant="ghost" iconOnly aria-label="Move bullet up" disabled={itemIndex === 0} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, -1)} icon={<ArrowUp size={ICON_SIZE.md} />} />
+                          <Button variant="ghost" iconOnly aria-label="Move bullet down" disabled={itemIndex === section.items.length - 1} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, 1)} icon={<ArrowDown size={ICON_SIZE.md} />} />
+                          <Button variant="ghost-danger" iconOnly aria-label="Remove bullet" disabled={section.items.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: value.items.filter((_, current) => current !== itemIndex) } : value) }))} icon={<Trash2 size={ICON_SIZE.md} />} />
                         </div>
                       </div>
-                      <input className={styles.formInput} maxLength={80} value={section.heading} onChange={(e) => updateChangelogSection(sectionIndex, e.target.value)} placeholder="Section heading" aria-label={`Section ${sectionIndex + 1} heading`} />
-                      <div className={styles.changelogBulletEditors}>
-                        {section.items.map((item, itemIndex) => <div key={itemIndex}>
-                          <input className={styles.formInput} maxLength={300} value={item} onChange={(e) => updateChangelogBullet(sectionIndex, itemIndex, e.target.value)} placeholder="Bullet item" aria-label={`Section ${sectionIndex + 1} bullet ${itemIndex + 1}`} />
-                          <button type="button" aria-label="Move bullet up" disabled={itemIndex === 0} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, -1)}><ArrowUp /></button>
-                          <button type="button" aria-label="Move bullet down" disabled={itemIndex === section.items.length - 1} onClick={() => moveChangelogBullet(sectionIndex, itemIndex, 1)}><ArrowDown /></button>
-                          <button type="button" aria-label="Remove bullet" disabled={section.items.length === 1} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: value.items.filter((_, current) => current !== itemIndex) } : value) }))}><Trash2 /></button>
-                        </div>)}
-                      </div>
-                      <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: [...value.items, ""] } : value) }))}><Plus /> Add Bullet</button>
+                    ))}
+                    <div>
+                      <Button variant="secondary" size="sm" icon={<Plus size={ICON_SIZE.md} />} onClick={() => setChangelogForm((form) => ({ ...form, sections: form.sections.map((value, index) => index === sectionIndex ? { ...value, items: [...value.items, ""] } : value) }))}>
+                        Add bullet
+                      </Button>
                     </div>
-                  ))}
-                  <button type="button" className={styles.changelogAddButton} onClick={() => setChangelogForm((form) => ({ ...form, sections: [...form.sections, { heading: "", items: [""] }] }))}><Plus /> Add Section</button>
-                </div>
-              </>
-            )}
-            {changelogFormError && <div className={styles.modalError} role="alert">{changelogFormError}</div>}
-            <div className={styles.changelogFormActions}>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary}`}
-                disabled={changelogFormSaving}
-                onClick={handleChangelogCreateOrUpdate}
-              >
-                {!changelogFormSaving && <Plus aria-hidden="true" />}
-                {changelogFormSaving ? "Saving..." : editingChangelogVersion ? "Update Entry" : "Create Entry"}
-              </button>
-              {editingChangelogVersion && (
-                <button
-                  type="button"
-                  className={`${buttonStyles.button} ${buttonStyles.secondary}`}
-                  onClick={handleChangelogCancel}
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </div>
-
-          {showChangelogHistory && <div className={styles.changelogHistory}>
-            <div className={styles.changelogHistoryTitle}>Changelog History <span>{changelogEntries.length} versions</span></div>
-            <div className={styles.changelogList}>
-            {changelogLoading ? (
-              <div className={styles.placeholder}>Loading changelog...</div>
-            ) : changelogEntries.length === 0 ? (
-              <div className={styles.placeholder}>No changelog entries yet</div>
-            ) : (
-              <>
-                {changelogEntries.map((entry) => (
-                  <div key={entry.id} className={styles.changelogEntry}>
-                    <div className={styles.changelogHeader}>
-                      <div>
-                        <div className={styles.changelogVersion}>v{entry.version}</div>
-                        <div className={styles.changelogDate}>{entry.date}</div>
-                      </div>
-                      <div className={styles.changelogActions}>
-                        <button
-                          type="button"
-                          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary}`}
-                          onClick={() => handleChangelogEdit(entry)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.danger}`}
-                          disabled={deletingChangelogVersion === entry.version}
-                          onClick={() => handleChangelogDelete(entry.version)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    {entry.sections?.length ? <div className={styles.historyStructured}><strong>{entry.title}</strong>{entry.sections.map((section, index) => <div key={index}><span>{section.heading}</span><ul className={styles.changesList}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</ul></div>)}</div> : <ul className={styles.changesList}>{entry.changes.map((change, idx) => <li key={idx}>{change}</li>)}</ul>}
                   </div>
-                ))}
-              </>
-            )}
-            </div>
-          </div>
-          }
+                </Fragment>
+              ))}
+              <CardDivider />
+              <div>
+                <Button variant="secondary" size="sm" icon={<Plus size={ICON_SIZE.md} />} onClick={() => setChangelogForm((form) => ({ ...form, sections: [...form.sections, { heading: "", items: [""] }] }))}>
+                  Add section
+                </Button>
+              </div>
+            </>
+          ) : null}
 
-          <footer className={styles.changelogTip}>
-            <Info aria-hidden="true" />
-            <p><strong>Tip:</strong> Keep changelogs clear and concise. Focus on important updates that impact your users.</p>
-          </footer>
-        </section>
+          {changelogFormError ? <Notice tone="danger" role="alert">{changelogFormError}</Notice> : null}
+          <div className={styles.formActions}>
+            {editingChangelogVersion ? (
+              <Button variant="secondary" onClick={handleChangelogCancel}>Cancel</Button>
+            ) : null}
+            <Button
+              variant="primary"
+              disabled={changelogFormSaving}
+              icon={changelogFormSaving || editingChangelogVersion ? undefined : <Plus size={ICON_SIZE.md} />}
+              onClick={handleChangelogCreateOrUpdate}
+            >
+              {changelogFormSaving ? "Saving..." : editingChangelogVersion ? "Update entry" : "Create entry"}
+            </Button>
+          </div>
+
+          {showChangelogHistory ? (
+            <>
+              <CardDivider />
+              <div className={styles.group}>
+                <div className={styles.groupHeader}>
+                  <h3 className={styles.subsectionTitle}>Changelog history</h3>
+                  <span className={styles.helper}>{changelogEntries.length} versions</span>
+                </div>
+                {changelogLoading ? (
+                  <p className={styles.helper} role="status">Loading changelog...</p>
+                ) : changelogEntries.length === 0 ? (
+                  <p className={styles.helper}>No changelog entries yet.</p>
+                ) : (
+                  <ul className={styles.rows}>
+                    {changelogEntries.map((entry) => (
+                      <li key={entry.id} className={styles.rowStack}>
+                        <div className={styles.row}>
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>Version {entry.version}{entry.title ? ` · ${entry.title}` : ""}</span>
+                            <span className={styles.rowMeta}>{entry.date}</span>
+                          </div>
+                          <div className={styles.rowActions}>
+                            <Button variant="secondary" size="sm" onClick={() => handleChangelogEdit(entry)} aria-label={`Edit version ${entry.version}`}>
+                              Edit
+                            </Button>
+                            <Menu triggerLabel={`More actions for version ${entry.version}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                              <MenuItem
+                                tone="danger"
+                                icon={<Trash2 size={ICON_SIZE.md} />}
+                                disabled={deletingChangelogVersion === entry.version}
+                                onSelect={() => handleChangelogDelete(entry.version)}
+                              >
+                                Delete entry
+                              </MenuItem>
+                            </Menu>
+                          </div>
+                        </div>
+                        {entry.sections?.length ? (
+                          entry.sections.map((section, index) => (
+                            <div key={index} className={styles.group}>
+                              <span className={styles.subsectionTitle}>{section.heading}</span>
+                              <ul className={styles.list}>{section.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}</ul>
+                            </div>
+                          ))
+                        ) : (
+                          <ul className={styles.list}>{entry.changes.map((change, idx) => <li key={idx}>{change}</li>)}</ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          ) : null}
+        </Card>
       )}
 
       {activeTab === "announcements" && (
-        <div className={styles.sectionStack}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>Create Announcement</h3><span className={styles.panelSubtle}>Publish an in-app pop-up without changing user access.</span></div></div>
-            <div className={styles.panelBody}>
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-title">Title</label><input id="announcement-title" className={styles.formInput} value={announcementTitle} onChange={event => setAnnouncementTitle(event.target.value)} maxLength={160} /></div>
-              <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-message">Message</label><textarea id="announcement-message" className={styles.formTextarea} value={announcementMessage} onChange={event => setAnnouncementMessage(event.target.value)} /></div>
-              <div className={styles.announcementOptions}>
-                <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-audience">Audience</label><select id="announcement-audience" className={styles.formInput} value={announcementAudience} onChange={event => { setAnnouncementAudience(event.target.value as "all" | "admins" | "user"); setAnnouncementUserId(""); }}><option value="all">All users</option><option value="admins">Administrators</option><option value="user">Specific user</option></select></div>
-                {announcementAudience === "user" && <div className={styles.formRow}><label className={styles.formLabel} htmlFor="announcement-user">User</label><select id="announcement-user" className={styles.formInput} value={announcementUserId} onChange={event => setAnnouncementUserId(event.target.value)} disabled={announcementUsersLoading || announcementUsers.length === 0}><option value="">{announcementUsersLoading ? "Loading users…" : announcementUsersError ? "Unable to load users" : announcementUsers.length === 0 ? "No users available" : "Select user"}</option>{announcementUsers.map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}</select>{announcementUsersError && <div className={styles.errorBanner} role="alert">{announcementUsersError} <button type="button" className={styles.linkBtn} onClick={() => void loadAnnouncementUsers()}>Retry</button></div>}</div>}
-                <div className={styles.formRow}><label className={styles.formLabel}>Initial status</label><select className={styles.formInput} value={announcementStatus} onChange={event => setAnnouncementStatus(event.target.value as "draft" | "active" | "archived")}><option value="draft">Draft</option><option value="active">Active</option></select></div>
-              </div>
-              <label className={styles.checkboxRow}><input type="checkbox" checked={announcementRequiresAck} onChange={event => setAnnouncementRequiresAck(event.target.checked)} /><span>Require explicit acknowledgment</span></label>
-              <div className={styles.changelogFormActions}><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={announcementSaving || !announcementTitle.trim() || !announcementMessage.trim() || (announcementAudience === "user" && !announcementUserId)} onClick={() => { void saveAnnouncement(); }}>{announcementSaving ? "Saving…" : "Save Announcement"}</button></div>
+        <>
+          <Card aria-label="Create announcement">
+            <CardHeader title="Create announcement" description="Publish an in-app pop-up without changing user access." />
+            <FormGrid>
+              <TextField id="announcement-title" label="Title" fullRow value={announcementTitle} onChange={event => setAnnouncementTitle(event.target.value)} maxLength={160} />
+              <TextAreaField id="announcement-message" label="Message" fullRow value={announcementMessage} onChange={event => setAnnouncementMessage(event.target.value)} />
+              <SelectField
+                id="announcement-audience"
+                label="Audience"
+                value={announcementAudience}
+                onChange={event => { setAnnouncementAudience(event.target.value as "all" | "admins" | "user"); setAnnouncementUserId(""); }}
+              >
+                <option value="all">All users</option>
+                <option value="admins">Administrators</option>
+                <option value="user">Specific user</option>
+              </SelectField>
+              <SelectField id="announcement-status" label="Initial status" value={announcementStatus} onChange={event => setAnnouncementStatus(event.target.value as "draft" | "active" | "archived")}>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+              </SelectField>
+              {announcementAudience === "user" ? (
+                <SelectField
+                  id="announcement-user"
+                  label="User"
+                  fullRow
+                  value={announcementUserId}
+                  onChange={event => setAnnouncementUserId(event.target.value)}
+                  disabled={announcementUsersLoading || announcementUsers.length === 0}
+                >
+                  <option value="">{announcementUsersLoading ? "Loading users..." : announcementUsersError ? "Unable to load users" : announcementUsers.length === 0 ? "No users available" : "Select user"}</option>
+                  {announcementUsers.map(user => <option value={user.id} key={user.id}>{user.first_name} {user.last_name} (@{user.username})</option>)}
+                </SelectField>
+              ) : null}
+            </FormGrid>
+            {announcementAudience === "user" && announcementUsersError ? (
+              <Notice tone="danger" role="alert" action={<Button variant="ghost" size="sm" onClick={() => void loadAnnouncementUsers()}>Retry</Button>}>
+                {announcementUsersError}
+              </Notice>
+            ) : null}
+            <CheckboxField label="Require explicit acknowledgment" checked={announcementRequiresAck} onChange={event => setAnnouncementRequiresAck(event.target.checked)} />
+            <div className={styles.formActions}>
+              <Button
+                variant="primary"
+                disabled={announcementSaving || !announcementTitle.trim() || !announcementMessage.trim() || (announcementAudience === "user" && !announcementUserId)}
+                onClick={() => { void saveAnnouncement(); }}
+              >
+                {announcementSaving ? "Saving..." : "Save announcement"}
+              </Button>
             </div>
-          </section>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><h3 className={styles.panelTitle}>Announcement History</h3><span className={styles.panelSubtle}>{announcements.length} total</span></div>
-            {announcementsLoading ? <div className={styles.placeholder} role="status">Loading announcements…</div> : announcements.length === 0 ? <div className={styles.placeholder}>No announcements have been created.</div> : <div className={styles.announcementList}>{announcements.map(item => <article className={styles.announcementCard} key={item.id}><div className={styles.announcementCardHeader}><div><span className={`${styles.statusPill} ${item.status === "active" ? styles.statusActive : styles.statusDraft}`}>{item.status}</span><strong>{item.title}</strong></div><button className={styles.actionBtn} type="button" onClick={() => { void openAcknowledgmentDialog(item); }}>View acknowledged ({item.acknowledgment_count})</button></div><p>{item.message}</p><div className={styles.announcementCardFooter}><span>Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}</span><div className={styles.rowActions}>{item.status !== "active" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</button>}{item.status !== "archived" && <button className={styles.actionBtn} type="button" onClick={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</button>}<button className={styles.actionBtn} type="button" onClick={() => { void deleteAnnouncement(item); }}>Delete</button></div></div></article>)}</div>}
-          </section>
-        </div>
+          </Card>
+
+          <Card aria-label="Announcement history">
+            <CardHeader title="Announcement history" description={`${announcements.length} total`} />
+            {announcementsLoading ? (
+              <p className={styles.helper} role="status">Loading announcements...</p>
+            ) : announcements.length === 0 ? (
+              <EmptyState title="No announcements yet" description="Announcements you create appear here." />
+            ) : (
+              <ul className={styles.rows}>
+                {announcements.map(item => (
+                  <li className={styles.rowStack} key={item.id}>
+                    <div className={styles.row}>
+                      <div className={styles.rowText}>
+                        <span className={styles.rowTitle}>
+                          {item.title}
+                          <Badge tone={item.status === "active" ? "success" : "neutral"}>{capitalizeFirstLetter(item.status)}</Badge>
+                        </span>
+                        <span className={styles.rowMeta}>
+                          Audience: {item.audience_type}{item.requires_acknowledgment ? " · acknowledgment required" : ""}
+                        </span>
+                      </div>
+                      <div className={styles.rowActions}>
+                        <Button variant="secondary" size="sm" onClick={() => { void openAcknowledgmentDialog(item); }}>
+                          View acknowledged ({item.acknowledgment_count})
+                        </Button>
+                        <Menu triggerLabel={`More actions for ${item.title}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
+                          {item.status !== "active" ? (
+                            <MenuItem icon={<Send size={ICON_SIZE.md} />} onSelect={() => { void updateAnnouncementStatus(item, "active"); }}>Publish</MenuItem>
+                          ) : null}
+                          {item.status !== "archived" ? (
+                            <MenuItem icon={<Archive size={ICON_SIZE.md} />} onSelect={() => { void updateAnnouncementStatus(item, "archived"); }}>Archive</MenuItem>
+                          ) : null}
+                          <MenuDivider />
+                          <MenuItem tone="danger" icon={<Trash2 size={ICON_SIZE.md} />} onSelect={() => { void deleteAnnouncement(item); }}>Delete announcement</MenuItem>
+                        </Menu>
+                      </div>
+                    </div>
+                    <p className={styles.rowBody}>{item.message}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </>
       )}
 
       {activeTab === "messages" && (
-        <section className={styles.panel}>
-          <div className={styles.panelHeader}><div><h3 className={styles.panelTitle}>User Messages</h3><span className={styles.panelSubtle}>Problem reports and feature requests from users</span></div><span className={styles.panelSubtle}>{feedbackMessages.filter(message => message.status !== "resolved").length} open</span></div>
-          {feedbackLoading ? <div className={styles.placeholder} role="status">Loading messages...</div> : feedbackMessages.length === 0 ? <div className={styles.placeholder}>No user messages have been submitted.</div> : <div className={styles.feedbackList}>{feedbackMessages.map(message => <article className={styles.feedbackCard} key={message.id}><div className={styles.feedbackHeader}><div><span className={`${styles.statusPill} ${message.status === "resolved" ? styles.statusActive : styles.statusDraft}`}>{message.status.replace("_", " ")}</span><span className={styles.feedbackCategory}>{message.category}</span><h4>{message.subject}</h4></div><time dateTime={message.created_at || undefined}>{formatAdminTimestamp(message.created_at, "Unknown")}</time></div><div className={styles.feedbackMeta}>{message.user_name} (@{message.username}) · {message.email}</div><p className={styles.feedbackMessage}>{message.message}</p><textarea className={styles.feedbackNoteInput} aria-label={`Internal note for ${message.subject}`} value={feedbackNotes[message.id] || ""} onChange={event => setFeedbackNotes(current => ({ ...current, [message.id]: event.target.value }))} placeholder="Internal note for administrators" maxLength={5000} /><div className={styles.feedbackFooter}><span>{message.admin_note ? "Internal note saved" : "No internal note"}</span><div className={styles.rowActions}><select className={styles.toolbarSelect} aria-label={`Status for ${message.subject}`} value={message.status} onChange={event => { void updateFeedback(message, event.target.value as AdminFeedbackMessage["status"]); }}><option value="open">Open</option><option value="in_progress">In progress</option><option value="resolved">Resolved</option></select><button type="button" className={styles.actionBtn} onClick={() => { void updateFeedback(message, message.status); }}>Save note</button></div></div></article>)}</div>}
-        </section>
-      )}
-
-      {noteTournament && (
-        <div className={styles.modalOverlay} onClick={() => setNoteTournament(null)}>
-          <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Administrative notes for ${noteTournament.name}`} onClick={event => event.stopPropagation()}>
-            <div className={styles.modalHeader}><div><h3 className={styles.modalTitle}>Tournament Notes: {noteTournament.name}</h3><div className={styles.secondaryText}>Internal administrator context only</div></div><CloseControl size="sm" label="Close tournament notes" onClick={() => setNoteTournament(null)} /></div>
-            <div className={styles.modalBody}>
-              <section className={styles.reviewSection}><h4>Add note</h4><div className={styles.reviewFormGrid}><select className={styles.formInput} value={tournamentNoteCategory} onChange={event => setTournamentNoteCategory(event.target.value)}><option value="general">General</option><option value="data">Data issue</option><option value="ownership">Ownership question</option><option value="results">Results review</option><option value="support">Support follow-up</option></select></div><textarea className={styles.formTextarea} value={tournamentNoteText} onChange={event => setTournamentNoteText(event.target.value)} placeholder="Add factual context for other administrators…" maxLength={2000} /><div className={styles.reviewFormActions}><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={!tournamentNoteText.trim()} onClick={() => { void saveTournamentNote(); }}>Add Note</button></div></section>
-              <section className={styles.reviewSection}><h4>Note history</h4>{tournamentNotesLoading ? <div className={styles.reviewEmpty}>Loading notes…</div> : tournamentNotes.length === 0 ? <div className={styles.reviewEmpty}>No internal notes have been added.</div> : <div className={styles.reviewList}>{tournamentNotes.map(note => <article className={styles.reviewItem} key={note.id}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${note.is_resolved ? styles.statusActive : styles.statusDraft}`}>{note.is_resolved ? "Resolved" : "Open"}</span><strong>{note.category}</strong><span>{formatAdminTimestamp(note.created_at, "")}</span></div><p>{note.note}</p><div className={styles.reviewItemFooter}><span>Added by @{note.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveTournamentNote(note.id, !note.is_resolved); }}>{note.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}</section>
-            </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setNoteTournament(null)}>Close</button></div>
-          </div>
-        </div>
-      )}
-
-      {deleteConfirmation && (
-        <div className={styles.modalOverlay} onClick={() => setDeleteConfirmation(null)}>
-          <div
-            className={`${styles.modal} ${styles.compactModal}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-confirmation-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <div>
-                <h3 id="delete-confirmation-title" className={styles.modalTitle}>Confirm deletion</h3>
-                <div className={styles.secondaryText}>This action cannot be undone.</div>
-              </div>
-              <CloseControl
-                size="sm"
-                label="Close delete confirmation"
-                onClick={() => setDeleteConfirmation(null)}
-              />
-            </div>
-            <div className={styles.modalBody}>
-              <p className={styles.confirmationMessage}>
-                Delete {deleteConfirmation.type === "announcement" ? "announcement" : "changelog entry"}{" "}
-                <strong>
-                  {deleteConfirmation.type === "announcement"
-                    ? deleteConfirmation.announcement.title
-                    : `version ${deleteConfirmation.version}`}
-                </strong>
-                ?
-              </p>
-            </div>
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`}
-                onClick={() => setDeleteConfirmation(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
-                onClick={() => {
-                  const confirmation = deleteConfirmation;
-                  setDeleteConfirmation(null);
-                  if (confirmation.type === "announcement") {
-                    void confirmAnnouncementDelete(confirmation.announcement);
-                  } else {
-                    void confirmChangelogDelete(confirmation.version);
-                  }
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {acknowledgedAnnouncement && (
-        <div className={styles.modalOverlay} onClick={onAcknowledgmentOverlayClick}>
-          <div
-            ref={acknowledgmentDialogRef}
-            className={`${styles.modal} ${styles.reviewModal}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="announcement-acknowledgments-title"
-            tabIndex={-1}
-          >
-            <div className={styles.modalHeader}>
-              <div>
-                <h3 id="announcement-acknowledgments-title" className={styles.modalTitle}>Acknowledged: {acknowledgedAnnouncement.title}</h3>
-                <div className={styles.secondaryText}>{acknowledgedAnnouncement.acknowledgment_count} users acknowledged</div>
-              </div>
-              <CloseControl size="sm" label="Close acknowledgments" onClick={closeAcknowledgmentDialog} />
-            </div>
-            <div className={styles.modalBody}>
-              {acknowledgmentsLoading ? (
-                <div className={styles.placeholder} role="status">Loading acknowledged users…</div>
-              ) : acknowledgmentsError ? (
-                <div className={styles.modalError} role="alert">{acknowledgmentsError}</div>
-              ) : acknowledgmentUsers.length === 0 ? (
-                <div className={styles.placeholder}>No users have acknowledged this announcement.</div>
-              ) : (
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead><tr><th>User</th><th>Email</th><th>Account</th><th>Acknowledged</th><th>Version</th></tr></thead>
-                    <tbody>{acknowledgmentUsers.map(user => (
-                      <tr key={`${user.id}-${user.version}`}>
-                        <td><strong>{user.first_name} {user.last_name}</strong><br />@{user.username}</td>
-                        <td>{user.email}</td>
-                        <td><span className={`${styles.statusPill} ${user.is_active ? styles.statusActive : styles.statusInactive}`}>{user.is_active ? "Active" : "Inactive"}</span></td>
-                        <td>{formatAdminTimestamp(user.acknowledged_at, "Unknown")}</td>
-                        <td>{user.version}</td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={closeAcknowledgmentDialog}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {reviewUser && (
-        <div className={styles.modalOverlay} onClick={() => setReviewUser(null)}>
-          <div className={`${styles.modal} ${styles.reviewModal}`} role="dialog" aria-modal="true" aria-label={`Review account ${reviewUser.username}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div><h3 className={styles.modalTitle}>Account Review: {reviewUser.username}</h3><div className={styles.secondaryText}>Observation and internal notes only—this does not change account access.</div></div>
-              <CloseControl size="sm" label="Close account review" onClick={() => setReviewUser(null)} />
-            </div>
-            <div className={styles.modalBody}>
-              {reviewError && <div className={styles.modalError} role="alert">{reviewError}</div>}
-              {reviewLoading ? <div className={styles.placeholder} role="status">Loading account activity…</div> : reviewDetail ? (
-                <div className={styles.reviewLayout}>
-                  <section className={styles.reviewSection}>
-                    <h4>Account details</h4>
-                    <div className={styles.detailGrid}>
-                      <div><strong>Name:</strong> {reviewDetail.user.name}</div><div><strong>Email:</strong> {reviewDetail.user.email}</div>
-                      <div><strong>Status:</strong> {reviewDetail.user.is_active ? "Active" : "Inactive"}</div><div><strong>Created:</strong> {formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</div>
-                      <div><strong>Last login:</strong> {formatAdminTimestamp(reviewDetail.user.last_login_at, "Never")}</div><div><strong>Last activity:</strong> {formatAdminTimestamp(reviewDetail.user.last_activity_at, "Never")}</div>
-                      <div><strong>Verification:</strong> {reviewDetail.user.email_verified ? formatAdminTimestamp(reviewDetail.user.email_verified_at, "Verified") : "Unverified"}</div>
-                      <div><strong>Development notice:</strong> {reviewDetail.user.dev_notice_version_accepted || "Not acknowledged"}</div>
-                      <div><strong>Active sessions:</strong> {reviewUser.active_session_count}</div><div><strong>Failed logins:</strong> {reviewUser.failed_login_count}</div>
+        <Card aria-label="User messages">
+          <CardHeader title="User messages" description={`Problem reports and feature requests from users · ${openFeedbackCount} open`} />
+          {feedbackLoading ? (
+            <p className={styles.helper} role="status">Loading messages...</p>
+          ) : feedbackMessages.length === 0 ? (
+            <EmptyState title="No messages yet" description="No user messages have been submitted." />
+          ) : (
+            <ul className={styles.rows}>
+              {feedbackMessages.map(message => (
+                <li className={styles.rowStack} key={message.id}>
+                  <div className={styles.row}>
+                    <div className={styles.rowText}>
+                      <span className={styles.rowTitle}>
+                        {message.subject}
+                        <Badge tone={FEEDBACK_STATUS_TONE[message.status] ?? "neutral"}>{capitalizeFirstLetter(message.status.replace("_", " "))}</Badge>
+                      </span>
+                      <span className={styles.rowMeta}>
+                        {capitalizeFirstLetter(message.category.replace(/_/g, " "))} · {message.user_name} (@{message.username}) · {message.email}
+                      </span>
                     </div>
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Owned tournaments</h4>
-                    {reviewDetail.owned_tournaments.length === 0 ? <div className={styles.reviewEmpty}>No owned tournaments.</div> : <div className={styles.activityList}>{reviewDetail.owned_tournaments.map(item => <div className={styles.activityRow} key={item.id}><div><strong>{item.name}</strong><span>Tournament #{item.id}</span></div><span>{item.lifecycle_status.replace(/_/g, " ")}</span></div>)}</div>}
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Staff memberships</h4>
-                    {reviewDetail.staff_memberships.length === 0 ? <div className={styles.reviewEmpty}>No tournament staff memberships.</div> : <div className={styles.activityList}>{reviewDetail.staff_memberships.map(item => <div className={styles.activityRow} key={item.tournament_id}><div><strong>{item.tournament_name}</strong><span>Tournament #{item.tournament_id}</span></div><div><span>{item.role.replace(/_/g, " ")}</span><span>Since {formatAdminTimestamp(item.created_at, "Unknown")}</span></div></div>)}</div>}
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Add internal review item</h4>
-                    <div className={styles.reviewFormGrid}>
-                      <select className={styles.formInput} aria-label="Review item type" value={reviewKind} onChange={(event) => setReviewKind(event.target.value as "flag" | "note")}><option value="note">Internal note</option><option value="flag">Flag for review</option></select>
-                      <select className={styles.formInput} aria-label="Review category" value={reviewCategory} onChange={(event) => setReviewCategory(event.target.value)}><option value="general">General</option><option value="verification">Verification</option><option value="inactive">Inactive</option><option value="duplicate">Possible duplicate</option><option value="suspicious">Suspicious activity</option><option value="fake">Potentially fake</option></select>
-                    </div>
-                    <textarea className={styles.formTextarea} value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} placeholder="Add factual context for other administrators…" maxLength={2000} />
-                    <div className={styles.reviewFormActions}><span>{reviewNote.length}/2000</span><button type="button" className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`} disabled={reviewSaving || !reviewNote.trim()} onClick={() => { void saveUserReview(); }}>{reviewSaving ? "Saving…" : reviewKind === "flag" ? "Add Flag" : "Add Note"}</button></div>
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Review history</h4>
-                    {reviewDetail.reviews.length === 0 ? <div className={styles.reviewEmpty}>No flags or internal notes have been added.</div> : <div className={styles.reviewList}>{reviewDetail.reviews.map(item => <article key={item.id} className={styles.reviewItem}><div className={styles.reviewItemHeader}><span className={`${styles.statusPill} ${item.is_resolved ? styles.statusActive : styles.statusDraft}`}>{item.is_resolved ? "Resolved" : item.kind === "flag" ? "Open flag" : "Open note"}</span><strong>{item.category.replace(/_/g, " ")}</strong><span>{formatAdminTimestamp(item.created_at, "")}</span></div><p>{item.note}</p><div className={styles.reviewItemFooter}><span>Added by @{item.admin_username}</span><button type="button" className={styles.actionBtn} onClick={() => { void resolveUserReview(item.id, !item.is_resolved); }}>{item.is_resolved ? "Reopen" : "Resolve"}</button></div></article>)}</div>}
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Recent login activity</h4>
-                    {reviewDetail.sessions.length === 0 ? <div className={styles.reviewEmpty}>No authenticated sessions recorded.</div> : <div className={styles.activityList}>{reviewDetail.sessions.map(session => <div key={session.id} className={styles.activityRow}><div><strong>{session.device_nickname || "Browser session"}</strong><span>{session.region_hint || "Region unavailable"}</span></div><div><span>Last seen {formatAdminTimestamp(session.last_seen_at, "Unknown")}</span><span>Risk {session.risk_score.toFixed(2)} · {session.is_revoked ? "Revoked" : "Active"}</span></div></div>)}</div>}
-                  </section>
-                  <section className={styles.reviewSection}>
-                    <h4>Acknowledgment history</h4>
-                    {reviewDetail.acknowledgments.length === 0 ? <div className={styles.reviewEmpty}>No server-recorded acknowledgments.</div> : <div className={styles.activityList}>{reviewDetail.acknowledgments.map(item => <div key={item.id} className={styles.activityRow}><div><strong>{item.content_type.replace(/_/g, " ")}</strong><span>{item.content_id} · version {item.version}</span></div><div><span>{formatAdminTimestamp(item.acknowledged_at, "Unknown")}</span></div></div>)}</div>}
-                  </section>
-                </div>
-              ) : null}
-            </div>
-            <div className={styles.modalFooter}><button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setReviewUser(null)}>Close</button></div>
-          </div>
-        </div>
-      )}
-
-      {editUser && (
-        <div className={styles.modalOverlay} onClick={() => setEditUser(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit user ${editUser.username}`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit {editUser.username}</h3>
-              <button type="button" aria-label="Close edit user dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditUser(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {editError && <div className={styles.modalError} role="alert">{editError}</div>}
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>First name</label>
-                <input className={styles.formInput} value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Last name</label>
-                <input className={styles.formInput} value={editLastName} onChange={(e) => setEditLastName(e.target.value)} />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Email</label>
-                <input className={styles.formInput} type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Organization</label>
-                <input className={styles.formInput} value={editOrg} onChange={(e) => setEditOrg(e.target.value)} placeholder="None" />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditUser(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
-                disabled={editSaving}
-                onClick={async () => {
-                  setEditSaving(true);
-                  setEditError(null);
-                  try {
-                    await apiClient.patch(`/api/v1/admin/users/${editUser.id}`, {
-                      first_name: editFirstName,
-                      last_name: editLastName,
-                      email: editEmail,
-                      organization: editOrg,
-                    });
-                    setEditUser(null);
-                    await loadUsers(true);
-                    await loadAuditLogs(false);
-                    showSuccess(`${editUser.username} was updated.`);
-                  } catch (err) {
-                    setEditError(err instanceof Error ? err.message : "Save failed");
-                  } finally {
-                    setEditSaving(false);
-                  }
-                }}
-              >
-                {editSaving ? "Saving..." : "Save changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {resetUser && (
-        <div className={styles.modalOverlay} onClick={() => setResetUser(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reset password for ${resetUser.username}`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Reset password for {resetUser.username}</h3>
-              <button type="button" aria-label="Close password reset dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setResetUser(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {resetError && <div className={styles.modalError} role="alert">{resetError}</div>}
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>New password</label>
-                <input
-                  ref={resetPasswordInputRef}
-                  className={styles.formInput}
-                  type="password"
-                  value={resetPassword}
-                  onChange={(e) => setResetPassword(e.target.value)}
-                  placeholder="Min 8 characters"
-                />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setResetUser(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
-                disabled={resetSaving || resetPassword.length < 8}
-                onClick={async () => {
-                  setResetSaving(true);
-                  setResetError(null);
-                  try {
-                    await apiClient.post(`/api/v1/admin/users/${resetUser.id}/reset-password`, { new_password: resetPassword });
-                    setResetUser(null);
-                    await loadAuditLogs(false);
-                    showSuccess(`Password reset for ${resetUser.username}.`);
-                  } catch (err) {
-                    setResetError(err instanceof Error ? err.message : "Reset failed");
-                  } finally {
-                    setResetSaving(false);
-                  }
-                }}
-              >
-                {resetSaving ? "Resetting..." : "Set password"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deleteUser && (
-        <div className={styles.modalOverlay} onClick={() => setDeleteUser(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete user ${deleteUser.username}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Delete user {deleteUser.username}</h3>
-              <button type="button" aria-label="Close delete user dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteUser(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {deleteUserError && <div className={styles.modalError} role="alert">{deleteUserError}</div>}
-              <div className={styles.detailCard}>
-                <div className={styles.detailNote}>This permanently deletes the user, all BracketWorks and Tournament Central tournaments they own, and related records. Their Tournament Central registrations, bowler entries, and uploaded documents in other organizers&apos; tournaments are also deleted. Type DELETE to confirm.</div>
-                {deleteUserPreview && (
-                  <div className={styles.detailGrid}>
-                    {Object.entries(deleteUserPreview.impact).map(([key, value]) => (
-                      <div key={key}><strong>{key.replace(/_/g, " ")}:</strong> {value}</div>
-                    ))}
+                    <time className={styles.rowMeta} dateTime={message.created_at || undefined}>{formatAdminTimestamp(message.created_at, "Unknown")}</time>
                   </div>
-                )}
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Reason</label>
-                <input
-                  className={styles.formInput}
-                  value={deleteUserReason}
-                  onChange={(event) => setDeleteUserReason(event.target.value)}
-                  placeholder="Required for audit trail"
-                />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Confirm text</label>
-                <input
-                  className={styles.formInput}
-                  value={deleteUserConfirmText}
-                  onChange={(event) => setDeleteUserConfirmText(event.target.value)}
-                  placeholder="Type DELETE"
-                />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setDeleteUser(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
-                disabled={deleteUserSaving || !deleteUserReason.trim() || deleteUserConfirmText.trim().toUpperCase() !== "DELETE"}
-                onClick={async () => {
-                  if (!deleteUser) return;
-                  setDeleteUserSaving(true);
-                  setDeleteUserError(null);
-                  try {
-                    await apiClient.post(`/api/v1/admin/users/${deleteUser.id}/delete`, {
-                      reason: deleteUserReason,
-                      confirm_text: deleteUserConfirmText,
-                    });
-                    setDeleteUser(null);
-                    await refreshAfterMutation({ overview: true, users: true, audit: true });
-                    showSuccess(`${deleteUser.username} was deleted.`);
-                  } catch (err) {
-                    setDeleteUserError(err instanceof Error ? err.message : "Delete failed");
-                  } finally {
-                    setDeleteUserSaving(false);
-                  }
-                }}
-              >
-                {deleteUserSaving ? "Deleting..." : "Delete user and all tournament data"}
-              </button>
-            </div>
-          </div>
-        </div>
+                  <p className={styles.rowBody}>{message.message}</p>
+                  <TextAreaField
+                    label="Internal note"
+                    optional
+                    value={feedbackNotes[message.id] || ""}
+                    onChange={event => setFeedbackNotes(current => ({ ...current, [message.id]: event.target.value }))}
+                    placeholder="Internal note for administrators"
+                    maxLength={5000}
+                    helper={message.admin_note ? "Internal note saved" : "No internal note"}
+                    aria-label={`Internal note for ${message.subject}`}
+                  />
+                  <div className={styles.formActions}>
+                    <SelectField
+                      label={`Status for ${message.subject}`}
+                      hideLabel
+                      value={message.status}
+                      onChange={event => { void updateFeedback(message, event.target.value as AdminFeedbackMessage["status"]); }}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_progress">In progress</option>
+                      <option value="resolved">Resolved</option>
+                    </SelectField>
+                    <Button variant="secondary" onClick={() => { void updateFeedback(message, message.status); }}>Save note</Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       )}
 
-      {editTournament && (
-        <div className={styles.modalOverlay} onClick={() => setEditTournament(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Edit tournament ${editTournament.name}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Edit Tournament #{editTournament.id}</h3>
-              <button type="button" aria-label="Close edit tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setEditTournament(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {editTournamentError && <div className={styles.modalError} role="alert">{editTournamentError}</div>}
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Name</label>
-                <input className={styles.formInput} value={editTournamentName} onChange={(event) => setEditTournamentName(capitalizeFirstLetter(event.target.value))} />
+      <Modal
+        open={Boolean(noteTournament)}
+        onClose={() => setNoteTournament(null)}
+        title={`Tournament notes: ${noteTournament?.name ?? ""}`}
+        description="Internal administrator context only"
+        size="lg"
+        closeLabel="Close tournament notes"
+        footer={<Button variant="secondary" onClick={() => setNoteTournament(null)}>Close</Button>}
+      >
+        {noteTournament ? (
+          <div className={styles.stack}>
+            <section className={styles.group}>
+              <h3 className={styles.subsectionTitle}>Add note</h3>
+              <FormGrid>
+                <SelectField label="Category" value={tournamentNoteCategory} onChange={event => setTournamentNoteCategory(event.target.value)}>
+                  <option value="general">General</option>
+                  <option value="data">Data issue</option>
+                  <option value="ownership">Ownership question</option>
+                  <option value="results">Results review</option>
+                  <option value="support">Support follow-up</option>
+                </SelectField>
+                <TextAreaField
+                  label="Note"
+                  fullRow
+                  value={tournamentNoteText}
+                  onChange={event => setTournamentNoteText(event.target.value)}
+                  placeholder="Add factual context for other administrators..."
+                  maxLength={2000}
+                />
+              </FormGrid>
+              <div className={styles.formActions}>
+                <Button variant="primary" disabled={!tournamentNoteText.trim()} onClick={() => { void saveTournamentNote(); }}>Add note</Button>
               </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Location</label>
-                <input className={styles.formInput} value={editTournamentLocation} onChange={(event) => setEditTournamentLocation(capitalizeFirstLetter(event.target.value))} />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Start date</label>
-                <input className={styles.formInput} value={editTournamentStartDate} onChange={(event) => setEditTournamentStartDate(event.target.value)} placeholder="YYYY-MM-DD or custom" />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>End date</label>
-                <input className={styles.formInput} value={editTournamentEndDate} onChange={(event) => setEditTournamentEndDate(event.target.value)} placeholder="YYYY-MM-DD or custom" />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setEditTournament(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
-                disabled={editTournamentSaving}
-                onClick={async () => {
-                  setEditTournamentSaving(true);
-                  setEditTournamentError(null);
-                  try {
-                    await apiClient.patch(`/api/v1/admin/tournaments/${editTournament.id}`, {
-                      name: editTournamentName,
-                      location: editTournamentLocation,
-                      start_date: editTournamentStartDate,
-                      end_date: editTournamentEndDate,
-                    });
-                    setEditTournament(null);
-                    await loadTournaments(true);
-                    await loadAuditLogs(false);
-                    showSuccess(`${editTournament.name} was updated.`);
-                  } catch (err) {
-                    setEditTournamentError(err instanceof Error ? err.message : "Failed to update tournament");
-                  } finally {
-                    setEditTournamentSaving(false);
-                  }
-                }}
-              >
-                {editTournamentSaving ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {reassignTournament && (
-        <div className={styles.modalOverlay} onClick={() => setReassignTournament(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Reassign tournament ${reassignTournament.name}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Reassign Tournament #{reassignTournament.id}</h3>
-              <button type="button" aria-label="Close reassign tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setReassignTournament(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {reassignError && <div className={styles.modalError} role="alert">{reassignError}</div>}
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>New owner</label>
-                <select className={styles.formInput} value={reassignUserId} onChange={(event) => setReassignUserId(event.target.value)}>
-                  <option value="">Select user</option>
-                  {usersResponse.users.map((user) => (
-                    <option key={user.id} value={String(user.id)}>
-                      {user.first_name} {user.last_name} (@{user.username})
-                    </option>
+            </section>
+            <CardDivider />
+            <section className={styles.group}>
+              <h3 className={styles.subsectionTitle}>Note history</h3>
+              {tournamentNotesLoading ? (
+                <p className={styles.helper} role="status">Loading notes...</p>
+              ) : tournamentNotes.length === 0 ? (
+                <p className={styles.helper}>No internal notes have been added.</p>
+              ) : (
+                <ul className={styles.rows}>
+                  {tournamentNotes.map(note => (
+                    <li className={styles.rowStack} key={note.id}>
+                      <div className={styles.row}>
+                        <span className={styles.rowTitle}>
+                          {capitalizeFirstLetter(note.category.replace(/_/g, " "))}
+                          <Badge tone={note.is_resolved ? "success" : "warning"}>{note.is_resolved ? "Resolved" : "Open"}</Badge>
+                        </span>
+                        <span className={styles.rowMeta}>{formatAdminTimestamp(note.created_at, "")}</span>
+                      </div>
+                      <p className={styles.rowBody}>{note.note}</p>
+                      <div className={styles.row}>
+                        <span className={styles.rowMeta}>Added by @{note.admin_username}</span>
+                        <Button variant="ghost" size="sm" onClick={() => { void resolveTournamentNote(note.id, !note.is_resolved); }}>
+                          {note.is_resolved ? "Reopen" : "Resolve"}
+                        </Button>
+                      </div>
+                    </li>
                   ))}
-                </select>
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setReassignTournament(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
-                disabled={reassignSaving || !reassignUserId}
-                onClick={async () => {
-                  setReassignSaving(true);
-                  setReassignError(null);
-                  try {
-                    await apiClient.post(`/api/v1/admin/tournaments/${reassignTournament.id}/reassign`, {
-                      new_owner_user_id: Number(reassignUserId),
-                    });
-                    setReassignTournament(null);
-                    await loadTournaments(true);
-                    await loadAuditLogs(false);
-                    showSuccess(`${reassignTournament.name} was reassigned.`);
-                  } catch (err) {
-                    setReassignError(err instanceof Error ? err.message : "Failed to reassign tournament");
-                  } finally {
-                    setReassignSaving(false);
-                  }
-                }}
-              >
-                {reassignSaving ? "Saving..." : "Reassign"}
-              </button>
-            </div>
+                </ul>
+              )}
+            </section>
           </div>
-        </div>
-      )}
+        ) : null}
+      </Modal>
 
-      {archiveTournament && (
-        <div className={styles.modalOverlay} onClick={() => setArchiveTournament(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Archive tournament ${archiveTournament.name}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Archive Tournament #{archiveTournament.id}</h3>
-              <button type="button" aria-label="Close archive tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setArchiveTournament(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {archiveError && <div className={styles.modalError} role="alert">{archiveError}</div>}
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Reason (optional)</label>
-                <input className={styles.formInput} value={archiveReason} onChange={(event) => setArchiveReason(event.target.value)} placeholder="Example: merged into Spring Open 2026" />
-              </div>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setArchiveTournament(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.small}`}
-                disabled={archiveSaving}
-                onClick={async () => {
-                  setArchiveSaving(true);
-                  setArchiveError(null);
-                  try {
-                    await apiClient.post(`/api/v1/admin/tournaments/${archiveTournament.id}/archive`, { reason: archiveReason });
-                    setArchiveTournament(null);
-                    await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
-                    showSuccess(`${archiveTournament.name} was archived.`);
-                  } catch (err) {
-                    setArchiveError(err instanceof Error ? err.message : "Failed to archive tournament");
-                  } finally {
-                    setArchiveSaving(false);
-                  }
-                }}
-              >
-                {archiveSaving ? "Archiving..." : "Archive"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={Boolean(deleteConfirmation)}
+        title={deleteConfirmation?.type === "changelog" ? "Delete changelog entry?" : "Delete announcement?"}
+        description={deleteConfirmation
+          ? `${deleteConfirmation.type === "announcement" ? `"${deleteConfirmation.announcement.title}"` : `Version ${deleteConfirmation.version}`} will be deleted. This cannot be undone.`
+          : ""}
+        confirmLabel="Delete"
+        tone="danger"
+        onCancel={() => setDeleteConfirmation(null)}
+        onConfirm={() => {
+          const confirmation = deleteConfirmation;
+          setDeleteConfirmation(null);
+          if (!confirmation) return;
+          if (confirmation.type === "announcement") {
+            void confirmAnnouncementDelete(confirmation.announcement);
+          } else {
+            void confirmChangelogDelete(confirmation.version);
+          }
+        }}
+      />
 
-      {deleteTournament && (
-        <div className={styles.modalOverlay} onClick={() => setDeleteTournament(null)}>
-          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Delete tournament ${deleteTournament.name}`} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Delete Tournament #{deleteTournament.id}</h3>
-              <button type="button" aria-label="Close delete tournament dialog" className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.modalClose}`} onClick={() => setDeleteTournament(null)}>X</button>
-            </div>
-            <div className={styles.modalBody}>
-              {deleteTournamentError && <div className={styles.modalError} role="alert">{deleteTournamentError}</div>}
-              <div className={styles.detailCard}>
-                <div className={styles.detailNote}>This action is permanent. Type DELETE to confirm.</div>
-                {deleteTournamentPreview && (
-                  <>
-                    <div className={styles.detailGrid}>
-                      {Object.entries(deleteTournamentPreview.impact).map(([key, value]) => (
-                        <div key={key}><strong>{key.replace(/_/g, " ")}:</strong> {value}</div>
+      <ConfirmDialog
+        open={Boolean(accountConfirm)}
+        title={accountConfirmCopy?.title ?? ""}
+        description={accountConfirmCopy?.description ?? ""}
+        confirmLabel={accountConfirmCopy?.confirmLabel ?? "Confirm"}
+        busyLabel="Saving..."
+        tone={accountConfirmCopy?.tone ?? "default"}
+        busy={accountConfirmBusy}
+        onCancel={() => setAccountConfirm(null)}
+        onConfirm={() => { void confirmAccountChange(); }}
+      />
+
+      <Modal
+        open={Boolean(acknowledgedAnnouncement)}
+        onClose={closeAcknowledgmentDialog}
+        title={`Acknowledged: ${acknowledgedAnnouncement?.title ?? ""}`}
+        description={`${acknowledgedAnnouncement?.acknowledgment_count ?? 0} users acknowledged`}
+        size="lg"
+        closeLabel="Close acknowledgments"
+        footer={<Button variant="secondary" onClick={closeAcknowledgmentDialog}>Close</Button>}
+      >
+        {acknowledgmentsLoading ? (
+          <p className={styles.helper} role="status">Loading acknowledged users...</p>
+        ) : acknowledgmentsError ? (
+          <Notice tone="danger" role="alert">{acknowledgmentsError}</Notice>
+        ) : acknowledgmentUsers.length === 0 ? (
+          <p className={styles.helper}>No users have acknowledged this announcement.</p>
+        ) : (
+          <DataTable caption="Users who acknowledged this announcement">
+            <thead>
+              <tr>
+                <th scope="col">User</th>
+                <th scope="col">Email</th>
+                <th scope="col">Account</th>
+                <th scope="col">Acknowledged</th>
+                <th scope="col">Version</th>
+              </tr>
+            </thead>
+            <tbody>
+              {acknowledgmentUsers.map(user => (
+                <tr key={`${user.id}-${user.version}`}>
+                  <td>
+                    <span className={styles.cellStack}>
+                      <span className={styles.cellTitle}>{user.first_name} {user.last_name}</span>
+                      <span className={styles.cellMeta}>@{user.username}</span>
+                    </span>
+                  </td>
+                  <td data-tone="secondary">{user.email}</td>
+                  <td><Badge tone={user.is_active ? "success" : "neutral"}>{user.is_active ? "Active" : "Inactive"}</Badge></td>
+                  <td data-tone="secondary">{formatAdminTimestamp(user.acknowledged_at, "Unknown")}</td>
+                  <td>{user.version}</td>
+                </tr>
+              ))}
+            </tbody>
+          </DataTable>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(reviewUser)}
+        onClose={() => setReviewUser(null)}
+        title={`Account review: ${reviewUser?.username ?? ""}`}
+        description="Observation and internal notes only. This does not change account access."
+        size="lg"
+        closeLabel="Close account review"
+        footer={<Button variant="secondary" onClick={() => setReviewUser(null)}>Close</Button>}
+      >
+        {reviewUser ? (
+          <div className={styles.stack}>
+            {reviewError ? <Notice tone="danger" role="alert">{reviewError}</Notice> : null}
+            {reviewLoading ? <p className={styles.helper} role="status">Loading account activity...</p> : reviewDetail ? (
+              <>
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Account details</h3>
+                  <dl className={styles.details}>
+                    <AdminDetail label="Name">{reviewDetail.user.name}</AdminDetail>
+                    <AdminDetail label="Email">{reviewDetail.user.email}</AdminDetail>
+                    <AdminDetail label="Status">{reviewDetail.user.is_active ? "Active" : "Inactive"}</AdminDetail>
+                    <AdminDetail label="Created">{formatAdminTimestamp(reviewDetail.user.created_at, "Unknown")}</AdminDetail>
+                    <AdminDetail label="Last login">{formatAdminTimestamp(reviewDetail.user.last_login_at, "Never")}</AdminDetail>
+                    <AdminDetail label="Last activity">{formatAdminTimestamp(reviewDetail.user.last_activity_at, "Never")}</AdminDetail>
+                    <AdminDetail label="Verification">{reviewDetail.user.email_verified ? formatAdminTimestamp(reviewDetail.user.email_verified_at, "Verified") : "Unverified"}</AdminDetail>
+                    <AdminDetail label="Development notice">{reviewDetail.user.dev_notice_version_accepted || "Not acknowledged"}</AdminDetail>
+                    <AdminDetail label="Active sessions">{reviewUser.active_session_count}</AdminDetail>
+                    <AdminDetail label="Failed logins">{reviewUser.failed_login_count}</AdminDetail>
+                  </dl>
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Owned tournaments</h3>
+                  {reviewDetail.owned_tournaments.length === 0 ? <p className={styles.helper}>No owned tournaments.</p> : (
+                    <ul className={styles.rows}>
+                      {reviewDetail.owned_tournaments.map(item => (
+                        <li className={styles.row} key={item.id}>
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>{item.name}</span>
+                            <span className={styles.rowMeta}>Tournament #{item.id}</span>
+                          </div>
+                          <span className={styles.rowMeta}>{capitalizeFirstLetter(item.lifecycle_status.replace(/_/g, " "))}</span>
+                        </li>
                       ))}
-                    </div>
-                    {deleteTournamentPreview.requires_force && (
-                      <div className={styles.warnText}>This tournament has score data. Force delete must be enabled.</div>
-                    )}
-                  </>
-                )}
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Reason</label>
-                <input className={styles.formInput} value={deleteTournamentReason} onChange={(event) => setDeleteTournamentReason(event.target.value)} placeholder="Required for admin audit trail" />
-              </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Confirm text</label>
-                <input className={styles.formInput} value={deleteTournamentConfirmText} onChange={(event) => setDeleteTournamentConfirmText(event.target.value)} placeholder="Type DELETE" />
-              </div>
-              <label className={styles.checkboxRow}>
-                <input type="checkbox" checked={forceDeleteTournament} onChange={(event) => setForceDeleteTournament(event.target.checked)} />
-                <span>Force delete even if score data exists</span>
-              </label>
-            </div>
-            <div className={styles.modalFooter}>
-              <button type="button" className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.small}`} onClick={() => setDeleteTournament(null)}>Cancel</button>
-              <button
-                type="button"
-                className={`${buttonStyles.button} ${buttonStyles.danger} ${buttonStyles.small}`}
-                disabled={deleteTournamentSaving || !deleteTournamentReason.trim() || deleteTournamentConfirmText.trim().toUpperCase() !== "DELETE"}
-                onClick={async () => {
-                  if (!deleteTournament) return;
-                  setDeleteTournamentSaving(true);
-                  setDeleteTournamentError(null);
-                  try {
-                    await apiClient.post(`/api/v1/admin/tournaments/${deleteTournament.id}/delete`, {
-                      reason: deleteTournamentReason,
-                      force: forceDeleteTournament,
-                      confirm_text: deleteTournamentConfirmText,
-                    });
-                    setDeleteTournament(null);
-                    await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
-                    showSuccess(`${deleteTournament.name} was deleted.`);
-                  } catch (err) {
-                    setDeleteTournamentError(err instanceof Error ? err.message : "Failed to delete tournament");
-                  } finally {
-                    setDeleteTournamentSaving(false);
-                  }
-                }}
-              >
-                {deleteTournamentSaving ? "Deleting..." : "Delete permanently"}
-              </button>
-            </div>
+                    </ul>
+                  )}
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Staff memberships</h3>
+                  {reviewDetail.staff_memberships.length === 0 ? <p className={styles.helper}>No tournament staff memberships.</p> : (
+                    <ul className={styles.rows}>
+                      {reviewDetail.staff_memberships.map(item => (
+                        <li className={styles.row} key={item.tournament_id}>
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>{item.tournament_name}</span>
+                            <span className={styles.rowMeta}>Tournament #{item.tournament_id}</span>
+                          </div>
+                          <span className={styles.rowMeta}>{capitalizeFirstLetter(item.role.replace(/_/g, " "))} · since {formatAdminTimestamp(item.created_at, "Unknown")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Add internal review item</h3>
+                  <FormGrid>
+                    <SelectField label="Type" value={reviewKind} onChange={(event) => setReviewKind(event.target.value as "flag" | "note")}>
+                      <option value="note">Internal note</option>
+                      <option value="flag">Flag for review</option>
+                    </SelectField>
+                    <SelectField label="Category" value={reviewCategory} onChange={(event) => setReviewCategory(event.target.value)}>
+                      <option value="general">General</option>
+                      <option value="verification">Verification</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="duplicate">Possible duplicate</option>
+                      <option value="suspicious">Suspicious activity</option>
+                      <option value="fake">Potentially fake</option>
+                    </SelectField>
+                    <TextAreaField
+                      label="Note"
+                      fullRow
+                      value={reviewNote}
+                      onChange={(event) => setReviewNote(event.target.value)}
+                      placeholder="Add factual context for other administrators..."
+                      maxLength={2000}
+                      helper={`${reviewNote.length}/2000`}
+                    />
+                  </FormGrid>
+                  <div className={styles.formActions}>
+                    <Button variant="primary" disabled={reviewSaving || !reviewNote.trim()} onClick={() => { void saveUserReview(); }}>
+                      {reviewSaving ? "Saving..." : reviewKind === "flag" ? "Add flag" : "Add note"}
+                    </Button>
+                  </div>
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Review history</h3>
+                  {reviewDetail.reviews.length === 0 ? <p className={styles.helper}>No flags or internal notes have been added.</p> : (
+                    <ul className={styles.rows}>
+                      {reviewDetail.reviews.map(item => (
+                        <li key={item.id} className={styles.rowStack}>
+                          <div className={styles.row}>
+                            <span className={styles.rowTitle}>
+                              {capitalizeFirstLetter(item.category.replace(/_/g, " "))}
+                              <Badge tone={item.is_resolved ? "success" : item.kind === "flag" ? "danger" : "warning"}>
+                                {item.is_resolved ? "Resolved" : item.kind === "flag" ? "Open flag" : "Open note"}
+                              </Badge>
+                            </span>
+                            <span className={styles.rowMeta}>{formatAdminTimestamp(item.created_at, "")}</span>
+                          </div>
+                          <p className={styles.rowBody}>{item.note}</p>
+                          <div className={styles.row}>
+                            <span className={styles.rowMeta}>Added by @{item.admin_username}</span>
+                            <Button variant="ghost" size="sm" onClick={() => { void resolveUserReview(item.id, !item.is_resolved); }}>
+                              {item.is_resolved ? "Reopen" : "Resolve"}
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Recent login activity</h3>
+                  {reviewDetail.sessions.length === 0 ? <p className={styles.helper}>No authenticated sessions recorded.</p> : (
+                    <ul className={styles.rows}>
+                      {reviewDetail.sessions.map(session => (
+                        <li key={session.id} className={styles.row}>
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>{session.device_nickname || "Browser session"}</span>
+                            <span className={styles.rowMeta}>{session.region_hint || "Region unavailable"}</span>
+                          </div>
+                          <div className={styles.cellStack}>
+                            <span className={styles.rowMeta}>Last seen {formatAdminTimestamp(session.last_seen_at, "Unknown")}</span>
+                            <span className={styles.rowMeta}>Risk {session.risk_score.toFixed(2)} · {session.is_revoked ? "Revoked" : "Active"}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+                <CardDivider />
+                <section className={styles.group}>
+                  <h3 className={styles.subsectionTitle}>Acknowledgment history</h3>
+                  {reviewDetail.acknowledgments.length === 0 ? <p className={styles.helper}>No server-recorded acknowledgments.</p> : (
+                    <ul className={styles.rows}>
+                      {reviewDetail.acknowledgments.map(item => (
+                        <li key={item.id} className={styles.row}>
+                          <div className={styles.rowText}>
+                            <span className={styles.rowTitle}>{capitalizeFirstLetter(item.content_type.replace(/_/g, " "))}</span>
+                            <span className={styles.rowMeta}>{item.content_id} · version {item.version}</span>
+                          </div>
+                          <span className={styles.rowMeta}>{formatAdminTimestamp(item.acknowledged_at, "Unknown")}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </>
+            ) : null}
           </div>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(editUser)}
+        onClose={() => setEditUser(null)}
+        title={`Edit ${editUser?.username ?? "user"}`}
+        closeLabel="Close edit user dialog"
+        dismissible={!editSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setEditUser(null)} disabled={editSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={editSaving}
+              onClick={async () => {
+                if (!editUser) return;
+                setEditSaving(true);
+                setEditError(null);
+                try {
+                  await apiClient.patch(`/api/v1/admin/users/${editUser.id}`, {
+                    first_name: editFirstName,
+                    last_name: editLastName,
+                    email: editEmail,
+                    organization: editOrg,
+                  });
+                  setEditUser(null);
+                  await loadUsers(true);
+                  await loadAuditLogs(false);
+                  showSuccess(`${editUser.username} was updated.`);
+                } catch (err) {
+                  setEditError(err instanceof Error ? err.message : "Save failed");
+                } finally {
+                  setEditSaving(false);
+                }
+              }}
+            >
+              {editSaving ? "Saving..." : "Save changes"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {editError ? <Notice tone="danger" role="alert">{editError}</Notice> : null}
+          <FormGrid>
+            <TextField label="First name" value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} />
+            <TextField label="Last name" value={editLastName} onChange={(e) => setEditLastName(e.target.value)} />
+            <TextField label="Email" type="email" fullRow value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
+            <TextField label="Organization" optional fullRow value={editOrg} onChange={(e) => setEditOrg(e.target.value)} />
+          </FormGrid>
         </div>
-      )}
-    </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(resetUser)}
+        onClose={() => setResetUser(null)}
+        title={`Reset password for ${resetUser?.username ?? "user"}`}
+        size="sm"
+        closeLabel="Close password reset dialog"
+        dismissible={!resetSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setResetUser(null)} disabled={resetSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={resetSaving || resetPassword.length < 8}
+              onClick={async () => {
+                if (!resetUser) return;
+                setResetSaving(true);
+                setResetError(null);
+                try {
+                  await apiClient.post(`/api/v1/admin/users/${resetUser.id}/reset-password`, { new_password: resetPassword });
+                  setResetUser(null);
+                  await loadAuditLogs(false);
+                  showSuccess(`Password reset for ${resetUser.username}.`);
+                } catch (err) {
+                  setResetError(err instanceof Error ? err.message : "Reset failed");
+                } finally {
+                  setResetSaving(false);
+                }
+              }}
+            >
+              {resetSaving ? "Resetting..." : "Set password"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {resetError ? <Notice tone="danger" role="alert">{resetError}</Notice> : null}
+          <PasswordField
+            ref={resetPasswordInputRef}
+            label="New password"
+            value={resetPassword}
+            onChange={(e) => setResetPassword(e.target.value)}
+            helper="At least 8 characters."
+            autoComplete="new-password"
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteUser)}
+        onClose={() => setDeleteUser(null)}
+        title={`Delete user ${deleteUser?.username ?? ""}`}
+        role="alertdialog"
+        closeLabel="Close delete user dialog"
+        dismissible={!deleteUserSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setDeleteUser(null)} disabled={deleteUserSaving}>Cancel</Button>
+            <Button
+              variant="danger"
+              disabled={deleteUserSaving || !deleteUserReason.trim() || deleteUserConfirmText.trim().toUpperCase() !== "DELETE"}
+              onClick={async () => {
+                if (!deleteUser) return;
+                setDeleteUserSaving(true);
+                setDeleteUserError(null);
+                try {
+                  await apiClient.post(`/api/v1/admin/users/${deleteUser.id}/delete`, {
+                    reason: deleteUserReason,
+                    confirm_text: deleteUserConfirmText,
+                  });
+                  setDeleteUser(null);
+                  await refreshAfterMutation({ overview: true, users: true, audit: true });
+                  showSuccess(`${deleteUser.username} was deleted.`);
+                } catch (err) {
+                  setDeleteUserError(err instanceof Error ? err.message : "Delete failed");
+                } finally {
+                  setDeleteUserSaving(false);
+                }
+              }}
+            >
+              {deleteUserSaving ? "Deleting..." : "Delete user and all tournament data"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {deleteUserError ? <Notice tone="danger" role="alert">{deleteUserError}</Notice> : null}
+          <Notice tone="warning">
+            This permanently deletes the user, all BracketWorks and Tournament Central tournaments they own, and related records. Their Tournament Central registrations, bowler entries, and uploaded documents in other organizers&apos; tournaments are also deleted.
+          </Notice>
+          {deleteUserPreview ? (
+            <dl className={styles.details}>
+              {Object.entries(deleteUserPreview.impact).map(([key, value]) => (
+                <AdminDetail key={key} label={capitalizeFirstLetter(key.replace(/_/g, " "))}>{value}</AdminDetail>
+              ))}
+            </dl>
+          ) : null}
+          <TextField label="Reason" value={deleteUserReason} onChange={(event) => setDeleteUserReason(event.target.value)} helper="Recorded in the audit log." />
+          <TextField label="Type DELETE to confirm" value={deleteUserConfirmText} onChange={(event) => setDeleteUserConfirmText(event.target.value)} placeholder="DELETE" autoComplete="off" />
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(editTournament)}
+        onClose={() => setEditTournament(null)}
+        title={`Edit tournament #${editTournament?.id ?? ""}`}
+        closeLabel="Close edit tournament dialog"
+        dismissible={!editTournamentSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setEditTournament(null)} disabled={editTournamentSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={editTournamentSaving}
+              onClick={async () => {
+                if (!editTournament) return;
+                setEditTournamentSaving(true);
+                setEditTournamentError(null);
+                try {
+                  await apiClient.patch(`/api/v1/admin/tournaments/${editTournament.id}`, {
+                    name: editTournamentName,
+                    location: editTournamentLocation,
+                    start_date: editTournamentStartDate,
+                    end_date: editTournamentEndDate,
+                  });
+                  setEditTournament(null);
+                  await loadTournaments(true);
+                  await loadAuditLogs(false);
+                  showSuccess(`${editTournament.name} was updated.`);
+                } catch (err) {
+                  setEditTournamentError(err instanceof Error ? err.message : "Failed to update tournament");
+                } finally {
+                  setEditTournamentSaving(false);
+                }
+              }}
+            >
+              {editTournamentSaving ? "Saving..." : "Save"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {editTournamentError ? <Notice tone="danger" role="alert">{editTournamentError}</Notice> : null}
+          <FormGrid>
+            <TextField label="Name" fullRow value={editTournamentName} onChange={(event) => setEditTournamentName(capitalizeFirstLetter(event.target.value))} />
+            <TextField label="Location" fullRow value={editTournamentLocation} onChange={(event) => setEditTournamentLocation(capitalizeFirstLetter(event.target.value))} />
+            <TextField label="Start date" value={editTournamentStartDate} onChange={(event) => setEditTournamentStartDate(event.target.value)} placeholder="YYYY-MM-DD or custom" />
+            <TextField label="End date" value={editTournamentEndDate} onChange={(event) => setEditTournamentEndDate(event.target.value)} placeholder="YYYY-MM-DD or custom" />
+          </FormGrid>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(reassignTournament)}
+        onClose={() => setReassignTournament(null)}
+        title={`Reassign tournament #${reassignTournament?.id ?? ""}`}
+        size="sm"
+        closeLabel="Close reassign tournament dialog"
+        dismissible={!reassignSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setReassignTournament(null)} disabled={reassignSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={reassignSaving || !reassignUserId}
+              onClick={async () => {
+                if (!reassignTournament) return;
+                setReassignSaving(true);
+                setReassignError(null);
+                try {
+                  await apiClient.post(`/api/v1/admin/tournaments/${reassignTournament.id}/reassign`, {
+                    new_owner_user_id: Number(reassignUserId),
+                  });
+                  setReassignTournament(null);
+                  await loadTournaments(true);
+                  await loadAuditLogs(false);
+                  showSuccess(`${reassignTournament.name} was reassigned.`);
+                } catch (err) {
+                  setReassignError(err instanceof Error ? err.message : "Failed to reassign tournament");
+                } finally {
+                  setReassignSaving(false);
+                }
+              }}
+            >
+              {reassignSaving ? "Saving..." : "Reassign"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {reassignError ? <Notice tone="danger" role="alert">{reassignError}</Notice> : null}
+          <SelectField label="New owner" value={reassignUserId} onChange={(event) => setReassignUserId(event.target.value)}>
+            <option value="">Select user</option>
+            {usersResponse.users.map((user) => (
+              <option key={user.id} value={String(user.id)}>
+                {user.first_name} {user.last_name} (@{user.username})
+              </option>
+            ))}
+          </SelectField>
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(archiveTournament)}
+        onClose={() => setArchiveTournament(null)}
+        title={`Archive tournament #${archiveTournament?.id ?? ""}`}
+        size="sm"
+        closeLabel="Close archive tournament dialog"
+        dismissible={!archiveSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setArchiveTournament(null)} disabled={archiveSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={archiveSaving}
+              onClick={async () => {
+                if (!archiveTournament) return;
+                setArchiveSaving(true);
+                setArchiveError(null);
+                try {
+                  await apiClient.post(`/api/v1/admin/tournaments/${archiveTournament.id}/archive`, { reason: archiveReason });
+                  setArchiveTournament(null);
+                  await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                  showSuccess(`${archiveTournament.name} was archived.`);
+                } catch (err) {
+                  setArchiveError(err instanceof Error ? err.message : "Failed to archive tournament");
+                } finally {
+                  setArchiveSaving(false);
+                }
+              }}
+            >
+              {archiveSaving ? "Archiving..." : "Archive"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {archiveError ? <Notice tone="danger" role="alert">{archiveError}</Notice> : null}
+          <TextField label="Reason" optional value={archiveReason} onChange={(event) => setArchiveReason(event.target.value)} placeholder="Example: merged into Spring Open 2026" />
+        </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTournament)}
+        onClose={() => setDeleteTournament(null)}
+        title={`Delete tournament #${deleteTournament?.id ?? ""}`}
+        role="alertdialog"
+        closeLabel="Close delete tournament dialog"
+        dismissible={!deleteTournamentSaving}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setDeleteTournament(null)} disabled={deleteTournamentSaving}>Cancel</Button>
+            <Button
+              variant="danger"
+              disabled={deleteTournamentSaving || !deleteTournamentReason.trim() || deleteTournamentConfirmText.trim().toUpperCase() !== "DELETE"}
+              onClick={async () => {
+                if (!deleteTournament) return;
+                setDeleteTournamentSaving(true);
+                setDeleteTournamentError(null);
+                try {
+                  await apiClient.post(`/api/v1/admin/tournaments/${deleteTournament.id}/delete`, {
+                    reason: deleteTournamentReason,
+                    force: forceDeleteTournament,
+                    confirm_text: deleteTournamentConfirmText,
+                  });
+                  setDeleteTournament(null);
+                  await refreshAfterMutation({ overview: true, tournaments: true, audit: true });
+                  showSuccess(`${deleteTournament.name} was deleted.`);
+                } catch (err) {
+                  setDeleteTournamentError(err instanceof Error ? err.message : "Failed to delete tournament");
+                } finally {
+                  setDeleteTournamentSaving(false);
+                }
+              }}
+            >
+              {deleteTournamentSaving ? "Deleting..." : "Delete permanently"}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.stack}>
+          {deleteTournamentError ? <Notice tone="danger" role="alert">{deleteTournamentError}</Notice> : null}
+          <Notice tone="warning">This action is permanent and cannot be undone.</Notice>
+          {deleteTournamentPreview ? (
+            <dl className={styles.details}>
+              {Object.entries(deleteTournamentPreview.impact).map(([key, value]) => (
+                <AdminDetail key={key} label={capitalizeFirstLetter(key.replace(/_/g, " "))}>{value}</AdminDetail>
+              ))}
+            </dl>
+          ) : null}
+          {deleteTournamentPreview?.requires_force ? (
+            <Notice tone="danger">This tournament has score data. Turn on force delete to continue.</Notice>
+          ) : null}
+          <TextField label="Reason" value={deleteTournamentReason} onChange={(event) => setDeleteTournamentReason(event.target.value)} helper="Recorded in the admin audit log." />
+          <TextField label="Type DELETE to confirm" value={deleteTournamentConfirmText} onChange={(event) => setDeleteTournamentConfirmText(event.target.value)} placeholder="DELETE" autoComplete="off" />
+          <CheckboxField label="Force delete even if score data exists" checked={forceDeleteTournament} onChange={(event) => setForceDeleteTournament(event.target.checked)} />
+        </div>
+      </Modal>
+    </Page>
   );
 }
