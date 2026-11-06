@@ -1,9 +1,10 @@
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { Badge, Button, ICON_SIZE, Pagination } from '@bracketworks/ui'
+
 import { Player } from '../../lib/types'
 import type { RowSaveState } from '../types'
 import { calculateTotalScratch, calculateTotalWithHandicap, calculateDisplayTotal, getGameTotal } from '../utils/scoreUtils'
-import { Pagination } from '../../components/Performance'
-import styles from '../scores.module.css'
-import buttonStyles from '../../styles/buttons.module.css'
+import styles from './ScoreTable.module.css'
 
 interface MobileScoreCardListProps {
   paginatedItems: Player[]
@@ -12,6 +13,7 @@ interface MobileScoreCardListProps {
   isScoresLocked: boolean
   currentPage: number
   totalPages: number
+  totalItems: number
   onToggleExpand: (playerId: number) => void
   onUpdateScore: (playerId: number, field: string, value: number | undefined) => void
   onFocusNext: (playerId: number, field: string) => void
@@ -19,9 +21,11 @@ interface MobileScoreCardListProps {
   onPageChange: (page: number) => void
 }
 
+const PAGE_SIZE = 50
+
 /**
- * Mobile score card list with expand-to-edit per-player cards.
- * Rendering only — no state or API calls.
+ * Phone score list: divider rows that expand to edit three games.
+ * Rendering only: no state or API calls. Sits inside a flush Card.
  */
 export function MobileScoreCardList({
   paginatedItems,
@@ -30,17 +34,20 @@ export function MobileScoreCardList({
   isScoresLocked,
   currentPage,
   totalPages,
+  totalItems,
   onToggleExpand,
   onUpdateScore,
   onFocusNext,
   onSaveAll,
   onPageChange,
 }: MobileScoreCardListProps) {
+  const firstShown = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const lastShown = Math.min(currentPage * PAGE_SIZE, totalItems)
   return (
     <>
-      <div className={styles.mobileScoreList}>
+      <ul className={styles.mobileList}>
         {paginatedItems.map(player => (
-          <MobileScoreCard
+          <MobileScoreRow
             key={player.id}
             player={player}
             isExpanded={!!expandedPlayers[player.id]}
@@ -52,18 +59,21 @@ export function MobileScoreCardList({
             onSaveAll={onSaveAll}
           />
         ))}
-      </div>
+      </ul>
 
-      {totalPages > 1 && (
-        <div className={styles.mobilePaginationWrap}>
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
-        </div>
-      )}
+      {totalPages > 1 ? (
+        <Pagination
+          page={currentPage}
+          pageCount={totalPages}
+          onPageChange={onPageChange}
+          summary={`Showing ${firstShown}-${lastShown} of ${totalItems} players`}
+        />
+      ) : null}
     </>
   )
 }
 
-interface MobileScoreCardProps {
+interface MobileScoreRowProps {
   player: Player
   isExpanded: boolean
   saveState: RowSaveState
@@ -74,7 +84,7 @@ interface MobileScoreCardProps {
   onSaveAll: () => void
 }
 
-function MobileScoreCard({
+function MobileScoreRow({
   player,
   isExpanded,
   saveState,
@@ -83,67 +93,54 @@ function MobileScoreCard({
   onUpdateScore,
   onFocusNext,
   onSaveAll,
-}: MobileScoreCardProps) {
-  const hasFailed = saveState === 'failed'
-  const saveLabel =
-    saveState === 'saving' ? 'Saving...' :
-    saveState === 'saved' ? 'Saved' :
-    saveState === 'failed' ? 'Failed' : ''
-  const pilotClass =
-    saveState === 'saving' ? styles.mobileSaveStateSaving :
-    saveState === 'saved' ? styles.mobileSaveStateSaved :
-    saveState === 'failed' ? styles.mobileSaveStateFailed :
-    styles.mobileSaveStateIdle
+}: MobileScoreRowProps) {
+  const playerName = `${player.firstName} ${player.lastName}`.trim()
+  const detailsId = `mobile-score-details-${player.id}`
 
   return (
-    <div className={styles.mobileScoreCard}>
-      <div
-        className={styles.mobileScoreCardHeader}
-        role="button"
-        tabIndex={0}
+    <li className={styles.mobileRow}>
+      <button
+        type="button"
+        className={styles.mobileRowHeader}
         aria-expanded={isExpanded}
+        aria-controls={detailsId}
         onClick={onToggleExpand}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand() }
-        }}
       >
-        <div className={styles.mobileScoreIdentity}>
-          <div className={styles.mobileScoreName}>{player.firstName} {player.lastName}</div>
-          <div className={styles.mobileScoreMeta}>
-            {player.lane ? `Lane ${player.lane} | ` : ''}Avg: {player.average} | HDCP: {player.handicap}
-          </div>
-        </div>
-        <div className={styles.mobileScoreHeaderRight}>
-          {saveLabel && <span className={`${styles.mobileSaveStatePill} ${pilotClass}`}>{saveLabel}</span>}
-          <span className={styles.mobileScoreTotal}>{calculateDisplayTotal(player)}</span>
-          <span className={styles.mobileExpandGlyph}>{isExpanded ? '^' : 'v'}</span>
-        </div>
-      </div>
+        <span className={styles.mobileIdentity}>
+          <span className={styles.mobileName}>{playerName}</span>
+          <span className={styles.mobileMeta}>
+            {[player.lane ? `Lane ${player.lane}` : null, `Avg ${player.average}`, `Hdcp ${player.handicap}`].filter(Boolean).join(' · ')}
+          </span>
+        </span>
+        {saveState === 'saving' ? <span className={styles.saving}>Saving...</span> : null}
+        {saveState === 'failed' ? <Badge tone="danger">Save failed</Badge> : null}
+        <span className={styles.mobileTotal}>{calculateDisplayTotal(player)}</span>
+        {isExpanded
+          ? <ChevronUp size={ICON_SIZE.md} aria-hidden="true" />
+          : <ChevronDown size={ICON_SIZE.md} aria-hidden="true" />}
+      </button>
 
-      {isExpanded && (
-        <div className={styles.mobileScoreCardBody}>
-          <div className={styles.mobileContextChips}>
-            <span className={styles.mobileContextChip}>Scratch: {calculateTotalScratch(player)}</span>
-            <span className={styles.mobileContextChip}>Total: {calculateTotalWithHandicap(player)}</span>
-          </div>
-
-          <div className={styles.mobileGameInputGrid}>
+      {isExpanded ? (
+        <div id={detailsId} className={styles.mobileDetails}>
+          <div className={styles.mobileGames}>
             {([1, 2, 3] as const).map(g => {
               const field = `game${g}_scratch` as 'game1_scratch' | 'game2_scratch' | 'game3_scratch'
               const scratch = player.scores?.[field] as number | undefined
+              const inputId = `mobile-score-${player.id}-${g}`
               return (
-                <div key={g} className={styles.mobileGameInputField}>
-                  <span>G{g}</span>
+                <div key={g} className={styles.mobileGame}>
+                  <label htmlFor={inputId} className={styles.mobileGameLabel}>Game {g}</label>
                   <input
+                    id={inputId}
                     type="number"
                     min="0"
                     max="300"
                     inputMode="numeric"
+                    enterKeyHint="next"
                     disabled={isScoresLocked}
-                    placeholder=""
                     data-mobile-player={player.id}
                     data-mobile-field={field}
-                    className={styles.mobileScoreInput}
+                    className={styles.mobileGameInput}
                     value={scratch ?? ''}
                     onChange={e => onUpdateScore(player.id, field, parseInt(e.target.value) || 0)}
                     onKeyDown={e => {
@@ -156,13 +153,15 @@ function MobileScoreCard({
             })}
           </div>
 
-          {hasFailed && (
-            <button className={styles.mobileRetryBtn} onClick={onSaveAll}>
-              Retry Save
-            </button>
-          )}
+          <p className={styles.mobileTotals}>
+            Scratch {calculateTotalScratch(player)} · Total {calculateTotalWithHandicap(player)}
+          </p>
+
+          {saveState === 'failed' ? (
+            <Button size="sm" variant="secondary" onClick={onSaveAll}>Retry save</Button>
+          ) : null}
         </div>
-      )}
-    </div>
+      ) : null}
+    </li>
   )
 }

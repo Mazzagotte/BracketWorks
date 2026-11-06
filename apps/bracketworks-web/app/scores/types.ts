@@ -29,6 +29,6 @@ export interface ScoreValidation {
 }
 
 export interface PlayerScoreStatus {
-  label: 'Complete' | 'In Progress' | 'Not Started';
+  label: 'Complete' | 'In progress' | 'Not started';
   tone: 'complete' | 'progress' | 'pending';
 }

@@ -19,12 +19,12 @@ describe('ScoreCorrectionModal', () => {
       />,
     )
 
-    expect(screen.getByRole('dialog', { name: 'Confirm Score Correction' })).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Confirm score correction' })).toBeTruthy()
     expect(screen.getByText((_, element) => (
       element?.tagName === 'P'
-      && element.textContent?.replace(/\s+/g, ' ').includes('Change Game 1 for Jamie Bowler from 198 to 200') === true
+      && element.textContent?.replace(/\s+/g, ' ').includes('Change game 1 for Jamie Bowler from 198 to 200') === true
     ))).toBeTruthy()
-    const saveButton = screen.getByRole('button', { name: 'Save Correction' }) as HTMLButtonElement
+    const saveButton = screen.getByRole('button', { name: 'Save correction' }) as HTMLButtonElement
     expect(saveButton.disabled).toBe(true)
 
     fireEvent.change(screen.getByRole('textbox'), {

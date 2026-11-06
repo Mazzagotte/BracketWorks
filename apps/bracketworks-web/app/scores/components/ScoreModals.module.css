@@ -1,0 +1,37 @@
+/* Score confirmation dialogs: content inside the shared Modal. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.text {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.text strong {
+  font-weight: 600;
+  color: var(--bw-text-title);
+}
+
+.nameList {
+  max-height: calc(var(--space-16) * 4);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.nameRow {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--bw-border-subtle);
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+.nameRow:last-child {
+  border-bottom: 0;
+}

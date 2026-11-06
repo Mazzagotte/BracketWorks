@@ -199,6 +199,6 @@ export function getPlayerScoreStatus(player: Player): PlayerScoreStatus {
   ]
   const enteredGames = gameScores.filter(score => score != null).length
   if (enteredGames === gameScores.length) return { label: 'Complete', tone: 'complete' }
-  if (enteredGames > 0) return { label: 'In Progress', tone: 'progress' }
-  return { label: 'Not Started', tone: 'pending' }
+  if (enteredGames > 0) return { label: 'In progress', tone: 'progress' }
+  return { label: 'Not started', tone: 'pending' }
 }

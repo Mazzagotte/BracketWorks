@@ -1,0 +1,204 @@
+/* Scores table, phone score rows, and page panels. */
+
+.scoreTable th,
+.scoreTable td {
+  white-space: nowrap;
+}
+
+.groupHeader {
+  border-bottom: 1px solid var(--bw-border-subtle);
+}
+
+.nameCell {
+  font-weight: 600;
+}
+
+.scoreInput {
+  box-sizing: border-box;
+  width: var(--space-16);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-panel);
+  color: var(--bw-text-title);
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.scoreInput:focus-visible {
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.scoreInput[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.scoreInput:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saving {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+/* Card header extras: progress and save status. */
+.headerMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-width: calc(var(--space-20) * 2.5);
+}
+
+.saveLine {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.saveLineError {
+  composes: saveLine;
+  color: var(--color-danger);
+}
+
+.searchForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.overline {
+  margin: 0 0 var(--space-3);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+/* Phone: divider rows that expand to three game inputs. */
+.mobileList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mobileRow {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.mobileRowHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--touch-target-comfortable);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: transparent;
+  color: var(--bw-text-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.mobileRowHeader:hover,
+.mobileRowHeader[aria-expanded='true'] {
+  background: var(--bw-surface-panel);
+}
+
+.mobileIdentity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mobileName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.mobileMeta {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.mobileTotal {
+  font: var(--type-table);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.mobileDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.mobileGames {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.mobileGame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.mobileGameLabel {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.mobileGameInput {
+  composes: scoreInput;
+  width: 100%;
+  height: var(--touch-target-comfortable);
+  font-size: var(--font-size-xl);
+}
+
+.mobileGameTotal {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.mobileTotals {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+@media (max-width: 767px) {
+  .searchForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .headerMeta {
+    align-items: flex-start;
+  }
+}

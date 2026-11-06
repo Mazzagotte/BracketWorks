@@ -54,7 +54,7 @@ export function buildScoresPdfHtml({
     ['High Game', highGame || '&mdash;'],
     ['High Series', highSeries || '&mdash;'],
     ['Average Series', averageSeries || '&mdash;'],
-    ['Status', scoresLocked ? 'Locked' : 'In Progress'],
+    ['Status', scoresLocked ? 'Locked' : 'In progress'],
   ]
   const statCards = statItems.map(([label, value]) => `<div class="stat-card">
       <span class="stat-label">${escapeHtml(label)}</span>

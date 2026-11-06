@@ -1,5 +1,8 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { Button, Modal, TextAreaField } from '@bracketworks/ui'
+
+import styles from './ScoreModals.module.css'
 
 interface CalcPayoutsModalProps {
   open: boolean
@@ -10,7 +13,7 @@ interface CalcPayoutsModalProps {
 }
 
 /**
- * Shown when the user clicks "Calculate Payouts".
+ * Shown when the user clicks "Calculate payouts".
  * Warns about missing scores or confirms when all scores are present.
  */
 export function CalcPayoutsModal({
@@ -20,62 +23,46 @@ export function CalcPayoutsModal({
   onClose,
   onProceed,
 }: CalcPayoutsModalProps) {
-  if (!open) return null
+  const hasMissing = missingScoreNames.length > 0
 
-  return (
-    <div className="bw-scores-calc-overlay">
-      <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
-        {missingScoreNames.length > 0 ? (
+  if (hasMissing) {
+    return (
+      <Modal
+        open={open}
+        onClose={onClose}
+        role="alertdialog"
+        title="Missing scores"
+        description={`${missingScoreNames.length === 1 ? '1 bowler is' : `${missingScoreNames.length} bowlers are`} missing one or more game scores. Enter every score before calculating payouts so the results are accurate.`}
+        footer={(
           <>
-            <div className="bw-scores-calc-head bw-scores-calc-head-brand">
-              <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Missing Scores</h2>
-            </div>
-            <p className="bw-scores-calc-text bw-scores-calc-text-tight">
-              The following{' '}
-              {missingScoreNames.length === 1 ? 'bowler is' : `${missingScoreNames.length} bowlers are`}{' '}
-              missing one or more game scores. All scores must be entered and finalized before calculating
-              payouts to ensure accurate results.
-            </p>
-            <div className="bw-scores-calc-missing-list">
-              {missingScoreNames.map((name, i) => (
-                <div
-                  key={i}
-                  className={`bw-scores-calc-missing-item ${i < missingScoreNames.length - 1 ? 'bw-scores-calc-missing-item-border' : ''}`}
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
-            <div className="bw-scores-calc-actions">
-              <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onClose}>
-                Go Back &amp; Enter Scores
-              </button>
-              <button className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning" onClick={onProceed}>
-                Proceed Anyway
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="bw-scores-calc-head bw-scores-calc-head-brand">
-              <h2 className="bw-scores-calc-title">All Scores Complete</h2>
-            </div>
-            <p className="bw-scores-calc-text">
-              All {playerCount} bowler{playerCount !== 1 ? 's' : ''} have scores for all 3 games. Confirm
-              these scores are final before calculating payouts. Winners will be determined from these results.
-            </p>
-            <div className="bw-scores-calc-actions">
-              <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onClose}>
-                Cancel
-              </button>
-              <button className="bw-scores-calc-btn bw-scores-calc-btn-primary" onClick={onProceed}>
-                Confirm &amp; Calculate Payouts
-              </button>
-            </div>
+            <Button variant="secondary" onClick={onProceed}>Proceed anyway</Button>
+            <Button variant="primary" onClick={onClose}>Go back and enter scores</Button>
           </>
         )}
-      </div>
-    </div>
+      >
+        <ul className={styles.nameList}>
+          {missingScoreNames.map((name, index) => (
+            <li key={`${name}-${index}`} className={styles.nameRow}>{name}</li>
+          ))}
+        </ul>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      role="alertdialog"
+      title="All scores complete"
+      description={`All ${playerCount} bowler${playerCount !== 1 ? 's' : ''} have scores for all 3 games. Confirm these scores are final before calculating payouts. Winners are determined from these results.`}
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={onProceed}>Confirm and calculate payouts</Button>
+        </>
+      )}
+    />
   )
 }
 
@@ -89,31 +76,21 @@ interface BracketMismatchModalProps {
  */
 export function BracketMismatchModal({ open, onClose }: BracketMismatchModalProps) {
   const router = useRouter()
-  if (!open) return null
 
   return (
-    <div className="bw-scores-calc-overlay">
-      <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
-        <div className="bw-scores-calc-head bw-scores-calc-head-brand">
-          <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Brackets Out of Date</h2>
-        </div>
-        <p className="bw-scores-calc-text">
-          Entries have changed since brackets were generated. Please go to the Brackets page and
-          regenerate brackets before calculating payouts.
-        </p>
-        <div className="bw-scores-calc-actions">
-          <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onClose}>
-            Go Back
-          </button>
-          <button
-            className="bw-scores-calc-btn bw-scores-calc-btn-primary"
-            onClick={() => { onClose(); router.push('/brackets') }}
-          >
-            Go to Brackets
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      role="alertdialog"
+      title="Brackets out of date"
+      description="Entries have changed since brackets were generated. Regenerate brackets on the Brackets page before calculating payouts."
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose}>Go back</Button>
+          <Button variant="primary" onClick={() => { onClose(); router.push('/brackets') }}>Go to brackets</Button>
+        </>
+      )}
+    />
   )
 }
 
@@ -131,45 +108,37 @@ export function UnlockScoresModal({
   onConfirm,
 }: UnlockScoresModalProps) {
   const [reason, setReason] = useState('')
-  if (!open) return null
-
   const trimmedReason = reason.trim()
 
+  useEffect(() => {
+    if (open) setReason('')
+  }, [open])
+
   return (
-    <div className="bw-scores-calc-overlay">
-      <div className="bw-scores-calc-modal bw-scores-calc-modal-brand">
-        <div className="bw-scores-calc-head bw-scores-calc-head-brand">
-          <h2 className="bw-scores-calc-title bw-scores-calc-title-warning">Unlock Scores?</h2>
-        </div>
-        <p className="bw-scores-calc-text">
-          Existing payouts may be invalidated and score changes will be audited. Add a short reason before
-          reopening score entry.
-        </p>
-        <label className="bw-scores-calc-field">
-          <span className="bw-scores-calc-label">Audit reason</span>
-          <textarea
-            className="bw-scores-calc-textarea"
-            value={reason}
-            onChange={event => setReason(event.target.value)}
-            placeholder="Example: correcting a posted Game 2 score"
-            rows={3}
-            autoFocus
-          />
-        </label>
-        <div className="bw-scores-calc-actions">
-          <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onClose} disabled={isSubmitting}>
-            Cancel
-          </button>
-          <button
-            className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning"
-            onClick={() => onConfirm(trimmedReason)}
-            disabled={isSubmitting || !trimmedReason}
-          >
-            {isSubmitting ? 'Unlocking...' : 'Unlock Scores'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      dismissible={!isSubmitting}
+      title="Unlock scores?"
+      description="Existing payouts may no longer be valid, and score changes are recorded. Add a short reason before reopening score entry."
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+          <Button variant="primary" onClick={() => onConfirm(trimmedReason)} disabled={isSubmitting || !trimmedReason}>
+            {isSubmitting ? 'Unlocking...' : 'Unlock scores'}
+          </Button>
+        </>
+      )}
+    >
+      <TextAreaField
+        label="Reason"
+        value={reason}
+        onChange={event => setReason(event.target.value)}
+        helper="For example: correcting a posted game 2 score"
+        rows={3}
+        autoFocus
+      />
+    </Modal>
   )
 }
 
@@ -191,54 +160,39 @@ export function ScoreCorrectionModal({ request, onCancel, onConfirm }: ScoreCorr
     setReason('')
   }, [request])
 
-  if (!request) return null
-
-  const gameNumber = request.field.match(/^game([123])_scratch$/)?.[1] || ''
-  const previousValue = request.previousValue ?? 'blank'
-  const nextValue = request.nextValue ?? 'blank'
+  const gameNumber = request?.field.match(/^game([123])_scratch$/)?.[1] || ''
+  const previousValue = request?.previousValue ?? 'blank'
+  const nextValue = request?.nextValue ?? 'blank'
   const trimmedReason = reason.trim()
 
   return (
-    <div className="bw-scores-calc-overlay">
-      <section
-        className="bw-scores-calc-modal bw-scores-calc-modal-brand"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="score-correction-title"
-      >
-        <div className="bw-scores-calc-head bw-scores-calc-head-brand">
-          <h2 id="score-correction-title" className="bw-scores-calc-title bw-scores-calc-title-warning">
-            Confirm Score Correction
-          </h2>
-        </div>
-        <p className="bw-scores-calc-text">
-          Change Game {gameNumber} for <strong>{request.playerName}</strong> from{' '}
-          <strong>{previousValue}</strong> to <strong>{nextValue}</strong>? This correction will be recorded.
-        </p>
-        <label className="bw-scores-calc-field">
-          <span className="bw-scores-calc-label">Audit reason</span>
-          <textarea
-            className="bw-scores-calc-textarea"
+    <Modal
+      open={request !== null}
+      onClose={onCancel}
+      title="Confirm score correction"
+      footer={(
+        <>
+          <Button variant="secondary" onClick={onCancel}>Cancel</Button>
+          <Button variant="primary" onClick={() => onConfirm(trimmedReason)} disabled={!trimmedReason}>Save correction</Button>
+        </>
+      )}
+    >
+      {request ? (
+        <div className={styles.body}>
+          <p className={styles.text}>
+            Change game {gameNumber} for <strong>{request.playerName}</strong> from{' '}
+            <strong>{previousValue}</strong> to <strong>{nextValue}</strong>? This correction is recorded.
+          </p>
+          <TextAreaField
+            label="Reason"
             value={reason}
             onChange={event => setReason(event.target.value)}
-            placeholder="Example: correcting a posted Game 2 score"
+            helper="For example: correcting a posted game 2 score"
             rows={3}
             autoFocus
           />
-        </label>
-        <div className="bw-scores-calc-actions">
-          <button className="bw-scores-calc-btn bw-scores-calc-btn-secondary" onClick={onCancel}>
-            Cancel
-          </button>
-          <button
-            className="bw-scores-calc-btn bw-scores-calc-btn-primary bw-scores-calc-btn-warning"
-            onClick={() => onConfirm(trimmedReason)}
-            disabled={!trimmedReason}
-          >
-            Save Correction
-          </button>
         </div>
-      </section>
-    </div>
+      ) : null}
+    </Modal>
   )
 }

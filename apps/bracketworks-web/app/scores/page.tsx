@@ -3,24 +3,32 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { Player } from '../lib/types'
 import Link from 'next/link'
-import { RefreshCcw, Search, UserRound, Zap } from 'lucide-react'
+import { BookOpen, Calculator, ClipboardList, Eraser, FileSpreadsheet, FileText, LockOpen, Printer, RefreshCcw, Search, Shuffle, Undo2, Upload } from 'lucide-react'
+import {
+  Badge,
+  Button,
+  Card,
+  CardDivider,
+  CardHeader,
+  EmptyState,
+  ICON_SIZE,
+  Notice,
+  Page,
+  PageHeader,
+  ProgressBar,
+  TextField,
+  buttonClassName,
+} from '@bracketworks/ui'
 
 import { useAuth } from '../lib/auth-context'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import ActionConfirmDialog from '../components/ActionConfirmDialog'
 import { API, apiFetch, getMemoryAccessToken } from '../lib/api'
-import EnhancedButton from '../components/EnhancedButton'
-import { MobileLayout } from '../../components/MobileLayout'
-import { Spinner } from '../components/LoadingComponents'
-import styles from './scores.module.css'
-import cardStyles from '../styles/cards.module.css'
-import buttonStyles from '../styles/buttons.module.css'
-import formStyles from '../styles/forms.module.css'
-import shellStyles from '../styles/page-shell.module.css'
+import styles from './components/ScoreTable.module.css'
 import { useToast } from '../components/Toast'
 import { useAutoSave } from '../components/DataManagement'
 import NoTournamentState from '../components/NoTournamentState'
-import { QuickActions, SearchPanel } from '../components/primitives'
+import { formatSquadDate } from '../lib/squadDate'
 import { getSelectedTournamentId, getSelectedSquadId } from '../lib/selection-session'
 import { MOBILE_VIEWPORT_QUERY } from '../lib/responsive'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -134,7 +142,6 @@ export default function ScoresPage() {
 
   // ── Derived counts ─────────────────────────────────────────────────────────
   const completedScoreCount = useMemo(() => players.filter(p => !hasMissingScore(p)).length, [players])
-  const scoreCompletionPercent = players.length > 0 ? Math.round((completedScoreCount / players.length) * 100) : 0
   const showInitialScoresLoad = isLoading && players.length === 0
 
   // ── Pre-payouts check: bracket mismatch + missing scores ───────────────────
@@ -271,53 +278,89 @@ export default function ScoresPage() {
     addToast({ message: failed > 0 && successful === 0 ? 'Randomize failed to save to database.' : failed > 0 ? `Randomized ${successful} players. ${failed} failed to save.` : `Randomized and saved ${successful} players.`, type: failed > 0 && successful === 0 ? 'error' : failed > 0 ? 'warning' : 'success', duration: failed > 0 && successful === 0 ? 4500 : 3500 })
   }, [sessionToken, addToast, playersRef, selectedSquadRef, setPlayers])
 
-  // ── Quick actions bar ──────────────────────────────────────────────────────
-  const scoresQuickActions = useMemo(() => (
-    <QuickActions
-      left={(
+  // ── Quick actions ──────────────────────────────────────────────────────────
+  const showAdminTools = (process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0
+  const scoresQuickActions = (
+    <Card aria-label="Quick actions">
+      <CardHeader title="Quick actions" />
+      <div className={styles.actionRow}>
+        {players.length > 0 && !isScoresLocked ? (
+          <Button variant="primary" icon={<Calculator size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void markScoresComplete() }}>
+            Calculate payouts
+          </Button>
+        ) : null}
+        {players.length > 0 && isScoresLocked ? (
+          <Button variant="primary" icon={<LockOpen size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setShowUnlockScoresConfirm(true)}>
+            Unlock scores
+          </Button>
+        ) : null}
+        {pendingSaves.length > 0 ? (
+          <Button
+            variant="secondary"
+            icon={<RefreshCcw size={ICON_SIZE.md} aria-hidden="true" />}
+            onClick={async () => { await processPendingSaves(); addToast({ message: 'Offline scores synced.', type: 'success', duration: 3000 }) }}
+          >
+            Sync offline scores ({pendingSaves.length})
+          </Button>
+        ) : null}
+        <Button variant="secondary" icon={<Upload size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>
+          {isImporting ? 'Importing...' : 'Import from Excel'}
+        </Button>
+        <Button variant="secondary" icon={<FileSpreadsheet size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleExportScoresToExcel} disabled={isExporting || players.length === 0}>
+          {isExporting ? 'Exporting...' : 'Export to Excel'}
+        </Button>
+        <Button variant="secondary" icon={<FileText size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>
+          {isExportingPdf ? 'Preparing...' : 'Export to PDF'}
+        </Button>
+        <Button variant="secondary" icon={<Printer size={ICON_SIZE.md} aria-hidden="true" />} onClick={handlePrintBlankScoreSheet} disabled={isExportingPdf || players.length === 0}>
+          Print blank score sheet
+        </Button>
+        <Button variant="ghost" icon={<BookOpen size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => setIsScoresGuideOpen(true)}>
+          Scores guide
+        </Button>
+      </div>
+      {showAdminTools ? (
         <>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => setIsScoresGuideOpen(true)}>Scores Guide</button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToExcel} disabled={isExporting || players.length === 0}>{isExporting ? 'Exporting...' : 'Export to Excel'}</button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handleExportScoresToPdf} disabled={isExportingPdf || players.length === 0}>{isExportingPdf ? 'Preparing...' : 'Export to PDF'}</button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={handlePrintBlankScoreSheet} disabled={isExportingPdf || players.length === 0}>Print Blank Score Sheet</button>
-          <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => importFileRef.current?.click()} disabled={isImporting || players.length === 0 || isScoresLocked}>{isImporting ? 'Importing...' : 'Import from Excel'}</button>
-          {players.length > 0 && !isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => { void markScoresComplete() }}>Calculate Payouts</button>}
-          {players.length > 0 && isScoresLocked && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.quickAction}`} onClick={() => setShowUnlockScoresConfirm(true)}>Unlock Scores</button>}
+          <CardDivider />
+          <h3 className={styles.overline}>Admin tools</h3>
+          <div className={styles.actionRow}>
+            <Button size="sm" variant="secondary" icon={<Shuffle size={ICON_SIZE.md} aria-hidden="true" />} onClick={handleRandomizeScores} disabled={isScoresLocked}>
+              Randomize scores
+            </Button>
+            <Button size="sm" variant="ghost-danger" icon={<Eraser size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => requestClearGame(2)} disabled={isScoresLocked}>
+              Clear game 2
+            </Button>
+            <Button size="sm" variant="ghost-danger" icon={<Eraser size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => requestClearGame(3)} disabled={isScoresLocked}>
+              Clear game 3
+            </Button>
+          </div>
         </>
-      )}
-      right={(
-        <>
-          {pendingSaves.length > 0 && (
-            <EnhancedButton onClick={async () => { await processPendingSaves(); addToast({ message: 'Sync completed!', type: 'success', duration: 3000 }) }} variant="primary" size="sm" className={`${cardStyles.quickActionControl} ${buttonStyles.quickAction}`}>
-              Sync Offline Scores ({pendingSaves.length})
-            </EnhancedButton>
-          )}
-          {(process.env.NODE_ENV === 'development' || !!currentUser?.isAdmin) && players.length > 0 && (
-            <>
-              <span className={styles.quickActionAdminLabel}>Admin tools</span>
-              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={handleRandomizeScores} disabled={isScoresLocked}>Randomize Scores</button>
-              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={() => requestClearGame(2)} disabled={isScoresLocked}>Clear Game 2</button>
-              <button className={`${cardStyles.quickActionControl} ${styles.adminButton} ${styles.quickActionAdminBtn}`} onClick={() => requestClearGame(3)} disabled={isScoresLocked}>Clear Game 3</button>
-            </>
-          )}
-        </>
-      )}
-    />
-  ), [players.length, pendingSaves.length, isExporting, isExportingPdf, isImporting, isScoresLocked, currentUser, addToast, handleExportScoresToExcel, handleExportScoresToPdf, handlePrintBlankScoreSheet, handleRandomizeScores, markScoresComplete, processPendingSaves, requestClearGame])
+      ) : null}
+    </Card>
+  )
 
   // ── Auth guards (must be after all hooks) ─────────────────────────────────
-  if (!isAuthInitialized) return <div className={styles.loadingState}><div role="status">Loading scores...</div></div>
-  if (!isUserAuthenticated && !hasStoredAuth) return <div className={styles.authRequired}><div>Please log in to access score management</div></div>
-  if (!isUserAuthenticated && hasStoredAuth) return <div className={styles.authRequired}><div role="status">Loading scores...</div></div>
+  if (!isAuthInitialized || (!isUserAuthenticated && hasStoredAuth)) {
+    return <Page><p className={styles.status} role="status">Loading scores...</p></Page>
+  }
+  if (!isUserAuthenticated && !hasStoredAuth) {
+    return (
+      <Page>
+        <Card>
+          <EmptyState title="Log in to enter scores" description="Please log in to manage scores for your tournament." />
+        </Card>
+      </Page>
+    )
+  }
   if (typeof window !== 'undefined' && !getSelectedTournamentId()) {
     return (
       <NoTournamentState
-        title="Scoring Console Waiting"
+        title="Scoring console waiting"
         description="Load a tournament to start entering game scores, validating round totals, and keeping standings current."
         cards={[
-          { title: 'Capture Results Fast', text: 'Record each game directly in the score sheet for fast lane-side updates.' },
-          { title: 'Stay Continuously Saved', text: 'Edits save as you type, so your progress stays protected between updates.' },
-          { title: 'Find Bowlers Quickly', text: 'Sort and filter by name, average, or score to correct and confirm entries quickly.' },
+          { title: 'Capture results fast', text: 'Record each game directly in the score sheet for fast lane-side updates.' },
+          { title: 'Stay saved', text: 'Edits save as you type, so your progress stays protected between updates.' },
+          { title: 'Find bowlers quickly', text: 'Sort and filter by name, average, or score to correct and confirm entries quickly.' },
         ]}
       />
     )
@@ -325,21 +368,31 @@ export default function ScoresPage() {
   if (!showInitialScoresLoad && typeof window !== 'undefined' && !getSelectedSquadId() && !selectedSquad) {
     return (
       <NoTournamentState
-        title="Scores Need a Squad"
+        title="Scores need a squad"
         description="Select a squad from the dashboard to open scoring for that session."
-        cards={[{ title: 'Open the Right Session', text: 'Choose the squad first, then enter game-by-game scores for its bowlers.' }]}
+        cards={[{ title: 'Open the right session', text: 'Choose the squad first, then enter game-by-game scores for its bowlers.' }]}
       />
     )
   }
+
+  const squadLabel = selectedSquad
+    ? `${formatSquadDate(selectedSquad.date)} · ${selectedSquad.time || 'Time pending'} squad`
+    : null
+  const hasSavedRows = Object.values(rowSaveState).some(state => state === 'saved')
+  const saveLine = rowStateCounts.failed > 0
+    ? `Failed to save ${rowStateCounts.failed} score${rowStateCounts.failed > 1 ? 's' : ''}`
+    : rowStateCounts.saving > 0
+      ? `Saving ${rowStateCounts.saving}...`
+      : hasSavedRows ? 'All scores saved' : 'Scores save as you type'
 
   return (
     <ErrorBoundary>
       <>
         <ActionConfirmDialog
           open={clearGameConfirm !== null}
-          title="Clear Game Scores?"
-          message={clearGameConfirm !== null ? `Clear all Game ${clearGameConfirm} scores for this tournament/squad? This cannot be undone.` : ''}
-          confirmLabel="Clear Scores"
+          title="Clear game scores?"
+          message={clearGameConfirm !== null ? `Clear all game ${clearGameConfirm} scores for this squad? This cannot be undone.` : ''}
+          confirmLabel="Clear scores"
           cancelLabel="Cancel"
           onCancel={() => setClearGameConfirm(null)}
           onConfirm={() => { if (clearGameConfirm !== null) void clearGameScores(clearGameConfirm); setClearGameConfirm(null) }}
@@ -366,174 +419,130 @@ export default function ScoresPage() {
         <ExplainScoresModal isOpen={isScoresGuideOpen} onClose={() => setIsScoresGuideOpen(false)} />
         <input ref={importFileRef} type="file" accept=".xlsx,.xls" onChange={handleImportScoresFileSelected} className="sr-only" />
 
-        {isMobile ? (
-          <MobileLayout padding="small" className={styles.mobileScoresLayoutShell}>
-            <div className={styles.mobileScoresPage}>
-              <div className={styles.mobileScoresToolbarSticky}>
-                {tournament && (
-                  <div className={styles.mobileScoresContextCard}>
-                    <span className={styles.mobileScoresContextTitle}>{tournament.name}</span>
-                    {selectedSquad && <span className={styles.mobileScoresContextMeta}>Squad: {selectedSquad.date} - {selectedSquad.time}</span>}
-                  </div>
-                )}
-                <div className={styles.mobileSaveBar}>
-                  {rowStateCounts.saving > 0 && <span>Saving {rowStateCounts.saving}...</span>}
-                  {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && <span>Auto-save on</span>}
-                  {rowStateCounts.failed > 0 && <span>{rowStateCounts.failed} failed</span>}
-                  {lastEdit && <button className={`${buttonStyles.button} ${buttonStyles.small} ${buttonStyles.secondary} ${styles.mobileUndoBtn}`} onClick={undoLastEdit}>Undo</button>}
-                </div>
-              </div>
-              {tournament && (
-                <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.mobileQuickActionsCard}`}>
-                  <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle}`}>Quick Actions</h2>
-                  <div className={cardStyles.quickActionsBody}>{scoresQuickActions}</div>
-                </div>
-              )}
-              {!tournament && !isLoading && (
-                <NoTournamentState
-                  description="Load a tournament from the dashboard to enter game scores, review totals, and prepare payout calculations."
-                  cards={[
-                    { title: 'Score Entry', text: "Record each bowler's game scores with totals calculated as you work." },
-                    { title: 'Auto-Save', text: 'Changes save in the background so live scoring stays focused and fast.' },
-                    { title: 'Payout Ready', text: 'Use completed scores to unlock payout review when the squad is finalized.' },
-                  ]}
-                />
-              )}
-              {showInitialScoresLoad && <div className={styles.mobileLoadingWrap}><Spinner size="lg" /></div>}
-              {!showInitialScoresLoad && paginationHook.paginatedItems.length > 0 && (
-                <MobileScoreCardList
-                  paginatedItems={paginationHook.paginatedItems}
-                  expandedPlayers={mobileExpandedPlayers}
-                  rowSaveState={rowSaveState}
-                  isScoresLocked={isScoresLocked}
-                  currentPage={paginationHook.currentPage}
-                  totalPages={paginationHook.totalPages}
-                  onToggleExpand={id => setMobileExpandedPlayers(prev => ({ ...prev, [id]: !prev[id] }))}
-                  onUpdateScore={updateScore}
-                  onFocusNext={focusNextMobileInput}
-                  onSaveAll={saveAllVisibleScores}
-                  onPageChange={paginationHook.goToPage}
-                />
-              )}
-            </div>
-          </MobileLayout>
+        {!tournament && !showInitialScoresLoad ? (
+          <NoTournamentState
+            description="Load a tournament from the dashboard before entering scores. Once loaded, this page becomes the live scoring workspace for the selected squad."
+            cards={[
+              { title: 'Enter games', text: 'Record scratch scores for each game and review handicap-adjusted totals.' },
+              { title: 'Live save status', text: 'See when rows are saving, saved, or need attention during score entry.' },
+              { title: 'Calculate payouts', text: 'Finalize scores and move directly into payout review when the squad is complete.' },
+            ]}
+          />
         ) : (
-          <div className={`${shellStyles.page} ${styles.desktopContainer}`}>
-            {!tournament && !showInitialScoresLoad && (
-              <NoTournamentState
-                description="Load a tournament from the dashboard before entering scores. Once loaded, this page becomes the live scoring workspace for the selected squad."
-                cards={[
-                  { title: 'Enter Games', text: 'Record scratch scores for each game and review handicap-adjusted totals.' },
-                  { title: 'Live Save Status', text: 'See when rows are saving, saved, or need attention during score entry.' },
-                  { title: 'Calculate Payouts', text: 'Finalize scores and move directly into payout review when the squad is complete.' },
-                ]}
-              />
-            )}
-            {!isOnline && (
-              <div className="notification notification-warning">
-                <div className="offline-indicator">
-                  <span />
-                  <span>You are offline. Scores are being saved locally and will sync when connection is restored.</span>
-                  {pendingSaves.length > 0 && <span className="pending-count">{pendingSaves.length} pending</span>}
-                </div>
-              </div>
-            )}
-            {showInitialScoresLoad && <div className={styles.statusMessage}><span role="status">Loading players and scores...</span></div>}
-            {tournament && (
+          <Page>
+            <PageHeader
+              title="Scores"
+              badge={isScoresLocked ? <Badge tone="neutral">Locked</Badge> : undefined}
+              description={[tournament?.name, squadLabel].filter(Boolean).join(' · ') || undefined}
+            />
+
+            {!isOnline ? (
+              <Notice tone="warning" role="status">
+                You are offline. Scores are saved on this device and sync when the connection is back.
+                {pendingSaves.length > 0 ? ` ${pendingSaves.length} waiting to sync.` : ''}
+              </Notice>
+            ) : null}
+
+            {showInitialScoresLoad ? (
+              <Card aria-label="Scores">
+                <p className={styles.status} role="status">Loading players and scores...</p>
+              </Card>
+            ) : tournament ? (
               <>
-                <div className={`${cardStyles.card} ${cardStyles.quickActionsCard} ${styles.scoresQuickActionsCard} ${styles.desktopWidthLockedCard}`}>
-                  <h2 className={`${cardStyles.cardHeader} ${cardStyles.cardHeaderDense} ${cardStyles.quickActionsTitle} ${styles.scoresQuickActionsTitle}`}>
-                    <Zap aria-hidden="true" />Quick Actions
-                  </h2>
-                  <div className={cardStyles.quickActionsBody}>{scoresQuickActions}</div>
-                </div>
-                {!showInitialScoresLoad && players.length === 0 && (
-                  <div className={`${cardStyles.card} ${styles.emptyScoresState}`}>
-                    <div className={styles.emptyScoresBadge}>Tournament Ready</div>
-                    <div className={styles.emptyScoresHeroRow}>
-                      <div className={styles.emptyScoresIconContainer}>
-                        <div className={styles.emptyScoresIcon}>
-                          <svg viewBox="0 0 100 100" className={styles.emptyScoresIconSvg} aria-hidden="true">
-                            <rect x="18" y="18" width="64" height="64" rx="8" ry="8" fill="none" stroke="currentColor" strokeWidth="4" />
-                            <line x1="30" y1="38" x2="70" y2="38" stroke="currentColor" strokeWidth="4" />
-                            <line x1="30" y1="54" x2="70" y2="54" stroke="currentColor" strokeWidth="4" />
-                            <line x1="30" y1="70" x2="55" y2="70" stroke="currentColor" strokeWidth="4" />
-                          </svg>
-                        </div>
-                      </div>
-                      <div>
-                        <h2 className={styles.emptyScoresTitle}>No players loaded for this squad yet</h2>
-                        <p className={styles.emptyScoresText}>Scores will appear here once entries have been added for the selected tournament and squad. Start by loading players into Entries, then come back here to enter game scores.</p>
-                      </div>
-                    </div>
-                    <div className={styles.emptyScoresActions}>
-                      <Link href="/players" className={`${styles.emptyScoresPrimaryAction} ${buttonStyles.button} ${buttonStyles.primary} ${buttonStyles.medium}`}>Go To Entries</Link>
-                      <Link href="/dashboard" className={`${styles.emptyScoresSecondaryAction} ${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.medium}`}>Back To Dashboard</Link>
-                    </div>
-                    <div className={styles.emptyScoresFeaturesGrid}>
-                      <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}><h3>Load Entries</h3><p>Add bowlers in Entries for the selected tournament and squad before entering any scores.</p></div>
-                      <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}><h3>Enter Game Scores</h3><p>Capture game-by-game scratch scores and let handicap totals calculate automatically.</p></div>
-                      <div className={`${cardStyles.panel} ${styles.emptyScoresFeatureCard}`}><h3>Track Results</h3><p>Sort and review totals quickly to prepare clean bracket seeding and payouts.</p></div>
-                    </div>
-                  </div>
-                )}
-                {!showInitialScoresLoad && players.length > 0 && <div className="mobile-scroll-hint">Scroll horizontally to see all score columns</div>}
-                {!showInitialScoresLoad && players.length > 0 && (
-                  <div className={styles.desktopWidthLockedCard}>
-                    <SearchPanel
-                      className={styles.scoresSearchCard}
-                      title={<span className={styles.scoresSearchHeading}><Search aria-hidden="true" />Search Scores</span>}
-                      useToolbar={false}
-                      accented={false}
-                      left={(
+                {scoresQuickActions}
+
+                {players.length === 0 ? (
+                  <Card aria-label="Scores">
+                    <EmptyState
+                      icon={<ClipboardList size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                      title="No bowlers in this squad yet"
+                      description="Add entries for this squad first, then come back to enter game scores."
+                      action={(
                         <>
-                          <label className={styles.scoresSearchInputWrap}>
-                            <UserRound aria-hidden="true" />
-                            <input type="text" className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`} placeholder="First name" aria-label="First name" value={searchFirstName} onChange={e => setSearchFirstName(e.target.value)} />
-                          </label>
-                          <label className={styles.scoresSearchInputWrap}>
-                            <UserRound aria-hidden="true" />
-                            <input type="text" className={`${formStyles.search} ${formStyles.compactControl} ${styles.scoresSearchInput}`} placeholder="Last name" aria-label="Last name" value={searchLastName} onChange={e => setSearchLastName(e.target.value)} />
-                          </label>
+                          <Link href="/players" className={buttonClassName({ variant: 'primary' })}>Go to entries</Link>
+                          <Link href="/dashboard" className={buttonClassName({ variant: 'secondary' })}>Back to dashboard</Link>
                         </>
                       )}
-                      right={(
-                        <button type="button" className={styles.scoresSearchClear} onClick={() => { setSearchFirstName(''); setSearchLastName('') }}>
-                          <RefreshCcw aria-hidden="true" />Clear
-                        </button>
-                      )}
                     />
-                  </div>
-                )}
-                {!showInitialScoresLoad && filteredPlayers.length > 0 && (
+                  </Card>
+                ) : (
                   <>
-                    {rowStateCounts.saving > 0 && <div className={`table-save-status table-save-status--saving ${styles.tableSaveStatus}`}>Saving...</div>}
-                    {rowStateCounts.saving === 0 && rowStateCounts.failed === 0 && Object.values(rowSaveState).some(s => s === 'saved') && (
-                      <div className={`table-save-status table-save-status--success ${styles.tableSaveStatus}`}>All scores saved</div>
-                    )}
-                    {rowStateCounts.failed > 0 && <div className={`table-save-status table-save-status--error ${styles.tableSaveStatus}`}>Failed to save {rowStateCounts.failed} score{rowStateCounts.failed > 1 ? 's' : ''}</div>}
-                    <ScoreEntryTable
-                      paginatedItems={paginationHook.paginatedItems}
-                      filteredPlayers={filteredPlayers}
-                      selectedSquad={selectedSquad}
-                      sortConfig={sortConfig}
-                      onSort={handleSort}
-                      rowSaveState={rowSaveState}
-                      isScoresLocked={isScoresLocked}
-                      onUpdateScore={updateScore}
-                      onKeyDown={handleKeyDown}
-                      completedScoreCount={completedScoreCount}
-                      scoreCompletionPercent={scoreCompletionPercent}
-                      currentPage={paginationHook.currentPage}
-                      totalPages={paginationHook.totalPages}
-                      onPageChange={paginationHook.goToPage}
-                      totalItems={filteredPlayers.length}
-                    />
+                    <Card aria-label="Search scores">
+                      <CardHeader title="Search scores" />
+                      <div className={styles.searchForm}>
+                        <TextField label="First name" value={searchFirstName} onChange={e => setSearchFirstName(e.target.value)} />
+                        <TextField label="Last name" value={searchLastName} onChange={e => setSearchLastName(e.target.value)} />
+                        <Button variant="ghost" onClick={() => { setSearchFirstName(''); setSearchLastName('') }} disabled={!searchFirstName && !searchLastName}>
+                          Clear
+                        </Button>
+                      </div>
+                    </Card>
+
+                    <Card padding="flush" aria-label="Scores">
+                      <CardHeader
+                        title="Scores"
+                        description={squadLabel ?? undefined}
+                        actions={(
+                          <div className={styles.headerMeta}>
+                            <ProgressBar
+                              value={completedScoreCount}
+                              max={players.length}
+                              label="Bowlers scored"
+                              valueText={`${completedScoreCount} of ${players.length} scored`}
+                            />
+                            <p className={rowStateCounts.failed > 0 ? styles.saveLineError : styles.saveLine} role="status">
+                              {saveLine}
+                            </p>
+                            {isMobile && lastEdit ? (
+                              <Button size="sm" variant="ghost" icon={<Undo2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={undoLastEdit}>Undo</Button>
+                            ) : null}
+                          </div>
+                        )}
+                      />
+                      {filteredPlayers.length === 0 ? (
+                        <EmptyState
+                          icon={<Search size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                          title="No matching bowlers"
+                          description="Try a different first or last name."
+                          action={<Button variant="secondary" onClick={() => { setSearchFirstName(''); setSearchLastName('') }}>Clear search</Button>}
+                        />
+                      ) : isMobile ? (
+                        <MobileScoreCardList
+                          paginatedItems={paginationHook.paginatedItems}
+                          expandedPlayers={mobileExpandedPlayers}
+                          rowSaveState={rowSaveState}
+                          isScoresLocked={isScoresLocked}
+                          currentPage={paginationHook.currentPage}
+                          totalPages={paginationHook.totalPages}
+                          totalItems={filteredPlayers.length}
+                          onToggleExpand={id => setMobileExpandedPlayers(prev => ({ ...prev, [id]: !prev[id] }))}
+                          onUpdateScore={updateScore}
+                          onFocusNext={focusNextMobileInput}
+                          onSaveAll={saveAllVisibleScores}
+                          onPageChange={paginationHook.goToPage}
+                        />
+                      ) : (
+                        <ScoreEntryTable
+                          paginatedItems={paginationHook.paginatedItems}
+                          filteredPlayers={filteredPlayers}
+                          sortConfig={sortConfig}
+                          onSort={handleSort}
+                          rowSaveState={rowSaveState}
+                          isScoresLocked={isScoresLocked}
+                          onUpdateScore={updateScore}
+                          onKeyDown={handleKeyDown}
+                          currentPage={paginationHook.currentPage}
+                          totalPages={paginationHook.totalPages}
+                          onPageChange={paginationHook.goToPage}
+                          totalItems={filteredPlayers.length}
+                        />
+                      )}
+                    </Card>
                   </>
                 )}
               </>
-            )}
-          </div>
+            ) : null}
+          </Page>
         )}
       </>
     </ErrorBoundary>

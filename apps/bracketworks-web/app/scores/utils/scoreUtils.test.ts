@@ -96,15 +96,15 @@ describe('needsReviewScore', () => {
 // ─── getPlayerScoreStatus ─────────────────────────────────────────────────
 
 describe('getPlayerScoreStatus', () => {
-  it('returns Not Started when no scores entered', () => {
+  it('returns Not started when no scores entered', () => {
     const status = getPlayerScoreStatus(makePlayer())
-    expect(status.label).toBe('Not Started')
+    expect(status.label).toBe('Not started')
     expect(status.tone).toBe('pending')
   })
 
-  it('returns In Progress when some scores entered', () => {
+  it('returns In progress when some scores entered', () => {
     const status = getPlayerScoreStatus(makePlayer({ game1_scratch: 200 }))
-    expect(status.label).toBe('In Progress')
+    expect(status.label).toBe('In progress')
     expect(status.tone).toBe('progress')
   })
 
