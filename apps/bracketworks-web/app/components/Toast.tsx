@@ -1,7 +1,16 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import CloseControl from '../../components/CloseControl';
+import { CircleAlert, CircleCheck, Info, TriangleAlert, X } from 'lucide-react';
+import { Button, ICON_SIZE } from '@bracketworks/ui';
+import styles from './Toast.module.css';
+
+const TOAST_ICONS = {
+  success: CircleCheck,
+  error: CircleAlert,
+  warning: TriangleAlert,
+  info: Info,
+} as const;
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -103,92 +112,47 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
     setTimeout(() => onRemove(toast.id), 200);
   };
 
-  const typeStyles = {
-    success: {
-      bg: 'bg-green-50 border-green-200',
-      icon: '',
-      iconColor: 'text-green-600',
-      titleColor: 'text-green-800',
-      messageColor: 'text-green-700',
-    },
-    error: {
-      bg: 'bg-red-50 border-red-200',
-      icon: '',
-      iconColor: 'text-red-600',
-      titleColor: 'text-red-800',
-      messageColor: 'text-red-700',
-    },
-    warning: {
-      bg: 'bg-yellow-50 border-yellow-200',
-      icon: '',
-      iconColor: 'text-yellow-600',
-      titleColor: 'text-yellow-800',
-      messageColor: 'text-yellow-700',
-    },
-    info: {
-      bg: 'bg-blue-50 border-blue-200',
-      icon: 'ℹ',
-      iconColor: 'text-blue-600',
-      titleColor: 'text-blue-800',
-      messageColor: 'text-blue-700',
-    },
-  };
-
-  const styles = typeStyles[toast.type];
+  const Icon = TOAST_ICONS[toast.type];
 
   return (
     <div
-      className={`
-        relative flex items-start p-4 mb-3 border rounded-lg shadow-lg transition-all duration-300 ease-in-out
-        ${styles.bg} ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        ${isExiting ? 'translate-x-full opacity-0' : ''}
-      `}
-      role="alert"
-      aria-live="polite"
+      className={styles.toast}
+      data-visible={isVisible && !isExiting ? 'true' : 'false'}
+      role={toast.type === 'error' ? 'alert' : 'status'}
+      aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
     >
-      <div className={`flex-shrink-0 ${styles.iconColor} text-xl mr-3`}>
-        {styles.icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        {toast.title && (
-          <h4 className={`text-sm font-medium ${styles.titleColor} mb-1`}>
-            {toast.title}
-          </h4>
-        )}
-        <p className={`text-sm ${styles.messageColor}`}>
-          {toast.message}
-        </p>
-        {toast.actions && toast.actions.length > 0 && (
-          <div className="mt-3 flex gap-2">
+      <Icon size={ICON_SIZE.md} aria-hidden="true" className={styles[toast.type]} />
+      <div className={styles.text}>
+        {toast.title ? <p className={styles.title}>{toast.title}</p> : null}
+        <p className={styles.message}>{toast.message}</p>
+        {toast.actions && toast.actions.length > 0 ? (
+          <div className={styles.actions}>
             {toast.actions.map((action, index) => (
-              <button
+              <Button
                 key={index}
+                size="sm"
+                variant={action.variant === 'primary' ? 'primary' : 'secondary'}
                 onClick={() => {
                   action.onClick();
                   handleRemove();
                 }}
-                className={`
-                  px-3 py-1 text-xs font-medium rounded
-                  ${action.variant === 'primary' 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                  }
-                `}
               >
                 {action.label}
-              </button>
+              </Button>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
-      {toast.dismissible && (
-        <CloseControl
+      {toast.dismissible ? (
+        <Button
+          size="sm"
+          variant="ghost"
+          iconOnly
+          icon={<X size={ICON_SIZE.md} aria-hidden="true" />}
+          aria-label="Dismiss notification"
           onClick={handleRemove}
-          className={`ml-2 ${styles.iconColor}`}
-          label="Dismiss notification"
-          size="xs"
         />
-      )}
+      ) : null}
     </div>
   );
 };
@@ -200,7 +164,7 @@ export const ToastContainer: React.FC = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 w-80 max-w-sm">
+    <div className={styles.stack}>
       {toasts.map(toast => (
         <ToastComponent
           key={toast.id}

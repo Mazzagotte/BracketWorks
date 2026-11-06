@@ -1,0 +1,85 @@
+/* Toasts (docs/ui-standards.md section 8): card surface, radius-lg, elevation-2, status icon. */
+
+.stack {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(calc(100vw - var(--space-8)), calc(var(--space-20) * 4.5));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 1px solid var(--bw-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bw-surface-card);
+  box-shadow: var(--elevation-2);
+  opacity: 0;
+}
+
+.toast[data-visible='true'] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
+  }
+}
+
+.success,
+.error,
+.warning,
+.info {
+  flex-shrink: 0;
+  margin-top: var(--space-0-5);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+.info {
+  color: var(--color-info);
+}
+
+.text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.message {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
