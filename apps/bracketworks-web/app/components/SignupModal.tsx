@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { Building2, Lock, Mail, User } from 'lucide-react';
-import AuthFeedback from './AuthFeedback';
+import { Button, CardDivider, FormGrid, Modal, Notice, PasswordField, TextField } from '@bracketworks/ui';
+
+import BWAuthShell from './BWAuthShell';
 import PasswordStrengthPanel from './PasswordStrengthPanel';
-import PasswordVisibilityToggle from './PasswordVisibilityToggle';
 import { useSignupForm } from '../hooks/useSignupForm';
 import { getSignupValidationError, submitSignup } from '../lib/auth/signup';
 import { logger } from '../lib/logger';
-import CloseControl from '../../components/CloseControl';
-import styles from './SignupModal.module.css';
-import { ICON_SIZE } from '@bracketworks/ui';
+import styles from './SignupModal.module.css';
 
 interface SignupModalProps {
   mode?: 'modal' | 'page';
@@ -21,27 +19,24 @@ interface SignupModalProps {
   onSuccess?: (message: string) => void;
 }
 
+const FORM_ID = 'signup-form';
+const STRENGTH_LABELS = ['Very weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very strong'];
+
+/** Create an account: the /signup page (inside BWAuthShell) or a dialog opened from login. */
 export default function SignupModal({ mode = 'modal', isOpen = false, onClose, onSuccess }: SignupModalProps) {
   const router = useRouter();
   const isPageMode = mode === 'page';
-  const shouldRender = isPageMode || isOpen;
+  const idPrefix = isPageMode ? 'signup' : 'modal-signup';
   const successCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const {
     checkingUsername,
-    fieldValidity,
     isFormReady,
-    mounted,
     passwordRequirementChecks,
     passwordStrength,
     resetForm,
-    setShowConfirmPassword,
-    setShowPassword,
-    setShowPasswordRequirements,
-    showConfirmPassword,
-    showPassword,
     showPasswordRequirements,
     updateValue,
     usernameAvailable,
@@ -72,6 +67,11 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
   const clearTransientFeedback = () => {
     if (error) setError('');
     if (signupSuccess) setSignupSuccess(false);
+  };
+
+  const handleChange = (field: Parameters<typeof updateValue>[0]) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    clearTransientFeedback();
+    updateValue(field, event.target.value);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -128,10 +128,6 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
     }
   };
 
-  const getStrengthText = () => {
-    const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
-    return labels[passwordStrength] || '';
-  };
   const strengthTone = useMemo(() => {
     if (passwordStrength <= 1) return 'weak';
     if (passwordStrength === 2) return 'fair';
@@ -140,258 +136,159 @@ export default function SignupModal({ mode = 'modal', isOpen = false, onClose, o
   }, [passwordStrength]);
   const passwordStrengthPercent = Math.max(passwordStrength * 20, 8);
 
-  const inputClass = (valid: boolean, hasError?: boolean) =>
-    `surface-authInput ${valid ? 'surface-authInputValid' : ''} ${hasError ? 'surface-authInputError' : ''}`;
+  const usernameError = usernameAvailable === false && !checkingUsername ? 'Username is taken' : undefined;
+  const usernameHelper = checkingUsername
+    ? 'Checking availability...'
+    : 'Choose a unique username. Do not use your email address.';
+  const submitLabel = loading ? 'Creating account...' : 'Create account';
+  const submitDisabled = loading || !isFormReady;
 
-  const handleLoginIntent = useCallback(() => {
-    if (isPageMode) {
-      router.push('/login');
-      return;
-    }
-    onClose?.();
-  }, [isPageMode, router, onClose]);
+  if (!isPageMode && !isOpen) return null;
 
-  if (!shouldRender) return null;
+  const form = (
+    <form id={FORM_ID} onSubmit={handleSignup} className={styles.form}>
+      {signupSuccess ? (
+        <Notice tone="success" role="status">
+          Account created. Check your email for your welcome message and verification link. Redirecting to login...
+        </Notice>
+      ) : null}
+      {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
+
+      <h3 className={styles.subsectionTitle}>Your information</h3>
+      <FormGrid>
+        <TextField
+          id={`${idPrefix}-firstName`}
+          label="First name"
+          value={firstName}
+          onChange={handleChange('firstName')}
+          autoComplete="given-name"
+          required
+        />
+        <TextField
+          id={`${idPrefix}-lastName`}
+          label="Last name"
+          value={lastName}
+          onChange={handleChange('lastName')}
+          autoComplete="family-name"
+          required
+        />
+        <TextField
+          id={`${idPrefix}-username`}
+          label="Username"
+          fullRow
+          value={username}
+          onChange={handleChange('username')}
+          placeholder="Choose a unique username"
+          autoComplete="username"
+          helper={usernameHelper}
+          error={usernameError}
+          required
+        />
+        <TextField
+          id={`${idPrefix}-organization`}
+          label="Organization"
+          optional
+          fullRow
+          value={organization}
+          onChange={handleChange('organization')}
+          placeholder="League, center, association, or event name"
+          helper="Bowling center, league, association, or event name."
+          autoComplete="organization"
+        />
+      </FormGrid>
+
+      <CardDivider />
+      <h3 className={styles.subsectionTitle}>Account security</h3>
+      <FormGrid>
+        <TextField
+          id={`${idPrefix}-email`}
+          label="Email address"
+          fullRow
+          type="email"
+          value={email}
+          onChange={handleChange('email')}
+          placeholder="you@example.com"
+          autoComplete="email"
+          required
+        />
+        <PasswordField
+          id={`${idPrefix}-password`}
+          label="Password"
+          value={password}
+          onChange={handleChange('password')}
+          autoComplete="new-password"
+          required
+        />
+        <PasswordField
+          id={`${idPrefix}-confirmPassword`}
+          label="Confirm password"
+          showLabel="Show confirm password"
+          hideLabelText="Hide confirm password"
+          value={confirmPassword}
+          onChange={handleChange('confirmPassword')}
+          autoComplete="new-password"
+          required
+        />
+      </FormGrid>
+
+      {showPasswordRequirements ? (
+        <PasswordStrengthPanel
+          strengthText={STRENGTH_LABELS[passwordStrength] || ''}
+          strengthPercent={passwordStrengthPercent}
+          tone={strengthTone}
+          requirements={[
+            { met: passwordRequirementChecks.minLength, label: 'At least 8 characters with a number or symbol.' },
+            { met: passwordRequirementChecks.lower, label: 'Lowercase letter' },
+            { met: passwordRequirementChecks.upper, label: 'Uppercase letter' },
+            { met: passwordRequirementChecks.number, label: 'Number' },
+            { met: passwordRequirementChecks.special, label: 'Special character' },
+          ]}
+        />
+      ) : null}
+      {!showPasswordRequirements && password ? (
+        <p className={styles.helper}>Use at least 8 characters with a number or symbol.</p>
+      ) : null}
+
+      {isPageMode ? (
+        <Button type="submit" variant="primary" fullWidth disabled={submitDisabled}>{submitLabel}</Button>
+      ) : null}
+
+      <p className={styles.helper}>
+        By creating an account, you agree to our <Link href="/terms">Terms of service</Link> and{' '}
+        <Link href="/privacy">Privacy policy</Link>.
+      </p>
+    </form>
+  );
+
+  if (isPageMode) {
+    return (
+      <BWAuthShell
+        title="Create your account"
+        subtitle="Create your account to build brackets, manage side pots, and publish live results."
+        switchRow={<>Already have an account? <Link href="/login">Log in</Link></>}
+      >
+        {form}
+      </BWAuthShell>
+    );
+  }
 
   return (
-    <div className={isPageMode ? styles.pageShell : styles.overlay}>
-      <div className={`surface-card surface-modalShell ${styles.modal} ${isPageMode ? styles.pageCard : ''}`}>
-        {!isPageMode && (
-          <CloseControl onClick={onClose || (() => undefined)} position="absolute" size="sm" label="Close signup modal" disabled={false} className={styles.closeBtn} />
-        )}
-        {/* Header */}
-        <div className={`surface-cardHeader ${styles.header}`}>
-          <div className={styles.headerContent}>
-            <Image
-              src="/logo_no_text.svg"
-              alt="BracketWorks"
-              width={40}
-              height={40}
-              className={styles.logoIcon}
-              priority
-            />
-            <div>
-              <h2 className={styles.title}>Create your account</h2>
-              <p className={styles.subtitle}>Create your account to build brackets, manage side pots, and publish live results.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSignup} className={styles.body}>
-          <AuthFeedback
-            success={signupSuccess ? 'Account created. Check your email for your welcome message and verification link. Redirecting to login...' : ''}
-            error={error}
-          />
-
-          {/* Your Information Section */}
-          <h3 className={styles.sectionHeader}>YOUR INFORMATION</h3>
-
-          {/* Name Fields - Two Columns */}
-          <div className={styles.nameRow}>
-            <div className={styles.field}>
-              <label className="surface-authLabel">First name *</label>
-              <div className={styles.inputWrapper}>
-                <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={e => {
-                    clearTransientFeedback();
-                    updateValue('firstName', e.target.value);
-                  }}
-                  placeholder="First name"
-                  required
-                  className={inputClass(fieldValidity.firstName)}
-                />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <label className="surface-authLabel">Last name *</label>
-              <div className={styles.inputWrapper}>
-                <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={e => {
-                    clearTransientFeedback();
-                    updateValue('lastName', e.target.value);
-                  }}
-                  placeholder="Last name"
-                  required
-                  className={inputClass(fieldValidity.lastName)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Username */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Username *</label>
-            <div className={styles.inputWrapper}>
-              <User size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-              <input
-                type="text"
-                value={username}
-                onChange={e => {
-                  clearTransientFeedback();
-                  updateValue('username', e.target.value);
-                }}
-                placeholder="Choose a unique username"
-                className={`${inputClass(
-                  usernameAvailable === true ? true : usernameAvailable === false ? false : fieldValidity.username
-                )}`}
-              />
-            </div>
-            <p className={styles.fieldHint}>Choose a unique username. Do not use your email address.</p>
-            {usernameAvailable === false && !checkingUsername && (
-              <div className="surface-authHint">Username is taken</div>
-            )}
-            {checkingUsername && (
-              <div className={`${styles.checking} surface-authValidationBadgePending`}>Checking</div>
-            )}
-          </div>
-
-          {/* Organization */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Organization (optional)</label>
-            <div className={styles.inputWrapper}>
-              <Building2 size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-              <input
-                type="text"
-                value={organization}
-                onChange={e => {
-                  clearTransientFeedback();
-                  updateValue('organization', e.target.value);
-                }}
-                placeholder="League, center, association, or event name"
-              />
-            </div>
-            <p className={styles.fieldHint}>Optional — bowling center, league, association, or event name.</p>
-          </div>
-
-          {/* Account Security Section */}
-          <h3 className={styles.sectionHeader}>ACCOUNT SECURITY</h3>
-
-          {/* Email */}
-          <div className={styles.field}>
-            <label className="surface-authLabel">Email address *</label>
-            <div className={styles.inputWrapper}>
-              <Mail size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-              <input
-                type="email"
-                value={email}
-                onChange={e => {
-                  clearTransientFeedback();
-                  updateValue('email', e.target.value);
-                }}
-                placeholder="you@example.com"
-                required
-                className={inputClass(fieldValidity.email)}
-              />
-            </div>
-          </div>
-
-          {/* Password Fields - Two Columns */}
-          <div className={styles.passwordRow}>
-            <div className={styles.field}>
-              <label className="surface-authLabel">Password *</label>
-              <div className={styles.passwordField}>
-                <div className={styles.inputWrapper}>
-                    <Lock size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => {
-                      clearTransientFeedback();
-                      updateValue('password', e.target.value);
-                    }}
-                    placeholder="Enter your password"
-                    required
-                    className={inputClass(fieldValidity.password)}
-                  />
-                </div>
-                <PasswordVisibilityToggle
-                  isVisible={showPassword}
-                  onToggle={() => setShowPassword(!showPassword)}
-                  showText={false}
-                  variant="compact"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-            <div className={styles.field}>
-              <label className="surface-authLabel">Confirm password *</label>
-              <div className={styles.passwordField}>
-                <div className={styles.inputWrapper}>
-                    <Lock size={ICON_SIZE.lg} className={styles.fieldIcon} strokeWidth={2} aria-hidden="true" />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={e => {
-                      clearTransientFeedback();
-                      updateValue('confirmPassword', e.target.value);
-                    }}
-                    placeholder="Confirm your password"
-                    required
-                    className={`${inputClass(fieldValidity.confirmPassword)}`}
-                  />
-                </div>
-                <PasswordVisibilityToggle
-                  isVisible={showConfirmPassword}
-                  onToggle={() => setShowConfirmPassword(!showConfirmPassword)}
-                  showText={false}
-                  variant="compact"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Password Requirements and Strength */}
-          {showPasswordRequirements && (
-            <div className={styles.passwordRequirements}>
-              <PasswordStrengthPanel
-                strengthText={getStrengthText()}
-                strengthPercent={passwordStrengthPercent}
-                tone={strengthTone}
-                requirements={[
-                  { met: passwordRequirementChecks.minLength, label: 'At least 8 characters with a number or symbol.' },
-                  { met: passwordRequirementChecks.lower, label: 'Lowercase letter' },
-                  { met: passwordRequirementChecks.upper, label: 'Uppercase letter' },
-                  { met: passwordRequirementChecks.number, label: 'Number' },
-                  { met: passwordRequirementChecks.special, label: 'Special character' },
-                ]}
-              />
-            </div>
-          )}
-          {!showPasswordRequirements && password && (
-            <p className={styles.fieldHint}>Use at least 8 characters with a number or symbol.</p>
-          )}
-
-          {/* Button */}
-          <button type="submit" disabled={loading || !isFormReady} className={`surface-authButton surface-authButtonPrimary ${styles.submitBtn}`}>
-            {loading ? 'Creating...' : 'Create Account'}
-          </button>
-
-          {/* Footer */}
-          <div className={styles.footer}>
-            <p className={styles.tosText}>
-              By creating an account, you agree to our{' '}
-              <a href="/terms" className={styles.tosLink}>Terms of Service</a>
-              {' '}and{' '}
-              <a href="/privacy" className={styles.tosLink}>Privacy Policy</a>.
-            </p>
-            <div className={styles.divider}>OR</div>
-            <p className={styles.loginPrompt}>
-              Already have an account?{' '}
-              <button type="button" onClick={handleLoginIntent} className={styles.loginLink}>
-                Log in
-              </button>
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal
+      open={isOpen}
+      onClose={() => onClose?.()}
+      title="Create your account"
+      description="Create your account to build brackets, manage side pots, and publish live results."
+      size="md"
+      closeLabel="Close signup modal"
+      closeOnBackdrop={false}
+      footer={(
+        <>
+          <Button variant="secondary" onClick={() => onClose?.()}>Cancel</Button>
+          <Button type="submit" form={FORM_ID} variant="primary" disabled={submitDisabled}>{submitLabel}</Button>
+        </>
+      )}
+    >
+      {form}
+    </Modal>
   );
 }

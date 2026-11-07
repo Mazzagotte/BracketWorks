@@ -40,15 +40,6 @@ breakpoints (CSS cannot use custom properties in media queries; use the tiers be
   BracketWorks-only overrides: Tailwind directives and the fixed-height app shell.
   Keep this file small; anything both apps need belongs in `packages/ui/styles`.
 
-- `auth.css`
-  Single entrypoint for auth page-level CSS. This imports the login, signup,
-  validation, and reset-password global styles.
-
-- `auth-pages.css`
-  Consolidated auth page layouts and page-specific visuals.
-
-- `auth-validation.css`
-  Consolidated auth validation, connection, and password-strength states.
 
 ## Shared design modules
 
@@ -103,10 +94,8 @@ copy of the same visual treatment:
 
 ## Page-scoped global CSS
 
-Auth flow page-level CSS now lives in:
-
-- `auth-pages.css`
-- `auth-validation.css`
+Auth pages (login, signup, password reset, verify email) use the shared `AuthShell` through
+`app/components/BWAuthShell.tsx` and keep their styles in CSS modules next to each page.
 
 Other full-page global styling should stay in separate files only when it truly applies to an entire page flow rather than a reusable component.
 
@@ -132,8 +121,6 @@ Examples:
 - Change cross-app global rules in `packages/ui/styles/base.css`.
 - Change `main.css` only for BracketWorks-specific overrides.
 - Change shared design modules for repeated card, button, form, table, and page-shell patterns.
-- Change `auth.css` only if you need to add or remove auth-related global files.
-- Change `auth-pages.css` and `auth-validation.css` when working specifically on auth flows.
 - Change page CSS files only for full-page flows.
 - Change `*.module.css` for component-specific layout and behavior.
 

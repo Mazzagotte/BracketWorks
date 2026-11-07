@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+import { Button, Modal, Notice, TextField } from '@bracketworks/ui';
+
 import { useCooldownTimer } from '../hooks/useCooldownTimer';
 import { PasswordResetRateLimitError, requestPasswordReset } from '../lib/auth/password-reset';
 import { logger } from '../lib/logger';
 import { usePasswordResetModalForm } from '../hooks/usePasswordResetModalForm';
-import AuthFeedback from './AuthFeedback';
 import styles from './ResetPasswordModal.module.css';
 
 interface ResetPasswordModalProps {
@@ -14,6 +15,9 @@ interface ResetPasswordModalProps {
   onSuccess?: () => void;
 }
 
+const FORM_ID = 'reset-password-modal-form';
+
+/** "Forgot your password?" dialog on the login page. */
 export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: ResetPasswordModalProps) {
   const emailRef = useRef<HTMLInputElement>(null);
   const { clearCooldown, cooldownSeconds, startCooldown } = useCooldownTimer();
@@ -71,107 +75,50 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
     }
   }, [cooldownSeconds, form, onSuccess, startCooldown]);
 
-  if (!isOpen) return null;
-
   const submitDisabled = form.loading || !!form.fieldError || !form.email.trim() || cooldownSeconds > 0;
+  const submitLabel = form.loading
+    ? 'Sending...'
+    : cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send reset link';
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <div className={styles.header}>
-          <div className={styles.iconWrap}>
-            <div className={styles.iconBox}>
-              <svg
-                width="36"
-                height="36"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="7.5" cy="15.5" r="5.5" />
-                <path d="M21 2l-9.6 9.6" />
-                <path d="M15.5 7.5l3 3L22 7l-3-3" />
-              </svg>
-            </div>
-          </div>
-          <h2 className={styles.title}>Reset your password</h2>
-          <p className={styles.subtitle}>
-            Enter the email connected to your BracketWorks account.<br />
-            We&apos;ll send you a secure link to create a new password.
-          </p>
-        </div>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      title="Reset your password"
+      description="Enter the email connected to your BracketWorks account. We'll send you a secure link to create a new password."
+      size="sm"
+      closeLabel="Close reset password modal"
+      footer={(
+        <>
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button type="submit" form={FORM_ID} variant="primary" disabled={submitDisabled}>{submitLabel}</Button>
+        </>
+      )}
+    >
+      <form id={FORM_ID} onSubmit={handleSubmit} className={styles.form} noValidate>
+        {form.success ? <Notice tone="success" role="status">{form.success}</Notice> : null}
+        {form.error ? <Notice tone="danger" role="alert">{form.error}</Notice> : null}
 
-        <form onSubmit={handleSubmit} className={styles.body} noValidate>
-          <div className={styles.field}>
-            <label className="surface-authLabel">
-              Email address<span className={styles.required}> *</span>
-            </label>
-            <input
-              ref={emailRef}
-              type="email"
-              value={form.email}
-              onChange={e => form.updateEmail(e.target.value)}
-              onBlur={e => form.handleBlur(e.target.value)}
-              placeholder="name@example.com"
-              required
-              disabled={form.loading || cooldownSeconds > 0}
-              className={`surface-authInput ${
-                form.fieldError ? 'surface-authInputError' :
-                form.touched && !form.fieldError && form.email.trim() ? 'surface-authInputValid' : ''
-              }`}
-              aria-describedby={form.fieldError ? 'email-error' : 'email-hint'}
-              aria-invalid={Boolean(form.fieldError)}
-            />
-            {form.fieldError ? (
-              <p id="email-error" className={styles.fieldError} role="alert">
-                {form.fieldError}
-              </p>
-            ) : (
-              <p id="email-hint" className={styles.fieldHint}>
-                Enter the email used for your BracketWorks account.
-              </p>
-            )}
-          </div>
+        <TextField
+          ref={emailRef}
+          id="modal-reset-email"
+          label="Email address"
+          type="email"
+          value={form.email}
+          onChange={e => form.updateEmail(e.target.value)}
+          onBlur={e => form.handleBlur(e.target.value)}
+          placeholder="name@example.com"
+          autoComplete="email"
+          required
+          disabled={form.loading || cooldownSeconds > 0}
+          error={form.fieldError || undefined}
+          helper="Enter the email used for your BracketWorks account."
+        />
 
-          <div className={styles.feedback}>
-            <AuthFeedback success={form.success} error={form.error} />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitDisabled}
-            className={styles.submitBtn}
-          >
-            {form.loading ? 'Sending…' : (cooldownSeconds > 0 ? `Retry in ${cooldownSeconds}s` : 'Send Reset Link')}
-          </button>
-
-          <div className={styles.backWrap}>
-            <span className={styles.backLine} />
-            <button
-              type="button"
-              onClick={handleClose}
-              className={styles.backLink}
-            >
-              Back to Log In
-            </button>
-            <span className={styles.backLine} />
-          </div>
-
-          <p className={styles.support}>
-            Need help?{' '}
-            <a
-              href="mailto:support@bracketworks.app"
-              className={styles.supportLink}
-            >
-              Contact Support
-            </a>
-          </p>
-        </form>
-      </div>
-    </div>
+        <p className={styles.helper}>
+          Need help? <a href="mailto:support@bracketworks.app">Contact support</a>
+        </p>
+      </form>
+    </Modal>
   );
 }

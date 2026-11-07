@@ -1,14 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { Notice, buttonClassName } from "@bracketworks/ui";
 
+import BWAuthShell from "../components/BWAuthShell";
 import { API, apiFetch } from "../lib/api";
-import loginStyles from "../login/login.module.css";
+import styles from "./verifyEmail.module.css";
 
 type VerificationState = "loading" | "success" | "error";
+
+const NOTICE_TONE = { loading: "info", success: "success", error: "danger" } as const;
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -62,43 +65,23 @@ function VerifyEmailContent() {
     };
   }, [isPreview, token]);
 
-  const bannerClassName = useMemo(() => {
-    if (state === "success") {
-      return "auth-alert-success";
-    }
-    if (state === "error") {
-      return loginStyles.errorBanner;
-    }
-    return loginStyles.sessionExpiredBanner;
-  }, [state]);
-
   return (
-    <div className={loginStyles.page}>
-      <div className={`${loginStyles.card} ${loginStyles.resetCard}`}>
-        <div className={loginStyles.logoWrap}>
-          <Image
-            src="/logo_no_text.svg"
-            alt="BracketWorks Logo"
-            width={220}
-            height={220}
-            className={loginStyles.logoImage}
-            priority
-          />
-        </div>
-
-        <div className={loginStyles.form}>
-          <div className={loginStyles.formIntro}>Email Verification</div>
-          <div className={bannerClassName} role="status" aria-live="polite">
-            {message}
-          </div>
-          <div className={loginStyles.actions}>
-            <Link href={state === "success" ? "/login?verified=success" : "/login"} className={loginStyles.createAccountBtn}>
-              Continue to Login
-            </Link>
-          </div>
-        </div>
+    <BWAuthShell
+      title="Verify your email"
+      subtitle="Confirm your email to finish setting up your account."
+    >
+      <div className={styles.body}>
+        <Notice tone={NOTICE_TONE[state]} role={state === "error" ? "alert" : "status"}>
+          {message}
+        </Notice>
+        <Link
+          href={state === "success" ? "/login?verified=success" : "/login"}
+          className={buttonClassName({ variant: "primary", fullWidth: true })}
+        >
+          Continue to log in
+        </Link>
       </div>
-    </div>
+    </BWAuthShell>
   );
 }
 

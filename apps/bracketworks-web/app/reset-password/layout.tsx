@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 
-import '../styles/auth.css';
-import './styles/reset-password.css';
 import PageLayoutShell from '../components/layout/PageLayoutShell';
 
 export const metadata: Metadata = {

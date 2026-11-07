@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useState, useRef, useCallback, useMemo } from "react";
+import { Button, Notice, TextField, buttonClassName } from '@bracketworks/ui';
 
-import AuthFeedback from "../../components/AuthFeedback";
+import BWAuthShell from "../../components/BWAuthShell";
 import { useFieldValidation } from "../../hooks/useFieldValidation";
 import { describeNetworkRequestError, useNetworkRequest } from "../../hooks/useNetworkRequest";
 import { PasswordResetApiError, verifyResetCode } from "../../lib/auth/password-reset";
@@ -12,6 +13,7 @@ import { getEmailValidationError, getResetCodeValidationError } from '../../lib/
 import { useToast } from "../../components/Toast";
 import { logger } from '../../lib/logger';
 import { getErrorMessage } from '../../lib/error-utils';
+import styles from "../styles/resetPassword.module.css";
 
 export default function VerifyResetPage() {
   const router = useRouter();
@@ -168,167 +170,68 @@ export default function VerifyResetPage() {
   }, [submitVerification]);
 
   return (
-    <div className="rp-req-page">
-      <div className="rp-req-card">
-        {/* Shield with lock icon */}
-        <div className="rp-req-icon-wrap">
-          <div className="rp-req-icon-box">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              {/* Shield outline */}
-              <path d="M12 1L3 5v7c0 5.55 4.91 10.74 9 11.9c4.09-1.16 9-6.35 9-11.9V5l-9-4z" />
-              {/* Lock */}
-              <rect x="8" y="11" width="8" height="6" rx="1" />
-              <path d="M10 11V9a2 2 0 0 1 4 0v2" />
-              <circle cx="12" cy="14" r="0.5" fill="currentColor" />
-            </svg>
-          </div>
-        </div>
+    <BWAuthShell
+      title="Verify your reset code"
+      subtitle="Enter your email address and the reset code we sent you. Check your inbox for the verification code."
+      switchRow={<>Remembered your password? <Link href="/login">Back to log in</Link></>}
+    >
+      <form onSubmit={handleVerify} className={styles.form} noValidate>
+        {success ? <Notice tone="success" role="status">{success}</Notice> : null}
+        {error ? <Notice tone="danger" role="alert">{error}</Notice> : null}
 
-        <h1 className="rp-req-title">Verify Reset Code</h1>
-        <p className="rp-req-subtitle">
-          Enter your email address and the reset code we sent you.<br />
-          Check your inbox for the verification code.
+        <TextField
+          ref={emailRef}
+          id="reset-email"
+          label="Email address"
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            handleFieldChange('email', e.target.value, { ...formValues, email: e.target.value });
+          }}
+          onBlur={(e) => handleFieldBlur('email', e.target.value, { ...formValues, email: e.target.value })}
+          placeholder="name@example.com"
+          autoComplete="email"
+          disabled={loading}
+          required
+          error={fieldErrors.email || undefined}
+        />
+
+        <TextField
+          ref={codeRef}
+          id="reset-code"
+          label="Reset code"
+          type="text"
+          value={code}
+          onChange={(e) => {
+            setCode(e.target.value);
+            handleFieldChange('code', e.target.value, { ...formValues, code: e.target.value });
+          }}
+          onBlur={(e) => handleFieldBlur('code', e.target.value, { ...formValues, code: e.target.value })}
+          placeholder="000000"
+          autoComplete="one-time-code"
+          disabled={loading}
+          required
+          error={fieldErrors.code || undefined}
+        />
+
+        <Button
+          type="submit"
+          variant="primary"
+          fullWidth
+          disabled={loading || !!fieldErrors.email || !!fieldErrors.code || !email.trim() || !code.trim() || isValidating}
+        >
+          {loading ? 'Verifying...' : 'Verify code'}
+        </Button>
+
+        <Link href="/reset-password/request" className={buttonClassName({ variant: 'secondary', fullWidth: true })}>
+          Request a new code
+        </Link>
+
+        <p className={styles.helper}>
+          Need help? <a href="mailto:support@bracketworks.app">Contact support</a>
         </p>
-
-        <form onSubmit={handleVerify} className="rp-req-form" noValidate>
-          {/* Email Field */}
-          <div>
-            <label htmlFor="reset-email" className="rp-req-label">
-              Email address<span className="rp-req-required" aria-hidden="true"> *</span>
-            </label>
-            <div className="rp-req-input-wrap">
-              <input
-                ref={emailRef}
-                id="reset-email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  handleFieldChange('email', e.target.value, { ...formValues, email: e.target.value });
-                }}
-                onBlur={(e) => handleFieldBlur('email', e.target.value, { ...formValues, email: e.target.value })}
-                className={`rp-req-input${fieldErrors.email ? ' is-error' : ''}`}
-                placeholder="name@example.com"
-                autoComplete="email"
-                disabled={loading}
-                required
-                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-                aria-invalid={Boolean(fieldErrors.email)}
-              />
-              <span className="rp-req-input-icon" aria-hidden="true">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect width="20" height="16" x="2" y="4" rx="2" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                </svg>
-              </span>
-            </div>
-            {fieldErrors.email && (
-              <p id="email-error" className="rp-req-field-error" role="alert">
-                {fieldErrors.email}
-              </p>
-            )}
-          </div>
-
-          {/* Reset Code Field */}
-          <div>
-            <label htmlFor="reset-code" className="rp-req-label">
-              Reset code<span className="rp-req-required" aria-hidden="true"> *</span>
-            </label>
-            <div className="rp-req-input-wrap">
-              <input
-                ref={codeRef}
-                id="reset-code"
-                type="text"
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value);
-                  handleFieldChange('code', e.target.value, { ...formValues, code: e.target.value });
-                }}
-                onBlur={(e) => handleFieldBlur('code', e.target.value, { ...formValues, code: e.target.value })}
-                className={`rp-req-input${fieldErrors.code ? ' is-error' : ''}`}
-                placeholder="000000"
-                disabled={loading}
-                required
-                aria-describedby={fieldErrors.code ? 'code-error' : undefined}
-                aria-invalid={Boolean(fieldErrors.code)}
-              />
-              <span className="rp-req-input-icon" aria-hidden="true">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M7 14a6 6 0 0 0-6 6v3h18v-3a6 6 0 0 0-6-6H7z" />
-                </svg>
-              </span>
-            </div>
-            {fieldErrors.code && (
-              <p id="code-error" className="rp-req-field-error" role="alert">
-                {fieldErrors.code}
-              </p>
-            )}
-          </div>
-
-          <div className="rp-req-feedback">
-            <AuthFeedback
-              success={success}
-              error={error}
-              successClassName="success-message"
-              errorClassName="error-container"
-              wrapErrorInSpan={true}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="rp-req-submit"
-            disabled={loading || !!fieldErrors.email || !!fieldErrors.code || !email.trim() || !code.trim() || isValidating}
-          >
-            {loading ? 'Verifying...' : 'Verify Code'}
-          </button>
-
-          <Link href="/reset-password/request" className="rp-error-action-link">
-            Request New Code
-          </Link>
-        </form>
-
-        <div className="rp-req-back-wrap">
-          <span className="rp-req-back-line" />
-          <Link href="/login" className="rp-req-back-link">Back to Log In</Link>
-          <span className="rp-req-back-line" />
-        </div>
-
-        <p className="rp-req-support">
-          Need help?{' '}
-          <a href="mailto:support@bracketworks.app" className="rp-req-support-link">Contact Support</a>
-        </p>
-      </div>
-    </div>
+      </form>
+    </BWAuthShell>
   );
 }
-

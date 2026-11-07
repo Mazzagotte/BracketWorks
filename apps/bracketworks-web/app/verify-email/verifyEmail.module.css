@@ -1,0 +1,7 @@
+/* Verify email page inside the shared AuthShell card. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
