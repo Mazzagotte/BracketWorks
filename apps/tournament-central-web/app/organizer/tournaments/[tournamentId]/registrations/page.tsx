@@ -41,7 +41,7 @@ import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney, formatSquadTime, formatTournamentDate } from '@/components/organizer/organizerFormatting';
 import { loadOrganizerSetupState } from '@/components/organizer/organizerApi';
 import type { DivisionConfig, EventConfig, SquadConfig } from '@/components/organizer/types';
-import { buildParticipantRows, buildPaymentSummary, buildSquadSummaries } from '@/components/organizer/tournamentInsights';
+import { buildParticipantRows, buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import { usePaymentToggle } from '@/components/organizer/usePaymentToggle';
 import EmailBowlersModal from '@/components/organizer/EmailBowlersModal';
 import {
@@ -674,7 +674,6 @@ export default function OrganizerTournamentRegistrationsPage() {
     });
   }, [eventFilter, paymentFilter, registrations, search, squadFilter, statusFilter]);
 
-  const paymentSummary = useMemo(() => buildPaymentSummary(registrations), [registrations]);
 
   const sideEventsByBowler = useMemo(() => {
     const byBowler = new Map<number, SideEventRecord[]>();
@@ -855,7 +854,6 @@ export default function OrganizerTournamentRegistrationsPage() {
               { label: 'Confirmed', value: String(metrics.confirmed), detail: `${metrics.confirmedPercent.toFixed(0)}% of total` },
               { label: 'Pending', value: String(metrics.pending), detail: 'Includes waitlisted' },
               { label: 'Cancelled', value: String(metrics.cancelled), detail: `${metrics.cancelledPercent.toFixed(0)}% of total` },
-              { label: 'Collected', value: formatMoney(paymentSummary.paidCents), detail: `${formatMoney(paymentSummary.unpaidCents)} unpaid` },
             ]}
           />
 

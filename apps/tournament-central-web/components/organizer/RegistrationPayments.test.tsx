@@ -47,7 +47,7 @@ afterEach(() => {
 });
 
 describe('Recording payments from the registrations list', () => {
-  it('records a confirmed payment and refreshes status and totals', async () => {
+  it('records a confirmed payment and refreshes the status', async () => {
     const user = userEvent.setup();
     render(<Page />);
     const statusButton = screen.getByRole('button', { name: 'Mark OPEN-0007 as paid' });
@@ -62,18 +62,13 @@ describe('Recording payments from the registrations list', () => {
     expect(await screen.findByRole('button', { name: 'Mark OPEN-0007 as unpaid' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' })).toHaveTextContent('Paid');
     expect(screen.queryByRole('button', { name: 'Mark OPEN-0007 as paid' })).not.toBeInTheDocument();
-    const summary = screen.getByLabelText('Registration summary');
-    const collected = () => within(summary).getByText('Collected', { selector: 'span' }).parentElement;
-    expect(collected()).toHaveTextContent('$80.00');
-    expect(collected()).toHaveTextContent('$0.00 unpaid');
+    expect(within(screen.getByLabelText('Registration summary')).queryByText('Collected')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as paid.');
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent('does not issue a refund');
     await user.click(screen.getByRole('button', { name: 'Mark unpaid' }));
     expect(updateTournamentRegistrationPaymentStatus).toHaveBeenLastCalledWith('session', 42, 7, 'unpaid');
     expect(await screen.findByRole('button', { name: 'Mark OPEN-0007 as paid' })).toBeInTheDocument();
-    expect(collected()).toHaveTextContent('$0.00');
-    expect(collected()).toHaveTextContent('$80.00 unpaid');
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as unpaid.');
   });
 
