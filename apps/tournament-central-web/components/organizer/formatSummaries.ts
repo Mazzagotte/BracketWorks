@@ -67,6 +67,7 @@ export function eventRulesParts(rules: EventRules, scoring: 'handicap' | 'scratc
   if (rules.team.combinedAverageMax) parts.push(`Combined average ${rules.team.combinedAverageMax} or less`);
   const finals = finalsSummary(rules.finals);
   if (finals) parts.push(finals);
+  if (rules.finals.scope === 'squad') parts.push(rules.finals.type === 'none' ? 'Standings for each squad' : 'Finals for each squad');
   return parts;
 }
 

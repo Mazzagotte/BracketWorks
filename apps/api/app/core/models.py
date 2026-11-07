@@ -972,11 +972,16 @@ class TcScore(Base):
 
 
 class TcFinals(Base):
-    """Finals for one TC event and division, with the seeds taken from qualifying when they started."""
+    """Finals for one TC event and division (and squad, when the event's finals are per squad).
+
+    The seeds are taken from qualifying when the finals start.
+    """
 
     __tablename__ = "tc_finals"
     __table_args__ = (
-        UniqueConstraint("tournament_id", "event_config_id", "division_key", name="uq_tc_finals_event_division"),
+        UniqueConstraint(
+            "tournament_id", "event_config_id", "division_key", "squad_key", name="uq_tc_finals_event_division_squad"
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -985,6 +990,10 @@ class TcFinals(Base):
     division_config_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     # division_config_id or "" so the unique constraint also covers events without divisions.
     division_key: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    # Per-squad finals only: the squad they're for (null for entries without a squad).
+    squad_config_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    # "" for tournament-wide finals; the squad group key (squad id or "__no-squad__") for per-squad finals.
+    squad_key: Mapped[str] = mapped_column(String(120), nullable=False, default="")
     finals_type: Mapped[str] = mapped_column(String(32), nullable=False)
     # [{seed, key, name, entryIds, bowlerIds, handicapPerGame, qualifyingTotal}]
     seeds: Mapped[list] = mapped_column(JSON, nullable=False, default=list)

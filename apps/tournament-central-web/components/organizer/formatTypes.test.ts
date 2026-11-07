@@ -18,7 +18,9 @@ describe('tournament format model', () => {
     }, { scoring: 'handicap', maxPlayers: 2 });
     expect(rules).toMatchObject({ format: 'scotch-doubles', games: 3, usbcRequired: true, reentryScoring: 'best-counts' });
     expect(rules.handicap).toEqual({ percent: 80, basis: 230, maxPins: 60, perPair: true });
-    expect(rules.finals).toMatchObject({ type: 'stepladder', cut: { by: 'count', value: 5 } });
+    expect(rules.finals).toMatchObject({ type: 'stepladder', cut: { by: 'count', value: 5 }, scope: 'tournament' });
+    expect(normalizeEventRules({ finals: { type: 'stepladder', scope: 'squad' } }, { scoring: 'scratch', maxPlayers: 1 }).finals.scope).toBe('squad');
+    expect(normalizeEventRules({ finals: { scope: 'nonsense' } }, { scoring: 'scratch', maxPlayers: 1 }).finals.scope).toBe('tournament');
     expect(normalizeEventRules({ handicap: { percent: 80, basis: 230 } }, { scoring: 'scratch', maxPlayers: 1 }).handicap).toBeNull();
   });
 

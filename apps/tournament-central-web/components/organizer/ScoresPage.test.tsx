@@ -15,6 +15,7 @@ vi.mock('./scoresApi', () => ({
   startFinals: vi.fn(),
   saveFinalsGames: vi.fn(),
   resetFinals: vi.fn(),
+  NO_SQUAD_KEY: '__no-squad__',
 }));
 
 const SAVE_WAIT = { timeout: 3000 };
@@ -28,7 +29,8 @@ function grid(): ScoreGrid {
       scoring: 'handicap',
       scoring_label: 'Handicap 90% of 220',
       games: 3,
-      divisions: [{ id: null, name: null, entry_count: 2, advancing_count: 5, cashing_count: 2 }],
+      finals_scope: 'tournament',
+      divisions: [{ id: null, name: null, squad: null, entry_count: 2, advancing_count: 5, cashing_count: 2, cash_note: null }],
     }],
     event_id: 'evt-singles',
     squads: [{ id: 'sq-am', label: 'Sat 9:00 AM' }],
@@ -85,6 +87,8 @@ function finalsState(started: boolean): FinalsState {
   return {
     event_id: 'evt-singles',
     division_id: null,
+    squad_id: null,
+    squad_label: null,
     event_name: 'Singles',
     division_name: null,
     finals_type: 'stepladder',
@@ -219,7 +223,7 @@ describe('Scores page', () => {
     expect(within(dialog).getByText(/Seeds are taken from the current standings/)).toBeTruthy();
     await user.click(within(dialog).getByRole('button', { name: 'Start finals' }));
 
-    expect(startFinals).toHaveBeenCalledWith('session', 42, { event_config_id: 'evt-singles', division_config_id: null });
+    expect(startFinals).toHaveBeenCalledWith('session', 42, { event_config_id: 'evt-singles', division_config_id: null, squad_config_id: null });
     const input = await screen.findByRole('textbox', { name: 'Ann Lee, Title match' });
     expect(screen.getByRole('group', { name: 'Title match' })).toBeTruthy();
 
@@ -228,10 +232,65 @@ describe('Scores page', () => {
     expect(saveFinalsGames).toHaveBeenCalledWith(
       'session',
       42,
-      { event_config_id: 'evt-singles', division_config_id: null },
+      { event_config_id: 'evt-singles', division_config_id: null, squad_config_id: null },
       [{ round: 1, match: 1, seed: 1, score: 210 }],
     );
     const row = input.closest('tr') as HTMLElement;
     expect(within(row).getAllByRole('cell').at(-1)?.textContent).toBe('246');
+  });
+
+  it('shows the cut and cash for the chosen squad when the event is per squad', async () => {
+    const perSquad = grid();
+    perSquad.events[0].finals_scope = 'squad';
+    perSquad.squads = [{ id: 'sq-am', label: '9:00 AM' }, { id: 'sq-pm', label: '2:00 PM' }];
+    perSquad.events[0].divisions = [
+      { id: null, name: null, squad: { id: 'sq-am', label: '9:00 AM' }, entry_count: 2, advancing_count: 2, cashing_count: 1, cash_note: 'The finals winner cashes.' },
+      { id: null, name: null, squad: { id: 'sq-pm', label: '2:00 PM' }, entry_count: 8, advancing_count: 2, cashing_count: 4, cash_note: 'Places 3-4 cash from qualifying' },
+    ];
+    vi.mocked(fetchScoreGrid).mockResolvedValue(perSquad);
+    const user = userEvent.setup();
+    await renderGrid();
+    expect(screen.getByText(/Cut and cash lines are for each squad/)).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText('Squad'), 'sq-pm');
+    expect(await screen.findByText(/Top 2 advance, places 3-4 cash from qualifying/)).toBeTruthy();
+  });
+
+  it('picks a squad for per-squad finals and shows placings', async () => {
+    const squadGroup = (id: string, label: string) => ({
+      ...standings.events[0].divisions[0],
+      squad: { id, label },
+    });
+    vi.mocked(fetchStandings).mockResolvedValue({
+      ...standings,
+      events: [{ ...standings.events[0], divisions: [squadGroup('sq-am', '9:00 AM'), squadGroup('sq-pm', '2:00 PM')] }],
+    });
+    const done = finalsState(true);
+    done.finals = {
+      ...stepladder({ a: 190, b: 220 }),
+      status: 'complete',
+      champion: { name: 'Ann Lee', detail: 'Won the title match 220 to 190' },
+      placings: [
+        { key: '1', place: 1, tied: false, name: 'Ann Lee', cashing: true },
+        { key: '2', place: 2, tied: false, name: 'Bob Ray', cashing: false },
+      ],
+    };
+    vi.mocked(fetchFinals).mockResolvedValue(done);
+    const user = userEvent.setup();
+    render(<ScoresPage />);
+    await user.click(screen.getByRole('button', { name: 'Finals' }));
+
+    await waitFor(() => expect(fetchFinals).toHaveBeenCalledWith(
+      'session', 42, { event_config_id: 'evt-singles', division_config_id: null, squad_config_id: 'sq-am' },
+    ));
+    const placings = await screen.findByRole('region', { name: 'Placings' });
+    expect(within(placings).getByText('1st')).toBeTruthy();
+    expect(within(placings).getByText('Cashes')).toBeTruthy();
+    expect(within(placings).getAllByText('Cashes')).toHaveLength(1);
+
+    const squads = screen.getByRole('group', { name: 'Squad' });
+    await user.click(within(squads).getByRole('button', { name: '2:00 PM' }));
+    await waitFor(() => expect(fetchFinals).toHaveBeenLastCalledWith(
+      'session', 42, { event_config_id: 'evt-singles', division_config_id: null, squad_config_id: 'sq-pm' },
+    ));
   });
 });

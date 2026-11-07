@@ -25,17 +25,17 @@ SETUP = {
 }
 
 
-def _tournament(db, owner, *, is_public=True, name="TC Live Open"):
+def _tournament(db, owner, *, is_public=True, name="TC Live Open", setup=SETUP):
     tournament = models.TournamentCentral(user_id=owner.id, name=name, is_public=is_public, is_published=is_public)
     db.add(tournament)
     db.flush()
-    db.add(models.TournamentCentralSetupState(tournament_id=tournament.id, user_id=owner.id, payload=SETUP, is_published=True))
+    db.add(models.TournamentCentralSetupState(tournament_id=tournament.id, user_id=owner.id, payload=setup, is_published=True))
     db.commit()
     db.refresh(tournament)
     return tournament
 
 
-def _entry(db, tournament, *, code, first, last, average, status="confirmed"):
+def _entry(db, tournament, *, code, first, last, average, status="confirmed", squad=("sq-am", "Morning", "09:00")):
     now = datetime.now(timezone.utc)
     registration = models.TcRegistration(
         confirmation_code=code,
@@ -60,10 +60,10 @@ def _entry(db, tournament, *, code, first, last, average, status="confirmed"):
         tournament_id=tournament.id,
         event_config_id="evt-singles",
         event_name_snapshot="Singles",
-        squad_config_id="sq-am",
-        squad_name_snapshot="Morning",
+        squad_config_id=squad[0],
+        squad_name_snapshot=squad[1],
         squad_date_snapshot="2026-11-15",
-        squad_time_snapshot="09:00",
+        squad_time_snapshot=squad[2],
         status=status,
     )
     db.add(entry)
@@ -166,13 +166,14 @@ def test_public_standings_contract_and_privacy(api_client, db_session, auth_iden
     event = body["events"][0]
     assert set(event) == {"id", "name", "format", "scoring", "games", "scoringLabel", "divisions"}
     division = event["divisions"][0]
-    assert set(division) == {"id", "name", "entryCount", "advancingCount", "cashingCount", "rows", "finals"}
+    assert set(division) == {"id", "name", "entryCount", "advancingCount", "cashingCount", "cashNote", "rows", "finals"}
+    assert "squad" not in division  # tournament-wide groups leave the squad out
     assert division["entryCount"] == 1
     row = division["rows"][0]
     assert set(row) == {"key", "rank", "tied", "name", "bowlers", "games", "gamesBowled", "scratchTotal",
                         "handicapTotal", "total", "status", "squadLabel"}
     assert set(row["bowlers"][0]) == {"name", "average", "handicapPerGame"}
-    assert set(division["finals"]) == {"type", "label", "status", "champion", "matches", "rounds", "table", "notes"}
+    assert set(division["finals"]) == {"type", "label", "status", "champion", "matches", "rounds", "table", "placings", "notes"}
     assert body["allEvents"] is None
 
     private = _tournament(db_session, auth_identity.user, is_public=False, name="Private Live")
@@ -237,3 +238,79 @@ def test_finals_start_enter_and_reset(api_client, db_session, auth_identity, mak
     assert db_session.query(models.TcFinals).count() == 0
     assert db_session.query(models.TcFinalsGame).count() == 0
     assert api_client.delete(_url(tournament.id, query), headers=headers).status_code == 404
+
+
+SQUAD_SETUP = {
+    **SETUP,
+    "events": [
+        {
+            **SETUP["events"][0],
+            "rules": {
+                **SETUP["events"][0]["rules"],
+                "finals": {"type": "stepladder", "cut": {"by": "count", "value": 2}, "scope": "squad"},
+            },
+        }
+    ],
+    "squads": [
+        {"id": "sq-am", "name": "Morning", "dateIso": "2026-11-15", "startTime": "09:00", "eventIds": []},
+        {"id": "sq-pm", "name": "Afternoon", "dateIso": "2026-11-15", "startTime": "14:00", "eventIds": []},
+    ],
+}
+
+
+def test_finals_for_each_squad(api_client, db_session, auth_identity):
+    tournament = _tournament(db_session, auth_identity.user, setup=SQUAD_SETUP)
+    headers = auth_identity.headers
+    squads = {"am": ("sq-am", "Morning", "09:00"), "pm": ("sq-pm", "Afternoon", "14:00")}
+    players = []
+    for index, (squad, score) in enumerate((("am", 230), ("am", 220), ("am", 150), ("pm", 210), ("pm", 200))):
+        entry_id, bowler_id = _entry(
+            db_session, tournament, code=f"Q-{index}", first=f"P{index}", last="Lane", average=200, squad=squads[squad]
+        )
+        players.append((entry_id, bowler_id))
+        _put_scores(api_client, headers, tournament.id, [{"entry_id": entry_id, "bowler_id": bowler_id, "game": 1, "score": score}])
+
+    missing = api_client.post(_url(tournament.id, "finals/start"), headers=headers, json={"event_config_id": "evt-singles"})
+    assert missing.status_code == 400
+    assert "each squad" in missing.json()["detail"]
+    assert api_client.get(_url(tournament.id, "finals?event_config_id=evt-singles"), headers=headers).status_code == 400
+
+    am = {"event_config_id": "evt-singles", "squad_config_id": "sq-am"}
+    pm = {"event_config_id": "evt-singles", "squad_config_id": "sq-pm"}
+    started = api_client.post(_url(tournament.id, "finals/start"), headers=headers, json=am)
+    assert started.status_code == 200
+    body = started.json()
+    assert body["squad_id"] == "sq-am" and body["squad_label"] == "9:00 AM"
+    assert [seed["name"] for seed in body["seeds"]] == ["P0 Lane", "P1 Lane"]
+    assert api_client.post(_url(tournament.id, "finals/start"), headers=headers, json=am).status_code == 409
+    other = api_client.post(_url(tournament.id, "finals/start"), headers=headers, json=pm)
+    assert other.status_code == 200
+    assert [seed["name"] for seed in other.json()["seeds"]] == ["P3 Lane", "P4 Lane"]
+    assert db_session.query(models.TcFinals).count() == 2
+
+    entered = api_client.put(
+        _url(tournament.id, "finals/games"),
+        headers=headers,
+        json={**am, "games": [{"round": 1, "seed": 1, "score": 200}, {"round": 1, "seed": 2, "score": 210}]},
+    )
+    assert entered.status_code == 200
+    assert entered.json()["finals"]["champion"]["name"] == "P1 Lane"
+    assert [p["place"] for p in entered.json()["finals"]["placings"]] == [1, 2]
+
+    public = api_client.get(f"/api/v1/public/tc-tournament/{tournament.id}/standings").json()
+    groups = public["events"][0]["divisions"]
+    assert [group["squad"] for group in groups] == [{"id": "sq-am", "label": "9:00 AM"}, {"id": "sq-pm", "label": "2:00 PM"}]
+    assert [group["entryCount"] for group in groups] == [3, 2]
+    assert groups[0]["finals"]["status"] == "complete" and groups[1]["finals"]["status"] == "in-progress"
+
+    grid = api_client.get(_url(tournament.id, "scores?squad_config_id=sq-pm"), headers=headers).json()
+    assert grid["events"][0]["finals_scope"] == "squad"
+    assert [d["squad"]["id"] for d in grid["events"][0]["divisions"]] == ["sq-am", "sq-pm"]
+    assert len(grid["rows"]) == 2
+
+    assert api_client.delete(_url(tournament.id, "finals?event_config_id=evt-singles"), headers=headers).status_code == 400
+    reset = api_client.delete(_url(tournament.id, "finals?event_config_id=evt-singles&squad_config_id=sq-am"), headers=headers)
+    assert reset.status_code == 200
+    db_session.expire_all()
+    remaining = db_session.query(models.TcFinals).all()
+    assert [(row.squad_key, row.squad_config_id) for row in remaining] == [("sq-pm", "sq-pm")]

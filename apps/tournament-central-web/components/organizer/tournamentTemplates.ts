@@ -290,7 +290,7 @@ export const TOURNAMENT_TEMPLATES: TournamentTemplateOption[] = [
         name: 'Sweeper', description: 'Four games per set. Re-enter as often as allowed; your best set counts.',
         format: 'singles', scoring: 'handicap', games: 4, entryFeeCents: 5000, reentries: 3, reentryScoring: 'best-counts', payoutRatio: 4,
         handicap: { percent: 80, basis: 220 },
-        finals: { type: 'stepladder', cut: { by: 'count', value: 5 }, notes: 'Top 5 bowl a stepladder, one game per match.' },
+        finals: { type: 'stepladder', cut: { by: 'count', value: 5 }, notes: 'Top 5 bowl a stepladder, one game per match.', scope: 'squad' },
       })],
       divisions: [],
       fees: standardSideEvents(),

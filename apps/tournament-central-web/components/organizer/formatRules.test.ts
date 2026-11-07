@@ -23,9 +23,9 @@ describe('event rule validation', () => {
     const fields = (target: EventConfig) => eventRuleProblems(target).map((problem) => problem.field);
     expect(fields(event({ handicap: { percent: 0, basis: 220, maxPins: null, perPair: false } }))).toEqual(['handicapPercent']);
     expect(fields(event({ handicap: { percent: 101, basis: 0, maxPins: null, perPair: false } }))).toEqual(['handicapPercent', 'handicapBasis']);
-    expect(fields(event({ finals: { type: 'stepladder', cut: { by: 'count', value: 0 }, roundRobinScoring: null, winBonusPins: null, notes: '' } }))).toEqual(['cutValue']);
-    expect(fields(event({ finals: { type: 'cut', cut: null, roundRobinScoring: null, winBonusPins: null, notes: '' } }))).toEqual(['cutValue']);
-    expect(fields(event({ finals: { type: 'cut', cut: { by: 'percent', value: 150 }, roundRobinScoring: null, winBonusPins: null, notes: '' } }))).toEqual(['cutValue']);
+    expect(fields(event({ finals: { type: 'stepladder', cut: { by: 'count', value: 0 }, roundRobinScoring: null, winBonusPins: null, notes: '', scope: 'tournament' } }))).toEqual(['cutValue']);
+    expect(fields(event({ finals: { type: 'cut', cut: null, roundRobinScoring: null, winBonusPins: null, notes: '', scope: 'tournament' } }))).toEqual(['cutValue']);
+    expect(fields(event({ finals: { type: 'cut', cut: { by: 'percent', value: 150 }, roundRobinScoring: null, winBonusPins: null, notes: '', scope: 'tournament' } }))).toEqual(['cutValue']);
     expect(fields(event({ team: { mixedRequired: false, combinedAverageMax: 0 } }))).toEqual(['combinedAverageMax']);
     expect(fields(event({ payoutRatio: 0 }))).toEqual(['payoutRatio']);
   });
@@ -60,8 +60,11 @@ describe('format summaries', () => {
     expect(handicapFormula(handicap)).toBe('90% of 220');
     expect(handicapExample(handicap)).toBe('A 180 average gets 36 pins per game.');
     expect(handicapExample({ ...handicap, percent: 80, basis: 440, perPair: true })).toBe('A pair averaging 360 combined gets 64 pins per game.');
-    expect(finalsSummary({ type: 'stepladder', cut: { by: 'count', value: 5 }, roundRobinScoring: null, winBonusPins: null, notes: '' })).toBe('Stepladder, top 5');
+    expect(finalsSummary({ type: 'stepladder', cut: { by: 'count', value: 5 }, roundRobinScoring: null, winBonusPins: null, notes: '', scope: 'tournament' })).toBe('Stepladder, top 5');
     expect(eventRulesSummary({ ...defaultEventRules('singles', 'handicap'), games: 3 }, 'handicap')).toBe('Singles · 3 games · Handicap 90% of 220');
+    const perSquad = defaultEventRules('singles', 'scratch');
+    expect(eventRulesSummary({ ...perSquad, finals: { ...perSquad.finals, type: 'stepladder', scope: 'squad' } }, 'scratch'))
+      .toBe('Singles · Scratch · Stepladder · Finals for each squad');
     expect(bracketPayoutSummary(500, defaultSideEvent('brackets').brackets!)).toBe('8 entries at $5 = $40: pays $30 and $10');
     expect(sideEventSummary({ ...defaultSideEvent('brackets'), maxQuantity: 10 })).toBe('Brackets · Per bowler · Up to 10 each');
     expect(divisionLimitParts({ minAge: 50, maxAge: 64, maxAverage: 200, rules: { gender: 'women', prizeType: 'scholarship' } }))

@@ -420,3 +420,170 @@ def test_display_text_helpers():
     assert engine.squad_label("Morning", "2026-11-14", "14:00") == "Sat 2:00 PM"
     assert engine.squad_label("Morning", None, None) == "Morning"
     assert engine.location_text({"bowlingCenter": "Meridian Lanes", "city": "Meridian", "state": "ID"}, None) == "Meridian Lanes, Meridian, ID"
+
+
+# ---------------------------------------------------------------------------
+# Finals placings and the money line
+
+
+def test_stepladder_placings_go_down_the_ladder():
+    games = [(1, 1, 4, 200), (1, 1, 3, 190), (2, 1, 4, 210), (2, 1, 2, 180), (3, 1, 4, 170), (3, 1, 1, 220)]
+    finals = _finals("stepladder", _seeds(4), games)
+    assert [(p["place"], p["name"], p["tied"]) for p in finals["placings"]] == [
+        (1, "Seed 1", False), (2, "Seed 4", False), (3, "Seed 2", False), (4, "Seed 3", False),
+    ]
+    assert finals["placings"][0]["key"] == "1"
+    partial = _finals("stepladder", _seeds(4), games[:2])
+    assert [(p["place"], p["name"]) for p in partial["placings"]] == [(4, "Seed 3")]
+
+
+def test_match_play_placings_tie_losers_of_a_round():
+    games = [(1, 2, 4, 200), (1, 2, 5, 190), (1, 4, 3, 180), (1, 4, 6, 210), (2, 1, 1, 220), (2, 1, 4, 200)]
+    finals = _finals("match-play-single", _seeds(6), games)
+    assert [(p["place"], p["name"], p["tied"]) for p in finals["placings"]] == [
+        (3, "Seed 4", True), (5, "Seed 3", True), (5, "Seed 5", True),
+    ]
+    two = _finals("match-play-single", _seeds(2), [(1, 1, 1, 190), (1, 1, 2, 214)])
+    assert [(p["place"], p["name"], p["tied"]) for p in two["placings"]] == [(1, "Seed 2", False), (2, "Seed 1", False)]
+
+
+def test_survivor_placings_reverse_elimination_order():
+    games = [
+        (1, 1, 1, 200), (1, 1, 2, 150), (1, 1, 3, 190), (1, 1, 4, 160), (1, 1, 5, 210),
+        (2, 1, 1, 180), (2, 1, 3, 230), (2, 1, 5, 200),
+        (3, 1, 3, 240), (3, 1, 5, 220),
+    ]
+    finals = _finals("survivor", _seeds(5), games)
+    assert [(p["place"], p["name"], p["tied"]) for p in finals["placings"]] == [
+        (1, "Seed 3", False), (2, "Seed 5", False), (3, "Seed 1", False), (4, "Seed 2", True), (4, "Seed 4", True),
+    ]
+
+
+def test_round_robin_placings_only_once_complete():
+    schedule = engine.round_robin_schedule([1, 2, 3])
+    scores = {1: 210, 2: 190, 3: 200}
+    games = []
+    for round_index, pairs in enumerate(schedule, start=1):
+        for match_index, (a, b) in enumerate(pairs, start=1):
+            games += [(round_index, match_index, a, scores[a]), (round_index, match_index, b, scores[b])]
+    finals = _finals("round-robin", _seeds(3), games, rules={"roundRobinScoring": "petersen"})
+    assert [(p["place"], p["name"]) for p in finals["placings"]] == [(1, "Seed 1"), (2, "Seed 3"), (3, "Seed 2")]
+    assert _finals("round-robin", _seeds(3), games[:2], rules={"roundRobinScoring": "petersen"})["placings"] == []
+
+
+def _ten():
+    bowlers = _bowlers(*[(i, f"B{i} X{i}", None) for i in range(1, 11)])
+    entries = [EntryIn(id=i, event_id="ev1", bowler_ids=(i,)) for i in range(1, 11)]
+    scores = {}
+    for i in range(1, 11):
+        scores.update(_scores(i, i, 300 - i * 10))
+    return bowlers, entries, scores
+
+
+def test_with_finals_cash_comes_from_finals_finish_when_fewer_pay_than_advance():
+    bowlers, entries, scores = _ten()
+    event = _event(scoring="scratch", games=1, finals={"type": "stepladder", "cut": {"by": "count", "value": 5}}, payoutRatio=5)
+    division = _division(engine.compute_standings(_input([event], entries, bowlers, scores)))
+    assert (division["advancingCount"], division["cashingCount"]) == (5, 2)
+    assert [row["status"] for row in division["rows"]] == ["advancing"] * 5 + [None] * 5
+    assert division["cashNote"] == "Top 2 finishers in the finals cash."
+
+    stored = FinalsIn(event_id="ev1", division_id=None, type="stepladder", seeds=_seeds(3),
+                      games=[FinalsGameIn(1, 1, 3, 200), FinalsGameIn(1, 1, 2, 190), FinalsGameIn(2, 1, 3, 180), FinalsGameIn(2, 1, 1, 220)])
+    finals = _division(engine.compute_standings(_input([event], entries, bowlers, scores, finals=[stored])))["finals"]
+    assert [(p["place"], p["cashing"]) for p in finals["placings"]] == [(1, True), (2, True), (3, False)]
+
+    one = _event(scoring="scratch", games=1, finals={"type": "stepladder", "cut": {"by": "count", "value": 5}}, payoutRatio=10)
+    assert _division(engine.compute_standings(_input([one], entries, bowlers, scores)))["cashNote"] == "The finals winner cashes."
+
+
+def test_with_finals_extra_cash_places_come_from_qualifying_below_the_cut():
+    bowlers, entries, scores = _ten()
+    event = _event(scoring="scratch", games=1, finals={"type": "stepladder", "cut": {"by": "count", "value": 5}}, payoutRatio=1.25)
+    division = _division(engine.compute_standings(_input([event], entries, bowlers, scores)))
+    assert (division["advancingCount"], division["cashingCount"]) == (5, 8)
+    assert [row["status"] for row in division["rows"]] == ["advancing"] * 5 + ["cashing"] * 3 + [None] * 2
+    assert division["cashNote"] == "Places 6-8 cash from qualifying"
+
+
+def test_without_finals_qualifying_rank_decides_the_money():
+    bowlers, entries, scores = _ten()
+    event = _event(scoring="scratch", games=1, payoutRatio=4)
+    division = _division(engine.compute_standings(_input([event], entries, bowlers, scores)))
+    assert division["advancingCount"] is None and division["cashingCount"] == 3
+    assert [row["status"] for row in division["rows"][:4]] == ["cashing", "cashing", "cashing", None]
+    assert division["cashNote"] is None
+
+
+# ---------------------------------------------------------------------------
+# Finals for each squad
+
+
+SQUADS = [
+    {"id": "sqA", "name": "Afternoon", "dateIso": "2026-03-06", "startTime": "14:00"},
+    {"id": "sqB", "name": "Morning", "dateIso": "2026-03-06", "startTime": "09:00"},
+    {"id": "sqC", "name": "Saturday", "dateIso": "2026-03-07", "startTime": "10:00"},
+]
+
+
+def _squad_input(finals_rule, *, squads=SQUADS, finals=None):
+    bowlers = _bowlers(*[(i, f"B{i} X{i}", None) for i in range(1, 8)])
+    placement = {1: "sqA", 2: "sqA", 3: "sqA", 4: "sqB", 5: "sqB", 6: "sqC", 7: None}
+    entries = [EntryIn(id=i, event_id="ev1", bowler_ids=(i,), squad_id=squad) for i, squad in placement.items()]
+    totals = {1: 200, 2: 190, 3: 180, 4: 150, 5: 250, 6: 100, 7: 120}
+    scores = {}
+    for i, total in totals.items():
+        scores.update(_scores(i, i, total))
+    event = _event(scoring="scratch", games=1, finals=finals_rule, payoutRatio=1)
+    data = _input([event], entries, bowlers, scores, finals=finals)
+    data.setup["squads"] = squads
+    return data
+
+
+def test_per_squad_groups_have_their_own_ranks_cut_cash_and_order():
+    data = _squad_input({"type": "stepladder", "cut": {"by": "count", "value": 2}, "scope": "squad"})
+    groups = engine.compute_standings(data)["events"][0]["divisions"]
+    assert [group["squad"] for group in groups] == [
+        {"id": "sqB", "label": "Fri Mar 6 · 9:00 AM"},
+        {"id": "sqA", "label": "Fri Mar 6 · 2:00 PM"},
+        {"id": "sqC", "label": "Sat Mar 7 · 10:00 AM"},
+        {"id": None, "label": "No squad"},
+    ]
+    morning, afternoon, saturday, _ = groups
+    assert [(row["name"], row["rank"]) for row in morning["rows"]] == [("B5 X5", 1), ("B4 X4", 2)]
+    assert [(row["rank"], row["status"]) for row in afternoon["rows"]] == [(1, "advancing"), (2, "advancing"), (3, "cashing")]
+    assert (afternoon["entryCount"], afternoon["advancingCount"], afternoon["cashingCount"]) == (3, 2, 3)
+    assert afternoon["cashNote"] == "Place 3 cashes from qualifying"
+    assert morning["cashNote"] == "Top 2 finishers in the finals cash."
+    assert saturday["advancingCount"] == 1 and saturday["rows"][0]["rank"] == 1
+
+
+def test_per_squad_finals_are_independent():
+    stored = FinalsIn(event_id="ev1", division_id=None, type="stepladder", seeds=_seeds(2),
+                      games=[FinalsGameIn(1, 1, 1, 200), FinalsGameIn(1, 1, 2, 190)], squad_key="sqA")
+    data = _squad_input({"type": "stepladder", "cut": {"by": "count", "value": 2}, "scope": "squad"}, finals=[stored])
+    payload, detail = engine.compute_standings_detail(data)
+    groups = {group["squad"]["id"]: group for group in payload["events"][0]["divisions"]}
+    assert groups["sqA"]["finals"]["status"] == "complete"
+    assert groups["sqB"]["finals"]["status"] == "not-started"
+    assert ("ev1", None, "sqA") in detail and ("ev1", None, engine.NO_SQUAD_KEY) in detail
+    seeds = engine.finals_seeds(detail[("ev1", None, "sqB")].payload, detail[("ev1", None, "sqB")].rows)
+    assert [seed["name"] for seed in seeds] == ["B5 X5", "B4 X4"]
+
+
+def test_tournament_scope_is_unchanged_and_ignores_squad_finals():
+    stored = FinalsIn(event_id="ev1", division_id=None, type="stepladder", seeds=_seeds(2),
+                      games=[FinalsGameIn(1, 1, 1, 200), FinalsGameIn(1, 1, 2, 190)], squad_key="sqA")
+    data = _squad_input({"type": "stepladder", "cut": {"by": "count", "value": 2}}, finals=[stored])
+    groups = engine.compute_standings(data)["events"][0]["divisions"]
+    assert len(groups) == 1 and "squad" not in groups[0]
+    assert [row["name"] for row in groups[0]["rows"][:2]] == ["B5 X5", "B1 X1"]
+    assert groups[0]["finals"]["status"] == "not-started"
+    assert engine.normalize_event_rules({"finals": {"scope": "nonsense"}}, scoring="scratch", max_players=1)["finals"]["scope"] == "tournament"
+
+
+def test_one_day_squad_labels_are_just_the_time():
+    one_day = [{**squad, "dateIso": "2026-03-06"} for squad in SQUADS]
+    data = _squad_input({"type": "cut", "cut": {"by": "count", "value": 1}, "scope": "squad"}, squads=one_day)
+    labels = [group["squad"]["label"] for group in engine.compute_standings(data)["events"][0]["divisions"]]
+    assert labels == ["9:00 AM", "10:00 AM", "2:00 PM", "No squad"]

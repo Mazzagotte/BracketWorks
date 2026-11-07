@@ -59,7 +59,14 @@ export type FinalsRule = {
   winBonusPins: number | null;
   /** Free text shown to bowlers, for example "Top 5 bowl a stepladder, one game per match." */
   notes: string;
+  /**
+   * Who the standings and finals are for. 'tournament' (default): all squads combined. 'squad': each
+   * squad has its own standings, cut, prize fund (cash line), and finals, as sweeper squads often do.
+   */
+  scope: FinalsScope;
 };
+
+export type FinalsScope = 'tournament' | 'squad';
 
 /** Rules for one event. Kept on EventConfig as `rules`. */
 export type EventRules = {
@@ -172,7 +179,7 @@ export function defaultEventRules(format: EventFormat = 'singles', scoring: 'han
     average: { source: 'highest-current-or-last', minGames: 21, noAverage: 'assigned-average', assignedAverage: null },
     team: { mixedRequired: false, combinedAverageMax: null },
     reentryScoring: 'all-count',
-    finals: { type: 'none', cut: null, roundRobinScoring: null, winBonusPins: null, notes: '' },
+    finals: { type: 'none', cut: null, roundRobinScoring: null, winBonusPins: null, notes: '', scope: 'tournament' },
     payoutRatio: null,
     usbcRequired: false,
   };
@@ -246,6 +253,7 @@ export function normalizeEventRules(raw: unknown, event: { scoring: 'handicap' |
       roundRobinScoring: finalsRaw.roundRobinScoring === 'petersen' ? 'petersen' : finalsRaw.roundRobinScoring === 'bonus-pins' ? 'bonus-pins' : null,
       winBonusPins: numberOr(finalsRaw.winBonusPins, null),
       notes: typeof finalsRaw.notes === 'string' ? finalsRaw.notes : '',
+      scope: finalsRaw.scope === 'squad' ? 'squad' : 'tournament',
     },
     payoutRatio: numberOr(raw.payoutRatio, null),
     usbcRequired: Boolean(raw.usbcRequired),

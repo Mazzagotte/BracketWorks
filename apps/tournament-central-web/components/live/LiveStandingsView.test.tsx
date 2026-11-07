@@ -397,3 +397,125 @@ describe('live standings page', () => {
     expect(screen.getByRole('heading', { name: 'Doubles' })).toBeInTheDocument();
   });
 });
+
+function squadGroup(id: string, label: string, rows: StandingRow[], extra: Partial<LiveDivision> = {}): LiveDivision {
+  return {
+    id: null,
+    name: null,
+    squad: { id, label },
+    entryCount: rows.length,
+    advancingCount: 1,
+    cashingCount: 1,
+    cashNote: 'The finals winner cashes.',
+    rows,
+    finals: {
+      type: 'stepladder',
+      label: 'Stepladder, top 2',
+      status: 'not-started',
+      champion: null,
+      matches: [],
+      rounds: [],
+      table: [],
+      placings: [],
+      notes: '',
+    },
+    ...extra,
+  };
+}
+
+function sweeperPayload(): LiveStandings {
+  const morning = squadGroup('sq-am', 'Fri Mar 6 · 9:00 AM', [
+    row('a1', 1, 'Ann Lee', [220], { status: 'advancing' }),
+    row('a2', 2, 'Bob Ray', [200]),
+  ]);
+  const afternoon = squadGroup('sq-pm', 'Fri Mar 6 · 2:00 PM', [
+    row('p1', 1, 'Cara Diaz', [240], { status: 'advancing' }),
+    row('p2', 2, 'Dan Fox', [190]),
+  ], {
+    finals: {
+      type: 'stepladder',
+      label: 'Stepladder, top 2',
+      status: 'complete',
+      champion: { name: 'Cara Diaz', detail: 'Won the title match 230 to 190' },
+      matches: [
+        { id: 'r1-m1', round: 1, label: 'Title match', a: { seed: 2, name: 'Dan Fox', score: 190, winner: false }, b: { seed: 1, name: 'Cara Diaz', score: 230, winner: true } },
+      ],
+      rounds: [],
+      table: [],
+      placings: [
+        { key: 'p1', place: 1, tied: false, name: 'Cara Diaz', cashing: true },
+        { key: 'p2', place: 2, tied: false, name: 'Dan Fox', cashing: false },
+      ],
+      notes: '',
+    },
+  });
+  return payload({
+    events: [{ id: 'sweeper', name: 'Sweeper', format: 'singles', scoring: 'scratch', games: 1, scoringLabel: 'Scratch', divisions: [morning, afternoon] }],
+    allEvents: null,
+  });
+}
+
+describe('live standings with finals for each squad', () => {
+  it('picks a squad, titles the card with it, and shows the cash note without a qualifying money line', () => {
+    render(<LiveStandingsView tournamentId={58} initialData={sweeperPayload()} />);
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 9:00 AM' })).toBeInTheDocument();
+    expect(screen.getByText('The finals winner cashes.')).toBeInTheDocument();
+    expect(screen.queryByText(/In the money/)).not.toBeInTheDocument();
+    expect(bodyRows().map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Ann Lee'),
+      'Cut line: top 1 advance to finals',
+      expect.stringContaining('Bob Ray'),
+    ]);
+
+    fireEvent.click(within(screen.getByRole('group', { name: 'Squad' })).getByRole('button', { name: /2:00 PM/ }));
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 2:00 PM' })).toBeInTheDocument();
+    expect(bodyRows()[0]).toHaveTextContent('Cara Diaz');
+  });
+
+  it('draws the qualifying money line below the cut only when more places pay than advance', () => {
+    const data = sweeperPayload();
+    data.events[0].divisions[0] = {
+      ...data.events[0].divisions[0],
+      rows: [
+        row('a1', 1, 'Ann Lee', [220], { status: 'advancing' }),
+        row('a2', 2, 'Bob Ray', [200], { status: 'cashing' }),
+        row('a3', 3, 'Gus Hale', [150]),
+      ],
+      cashingCount: 2,
+      cashNote: 'Place 2 cashes from qualifying',
+    };
+    render(<LiveStandingsView tournamentId={58} initialData={data} />);
+    expect(screen.getByText('Place 2 cashes from qualifying')).toBeInTheDocument();
+    expect(bodyRows().map((item) => item.textContent)).toEqual([
+      expect.stringContaining('Ann Lee'),
+      'Cut line: top 1 advance to finals',
+      expect.stringContaining('Bob Ray'),
+      'In the money: place 2 cashes from qualifying',
+      expect.stringContaining('Gus Hale'),
+    ]);
+  });
+
+  it('shows one finals card per division with a squad picker and the placings', () => {
+    render(<LiveStandingsView tournamentId={58} initialData={sweeperPayload()} />);
+    fireEvent.click(screen.getAllByRole('link', { name: 'Finals' })[0]);
+    expect(screen.getAllByRole('heading', { name: /^Sweeper/ })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 9:00 AM' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Placings' })).not.toBeInTheDocument();
+
+    fireEvent.click(within(screen.getByRole('group', { name: 'Squad' })).getByRole('button', { name: /2:00 PM/ }));
+    const placings = screen.getByRole('region', { name: 'Placings' });
+    expect(within(placings).getByText('1st')).toBeInTheDocument();
+    expect(within(placings).getByText('2nd')).toBeInTheDocument();
+    expect(within(placings).getAllByText('Cashes')).toHaveLength(1);
+  });
+
+  it('TV mode cycles through each squad group', async () => {
+    vi.useFakeTimers();
+    render(<LiveStandingsView tournamentId={58} initialData={sweeperPayload()} tv />);
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 9:00 AM' })).toBeInTheDocument();
+    await advance(TV_CYCLE_MS);
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 2:00 PM' })).toBeInTheDocument();
+    await advance(TV_CYCLE_MS);
+    expect(screen.getByRole('heading', { name: 'Sweeper · Fri Mar 6 · 9:00 AM' })).toBeInTheDocument();
+  });
+});

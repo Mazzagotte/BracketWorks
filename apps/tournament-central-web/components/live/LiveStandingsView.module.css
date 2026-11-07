@@ -189,3 +189,12 @@
     padding: 0 var(--space-4) var(--space-4);
   }
 }
+
+/* The cash note sits on its own line under the card description. */
+.noteLine {
+  display: block;
+}
+
+.placings {
+  padding-top: var(--space-4);
+}

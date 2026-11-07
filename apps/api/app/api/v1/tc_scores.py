@@ -40,6 +40,8 @@ class ScoresPayload(BaseModel):
 class FinalsTarget(BaseModel):
     event_config_id: str
     division_config_id: Optional[str] = None
+    # Required when the event's finals are per squad; "__no-squad__" targets entries without a squad.
+    squad_config_id: Optional[str] = None
 
 
 class FinalsGameChange(BaseModel):
@@ -76,6 +78,21 @@ def _division_id(value: Optional[str]) -> Optional[str]:
     return text or None
 
 
+SQUAD_REQUIRED = "This event's finals are for each squad. Choose a squad."
+
+
+def _squad_key(data: engine.StandingsInput, event_id: str, value: Optional[str]) -> Optional[str]:
+    """The finals group's squad key: None when the event's finals are tournament-wide (any squad given
+    is ignored), else the squad id. 400 when the event is per squad and no squad was given."""
+    rules = engine.rules_for_event(_setup_event(data, event_id) or {"id": event_id})
+    if engine.finals_scope(rules) != "squad":
+        return None
+    text = (value or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail=SQUAD_REQUIRED)
+    return text
+
+
 def _validate_score(value: Optional[int], label: str) -> None:
     if value is not None and not 0 <= value <= engine.MAX_SCORE:
         raise HTTPException(status_code=422, detail=f"{label} must be between 0 and {engine.MAX_SCORE}.")
@@ -95,7 +112,7 @@ def get_score_grid(
 ):
     tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
     data = _load(db, tournament)
-    standings, _ = engine.compute_standings_detail(data)
+    standings, groups = engine.compute_standings_detail(data)
     events = standings["events"]
     if not events:
         return {"events": [], "event_id": None, "squads": [], "games": MIN_GRID_GAMES, "shared_score": False, "rows": []}
@@ -122,8 +139,14 @@ def get_score_grid(
         if entry.squad_id and entry.squad_id not in squads:
             squads[entry.squad_id] = entry.squad_label or "Squad"
 
+    per_squad = engine.finals_scope(rules) == "squad"
+    if per_squad and any(not entry.squad_id for entry in event_entries):
+        squads[engine.NO_SQUAD_KEY] = engine.NO_SQUAD_LABEL
+
     squad_id = (squad_config_id or "").strip() or None
-    if squad_id:
+    if squad_id == engine.NO_SQUAD_KEY:
+        event_entries = [entry for entry in event_entries if not entry.squad_id]
+    elif squad_id:
         event_entries = [entry for entry in event_entries if entry.squad_id == squad_id]
 
     max_bowled = max(
@@ -132,6 +155,26 @@ def get_score_grid(
     )
     games_count = max(int(rules["games"] or 0) or max(max_bowled, MIN_GRID_GAMES), max_bowled)
     division_names = {division["id"]: division["name"] for division in event_payload["divisions"]}
+    scopes = {
+        event["id"]: engine.finals_scope(engine.rules_for_event(_setup_event(data, event["id"]) or {"id": event["id"]}))
+        for event in events
+    }
+    group_by_payload = {id(result.payload): result for result in groups.values()}
+
+    def division_summary(division: dict) -> dict:
+        result = group_by_payload.get(id(division))
+        squad = None
+        if result is not None and result.squad_key is not None:
+            squad = {"id": result.squad_key, "label": result.squad_label}
+        return {
+            "id": division["id"],
+            "name": division["name"],
+            "squad": squad,
+            "entry_count": division["entryCount"],
+            "advancing_count": division["advancingCount"],
+            "cashing_count": division["cashingCount"],
+            "cash_note": division.get("cashNote"),
+        }
 
     rows = []
     for entry in event_entries:
@@ -175,16 +218,10 @@ def get_score_grid(
                 "scoring": event["scoring"],
                 "scoring_label": event["scoringLabel"],
                 "games": event["games"],
-                "divisions": [
-                    {
-                        "id": division["id"],
-                        "name": division["name"],
-                        "entry_count": division["entryCount"],
-                        "advancing_count": division["advancingCount"],
-                        "cashing_count": division["cashingCount"],
-                    }
-                    for division in event["divisions"]
-                ],
+                # 'tournament' or 'squad': whether standings and finals are per squad.
+                "finals_scope": scopes[event["id"]],
+                # Per-squad events list one entry per division and squad (``squad`` set).
+                "divisions": [division_summary(division) for division in event["divisions"]],
             }
             for event in events
         ],
@@ -311,26 +348,36 @@ def get_public_standings(
 # Finals
 
 
-def _finals_row(db: Session, tournament_id: int, event_id: str, division_id: Optional[str]) -> Optional[models.TcFinals]:
+def _finals_row(
+    db: Session, tournament_id: int, event_id: str, division_id: Optional[str], squad_key: Optional[str]
+) -> Optional[models.TcFinals]:
     return db.query(models.TcFinals).filter(
         models.TcFinals.tournament_id == tournament_id,
         models.TcFinals.event_config_id == event_id,
         models.TcFinals.division_key == (division_id or ""),
+        models.TcFinals.squad_key == (squad_key or ""),
     ).first()
 
 
-def _finals_response(db: Session, tournament: models.TournamentCentral, event_id: str, division_id: Optional[str]) -> dict:
+def _finals_response(
+    db: Session,
+    tournament: models.TournamentCentral,
+    event_id: str,
+    division_id: Optional[str],
+    squad_value: Optional[str],
+) -> dict:
     data = _load(db, tournament)
     standings, divisions = engine.compute_standings_detail(data)
     event = next((item for item in standings["events"] if item["id"] == event_id), None)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
-    result = divisions.get((event_id, division_id))
+    squad_key = _squad_key(data, event_id, squad_value)
+    result = divisions.get((event_id, division_id, squad_key))
     if result is None:
-        raise HTTPException(status_code=404, detail="Division not found")
+        raise HTTPException(status_code=404, detail="Division or squad not found")
     setup_event = _setup_event(data, event_id) or {"id": event_id}
     rules = engine.rules_for_event(setup_event)
-    stored = _finals_row(db, tournament.id, event_id, division_id)
+    stored = _finals_row(db, tournament.id, event_id, division_id, squad_key)
     finals_type = stored.finals_type if stored else rules["finals"]["type"]
     finals = result.payload["finals"]
 
@@ -374,6 +421,8 @@ def _finals_response(db: Session, tournament: models.TournamentCentral, event_id
     return {
         "event_id": event_id,
         "division_id": division_id,
+        "squad_id": squad_key,
+        "squad_label": result.squad_label,
         "event_name": event["name"],
         "division_name": result.payload["name"],
         "finals_type": finals_type,
@@ -392,11 +441,12 @@ def get_finals(
     tournament_id: int,
     event_config_id: str = Query(...),
     division_config_id: Optional[str] = Query(default=None),
+    squad_config_id: Optional[str] = Query(default=None),
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
     tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
-    return _finals_response(db, tournament, event_config_id, _division_id(division_config_id))
+    return _finals_response(db, tournament, event_config_id, _division_id(division_config_id), squad_config_id)
 
 
 @router.post("/{tournament_id}/finals/start")
@@ -409,13 +459,15 @@ def start_finals(
     tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_scores")
     event_id = payload.event_config_id
     division_id = _division_id(payload.division_config_id)
-    if _finals_row(db, tournament.id, event_id, division_id):
-        raise HTTPException(status_code=409, detail="Finals have already started for this event and division.")
     data = _load(db, tournament)
+    squad_key = _squad_key(data, event_id, payload.squad_config_id)
+    if _finals_row(db, tournament.id, event_id, division_id, squad_key):
+        target = "event, division, and squad" if squad_key is not None else "event and division"
+        raise HTTPException(status_code=409, detail=f"Finals have already started for this {target}.")
     _, divisions = engine.compute_standings_detail(data)
-    result = divisions.get((event_id, division_id))
+    result = divisions.get((event_id, division_id, squad_key))
     if result is None:
-        raise HTTPException(status_code=404, detail="Event or division not found")
+        raise HTTPException(status_code=404, detail="Event, division, or squad not found")
     rules = engine.rules_for_event(_setup_event(data, event_id) or {"id": event_id})
     finals_type = rules["finals"]["type"]
     if finals_type == "match-play-double":
@@ -430,13 +482,15 @@ def start_finals(
         event_config_id=event_id,
         division_config_id=division_id,
         division_key=division_id or "",
+        squad_config_id=None if squad_key in (None, engine.NO_SQUAD_KEY) else squad_key,
+        squad_key=squad_key or "",
         finals_type=finals_type,
         seeds=seeds,
         status="in-progress",
         created_by_user_id=user.id,
     ))
     db.commit()
-    return _finals_response(db, tournament, event_id, division_id)
+    return _finals_response(db, tournament, event_id, division_id, squad_key)
 
 
 @router.put("/{tournament_id}/finals/games")
@@ -448,7 +502,8 @@ def save_finals_games(
 ):
     tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_scores")
     division_id = _division_id(payload.division_config_id)
-    finals = _finals_row(db, tournament.id, payload.event_config_id, division_id)
+    squad_key = _squad_key(_load(db, tournament), payload.event_config_id, payload.squad_config_id)
+    finals = _finals_row(db, tournament.id, payload.event_config_id, division_id, squad_key)
     if finals is None:
         raise HTTPException(status_code=404, detail="Finals haven't started for this event and division.")
     seeds = {int(seed["seed"]) for seed in finals.seeds or []}
@@ -480,7 +535,7 @@ def save_finals_games(
         row.updated_at = now
     finals.updated_at = now
     db.commit()
-    response = _finals_response(db, tournament, payload.event_config_id, division_id)
+    response = _finals_response(db, tournament, payload.event_config_id, division_id, squad_key)
     status = (response["finals"] or {}).get("status")
     if status and finals.status != status:
         finals.status = status
@@ -493,12 +548,14 @@ def reset_finals(
     tournament_id: int,
     event_config_id: str = Query(...),
     division_config_id: Optional[str] = Query(default=None),
+    squad_config_id: Optional[str] = Query(default=None),
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
     tournament = require_tc_tournament_permission(db, tournament_id, user, "manage_scores")
     division_id = _division_id(division_config_id)
-    finals = _finals_row(db, tournament.id, event_config_id, division_id)
+    squad_key = _squad_key(_load(db, tournament), event_config_id, squad_config_id)
+    finals = _finals_row(db, tournament.id, event_config_id, division_id, squad_key)
     if finals is None:
         raise HTTPException(status_code=404, detail="Finals haven't started for this event and division.")
     db.query(models.TcFinalsGame).filter(models.TcFinalsGame.finals_id == finals.id).delete(synchronize_session=False)

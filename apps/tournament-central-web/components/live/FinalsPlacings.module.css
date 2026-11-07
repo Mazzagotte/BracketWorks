@@ -1,0 +1,40 @@
+/* Finals placings: divider rows inside the finals card (docs/ui-standards.md section 7, lists). */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+  font: var(--type-table);
+  color: var(--bw-text-title);
+}
+
+.place {
+  flex: 0 0 var(--space-12);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-body);
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+}

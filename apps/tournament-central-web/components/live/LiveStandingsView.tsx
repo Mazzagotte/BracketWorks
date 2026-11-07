@@ -41,12 +41,15 @@ import type {
   StandingRow,
 } from './liveStandingsTypes';
 import { useHasMounted, useLiveStandings, useMediaQuery } from './useLiveStandings';
+import { FinalsPlacings } from './FinalsPlacings';
 import styles from './LiveStandingsView.module.css';
 
 /** How long TV mode shows each event and division before moving on. */
 export const TV_CYCLE_MS = 20_000;
 const EMPTY = '—';
 const DIVISION_ALL = '__all';
+/** Picker value for a per-squad group of entries without a squad. */
+const SQUAD_NONE = '__none';
 /** Segmented controls hold up to five options; more become a select. */
 const MAX_SEGMENTS = 5;
 
@@ -79,8 +82,63 @@ function divisionKey(division: LiveDivision): string {
   return division.id ?? DIVISION_ALL;
 }
 
+/** '' for tournament-wide groups; the squad id (or SQUAD_NONE) when the event's finals are per squad. */
+function squadKey(division: LiveDivision): string {
+  return division.squad ? division.squad.id ?? SQUAD_NONE : '';
+}
+
+/** Stable key for one standings group: division plus squad. */
+function groupKey(division: LiveDivision): string {
+  return `${divisionKey(division)}|${squadKey(division)}`;
+}
+
 function sectionTitle(event: LiveEvent, division: LiveDivision): string {
-  return division.name ? `${event.name} · ${division.name}` : event.name;
+  return [event.name, division.name, division.squad?.label].filter(Boolean).join(' · ');
+}
+
+/** One option per division (per-squad events list each division once, with every squad's entries counted). */
+function divisionOptions(event: LiveEvent): PickerOption[] {
+  const options = new Map<string, PickerOption>();
+  for (const item of event.divisions) {
+    const key = divisionKey(item);
+    const current = options.get(key);
+    if (current) current.count = (current.count ?? 0) + item.entryCount;
+    else options.set(key, { value: key, label: item.name ?? 'All', count: item.entryCount });
+  }
+  return [...options.values()];
+}
+
+function squadOptions(event: LiveEvent, division: LiveDivision): PickerOption[] {
+  return event.divisions
+    .filter((item) => item.squad && divisionKey(item) === divisionKey(division))
+    .map((item) => ({ value: squadKey(item), label: item.squad?.label ?? 'Squad', count: item.entryCount }));
+}
+
+/** The group for a division and squad choice, falling back to the division's first squad, then the event's first group. */
+function findGroup(event: LiveEvent, divisionId: string | null, squadId: string | null): LiveDivision | null {
+  const first = event.divisions[0];
+  const wanted = divisionId ?? (first ? divisionKey(first) : null);
+  const inDivision = event.divisions.filter((item) => divisionKey(item) === wanted);
+  return inDivision.find((item) => squadKey(item) === squadId) ?? inDivision[0] ?? event.divisions[0] ?? null;
+}
+
+type MoneyLine = { position: number; label: string } | null;
+
+/**
+ * Where the money line goes in qualifying. Without finals it's the top `cashingCount` places. With
+ * finals (the API sends `cashNote`), the finals finish decides the money, so qualifying only shows a
+ * line when more places pay than advance.
+ */
+function moneyLine(division: LiveDivision): MoneyLine {
+  const cashing = division.cashingCount;
+  const advancing = division.advancingCount;
+  if (!cashing) return null;
+  if (division.cashNote) {
+    if (!advancing || cashing <= advancing) return null;
+    const places = advancing + 1 === cashing ? `place ${cashing} cashes` : `places ${advancing + 1}-${cashing} cash`;
+    return { position: cashing, label: `In the money: ${places} from qualifying` };
+  }
+  return { position: cashing, label: `In the money: top ${cashing} cash` };
 }
 
 function rankText(rank: number | null, tied: boolean): string {
@@ -105,14 +163,14 @@ function orderRows<T extends { rank: number | null }>(rows: T[]): T[] {
 }
 
 /** Labels for the divider rows, keyed by how many ranked rows come before the line. */
-function lineLabels(rankedCount: number, advancingCount: number | null, cashingCount: number | null): Map<number, string[]> {
+function lineLabels(rankedCount: number, advancingCount: number | null, money: MoneyLine): Map<number, string[]> {
   const lines = new Map<number, string[]>();
   const add = (position: number | null, label: string) => {
     if (!position || position <= 0 || position >= rankedCount) return;
     lines.set(position, [...(lines.get(position) ?? []), label]);
   };
   add(advancingCount, `Cut line: top ${advancingCount} advance to finals`);
-  add(cashingCount, `In the money: top ${cashingCount} cash`);
+  if (money) add(money.position, money.label);
   return lines;
 }
 
@@ -178,7 +236,7 @@ function StandingsTable({ event, division, query }: { event: LiveEvent; division
   const filtering = query.trim().length > 0;
   const visible = filtering ? rows.filter((row) => matchesQuery(query, row.name, ...row.bowlers.map((bowler) => bowler.name))) : rows;
   const rankedCount = rows.filter((row) => row.rank !== null).length;
-  const lines = filtering ? new Map<number, string[]>() : lineLabels(rankedCount, division.advancingCount, division.cashingCount);
+  const lines = filtering ? new Map<number, string[]>() : lineLabels(rankedCount, division.advancingCount, moneyLine(division));
 
   return (
     <DataTable caption={`${sectionTitle(event, division)} standings`} className={styles.table}>
@@ -245,6 +303,7 @@ function StandingsCard({
   division,
   onEventChange,
   onDivisionChange,
+  onSquadChange,
   query,
   onQueryChange,
   tv,
@@ -254,6 +313,7 @@ function StandingsCard({
   division: LiveDivision;
   onEventChange: (id: string) => void;
   onDivisionChange: (key: string) => void;
+  onSquadChange: (key: string) => void;
   query: string;
   onQueryChange: (value: string) => void;
   tv: boolean;
@@ -261,12 +321,17 @@ function StandingsCard({
   const noScores = division.rows.length > 0 && division.rows.every((row) => row.rank === null);
   const entryText = `${division.entryCount} ${division.entryCount === 1 ? 'entry' : 'entries'}`;
   const eventOptions = events.map((item) => ({ value: item.id, label: item.name }));
-  const divisionOptions = event.divisions.map((item) => ({ value: divisionKey(item), label: item.name ?? 'All', count: item.entryCount }));
-  const hasPickers = eventOptions.length > 1 || divisionOptions.length > 1;
+  const divisions = divisionOptions(event);
+  const squads = squadOptions(event, division);
+  const hasPickers = eventOptions.length > 1 || divisions.length > 1 || squads.length > 1;
+  const facts = `${event.scoringLabel} · ${entryText}`;
 
   return (
     <Card padding="flush" aria-label="Standings" className={styles.tableCard}>
-      <CardHeader title={sectionTitle(event, division)} description={`${event.scoringLabel} · ${entryText}`} />
+      <CardHeader
+        title={sectionTitle(event, division)}
+        description={division.cashNote ? <>{facts}<span className={styles.noteLine}>{division.cashNote}</span></> : facts}
+      />
       {hasPickers || !tv ? (
         <TableToolbar
           className={styles.toolbar}
@@ -275,7 +340,8 @@ function StandingsCard({
           )}
         >
           <Picker label="Event" options={eventOptions} value={event.id} onChange={onEventChange} />
-          <Picker label="Division" options={divisionOptions} value={divisionKey(division)} onChange={onDivisionChange} />
+          <Picker label="Division" options={divisions} value={divisionKey(division)} onChange={onDivisionChange} />
+          <Picker label="Squad" options={squads} value={squadKey(division)} onChange={onSquadChange} />
         </TableToolbar>
       ) : null}
       {noScores ? (
@@ -410,16 +476,36 @@ function SurvivorTable({ finals, caption }: { finals: LiveFinals; caption: strin
   );
 }
 
-function FinalsCard({ event, division, finals, isPhone }: { event: LiveEvent; division: LiveDivision; finals: LiveFinals; isPhone: boolean }) {
+function FinalsCard({
+  event,
+  division,
+  finals,
+  isPhone,
+  squads,
+  onSquadChange,
+}: {
+  event: LiveEvent;
+  division: LiveDivision;
+  finals: LiveFinals;
+  isPhone: boolean;
+  squads: PickerOption[];
+  onSquadChange: (key: string) => void;
+}) {
   const title = sectionTitle(event, division);
   const badge = FINALS_BADGE[finals.status];
   const isBracket = finals.type === 'stepladder' || finals.type === 'match-play-single' || finals.type === 'match-play-double';
   const rounds = isBracket ? finalsRounds(finals) : [];
   const hasTable = (finals.type === 'round-robin' && finals.table.length > 0) || (finals.type === 'survivor' && finals.rounds.length > 0);
+  const hasPlacings = (finals.placings?.length ?? 0) > 0;
 
   return (
     <Card padding={hasTable ? 'flush' : 'default'} aria-label={`${title} finals`} className={hasTable ? styles.tableCard : undefined}>
       <CardHeader title={title} description={finals.label} actions={<Badge tone={badge.tone}>{badge.label}</Badge>} />
+      {squads.length > 1 ? (
+        <TableToolbar className={styles.toolbar}>
+          <Picker label="Squad" options={squads} value={squadKey(division)} onChange={onSquadChange} />
+        </TableToolbar>
+      ) : null}
       {finals.notes ? <p className={hasTable ? `${styles.body} ${styles.inset}` : styles.body}>{finals.notes}</p> : null}
       {!isBracket && finals.champion ? (
         <div className={hasTable ? styles.inset : undefined}><ChampionLine champion={finals.champion} /></div>
@@ -434,6 +520,11 @@ function FinalsCard({ event, division, finals, isPhone }: { event: LiveEvent; di
       ) : null}
       {finals.type === 'round-robin' && finals.table.length > 0 ? <RoundRobinTable finals={finals} caption={`${title} round robin`} /> : null}
       {finals.type === 'survivor' && finals.rounds.length > 0 ? <SurvivorTable finals={finals} caption={`${title} survivor rounds`} /> : null}
+      {hasPlacings ? (
+        <div className={hasTable ? `${styles.inset} ${styles.placings}` : styles.placings}>
+          <FinalsPlacings placings={finals.placings} />
+        </div>
+      ) : null}
       {!finals.notes && !hasTable && rounds.length === 0 && !finals.champion ? (
         <p className={styles.body}>Finals will appear here once the qualifying cut is set.</p>
       ) : null}
@@ -442,9 +533,26 @@ function FinalsCard({ event, division, finals, isPhone }: { event: LiveEvent; di
 }
 
 function FinalsView({ events, isPhone }: { events: LiveEvent[]; isPhone: boolean }) {
-  const sections = events.flatMap((event) =>
-    event.divisions.filter((division) => division.finals).map((division) => ({ event, division, finals: division.finals as LiveFinals })),
-  );
+  // Per-squad events show one card per division, with a squad picker; the choice is kept per event and division.
+  const [squadChoice, setSquadChoice] = useState<Record<string, string>>({});
+  const sections: Array<{ event: LiveEvent; division: LiveDivision; finals: LiveFinals; squads: PickerOption[]; slot: string }> = [];
+  for (const event of events) {
+    const seen = new Set<string>();
+    for (const division of event.divisions) {
+      if (!division.finals) continue;
+      const slot = `${event.id}:${divisionKey(division)}`;
+      if (!division.squad) {
+        sections.push({ event, division, finals: division.finals, squads: [], slot });
+        continue;
+      }
+      if (seen.has(slot)) continue;
+      seen.add(slot);
+      const withFinals = event.divisions.filter((item) => item.finals && item.squad && divisionKey(item) === divisionKey(division));
+      const chosen = withFinals.find((item) => squadKey(item) === squadChoice[slot]) ?? withFinals[0];
+      const squads = withFinals.map((item) => ({ value: squadKey(item), label: item.squad?.label ?? 'Squad' }));
+      sections.push({ event, division: chosen, finals: chosen.finals as LiveFinals, squads, slot });
+    }
+  }
   if (sections.length === 0) {
     return (
       <Card>
@@ -454,8 +562,16 @@ function FinalsView({ events, isPhone }: { events: LiveEvent[]; isPhone: boolean
   }
   return (
     <>
-      {sections.map(({ event, division, finals }) => (
-        <FinalsCard key={`${event.id}:${divisionKey(division)}`} event={event} division={division} finals={finals} isPhone={isPhone} />
+      {sections.map(({ event, division, finals, squads, slot }) => (
+        <FinalsCard
+          key={`${event.id}:${groupKey(division)}`}
+          event={event}
+          division={division}
+          finals={finals}
+          isPhone={isPhone}
+          squads={squads}
+          onSquadChange={(key) => setSquadChoice((previous) => ({ ...previous, [slot]: key }))}
+        />
       ))}
     </>
   );
@@ -468,7 +584,9 @@ function AllEventsCard({ allEvents, query, onQueryChange, tv }: { allEvents: Liv
   const filtering = query.trim().length > 0;
   const visible = filtering ? rows.filter((row) => matchesQuery(query, row.name)) : rows;
   const rankedCount = rows.filter((row) => row.rank !== null).length;
-  const lines = filtering ? new Map<number, string[]>() : lineLabels(rankedCount, null, allEvents.cashingCount);
+  const cashing = allEvents.cashingCount;
+  const money = cashing ? { position: cashing, label: `In the money: top ${cashing} cash` } : null;
+  const lines = filtering ? new Map<number, string[]>() : lineLabels(rankedCount, null, money);
   const columnCount = 3 + allEvents.events.length;
 
   return (
@@ -584,6 +702,7 @@ export default function LiveStandingsView({ tournamentId, initialData, initialNo
   const [view, setView] = useState<LiveView>('standings');
   const [eventId, setEventId] = useState<string | null>(null);
   const [divisionId, setDivisionId] = useState<string | null>(null);
+  const [squadId, setSquadId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -599,25 +718,33 @@ export default function LiveStandingsView({ tournamentId, initialData, initialNo
   const activeView: LiveView = views.some((item) => item.value === view) ? view : 'standings';
 
   const event = events.find((item) => item.id === eventId) ?? events[0] ?? null;
-  const division = event ? event.divisions.find((item) => divisionKey(item) === divisionId) ?? event.divisions[0] ?? null : null;
+  const division = event ? findGroup(event, divisionId, squadId) : null;
 
   const changeEvent = useCallback((id: string) => {
     setEventId(id);
     setDivisionId(null);
+    setSquadId(null);
+  }, []);
+  const changeDivision = useCallback((key: string) => {
+    setDivisionId(key);
+    setSquadId(null);
   }, []);
 
-  // TV mode: step through every event and division so a screen at the center shows them all.
+  // TV mode: step through every event, division, and squad group so a screen at the center shows them all.
   const stops = useMemo(
-    () => events.flatMap((item) => item.divisions.map((entry) => ({ eventId: item.id, divisionId: divisionKey(entry) }))),
+    () => events.flatMap((item) => item.divisions.map((entry) => ({ eventId: item.id, divisionId: divisionKey(entry), squadId: squadKey(entry) }))),
     [events],
   );
-  const currentStop = event && division ? stops.findIndex((stop) => stop.eventId === event.id && stop.divisionId === divisionKey(division)) : -1;
+  const currentStop = event && division
+    ? stops.findIndex((stop) => stop.eventId === event.id && stop.divisionId === divisionKey(division) && stop.squadId === squadKey(division))
+    : -1;
   useEffect(() => {
     if (!tv || stops.length < 2 || activeView !== 'standings') return undefined;
     const timer = setTimeout(() => {
       const next = stops[(currentStop + 1) % stops.length];
       setEventId(next.eventId);
       setDivisionId(next.divisionId);
+      setSquadId(next.squadId);
     }, TV_CYCLE_MS);
     return () => clearTimeout(timer);
   }, [tv, stops, currentStop, activeView]);
@@ -724,7 +851,8 @@ export default function LiveStandingsView({ tournamentId, initialData, initialNo
                     event={event}
                     division={division}
                     onEventChange={changeEvent}
-                    onDivisionChange={setDivisionId}
+                    onDivisionChange={changeDivision}
+                    onSquadChange={setSquadId}
                     query={query}
                     onQueryChange={setQuery}
                     tv={tv}

@@ -39,19 +39,41 @@ export type LiveEvent = {
   games: number;
   /** "Handicap 90% of 220", "Scratch", or "9-pin no-tap, scratch". */
   scoringLabel: string;
-  /** One per division. Events without divisions have a single entry with id and name null. */
+  /**
+   * One per division. Events without divisions have a single entry with id and name null.
+   * When the event's finals are for each squad, there is one entry per division and squad
+   * (ordered by division, then squad date and time), each with `squad` set.
+   */
   divisions: LiveDivision[];
 };
 
 export type LiveDivision = {
   id: string | null;
   name: string | null;
-  /** Entries registered (confirmed or pending) in this event and division. */
+  /**
+   * The squad this group's standings and finals are for. Null or absent when the event's standings
+   * are tournament-wide (all squads combined). Set when the event's finals are for each squad: each
+   * squad then has its own ranks, cut, cash line (its own prize fund), and finals. `id` is null for
+   * entries without a squad ("No squad"). `label` is "Sat Mar 6 · 2:00 PM", or just "2:00 PM" when
+   * the tournament is one day. Keys for this group must include the squad id.
+   */
+  squad?: { id: string | null; label: string } | null;
+  /** Entries registered (confirmed or pending) in this event and division (and squad, when set). */
   entryCount: number;
   /** How many of the top places advance to finals (null: no cut). */
   advancingCount: number | null;
-  /** How many places are paid, from the payout ratio (null: not stated). */
+  /**
+   * How many places are paid, from the payout ratio (null: not stated). Without finals these are the
+   * top qualifying places. With finals, the finals finish decides the money: the top places in the
+   * finals cash, and only places beyond the finals field cash from qualifying.
+   */
   cashingCount: number | null;
+  /**
+   * How the money works for this group when there are finals, shown under the qualifying card header:
+   * "Top 2 finishers in the finals cash." or "Places 6-8 cash from qualifying". Null without finals
+   * or without a payout ratio (absent in older payloads).
+   */
+  cashNote?: string | null;
   rows: StandingRow[];
   finals: LiveFinals | null;
 };
@@ -79,7 +101,10 @@ export type StandingRow = {
   /** Handicap added for the games bowled so far. */
   handicapTotal: number;
   total: number;
-  /** 'advancing' (inside the cut), 'cashing' (in the money but not advancing), or null. */
+  /**
+   * 'advancing' (inside the cut), 'cashing' (cashes from qualifying: without finals, inside the money
+   * line; with finals, only the places below the cut that still pay), or null.
+   */
   status: 'advancing' | 'cashing' | null;
   /** Squad label the entry bowled in, for example "Sat 2:00 PM". */
   squadLabel: string | null;
@@ -99,7 +124,25 @@ export type LiveFinals = {
   rounds: FinalsRound[];
   /** Round robin standings. */
   table: RoundRobinRow[];
+  /**
+   * Finishing places decided so far, ordered by place (empty until a place is decided; optional for
+   * older payloads). Stepladder: each match's loser takes the next place down the ladder and the
+   * title match decides 1st and 2nd. Match play: final loser 2nd, semifinal losers tie 3rd,
+   * quarterfinal losers tie 5th. Survivor: reverse elimination order. Round robin: the final table,
+   * once every match is bowled. `cashing` marks places inside the cash count.
+   */
+  placings?: FinalsPlacing[];
   notes: string;
+};
+
+export type FinalsPlacing = {
+  /** The finalist's seed key, stable across refreshes. */
+  key: string;
+  place: number;
+  /** Shares the place with another finalist (for example both semifinal losers are 3rd). */
+  tied: boolean;
+  name: string;
+  cashing: boolean;
 };
 
 export type FinalsSide = {

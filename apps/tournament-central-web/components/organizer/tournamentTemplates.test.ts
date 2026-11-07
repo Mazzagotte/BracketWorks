@@ -64,7 +64,7 @@ describe('tournament templates', () => {
     });
 
     const sweeper = findTournamentTemplate('sweeper')!.build().events[0];
-    expect(sweeper.rules).toMatchObject({ reentryScoring: 'best-counts', handicap: { percent: 80, basis: 220 }, finals: { type: 'stepladder', cut: { by: 'count', value: 5 } } });
+    expect(sweeper.rules).toMatchObject({ reentryScoring: 'best-counts', handicap: { percent: 80, basis: 220 }, finals: { type: 'stepladder', cut: { by: 'count', value: 5 }, scope: 'squad' } });
     expect(sweeper.allowReentry).toBe(true);
 
     expect(findTournamentTemplate('scotch-doubles')!.build().events[0].rules).toMatchObject({ format: 'scotch-doubles', handicap: { perPair: true }, team: { mixedRequired: true } });

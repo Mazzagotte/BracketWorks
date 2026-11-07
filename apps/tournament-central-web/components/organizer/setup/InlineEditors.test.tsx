@@ -82,6 +82,21 @@ describe('event rules editor', () => {
       finals: { type: 'round-robin', cut: { by: 'count', value: 5 }, roundRobinScoring: 'petersen' },
     });
   });
+
+  it('lets finals and the prize fund be for each squad', async () => {
+    const user = userEvent.setup();
+    const onSave = renderEvent();
+    expect(screen.queryByRole('group', { name: 'Finals are for' })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Entries per cash prize/), '5');
+    expect(screen.getByRole('group', { name: 'Finals are for' })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Finals'), 'stepladder');
+    expect(screen.getByRole('button', { name: 'Whole tournament' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Each squad has its own standings, cut, prize fund, and finals.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Each squad' }));
+    expect(screen.getByRole('button', { name: 'Each squad' })).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: 'Save event' }));
+    expect(onSave.mock.calls[0][0].rules.finals).toMatchObject({ type: 'stepladder', scope: 'squad' });
+  });
 });
 
 describe('division rules editor', () => {

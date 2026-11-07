@@ -3,7 +3,7 @@
 import { Fragment, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
-import { Button, CardDivider, CheckboxField, FormGrid, ICON_SIZE, Notice, SelectField, TextAreaField, TextField } from '@bracketworks/ui';
+import { Button, CardDivider, CheckboxField, FormGrid, ICON_SIZE, Notice, SegmentedControl, SelectField, TextAreaField, TextField } from '@bracketworks/ui';
 
 import {
   EVENT_FORMAT_LABEL,
@@ -15,7 +15,7 @@ import {
   defaultSideEvent,
   normalizeSideEvent,
 } from '../formatTypes';
-import type { AverageSource, BracketRules, DivisionRules, EventFormat, EventRules, FinalsType, SideEventKind, SideEventSettings } from '../formatTypes';
+import type { AverageSource, BracketRules, DivisionRules, EventFormat, EventRules, FinalsScope, FinalsType, SideEventKind, SideEventSettings } from '../formatTypes';
 import { bracketPayoutSummary, handicapExample, payoutRatioText } from '../formatSummaries';
 import { normalizeEventConfig, normalizeSquadConfig } from '../setupSerialization';
 import { buildSquadDisplayName, formatEntryFeeInput, normalizeEntryFeeInput, parseEntryFeeInputToCents } from '../setupFormatting';
@@ -355,6 +355,22 @@ function EventRulesSections({ draft, setDraft, problems }: {
             />
           ) : null}
         </FormGrid>
+        {finals.type !== 'none' || rules.payoutRatio ? (
+          <div className={styles.checkboxGroup}>
+            {/* Visible label; the segmented control carries the same accessible name. */}
+            <span className={styles.legend} aria-hidden="true">Finals are for</span>
+            <SegmentedControl<FinalsScope>
+              label="Finals are for"
+              value={finals.scope}
+              onChange={(scope) => setRules({ finals: { ...finals, scope } })}
+              options={[
+                { value: 'tournament', label: 'Whole tournament' },
+                { value: 'squad', label: 'Each squad' },
+              ]}
+            />
+            <p className={styles.helper}>Each squad has its own standings, cut, prize fund, and finals.</p>
+          </div>
+        ) : null}
       </EditorSection>
 
       <EditorSection title="Payouts and membership">

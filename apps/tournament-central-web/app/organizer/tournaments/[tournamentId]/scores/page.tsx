@@ -24,9 +24,11 @@ import {
 } from '@bracketworks/ui';
 import type { BracketMatchData, BracketRoundData } from '@bracketworks/ui';
 
+import { FinalsPlacings } from '@/components/live/FinalsPlacings';
 import type { FinalsMatch, LiveFinals, LiveStandings } from '@/components/live/liveStandingsTypes';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
+  NO_SQUAD_KEY,
   fetchFinals,
   fetchScoreGrid,
   fetchStandings,
@@ -238,14 +240,29 @@ function plural(count: number, word: string): string {
   return `${count} ${word.endsWith('y') ? `${word.slice(0, -1)}ies` : `${word}s`}`;
 }
 
-function linesSummary(grid: ScoreGrid): string {
+/** "Top 2 finishers in the finals cash." becomes "top 2 finishers in the finals cash" inside a list. */
+function inlineNote(note: string): string {
+  const text = note.replace(/\.$/u, '');
+  return text.charAt(0).toLocaleLowerCase() + text.slice(1);
+}
+
+function linesSummary(grid: ScoreGrid, squadId: string): string {
   const event = grid.events.find((item) => item.id === grid.event_id);
   if (!event) return '';
   const parts = [event.scoring_label];
-  event.divisions.forEach((division) => {
+  let divisions = event.divisions;
+  if (event.finals_scope === 'squad') {
+    // Each squad has its own cut and prize fund: show the chosen squad's lines.
+    if (!squadId) return [...parts, 'Cut and cash lines are for each squad. Choose a squad to see them.'].join(' · ');
+    divisions = divisions.filter((division) => division.squad?.id === squadId);
+  }
+  divisions.forEach((division) => {
+    const cash = division.cash_note
+      ? inlineNote(division.cash_note)
+      : division.cashing_count ? `top ${division.cashing_count} cash` : '';
     const lines = [
       division.advancing_count ? `top ${division.advancing_count} advance` : '',
-      division.cashing_count ? `top ${division.cashing_count} cash` : '',
+      cash,
     ].filter(Boolean).join(', ');
     if (!lines) return;
     parts.push(division.name ? `${division.name}: ${lines}` : lines.charAt(0).toUpperCase() + lines.slice(1));
@@ -364,7 +381,7 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
       <Card padding="flush" aria-label="Score grid">
         <CardHeader
           title={currentEvent?.name ?? 'Scores'}
-          description={linesSummary(grid)}
+          description={linesSummary(grid, squadId)}
           actions={<SaveStatusText status={autosave.status} />}
         />
         {grid.rows.length === 0 ? (
@@ -460,22 +477,40 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
 // ---------------------------------------------------------------------------
 // Finals
 
-type FinalsOption = { value: string; eventId: string; divisionId: string | null; label: string };
+type SquadOption = { value: string; label: string };
+
+/** One option per event and division. Per-squad events list their squads (`squads` is empty when tournament-wide). */
+type FinalsOption = { value: string; eventId: string; divisionId: string | null; label: string; squads: SquadOption[] };
 
 function finalsOptions(standings: LiveStandings): FinalsOption[] {
-  const options: FinalsOption[] = [];
+  const options = new Map<string, FinalsOption>();
   standings.events.forEach((event) => {
     event.divisions.forEach((division) => {
       if (!division.finals) return;
-      options.push({
-        value: `${event.id}::${division.id ?? ''}`,
+      const value = `${event.id}::${division.id ?? ''}`;
+      const option = options.get(value) ?? {
+        value,
         eventId: event.id,
         divisionId: division.id,
         label: division.name ? `${event.name}, ${division.name}` : event.name,
-      });
+        squads: [],
+      };
+      if (division.squad) option.squads.push({ value: division.squad.id ?? NO_SQUAD_KEY, label: division.squad.label });
+      options.set(value, option);
     });
   });
-  return options;
+  return [...options.values()];
+}
+
+function SquadPicker({ squads, value, onChange }: { squads: SquadOption[]; value: string; onChange: (value: string) => void }) {
+  if (squads.length <= 5) {
+    return <SegmentedControl label="Squad" value={value} onChange={onChange} options={squads} />;
+  }
+  return (
+    <SelectField label="Squad" value={value} onChange={(event) => onChange(event.target.value)}>
+      {squads.map((squad) => <option key={squad.value} value={squad.value}>{squad.label}</option>)}
+    </SelectField>
+  );
 }
 
 function bracketSide(side: FinalsMatch['a']) {
@@ -552,6 +587,7 @@ function slotKey(slot: Pick<FinalsSlot, 'round' | 'match' | 'seed'>): string {
 function FinalsView({ tournamentId }: { tournamentId: number }) {
   const [options, setOptions] = useState<FinalsOption[] | null>(null);
   const [selected, setSelected] = useState('');
+  const [selectedSquad, setSelectedSquad] = useState('');
   const [state, setState] = useState<FinalsState | null>(null);
   const [error, setError] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
@@ -561,7 +597,10 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
   const [actionError, setActionError] = useState('');
 
   const option = options?.find((item) => item.value === selected) ?? options?.[0] ?? null;
-  const target: FinalsTarget | null = option ? { event_config_id: option.eventId, division_config_id: option.divisionId } : null;
+  const squad = option?.squads.find((item) => item.value === selectedSquad) ?? option?.squads[0] ?? null;
+  const target: FinalsTarget | null = option
+    ? { event_config_id: option.eventId, division_config_id: option.divisionId, squad_config_id: squad?.value ?? null }
+    : null;
 
   /** Takes the server's finals, keeping any invalid text still being corrected. */
   const applyState = useCallback((next: FinalsState) => {
@@ -581,12 +620,13 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
 
   const eventId = target?.event_config_id ?? null;
   const divisionId = target?.division_config_id ?? null;
+  const squadId = target?.squad_config_id ?? null;
   const saveFinals = useCallback(async (games: FinalsGameChange[]) => {
     const token = getToken();
     if (!token) throw new Error('Your session expired. Please sign in again.');
     if (!eventId) return;
-    applyState(await saveFinalsGames(token, tournamentId, { event_config_id: eventId, division_config_id: divisionId }, games));
-  }, [tournamentId, eventId, divisionId, applyState]);
+    applyState(await saveFinalsGames(token, tournamentId, { event_config_id: eventId, division_config_id: divisionId, squad_config_id: squadId }, games));
+  }, [tournamentId, eventId, divisionId, squadId, applyState]);
   const autosave = useAutosave<FinalsGameChange>(saveFinals);
 
   useEffect(() => {
@@ -605,7 +645,7 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
     let cancelled = false;
     const token = getToken();
     if (!token) return undefined;
-    fetchFinals(token, tournamentId, { event_config_id: eventId, division_config_id: divisionId })
+    fetchFinals(token, tournamentId, { event_config_id: eventId, division_config_id: divisionId, squad_config_id: squadId })
       .then((next) => {
         if (cancelled) return;
         setInvalid(new Set());
@@ -617,7 +657,7 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
         if (!cancelled) setError(errorMessage(cause, 'Finals could not be loaded.'));
       });
     return () => { cancelled = true; };
-  }, [tournamentId, eventId, divisionId, applyState]);
+  }, [tournamentId, eventId, divisionId, squadId, applyState]);
 
   const updateSlot = (slot: FinalsSlot, text: string) => {
     const key = slotKey(slot);
@@ -677,11 +717,20 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
 
   return (
     <>
-      {options.length > 1 ? (
+      {options.length > 1 || (option?.squads.length ?? 0) > 1 ? (
         <div className={styles.controls}>
-          <SelectField label="Event and division" value={option?.value ?? ''} onChange={(event) => setSelected(event.target.value)}>
-            {options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </SelectField>
+          {options.length > 1 ? (
+            <SelectField
+              label="Event and division"
+              value={option?.value ?? ''}
+              onChange={(event) => { setSelected(event.target.value); setSelectedSquad(''); }}
+            >
+              {options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </SelectField>
+          ) : null}
+          {option && option.squads.length > 1 ? (
+            <SquadPicker squads={option.squads} value={squad?.value ?? ''} onChange={setSelectedSquad} />
+          ) : null}
         </div>
       ) : null}
 
@@ -766,6 +815,12 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
                 return out.length ? `${round.label}: ${out.join(', ')} out` : `${round.label}: in progress`;
               }).join(' · ')}
             </p>
+          ) : null}
+          {finals.placings && finals.placings.length > 0 ? (
+            <>
+              <CardDivider />
+              <FinalsPlacings placings={finals.placings} />
+            </>
           ) : null}
           <CardDivider />
           <h3 className={styles.subsectionTitle}>Enter finals scores</h3>

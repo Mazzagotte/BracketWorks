@@ -43,6 +43,9 @@ DEFAULT_FINALS_FIELD = {
 DEFAULT_WIN_BONUS_PINS = 30
 MAX_SCORE = 300
 ACTIVE_STATUSES = ("pending", "confirmed")
+# Group key for entries without a squad when an event's finals are per squad (no real squad id can match).
+NO_SQUAD_KEY = "__no-squad__"
+NO_SQUAD_LABEL = "No squad"
 DOUBLE_ELIMINATION_NOTE = "Double elimination finals are coming soon."
 _ALL_EVENTS_NAME = re.compile(r"\ball[\s-]*events?\b", re.IGNORECASE)
 
@@ -113,6 +116,9 @@ def normalize_event_rules(raw: Any, *, scoring: str, max_players: int) -> dict:
             "roundRobinScoring": rr if rr in ("petersen", "bonus-pins") else None,
             "winBonusPins": _num(finals_raw.get("winBonusPins"), None),
             "notes": finals_raw.get("notes") if isinstance(finals_raw.get("notes"), str) else "",
+            # 'tournament': one set of standings and finals for all squads combined (the default).
+            # 'squad': each squad has its own standings, cut, cash line, and finals.
+            "scope": "squad" if finals_raw.get("scope") == "squad" else "tournament",
         },
         "payoutRatio": _num(data.get("payoutRatio"), None),
         "usbcRequired": bool(data.get("usbcRequired")),
@@ -236,6 +242,10 @@ class EntryIn:
     squad_id: Optional[str] = None
     squad_label: Optional[str] = None
     reentry_number: int = 0
+    # Snapshots used to name and order per-squad standings groups when the squad left setup.
+    squad_name: Optional[str] = None
+    squad_date: Optional[str] = None
+    squad_time: Optional[str] = None
     registration_id: Optional[int] = None
 
 
@@ -255,6 +265,8 @@ class FinalsIn:
     type: str
     seeds: list[dict]
     games: list[FinalsGameIn] = field(default_factory=list)
+    # None for tournament-wide finals; the squad group key (squad id or NO_SQUAD_KEY) for per-squad finals.
+    squad_key: Optional[str] = None
 
 
 @dataclass
@@ -720,6 +732,100 @@ def survivor_finals(scores: _FinalsScores) -> dict:
     return {"rounds": rounds, "champion": champion, "notes": notes}
 
 
+def _placing(scores: _FinalsScores, seed: int, place: int, tied: bool) -> dict:
+    return {"key": scores.key(seed), "place": place, "tied": tied, "name": scores.name(seed), "cashing": False}
+
+
+def _match_loser(match: Mapping[str, Any]) -> Optional[int]:
+    a, b = match.get("a"), match.get("b")
+    if not a or not b:
+        return None
+    if a["winner"]:
+        return b["seed"]
+    if b["winner"]:
+        return a["seed"]
+    return None
+
+
+def finals_placings(finals_type: str, computed: Mapping[str, Any], scores: _FinalsScores) -> list[dict]:
+    """Finishing places decided so far, ordered by place. Ties share a place (semifinal losers tie 3rd).
+
+    Stepladder: the title match decides 1st and 2nd, and each earlier match's loser takes the next
+    place down (the first match's loser finishes last among the finalists). Match play: final loser
+    2nd, semifinal losers 3rd, quarterfinal losers 5th. Survivor: reverse elimination order. Round
+    robin: the final table, once every match is bowled.
+    """
+    placings: list[dict] = []
+    champion_seed: Optional[int] = None
+    matches = computed.get("matches") or []
+    if finals_type == "stepladder":
+        n = len(scores.seeds)
+        for match in matches:
+            loser = _match_loser(match)
+            if loser is None:
+                continue
+            placings.append(_placing(scores, loser, n - match["round"] + 1, False))
+            if match["round"] == n - 1:
+                champion_seed = match["a"]["seed"] if match["a"]["winner"] else match["b"]["seed"]
+    elif finals_type == "match-play-single":
+        rounds = max((match["round"] for match in matches), default=0)
+        bowled = {}
+        for match in matches:
+            is_bye = match["a"] is not None and match["b"] is None
+            if not is_bye:
+                bowled[match["round"]] = bowled.get(match["round"], 0) + 1
+        for match in matches:
+            loser = _match_loser(match)
+            if loser is None:
+                continue
+            place = 2 ** (rounds - match["round"]) + 1
+            placings.append(_placing(scores, loser, place, bowled.get(match["round"], 0) > 1))
+            if match["round"] == rounds:
+                champion_seed = match["a"]["seed"] if match["a"]["winner"] else match["b"]["seed"]
+    elif finals_type == "survivor":
+        for round_ in computed.get("rounds") or []:
+            out = [row for row in round_["rows"] if row["eliminated"]]
+            if not out:
+                continue
+            place = len(round_["rows"]) - len(out) + 1
+            placings.extend(_placing(scores, row["seed"], place, len(out) > 1) for row in out)
+            left = [row for row in round_["rows"] if not row["eliminated"]]
+            if len(left) == 1:
+                champion_seed = left[0]["seed"]
+    elif finals_type == "round-robin" and computed.get("champion"):
+        table = computed.get("table") or []
+        counts: dict[int, int] = {}
+        for row in table:
+            counts[row["rank"]] = counts.get(row["rank"], 0) + 1
+        placings = [_placing(scores, row["seed"], row["rank"], counts[row["rank"]] > 1) for row in table]
+    if champion_seed is not None:
+        placings.append(_placing(scores, champion_seed, 1, False))
+    return sorted(placings, key=lambda item: (item["place"], item["name"].lower()))
+
+
+def cash_lines(
+    finals_type: str, advancing: Optional[int], cashing: Optional[int]
+) -> tuple[Optional[int], Optional[str]]:
+    """How many qualifying places cash, and the note for the qualifying card.
+
+    Without finals, qualifying rank decides the money (top ``cashing`` places). With finals,
+    qualifying only decides who advances: the finals finish decides the money, and qualifying cash
+    places exist only when more places pay than advance (they go to the next qualifiers below the cut).
+    Returns (qualifying cash line for ``apply_lines``, cash note).
+    """
+    if finals_type == "none" or not advancing:
+        return cashing, None
+    if not cashing:
+        return None, None
+    if cashing > advancing:
+        first, last = advancing + 1, cashing
+        note = f"Place {first} cashes from qualifying" if first == last else f"Places {first}-{last} cash from qualifying"
+        return cashing, note
+    if cashing == 1:
+        return None, "The finals winner cashes."
+    return None, f"Top {cashing} finishers in the finals cash."
+
+
 def finals_label(finals_type: str, field_size: Optional[int], rules: Mapping[str, Any]) -> str:
     size = f", top {field_size}" if field_size else ""
     if finals_type == "stepladder":
@@ -762,6 +868,7 @@ def compute_finals(
         "matches": [],
         "rounds": [],
         "table": [],
+        "placings": [],
         "notes": rule_notes,
     }
     if finals_type == "match-play-double":
@@ -783,6 +890,7 @@ def compute_finals(
     else:
         computed = survivor_finals(scores)
     result.update({key: value for key, value in computed.items() if key != "notes"})
+    result["placings"] = finals_placings(finals_type, computed, scores)
     result["status"] = "complete" if computed["champion"] else "in-progress"
     result["notes"] = " ".join(note for note in [rule_notes, *computed["notes"]] if note)
     return result
@@ -815,6 +923,84 @@ class _DivisionResult:
     rows: list[_Row]
     event_id: str
     division_id: Optional[str]
+    # None for tournament-wide standings; the squad group key (squad id or NO_SQUAD_KEY) per squad.
+    squad_key: Optional[str] = None
+    squad_label: Optional[str] = None
+
+
+def finals_scope(rules: Mapping[str, Any]) -> str:
+    return "squad" if _as_dict(rules.get("finals")).get("scope") == "squad" else "tournament"
+
+
+def entry_squad_key(entry: EntryIn) -> str:
+    return entry.squad_id or NO_SQUAD_KEY
+
+
+def _clock_minutes(value: Any) -> Optional[int]:
+    text = _parse_time(value)
+    if text is None:
+        return None
+    parsed = datetime.strptime(text, "%I:%M %p")
+    return parsed.hour * 60 + parsed.minute
+
+
+def squad_group_label(name: Any, date_value: Any, time_value: Any, *, with_date: bool) -> str:
+    """'Sat Mar 6 \u00b7 2:00 PM', or just '2:00 PM' when the tournament is one day."""
+    day = _parse_date(date_value)
+    clock = _parse_time(time_value)
+    day_text = f"{_WEEKDAYS[day.weekday()]} {_MONTHS[day.month - 1]} {day.day}" if day else None
+    text = str(name or "").strip()
+    if day_text and clock:
+        return f"{day_text} \u00b7 {clock}" if with_date else clock
+    if clock:
+        return clock
+    if day_text and with_date:
+        return f"{day_text} \u00b7 {text}" if text else day_text
+    return text or day_text or "Squad"
+
+
+def squad_groups(setup: Mapping[str, Any], entries: Sequence[EntryIn]) -> list[tuple[str, str]]:
+    """(group key, label) for each squad the entries bowled in, ordered by date and time.
+
+    Entries without a squad form a last "No squad" group. Squad names, dates, and times come from
+    setup, falling back to the entry snapshots for squads no longer in setup.
+    """
+    setup_squads = {
+        str(squad.get("id")): squad
+        for squad in (setup.get("squads") or [])
+        if isinstance(squad, dict) and str(squad.get("id") or "").strip()
+    }
+    info: dict[str, tuple[Any, Any, Any]] = {}
+    has_none = False
+    for entry in sorted(entries, key=lambda item: item.id):
+        if not entry.squad_id:
+            has_none = True
+            continue
+        if entry.squad_id in info:
+            continue
+        squad = setup_squads.get(entry.squad_id)
+        if squad is not None:
+            info[entry.squad_id] = (squad.get("name"), squad.get("dateIso"), squad.get("startTime"))
+        else:
+            info[entry.squad_id] = (entry.squad_name or entry.squad_label, entry.squad_date, entry.squad_time)
+    days = {_parse_date(squad.get("dateIso")) for squad in setup_squads.values()}
+    days |= {_parse_date(date_value) for _, date_value, _ in info.values()}
+    days.discard(None)
+    with_date = len(days) > 1
+
+    def order(item: tuple[str, tuple[Any, Any, Any]]):
+        key, (name, date_value, time_value) = item
+        day = _parse_date(date_value)
+        minutes = _clock_minutes(time_value)
+        return (day or date.max, 24 * 60 if minutes is None else minutes, str(name or "").lower(), key)
+
+    groups = [
+        (key, squad_group_label(name, date_value, time_value, with_date=with_date))
+        for key, (name, date_value, time_value) in sorted(info.items(), key=order)
+    ]
+    if has_none:
+        groups.append((NO_SQUAD_KEY, NO_SQUAD_LABEL))
+    return groups
 
 
 def all_events_fee_ids(setup: Mapping[str, Any]) -> list[str]:
@@ -831,14 +1017,20 @@ def compute_standings(data: StandingsInput) -> dict:
     return compute_standings_detail(data)[0]
 
 
-def compute_standings_detail(data: StandingsInput) -> tuple[dict, dict[tuple[str, Optional[str]], _DivisionResult]]:
-    """The payload plus each division's ranked rows (with entry and bowler ids), keyed by (event, division)."""
+def compute_standings_detail(
+    data: StandingsInput,
+) -> tuple[dict, dict[tuple[str, Optional[str], Optional[str]], _DivisionResult]]:
+    """The payload plus each group's ranked rows (with entry and bowler ids), keyed by (event, division, squad).
+
+    The squad part of the key is None when the event's standings are tournament-wide, and the squad
+    group key (squad id or NO_SQUAD_KEY) when the event's finals are per squad.
+    """
     setup = data.setup if isinstance(data.setup, dict) else {}
     setup_events = _enabled(setup.get("events"))
     setup_divisions = _enabled(setup.get("divisions"))
     entries = list(data.entries)
     entries_by_id = {entry.id: entry for entry in entries}
-    finals_by_key = {(item.event_id, item.division_id): item for item in data.finals}
+    finals_by_key = {(item.event_id, item.division_id, item.squad_key): item for item in data.finals}
 
     known_event_ids = {str(event["id"]) for event in setup_events}
     for entry in sorted(entries, key=lambda item: item.id):
@@ -879,36 +1071,64 @@ def compute_standings_detail(data: StandingsInput) -> tuple[dict, dict[tuple[str
         if not division_list or any(entry.division_id is None for entry in event_entries):
             division_list.append((None, None))
 
+        per_squad = finals_scope(rules) == "squad"
+        groups: list[tuple[Optional[str], Optional[str]]] = (
+            list(squad_groups(setup, event_entries)) if per_squad else [(None, None)]
+        )
+
         divisions_payload = []
         for division_id, division_name in division_list:
             division_entries = [entry for entry in event_entries if entry.division_id == division_id]
-            rows = [row_by_entry[entry.id] for entry in division_entries]
-            if rules["reentryScoring"] == "best-counts":
-                rows = _best_counts(rows)
-            rows = rank_rows(rows)
-            ranked_count = sum(1 for row in rows if row.rank is not None)
-            entry_count = len(division_entries)
-            advancing = finals_field_size(rules, ranked_count, len(rows))
-            cashing = cashing_count(rules["payoutRatio"], entry_count)
-            apply_lines(rows, advancing, cashing)
-            finals = compute_finals(
-                rules["finals"]["type"],
-                rules,
-                finals_by_key.get((event_id, division_id)),
-                handicap=scoring == "handicap",
-                field_size=advancing,
-            )
-            payload = {
-                "id": division_id,
-                "name": division_name,
-                "entryCount": entry_count,
-                "advancingCount": advancing,
-                "cashingCount": cashing,
-                "rows": [row.as_payload() for row in rows],
-                "finals": finals,
-            }
-            divisions_payload.append(payload)
-            division_results.append(_DivisionResult(payload, rows, event_id, division_id))
+            division_groups = groups
+            if per_squad:
+                present = {entry_squad_key(entry) for entry in division_entries}
+                division_groups = [group for group in groups if group[0] in present]
+                if not division_groups:
+                    # Keep the division visible (with no rows) until someone in it bowls a squad.
+                    division_groups = [groups[0] if groups else (NO_SQUAD_KEY, NO_SQUAD_LABEL)]
+            for squad_key, squad_name in division_groups:
+                group_entries = (
+                    [entry for entry in division_entries if entry_squad_key(entry) == squad_key]
+                    if squad_key is not None
+                    else division_entries
+                )
+                rows = [row_by_entry[entry.id] for entry in group_entries]
+                if rules["reentryScoring"] == "best-counts":
+                    rows = _best_counts(rows)
+                rows = rank_rows(rows)
+                ranked_count = sum(1 for row in rows if row.rank is not None)
+                entry_count = len(group_entries)
+                advancing = finals_field_size(rules, ranked_count, len(rows))
+                cashing = cashing_count(rules["payoutRatio"], entry_count)
+                qualifying_cash, cash_note = cash_lines(rules["finals"]["type"], advancing, cashing)
+                apply_lines(rows, advancing, qualifying_cash)
+                finals = compute_finals(
+                    rules["finals"]["type"],
+                    rules,
+                    finals_by_key.get((event_id, division_id, squad_key)),
+                    handicap=scoring == "handicap",
+                    field_size=advancing,
+                )
+                if finals is not None:
+                    for placing in finals["placings"]:
+                        placing["cashing"] = bool(cashing) and placing["place"] <= cashing
+                payload = {
+                    "id": division_id,
+                    "name": division_name,
+                    "entryCount": entry_count,
+                    "advancingCount": advancing,
+                    "cashingCount": cashing,
+                    "cashNote": cash_note,
+                    "rows": [row.as_payload() for row in rows],
+                    "finals": finals,
+                }
+                if squad_key is not None:
+                    # Additive contract field: only per-squad groups carry it.
+                    payload["squad"] = {"id": None if squad_key == NO_SQUAD_KEY else squad_key, "label": squad_name}
+                divisions_payload.append(payload)
+                division_results.append(
+                    _DivisionResult(payload, rows, event_id, division_id, squad_key=squad_key, squad_label=squad_name)
+                )
         events_payload.append({
             "id": event_id,
             "name": str(event.get("name") or "Event"),
@@ -937,7 +1157,7 @@ def compute_standings_detail(data: StandingsInput) -> tuple[dict, dict[tuple[str
         "allEvents": all_events,
     }
     payload["fingerprint"] = fingerprint(payload)
-    return payload, {(result.event_id, result.division_id): result for result in division_results}
+    return payload, {(result.event_id, result.division_id, result.squad_key): result for result in division_results}
 
 
 def tournament_status(has_scores: bool, events: Sequence[Mapping[str, Any]], divisions: Sequence[_DivisionResult]) -> str:
@@ -1210,6 +1430,9 @@ def load_standings_input(db: Any, tournament: Any, *, logo_url: Optional[str] = 
             squad_id=entry.squad_config_id,
             squad_label=squad_label(entry.squad_name_snapshot, entry.squad_date_snapshot, entry.squad_time_snapshot),
             reentry_number=entry.reentry_number or 0,
+            squad_name=entry.squad_name_snapshot,
+            squad_date=entry.squad_date_snapshot,
+            squad_time=entry.squad_time_snapshot,
             registration_id=entry.registration_id,
         )
         for entry in entry_rows
@@ -1247,6 +1470,7 @@ def load_standings_input(db: Any, tournament: Any, *, logo_url: Optional[str] = 
             type=item.finals_type,
             seeds=list(item.seeds or []),
             games=games,
+            squad_key=item.squad_key or None,
         ))
 
     side_events = [

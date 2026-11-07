@@ -22,12 +22,19 @@ export type ScoreGridRow = {
   totals: { games_bowled: number; scratch: number; handicap: number; total: number };
 };
 
+/** Squad key the API uses for entries without a squad when an event's finals are per squad. */
+export const NO_SQUAD_KEY = '__no-squad__';
+
 export type ScoreGridDivision = {
   id: string | null;
   name: string | null;
+  /** Set when the event's finals are for each squad: one division entry per squad. */
+  squad: { id: string; label: string } | null;
   entry_count: number;
   advancing_count: number | null;
   cashing_count: number | null;
+  /** With finals: "Top 2 finishers in the finals cash." or "Places 6-8 cash from qualifying". */
+  cash_note: string | null;
 };
 
 export type ScoreGridEvent = {
@@ -37,6 +44,8 @@ export type ScoreGridEvent = {
   scoring: string;
   scoring_label: string;
   games: number;
+  /** 'squad': each squad has its own standings, cut, cash line, and finals. */
+  finals_scope: 'tournament' | 'squad';
   divisions: ScoreGridDivision[];
 };
 
@@ -85,6 +94,9 @@ export type FinalsSeed = {
 export type FinalsState = {
   event_id: string;
   division_id: string | null;
+  /** Per-squad finals: the squad key (squad id or NO_SQUAD_KEY) and its label. Null when tournament-wide. */
+  squad_id: string | null;
+  squad_label: string | null;
   event_name: string;
   division_name: string | null;
   finals_type: LiveFinalsType | 'none' | 'cut';
@@ -100,7 +112,17 @@ export type FinalsState = {
 export type FinalsTarget = {
   event_config_id: string;
   division_config_id: string | null;
+  /** Required when the event's finals are for each squad (NO_SQUAD_KEY for entries without one). */
+  squad_config_id?: string | null;
 };
+
+function targetQuery(target: FinalsTarget): string {
+  return query({
+    event_config_id: target.event_config_id,
+    division_config_id: target.division_config_id,
+    squad_config_id: target.squad_config_id,
+  });
+}
 
 export type FinalsGameChange = {
   round: number;
@@ -157,7 +179,7 @@ export function fetchStandings(token: string, tournamentId: number): Promise<Liv
 }
 
 export function fetchFinals(token: string, tournamentId: number, target: FinalsTarget): Promise<FinalsState> {
-  const url = `${base(tournamentId)}/finals${query({ event_config_id: target.event_config_id, division_config_id: target.division_config_id })}`;
+  const url = `${base(tournamentId)}/finals${targetQuery(target)}`;
   return request<FinalsState>(token, url, { method: 'GET' }, 'Failed to load finals');
 }
 
@@ -175,6 +197,6 @@ export function saveFinalsGames(token: string, tournamentId: number, target: Fin
 }
 
 export async function resetFinals(token: string, tournamentId: number, target: FinalsTarget): Promise<void> {
-  const url = `${base(tournamentId)}/finals${query({ event_config_id: target.event_config_id, division_config_id: target.division_config_id })}`;
+  const url = `${base(tournamentId)}/finals${targetQuery(target)}`;
   await request(token, url, { method: 'DELETE' }, 'Failed to reset finals');
 }
