@@ -109,7 +109,6 @@ Today fees are add-ons, but what a bowler picked isn't saved with the registrati
 - [x] Partners and teams: enter all bowlers on one registration (works today) or "I'll add my partner later".
 
 ### Found while setting up the Ada County flyers
-- [ ] **9-pin no-tap with handicap.** An event's scoring is one of handicap, scratch, or no-tap, so a handicapped 9-pin event (Senior 9-Pin) can't say both. Make no-tap a separate "9-pin" switch that works with handicap or scratch.
 - [ ] **Finals notes without a finals format.** Notes such as "Division winners receive paid entry into the Idaho State Senior Tournament" only show on the public page when a finals type is chosen. Show them (as prize notes) even with no finals.
 - [ ] **One prize per bowler** across multiple entries ("each bowler may receive only one cash prize") has no setting yet.
 
