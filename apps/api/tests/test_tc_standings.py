@@ -245,14 +245,26 @@ def test_all_events_for_association_counts_bowlers_in_every_event():
 
 def test_all_events_fee_limits_rows_to_buyers():
     bowlers = _bowlers((1, "Ann Lee", None), (2, "Bob Ray", None))
-    events = [_event("singles", scoring="scratch", games=1)]
-    entries = [EntryIn(id=1, event_id="singles", bowler_ids=(1,)), EntryIn(id=2, event_id="singles", bowler_ids=(2,))]
+    events = [_event("singles", scoring="scratch", games=1), _event("second", scoring="scratch", games=1)]
+    entries = [
+        EntryIn(id=1, event_id="singles", bowler_ids=(1,)), EntryIn(id=2, event_id="singles", bowler_ids=(2,)),
+        EntryIn(id=3, event_id="second", bowler_ids=(1,)), EntryIn(id=4, event_id="second", bowler_ids=(2,)),
+    ]
     fees = [{"id": "fee-ae", "name": "All Events", "sideEvent": {"kind": "fee"}}]
-    payload = engine.compute_standings(
-        _input(events, entries, bowlers, {**_scores(1, 1, 200), **_scores(2, 2, 210)}, fees=fees, side_events=[("fee-ae", 2, 2)])
-    )
+    scores = {**_scores(1, 1, 200), **_scores(2, 2, 210), **_scores(3, 1, 190), **_scores(4, 2, 180)}
+    payload = engine.compute_standings(_input(events, entries, bowlers, scores, fees=fees, side_events=[("fee-ae", 2, 2)]))
     assert [row["name"] for row in payload["allEvents"]["rows"]] == ["Bob Ray"]
     assert engine.compute_standings(_input(events, entries, bowlers))["allEvents"] is None
+
+
+def test_all_events_needs_at_least_two_events():
+    bowlers = _bowlers((1, "Ann Lee", None))
+    events = [_event("singles", scoring="scratch", games=1)]
+    entries = [EntryIn(id=1, event_id="singles", bowler_ids=(1,))]
+    payload = engine.compute_standings(
+        _input(events, entries, bowlers, _scores(1, 1, 200), details={"formatTemplateId": "association"})
+    )
+    assert payload["allEvents"] is None
 
 
 # ---------------------------------------------------------------------------

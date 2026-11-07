@@ -969,7 +969,8 @@ def compute_all_events(
     if details.get("formatTemplateId") != "association" and not fee_ids:
         return None
     events = [(str(event["id"]), str(event.get("name") or "Event")) for event, _, _ in event_meta]
-    if not events:
+    # All Events adds up several events; with one event it would only repeat that event's standings.
+    if len(events) < 2:
         return None
     event_index = {event_id: index for index, (event_id, _) in enumerate(events)}
 

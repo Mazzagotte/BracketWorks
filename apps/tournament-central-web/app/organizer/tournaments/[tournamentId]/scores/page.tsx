@@ -234,7 +234,8 @@ function rowTotals(row: ScoreGridRow, values: Record<string, string>, games: num
 }
 
 function plural(count: number, word: string): string {
-  return `${count} ${word}${count === 1 ? '' : 's'}`;
+  if (count === 1) return `${count} ${word}`;
+  return `${count} ${word.endsWith('y') ? `${word.slice(0, -1)}ies` : `${word}s`}`;
 }
 
 function linesSummary(grid: ScoreGrid): string {
@@ -402,7 +403,7 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
                         ].filter(Boolean).join(' · ');
                       return (
                         <tr key={bowler.bowler_id}>
-                          <th scope="row" className={styles.entryCell}>
+                          <td className={styles.entryCell}>
                             <div className={cells.stack}>
                               {index === 0 && row.bowlers.length > 1 && !grid.shared_score ? (
                                 <span className={cells.primaryText}>{row.label}</span>
@@ -413,7 +414,7 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
                               <span className={cells.secondaryText}>{details}</span>
                               {index === 0 && meta ? <span className={cells.secondaryText}>{meta}</span> : null}
                             </div>
-                          </th>
+                          </td>
                           {games.map((game) => {
                             const key = cellKey(row.entry_id, bowler.bowler_id, game);
                             const hasError = invalid.has(key);

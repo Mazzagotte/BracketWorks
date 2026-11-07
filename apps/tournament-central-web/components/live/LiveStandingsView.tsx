@@ -168,6 +168,8 @@ function Picker({ label, options, value, onChange }: { label: string; options: P
 /* ---------- Standings ---------- */
 
 function StandingsTable({ event, division, query }: { event: LiveEvent; division: LiveDivision; query: string }) {
+  // On phones the total sits right after the name, so the number people look for is visible without scrolling.
+  const totalFirst = useMediaQuery(MOBILE_VIEWPORT_QUERY);
   const rows = useMemo(() => orderRows(division.rows), [division.rows]);
   const gameCount = event.games > 0 ? event.games : rows.reduce((max, row) => Math.max(max, row.games.length), 0);
   const games = Array.from({ length: gameCount }, (_, index) => index);
@@ -184,6 +186,7 @@ function StandingsTable({ event, division, query }: { event: LiveEvent; division
         <tr>
           <th scope="col">#</th>
           <th scope="col">Bowler</th>
+          {totalFirst ? <th scope="col" data-align="right">Total</th> : null}
           {games.map((index) => (
             <th key={index} scope="col" data-align="right">
               <abbr title={`Game ${index + 1}`} className={styles.abbr}>G{index + 1}</abbr>
@@ -191,7 +194,7 @@ function StandingsTable({ event, division, query }: { event: LiveEvent; division
           ))}
           <th scope="col" data-align="right">Scratch</th>
           {showHandicap ? <th scope="col" data-align="right">Hdcp</th> : null}
-          <th scope="col" data-align="right">Total</th>
+          {totalFirst ? null : <th scope="col" data-align="right">Total</th>}
         </tr>
       </thead>
       <tbody>
@@ -202,7 +205,7 @@ function StandingsTable({ event, division, query }: { event: LiveEvent; division
         ) : null}
         {visible.map((row, index) => (
           <Fragment key={row.key}>
-            <StandingRowView row={row} games={games} showHandicap={showHandicap} />
+            <StandingRowView row={row} games={games} showHandicap={showHandicap} totalFirst={totalFirst} />
             {lines.has(index + 1) ? <DividerRow colSpan={columnCount} labels={lines.get(index + 1) ?? []} /> : null}
           </Fragment>
         ))}
@@ -211,8 +214,9 @@ function StandingsTable({ event, division, query }: { event: LiveEvent; division
   );
 }
 
-function StandingRowView({ row, games, showHandicap }: { row: StandingRow; games: number[]; showHandicap: boolean }) {
+function StandingRowView({ row, games, showHandicap, totalFirst }: { row: StandingRow; games: number[]; showHandicap: boolean; totalFirst: boolean }) {
   const bowled = row.rank !== null;
+  const totalCell = bowled ? <NumberCell value={row.total} emphasis /> : <td data-align="right" data-tone="secondary">{EMPTY}</td>;
   const bowlerNames = row.bowlers.length > 1 ? row.bowlers.map((bowler) => bowler.name).join(', ') : '';
   const meta = [bowlerNames, bowled ? '' : 'Not bowled yet'].filter(Boolean).join(' · ');
   return (
@@ -226,10 +230,11 @@ function StandingRowView({ row, games, showHandicap }: { row: StandingRow; games
         </span>
         {meta ? <span className={styles.meta}>{meta}</span> : null}
       </td>
+      {totalFirst ? totalCell : null}
       {games.map((index) => <NumberCell key={index} value={row.games[index] ?? null} />)}
       <td data-align="right" data-tone="secondary">{bowled ? row.scratchTotal : EMPTY}</td>
       {showHandicap ? <td data-align="right" data-tone="secondary">{bowled ? row.handicapTotal : EMPTY}</td> : null}
-      {bowled ? <NumberCell value={row.total} emphasis /> : <td data-align="right" data-tone="secondary">{EMPTY}</td>}
+      {totalFirst ? null : totalCell}
     </tr>
   );
 }
