@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { useMemo } from 'react';
 import {
+  Badge,
   ButtonLink,
   Card,
   CardHeader,
@@ -23,11 +24,10 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import AttentionList from '@/components/organizer/AttentionList';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import SendToBracketWorksCard from '@/components/organizer/SendToBracketWorksCard';
-import ShareTournamentCard from '@/components/organizer/ShareTournamentCard';
+import ShareTournamentButton from '@/components/organizer/ShareTournamentCard';
 import TournamentStatusBadge from '@/components/organizer/dashboard/TournamentStatusBadge';
 import {
   formatRegistrationDeadline,
-  formatRegistrationTimestamp,
   formatSquadTime,
   formatTournamentDate,
   formatTournamentDateRange,
@@ -131,15 +131,13 @@ export default function OrganizerTournamentOverviewPage() {
   const publicUrl = tournament?.is_public ? organizerRoutes.publicPage(tournamentId) : null;
   const isDataLoaded = !isTournamentLoading && !isSetupLoading && !isRegistrationsLoading && Boolean(tournament);
 
-  const details: { label: string; value: string }[] = tournament
-    ? [
-        { label: 'Location', value: location },
-        { label: 'Visibility', value: tournament.is_public ? 'Public: anyone can view and register' : 'Private: only invited users can view' },
-        { label: 'Setup', value: setupSummary?.is_published ? 'Published' : 'Draft changes are pending' },
-        ...(registrationCloseIso ? [{ label: 'Registration closes', value: formatRegistrationDeadline(registrationCloseIso, registrationCloseTime, tournamentTimeZone) }] : []),
-        ...(setupSummary ? [{ label: 'Last updated', value: formatRegistrationTimestamp(setupSummary.updated_at) }] : []),
-      ]
-    : [];
+  // Key facts live in the header: dates, place, and the registration deadline; visibility is a badge.
+  const headerFacts = [
+    formatTournamentDateRange(tournament?.start_date, tournament?.end_date),
+    location,
+    registrationCloseIso ? `Registration closes ${formatRegistrationDeadline(registrationCloseIso, registrationCloseTime, tournamentTimeZone)}` : null,
+  ].filter(Boolean).join(' · ');
+  const visibilityLabel = tournament?.is_public ? 'Public' : 'Private';
 
   const isTournamentDay = Boolean(tournament) && isTournamentDayWindow(tournament?.start_date, tournament?.end_date);
 
@@ -199,10 +197,24 @@ export default function OrganizerTournamentOverviewPage() {
     <Page>
       <PageHeader
         title={tournament?.name || 'Tournament'}
-        badge={tournament ? <TournamentStatusBadge isPublic={Boolean(tournament.is_public)} hasPublishedSetup={Boolean(setupSummary?.is_published)} /> : null}
-        description={`${formatTournamentDateRange(tournament?.start_date, tournament?.end_date)} · ${location}`}
+        badge={tournament ? (
+          <span className={styles.badges}>
+            <TournamentStatusBadge isPublic={Boolean(tournament.is_public)} hasPublishedSetup={Boolean(setupSummary?.is_published)} />
+            <Badge tone="neutral">{visibilityLabel}</Badge>
+          </span>
+        ) : null}
+        description={headerFacts}
         actions={
           <>
+            {tournament ? (
+              <ShareTournamentButton
+                tournamentId={tournamentId}
+                tournamentName={tournament.name || 'Tournament'}
+                dateText={formatTournamentDateRange(tournament.start_date, tournament.end_date)}
+                locationText={location}
+                isPublic={Boolean(tournament.is_public)}
+              />
+            ) : null}
             {publicUrl ? (
               <ButtonLink
                 href={publicUrl}
@@ -253,39 +265,16 @@ export default function OrganizerTournamentOverviewPage() {
               </Card>
             ) : null}
 
-            {isDataLoaded ? (
-              <AttentionList
-                items={attentionItems}
-                description="Things to handle before or during the tournament."
-                actionLabel="Review"
-              />
-            ) : null}
-
             {squadsCard}
           </>
         }
         side={
           <>
-            {tournament ? (
-              <Card aria-label="Details">
-                <CardHeader title="Details" />
-                <dl className={styles.details}>
-                  {details.map((item) => (
-                    <div key={item.label} className={styles.detailRow}>
-                      <dt>{item.label}</dt>
-                      <dd>{item.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
-            ) : null}
-            {tournament ? (
-              <ShareTournamentCard
-                tournamentId={tournamentId}
-                tournamentName={tournament.name || 'Tournament'}
-                dateText={formatTournamentDateRange(tournament.start_date, tournament.end_date)}
-                locationText={location}
-                isPublic={Boolean(tournament.is_public)}
+            {isDataLoaded ? (
+              <AttentionList
+                items={attentionItems}
+                description="Things to handle before or during the tournament."
+                actionLabel="Review"
               />
             ) : null}
             {tournament ? <SendToBracketWorksCard tournamentId={tournamentId} /> : null}

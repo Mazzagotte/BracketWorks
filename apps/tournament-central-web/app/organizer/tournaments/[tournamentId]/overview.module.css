@@ -1,36 +1,10 @@
-/* Tournament overview: tournament-day shortcuts and label and value divider rows in the side cards (docs/ui-standards.md section 7). */
+/* Tournament overview: header badges, tournament-day shortcuts, and the squads table. */
 
-.details {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-}
-
-/* One line per detail, label left and value right, matching the Needs attention rows. */
-.detailRow {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
-}
-
-.detailRow + .detailRow {
-  border-top: 1px solid var(--bw-border-subtle);
-}
-
-.detailRow dt {
-  flex-shrink: 0;
-  font: var(--type-body);
-  color: var(--bw-text-body);
-}
-
-.detailRow dd {
-  margin: 0;
-  font: var(--type-body);
-  color: var(--bw-text-title);
-  text-align: right;
-  overflow-wrap: anywhere;
+/* Status and visibility badges side by side in the page header. */
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .dayActions {

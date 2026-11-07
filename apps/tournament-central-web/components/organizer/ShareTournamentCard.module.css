@@ -1,4 +1,4 @@
-/* Share card: the links with copy actions; the QR code (on a light tile so phones can scan it) is in a dialog. */
+/* Share dialog (opened from the overview header): both links with copy actions, then the QR code on a light tile so phones can scan it. */
 
 .body {
   display: flex;

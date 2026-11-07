@@ -8,7 +8,7 @@ import { localIsoDate } from './tournamentInsights';
 const mocks = vi.hoisted(() => ({ context: vi.fn() }));
 vi.mock('./TournamentContext', () => ({ useTournamentContext: () => mocks.context() }));
 vi.mock('./SendToBracketWorksCard', () => ({ default: () => <section aria-label="BracketWorks" /> }));
-vi.mock('./ShareTournamentCard', () => ({ default: () => <section aria-label="Share" /> }));
+vi.mock('./ShareTournamentCard', () => ({ default: () => <button type="button">Share</button> }));
 
 function shiftDays(days: number): string {
   const date = new Date();
@@ -56,12 +56,14 @@ describe('tournament overview', () => {
     expect(screen.getByText('2 confirmed · 1 pending')).toBeInTheDocument();
   });
 
-  it('puts the squads card in the main column and orders the side cards details, share, BracketWorks', () => {
+  it('keeps details and sharing in the header, and the attention and BracketWorks cards on the side', () => {
     const { container } = render(<OverviewPage />);
     const labels = [...container.querySelectorAll('[aria-label]')]
       .map((element) => element.getAttribute('aria-label'))
-      .filter((label) => ['Tournament day', 'Squads', 'Details', 'Share', 'BracketWorks'].includes(label ?? ''));
-    expect(labels).toEqual(['Tournament day', 'Squads', 'Details', 'Share', 'BracketWorks']);
+      .filter((label) => ['Tournament day', 'Squads', 'Needs attention', 'Details', 'BracketWorks'].includes(label ?? ''));
+    expect(labels).toEqual(['Tournament day', 'Squads', 'Needs attention', 'BracketWorks']);
+    expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 }).closest('header') ?? document.body).toHaveTextContent(/Public|Private/);
   });
 
   it('shows tournament day shortcuts from the day before the start through the last day', () => {
