@@ -18,3 +18,8 @@ export function parseLiveTournamentId(value: string | undefined | null): number 
   return Number.isSafeInteger(id) ? id : null;
 }
 
+
+/** The public finals page path, for example "/live/tc-58/finals". */
+export function liveFinalsPagePath(tournamentId: number | string): string {
+  return `${livePagePath(tournamentId)}/finals`;
+}

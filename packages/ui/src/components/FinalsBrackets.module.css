@@ -1,0 +1,246 @@
+/* Finals shapes: docs/ui-standards.md sections 7 and 7a. Boxes are BracketMatch; connectors are
+   1px --bw-border-subtle; titles use the overline role. No fills, tints, or shadows. */
+
+.title {
+  margin: 0 0 var(--space-3);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+/* ---------- Stepladder ---------- */
+
+/* Match 1 is first in the DOM (reading order) and drawn at the bottom; the champion is drawn on top. */
+.ladder {
+  --ladder-step: var(--space-16);
+  --ladder-gap: var(--space-6);
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: var(--ladder-gap);
+  /* As wide as the stairs, centered in the card so it reads well on a TV. */
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.rung,
+.ladderChampion {
+  position: relative;
+  width: var(--size-md);
+  max-width: 100%;
+}
+
+/* Stairs: each rung up steps one step to the right. */
+.ladder > :nth-child(2) { margin-left: var(--ladder-step); }
+.ladder > :nth-child(3) { margin-left: calc(var(--ladder-step) * 2); }
+.ladder > :nth-child(4) { margin-left: calc(var(--ladder-step) * 3); }
+.ladder > :nth-child(5) { margin-left: calc(var(--ladder-step) * 4); }
+.ladder > :nth-child(6) { margin-left: calc(var(--ladder-step) * 5); }
+.ladder > :nth-child(7) { margin-left: calc(var(--ladder-step) * 6); }
+.ladder > :nth-child(8) { margin-left: calc(var(--ladder-step) * 7); }
+.ladder > :nth-child(n + 9) { margin-left: calc(var(--ladder-step) * 8); }
+
+/* The climber's path: a line from each rung up to the one above (or to the champion). It sits one step
+   in, so it lands inside the next rung, which starts one step further right. */
+.rung::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: calc(var(--ladder-step) + var(--space-6));
+  height: var(--ladder-gap);
+  border-left: 1px solid var(--bw-border-subtle);
+}
+
+.ladderChampion {
+  padding-top: var(--space-2);
+}
+
+@media (max-width: 1023px) {
+  .ladder {
+    --ladder-step: var(--space-8);
+  }
+}
+
+/* Phones: a straight vertical ladder at full width. */
+@media (max-width: 767px) {
+  .ladder {
+    --ladder-gap: var(--space-4);
+    align-items: stretch;
+    width: auto;
+  }
+
+  .ladder > .rung,
+  .ladder > .ladderChampion {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .rung::after {
+    left: var(--space-6);
+  }
+}
+
+/* ---------- Match play, two halves ---------- */
+
+.twoSidedScroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-x: auto;
+}
+
+.twoSidedChampion {
+  align-self: center;
+  max-width: var(--size-md);
+  text-align: center;
+}
+
+.twoSidedChampion > div {
+  align-items: center;
+}
+
+.twoSided {
+  display: flex;
+  gap: var(--space-8);
+  min-width: min-content;
+}
+
+.half {
+  display: flex;
+  flex: 2 1 0;
+  gap: var(--space-8);
+}
+
+/* The bottom half of the draw reads right to left: its first round is on the outside. */
+.halfRight {
+  flex-direction: row-reverse;
+}
+
+.round {
+  display: flex;
+  flex: 1 0 calc(var(--space-20) * 2.5);
+  flex-direction: column;
+  min-width: calc(var(--space-20) * 2.5);
+}
+
+.centerRound {
+  flex-grow: 1;
+}
+
+.roundBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.pair {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  padding: var(--space-2) 0;
+}
+
+/* Left half: lines run right, toward the final. */
+.half .slot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.half .pairJoined::after {
+  content: '';
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: calc(100% + var(--space-4));
+  border-left: 1px solid var(--bw-border-subtle);
+}
+
+.half .slotIncoming::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+/* Right half: the same lines, mirrored. */
+.halfRight .slot::after {
+  right: 100%;
+  left: auto;
+}
+
+.halfRight .pairJoined::after {
+  right: calc(100% + var(--space-4));
+  left: auto;
+}
+
+.halfRight .slotIncoming::before {
+  right: auto;
+  left: 100%;
+}
+
+/* The final takes a line in from each half. */
+.centerRound .slot::before,
+.centerRound .slot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: var(--space-4);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.centerRound .slot::before {
+  right: 100%;
+}
+
+.centerRound .slot::after {
+  left: 100%;
+}
+
+/* ---------- Round robin ---------- */
+
+.grid .rowHeader {
+  font: var(--type-table);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--bw-text-title);
+  white-space: nowrap;
+}
+
+.rowSeed {
+  display: inline-block;
+  min-width: var(--space-6);
+  color: var(--bw-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Room for the marker even before the opponent's score arrives, so cells never shift. */
+.result {
+  display: inline-block;
+  min-width: var(--space-4);
+  text-align: right;
+  white-space: pre;
+}
+
+.self {
+  background: transparent;
+}

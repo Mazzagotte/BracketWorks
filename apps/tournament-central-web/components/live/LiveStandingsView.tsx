@@ -1,59 +1,37 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, RefreshCw, SearchX, Share2, Trophy } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import {
   Badge,
   BracketTree,
-  Button,
+  ButtonLink,
   Card,
   CardHeader,
   DataTable,
   EmptyState,
   ICON_SIZE,
-  NavItem,
   Notice,
-  Page,
-  PageHeader,
   SearchField,
-  SegmentedControl,
-  SelectField,
   StatGroup,
   TableToolbar,
-  TopNav,
-  buttonClassName,
-  topNavBrandClassName,
 } from '@bracketworks/ui';
-import type { BracketMatchData, BracketPlayerData, BracketRoundData, StatusTone } from '@bracketworks/ui';
 
 import { MOBILE_VIEWPORT_QUERY } from '@/lib/responsive';
-import type {
-  FinalsMatch,
-  FinalsSide,
-  LiveAllEvents,
-  LiveDivision,
-  LiveEvent,
-  LiveFinals,
-  LiveStandings,
-  LiveTournamentStatus,
-  StandingRow,
-} from './liveStandingsTypes';
-import { useHasMounted, useLiveStandings, useMediaQuery } from './useLiveStandings';
+import type { LiveAllEvents, LiveDivision, LiveEvent, LiveFinals, LiveStandings, StandingRow } from './liveStandingsTypes';
+import { useLiveStandings, useMediaQuery } from './useLiveStandings';
 import { FinalsPlacings } from './FinalsPlacings';
+import { ChampionLine, RoundRobinTable, finalsRounds } from './finalsParts';
+import { EMPTY, FINALS_BADGE, LiveNotFound, LiveShell, TV_CYCLE_MS } from './LiveShell';
+import type { LiveNavItem } from './LiveShell';
+import { Picker, divisionKey, divisionOptions, findGroup, groupKey, groupStops, sectionTitle, squadKey, squadOptions } from './livePickers';
+import type { PickerOption } from './livePickers';
+import { liveFinalsPagePath } from './liveStandingsPaths';
 import styles from './LiveStandingsView.module.css';
 
-/** How long TV mode shows each event and division before moving on. */
-export const TV_CYCLE_MS = 20_000;
-const EMPTY = '—';
-const DIVISION_ALL = '__all';
-/** Picker value for a per-squad group of entries without a squad. */
-const SQUAD_NONE = '__none';
-/** Segmented controls hold up to five options; more become a select. */
-const MAX_SEGMENTS = 5;
+export { TV_CYCLE_MS, finalsRounds };
 
-type LiveView = 'standings' | 'finals' | 'all-events';
+export type LiveView = 'standings' | 'finals' | 'all-events';
 
 export type LiveStandingsViewProps = {
   tournamentId: number;
@@ -64,63 +42,9 @@ export type LiveStandingsViewProps = {
   tv?: boolean;
   /** Test hook; defaults to the live poll interval. */
   pollIntervalMs?: number;
+  /** `?view=finals` or `?view=all-events` (links from the finals page). */
+  initialView?: LiveView;
 };
-
-const STATUS_BADGE: Record<LiveTournamentStatus, { tone: StatusTone; label: string }> = {
-  upcoming: { tone: 'info', label: 'Upcoming' },
-  'in-progress': { tone: 'success', label: 'In progress' },
-  final: { tone: 'neutral', label: 'Final' },
-};
-
-const FINALS_BADGE: Record<LiveFinals['status'], { tone: StatusTone; label: string }> = {
-  'not-started': { tone: 'neutral', label: 'Not started' },
-  'in-progress': { tone: 'info', label: 'In progress' },
-  complete: { tone: 'success', label: 'Complete' },
-};
-
-function divisionKey(division: LiveDivision): string {
-  return division.id ?? DIVISION_ALL;
-}
-
-/** '' for tournament-wide groups; the squad id (or SQUAD_NONE) when the event's finals are per squad. */
-function squadKey(division: LiveDivision): string {
-  return division.squad ? division.squad.id ?? SQUAD_NONE : '';
-}
-
-/** Stable key for one standings group: division plus squad. */
-function groupKey(division: LiveDivision): string {
-  return `${divisionKey(division)}|${squadKey(division)}`;
-}
-
-function sectionTitle(event: LiveEvent, division: LiveDivision): string {
-  return [event.name, division.name, division.squad?.label].filter(Boolean).join(' · ');
-}
-
-/** One option per division (per-squad events list each division once, with every squad's entries counted). */
-function divisionOptions(event: LiveEvent): PickerOption[] {
-  const options = new Map<string, PickerOption>();
-  for (const item of event.divisions) {
-    const key = divisionKey(item);
-    const current = options.get(key);
-    if (current) current.count = (current.count ?? 0) + item.entryCount;
-    else options.set(key, { value: key, label: item.name ?? 'All', count: item.entryCount });
-  }
-  return [...options.values()];
-}
-
-function squadOptions(event: LiveEvent, division: LiveDivision): PickerOption[] {
-  return event.divisions
-    .filter((item) => item.squad && divisionKey(item) === divisionKey(division))
-    .map((item) => ({ value: squadKey(item), label: item.squad?.label ?? 'Squad', count: item.entryCount }));
-}
-
-/** The group for a division and squad choice, falling back to the division's first squad, then the event's first group. */
-function findGroup(event: LiveEvent, divisionId: string | null, squadId: string | null): LiveDivision | null {
-  const first = event.divisions[0];
-  const wanted = divisionId ?? (first ? divisionKey(first) : null);
-  const inDivision = event.divisions.filter((item) => divisionKey(item) === wanted);
-  return inDivision.find((item) => squadKey(item) === squadId) ?? inDivision[0] ?? event.divisions[0] ?? null;
-}
 
 type MoneyLine = { position: number; label: string } | null;
 
@@ -144,16 +68,6 @@ function moneyLine(division: LiveDivision): MoneyLine {
 function rankText(rank: number | null, tied: boolean): string {
   if (rank === null) return EMPTY;
   return tied ? `T${rank}` : String(rank);
-}
-
-function formatTime(iso: string): string | null {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function lowerFirst(value: string): string {
-  return value ? value.charAt(0).toLocaleLowerCase() + value.slice(1) : value;
 }
 
 /** Ranked rows in rank order, then rows that have not bowled, keeping the API's order within each. */
@@ -195,32 +109,6 @@ function matchesQuery(query: string, ...values: Array<string | null | undefined>
   const needle = query.trim().toLocaleLowerCase();
   if (!needle) return true;
   return values.some((value) => value?.toLocaleLowerCase().includes(needle));
-}
-
-/* ---------- Pickers ---------- */
-
-type PickerOption = { value: string; label: string; count?: number };
-
-function Picker({ label, options, value, onChange }: { label: string; options: PickerOption[]; value: string; onChange: (value: string) => void }) {
-  if (options.length < 2) return null;
-  if (options.length <= MAX_SEGMENTS) {
-    return (
-      <SegmentedControl
-        label={label}
-        className={styles.segmented}
-        options={options.map((option) => ({ value: option.value, label: option.label, count: option.count }))}
-        value={value}
-        onChange={onChange}
-      />
-    );
-  }
-  return (
-    <SelectField label={label} hideLabel value={value} onChange={(event) => onChange(event.target.value)} className={styles.select}>
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>{option.label}</option>
-      ))}
-    </SelectField>
-  );
 }
 
 /* ---------- Standings ---------- */
@@ -362,73 +250,6 @@ function StandingsCard({
 
 /* ---------- Finals ---------- */
 
-function sidePlayer(side: FinalsSide | null, bye: boolean): BracketPlayerData {
-  if (!side) return { name: bye ? 'Bye' : null };
-  return { name: side.name, score: side.score, winner: side.winner };
-}
-
-function roundTitle(type: LiveFinals['type'], round: FinalsMatch[], roundNumber: number): string {
-  if (type === 'stepladder' && round.length === 1) return round[0].label;
-  if (round.length === 1) return 'Final';
-  if (round.length === 2) return 'Semifinals';
-  if (round.length === 4) return 'Quarterfinals';
-  return `Round ${roundNumber}`;
-}
-
-export function finalsRounds(finals: LiveFinals): BracketRoundData[] {
-  const byRound = new Map<number, FinalsMatch[]>();
-  for (const match of finals.matches) byRound.set(match.round, [...(byRound.get(match.round) ?? []), match]);
-  return [...byRound.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([roundNumber, matches]) => ({
-      title: roundTitle(finals.type, matches, roundNumber),
-      matches: matches.map<BracketMatchData>((match) => ({
-        id: match.id,
-        label: match.label,
-        players: [sidePlayer(match.a, false), sidePlayer(match.b, match.a !== null)],
-      })),
-    }));
-}
-
-function ChampionLine({ champion }: { champion: NonNullable<LiveFinals['champion']> }) {
-  return (
-    <p className={styles.champion}>
-      <Trophy size={ICON_SIZE.md} aria-hidden="true" className={styles.trophy} />
-      <span>
-        Champion: <strong className={styles.championName}>{champion.name}</strong>
-        {champion.detail ? `, ${lowerFirst(champion.detail)}` : ''}
-      </span>
-    </p>
-  );
-}
-
-function RoundRobinTable({ finals, caption }: { finals: LiveFinals; caption: string }) {
-  return (
-    <DataTable caption={caption} className={styles.table}>
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Bowler</th>
-          <th scope="col" data-align="right">W-L-T</th>
-          <th scope="col" data-align="right">Pins</th>
-          <th scope="col" data-align="right">Points</th>
-        </tr>
-      </thead>
-      <tbody>
-        {finals.table.map((row) => (
-          <tr key={row.key ?? `${row.seed}-${row.name}`}>
-            <td className={styles.rank}>{row.rank}</td>
-            <td>{row.name}</td>
-            <td data-align="right">{`${row.wins}-${row.losses}-${row.ties}`}</td>
-            <NumberCell value={row.pins} />
-            <NumberCell value={row.points} emphasis />
-          </tr>
-        ))}
-      </tbody>
-    </DataTable>
-  );
-}
-
 function SurvivorTable({ finals, caption }: { finals: LiveFinals; caption: string }) {
   const rounds = [...finals.rounds].sort((a, b) => a.round - b.round);
   const bowlers = new Map<string, { seed: number; name: string; outAfter: number | null }>();
@@ -483,6 +304,7 @@ function FinalsCard({
   isPhone,
   squads,
   onSquadChange,
+  finalsHref,
 }: {
   event: LiveEvent;
   division: LiveDivision;
@@ -490,6 +312,8 @@ function FinalsCard({
   isPhone: boolean;
   squads: PickerOption[];
   onSquadChange: (key: string) => void;
+  /** The dedicated finals view for this group. */
+  finalsHref: string;
 }) {
   const title = sectionTitle(event, division);
   const badge = FINALS_BADGE[finals.status];
@@ -500,7 +324,18 @@ function FinalsCard({
 
   return (
     <Card padding={hasTable ? 'flush' : 'default'} aria-label={`${title} finals`} className={hasTable ? styles.tableCard : undefined}>
-      <CardHeader title={title} description={finals.label} actions={<Badge tone={badge.tone}>{badge.label}</Badge>} />
+      <CardHeader
+        title={title}
+        description={finals.label}
+        actions={(
+          <>
+            <Badge tone={badge.tone}>{badge.label}</Badge>
+            <ButtonLink variant="secondary" size="sm" href={finalsHref} icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}>
+              Open finals view
+            </ButtonLink>
+          </>
+        )}
+      />
       {squads.length > 1 ? (
         <TableToolbar className={styles.toolbar}>
           <Picker label="Squad" options={squads} value={squadKey(division)} onChange={onSquadChange} />
@@ -532,7 +367,15 @@ function FinalsCard({
   );
 }
 
-function FinalsView({ events, isPhone }: { events: LiveEvent[]; isPhone: boolean }) {
+/** The finals page for one group, opened on that group (and kept in TV mode). */
+function finalsViewHref(tournamentId: number, event: LiveEvent, division: LiveDivision, tv: boolean): string {
+  const params = new URLSearchParams({ event: event.id, division: divisionKey(division) });
+  if (division.squad) params.set('squad', squadKey(division));
+  if (tv) params.set('tv', '1');
+  return `${liveFinalsPagePath(tournamentId)}?${params.toString()}`;
+}
+
+function FinalsView({ events, isPhone, tournamentId, tv }: { events: LiveEvent[]; isPhone: boolean; tournamentId: number; tv: boolean }) {
   // Per-squad events show one card per division, with a squad picker; the choice is kept per event and division.
   const [squadChoice, setSquadChoice] = useState<Record<string, string>>({});
   const sections: Array<{ event: LiveEvent; division: LiveDivision; finals: LiveFinals; squads: PickerOption[]; slot: string }> = [];
@@ -571,6 +414,7 @@ function FinalsView({ events, isPhone }: { events: LiveEvent[]; isPhone: boolean
           isPhone={isPhone}
           squads={squads}
           onSquadChange={(key) => setSquadChoice((previous) => ({ ...previous, [slot]: key }))}
+          finalsHref={finalsViewHref(tournamentId, event, division, tv)}
         />
       ))}
     </>
@@ -655,64 +499,29 @@ function topScore(events: LiveEvent[]): { total: number; name: string } | null {
   return best;
 }
 
-function shareUrl(): string {
-  const url = new URL(window.location.href);
-  url.searchParams.delete('tv');
-  return url.toString();
-}
-
-function Brand() {
-  return (
-    <Link href="/" aria-label="Tournament Central home" className={topNavBrandClassName()}>
-      <Image src="/TC_logo_No_Text.svg" alt="" width={ICON_SIZE['2xl']} height={ICON_SIZE['2xl']} priority />
-      Tournament Central
-    </Link>
-  );
-}
-
-function Footer() {
-  return <p className={styles.footer}>Powered by Tournament Central</p>;
-}
-
-function NotFoundState() {
-  return (
-    <div className={styles.shell}>
-      <TopNav className={styles.topNav} brand={<Brand />} />
-      <main id="main-content">
-        <Page>
-          <Card>
-            <EmptyState
-              icon={<SearchX size={ICON_SIZE['2xl']} aria-hidden="true" />}
-              title="Live standings are not available"
-              description="This tournament is not public, or the link is not correct."
-              action={<Link href="/" className={buttonClassName({ variant: 'secondary' })}>Find a tournament</Link>}
-            />
-          </Card>
-          <Footer />
-        </Page>
-      </main>
-    </div>
-  );
-}
-
-export default function LiveStandingsView({ tournamentId, initialData, initialNotFound = false, tv = false, pollIntervalMs }: LiveStandingsViewProps) {
+export default function LiveStandingsView({
+  tournamentId,
+  initialData,
+  initialNotFound = false,
+  tv = false,
+  pollIntervalMs,
+  initialView = 'standings',
+}: LiveStandingsViewProps) {
   const { data, notFound, reconnecting, refresh } = useLiveStandings(tournamentId, initialData, { intervalMs: pollIntervalMs, initialNotFound });
   const isPhone = useMediaQuery(MOBILE_VIEWPORT_QUERY);
-  const mounted = useHasMounted();
-  const [view, setView] = useState<LiveView>('standings');
+  const [view, setView] = useState<LiveView>(initialView);
   const [eventId, setEventId] = useState<string | null>(null);
   const [divisionId, setDivisionId] = useState<string | null>(null);
   const [squadId, setSquadId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [copied, setCopied] = useState(false);
 
   const events = useMemo(() => data?.events ?? [], [data]);
   const hasFinals = events.some((event) => event.divisions.some((division) => division.finals));
   const allEvents = data?.allEvents ?? null;
   const views = useMemo(() => {
-    const list: Array<{ value: LiveView; label: string }> = [{ value: 'standings', label: 'Standings' }];
-    if (hasFinals) list.push({ value: 'finals', label: 'Finals' });
-    if (allEvents) list.push({ value: 'all-events', label: 'All events' });
+    const list: Array<LiveNavItem<LiveView>> = [{ value: 'standings', label: 'Standings', href: '#standings' }];
+    if (hasFinals) list.push({ value: 'finals', label: 'Finals', href: '#finals' });
+    if (allEvents) list.push({ value: 'all-events', label: 'All events', href: '#all-events' });
     return list;
   }, [hasFinals, allEvents]);
   const activeView: LiveView = views.some((item) => item.value === view) ? view : 'standings';
@@ -731,10 +540,7 @@ export default function LiveStandingsView({ tournamentId, initialData, initialNo
   }, []);
 
   // TV mode: step through every event, division, and squad group so a screen at the center shows them all.
-  const stops = useMemo(
-    () => events.flatMap((item) => item.divisions.map((entry) => ({ eventId: item.id, divisionId: divisionKey(entry), squadId: squadKey(entry) }))),
-    [events],
-  );
+  const stops = useMemo(() => groupStops(events), [events]);
   const currentStop = event && division
     ? stops.findIndex((stop) => stop.eventId === event.id && stop.divisionId === divisionKey(division) && stop.squadId === squadKey(division))
     : -1;
@@ -749,128 +555,56 @@ export default function LiveStandingsView({ tournamentId, initialData, initialNo
     return () => clearTimeout(timer);
   }, [tv, stops, currentStop, activeView]);
 
-  useEffect(() => {
-    if (!copied) return undefined;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
+  if (notFound || (!data && initialNotFound)) return <LiveNotFound />;
 
-  const share = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl());
-      setCopied(true);
-    } catch {
-      // Clipboard blocked: the address bar still has the link.
-    }
-  };
-
-  if (notFound || (!data && initialNotFound)) return <NotFoundState />;
-
-  const tournament = data?.tournament;
-  const status = tournament ? STATUS_BADGE[tournament.status] : null;
-  const facts = tournament ? [tournament.dateText, tournament.locationText].filter(Boolean).join(' · ') : '';
   const entryTotal = events.reduce((sum, item) => sum + item.divisions.reduce((inner, entry) => inner + entry.entryCount, 0), 0);
   const best = topScore(events);
-  const updatedTime = mounted && data?.updatedAt ? formatTime(data.updatedAt) : null;
-  const updatedText = data?.updatedAt ? (updatedTime ? `Updated ${updatedTime}` : 'Updated') : 'No scores yet';
 
   return (
-    <div className={styles.shell}>
-      <a className={styles.skipLink} href="#main-content">Skip to main content</a>
-      <TopNav
-        className={styles.topNav}
-        navLabel="Live standings views"
-        brand={<Brand />}
-        actions={tv ? undefined : (
-          <Button
-            size="sm"
-            variant="secondary"
-            className={styles.share}
-            icon={copied ? <Check size={ICON_SIZE.md} aria-hidden="true" /> : <Share2 size={ICON_SIZE.md} aria-hidden="true" />}
-            aria-label={copied ? 'Link copied' : 'Share live standings'}
-            onClick={() => { void share(); }}
-          >
-            <span className={styles.shareLabel}>{copied ? 'Link copied' : 'Share'}</span>
-          </Button>
-        )}
-      >
-        {views.length > 1 ? views.map((item) => (
-          <NavItem
-            key={item.value}
-            href={`#${item.value}`}
-            active={activeView === item.value}
-            onClick={(click) => { click.preventDefault(); setView(item.value); }}
-          >
-            {item.label}
-          </NavItem>
-        )) : null}
-      </TopNav>
+    <LiveShell
+      data={data}
+      tv={tv}
+      reconnecting={reconnecting}
+      onRefresh={refresh}
+      views={views}
+      activeView={activeView}
+      onViewChange={setView}
+      viewsLabel="Live standings views"
+      shareLabel="Share live standings"
+      fallbackTitle="Live standings"
+      loadingText="Loading live standings..."
+      unavailableText="Unable to reach live standings. Trying again..."
+    >
+      <StatGroup
+        label="Tournament totals"
+        items={[
+          { label: 'Entries', value: String(entryTotal) },
+          { label: 'Events', value: String(events.length) },
+          { label: 'Top score', value: best ? String(best.total) : EMPTY, detail: best ? best.name : 'No scores yet' },
+        ]}
+      />
 
-      <main id="main-content">
-        <Page>
-          {views.length > 1 ? (
-            <SegmentedControl label="Live standings views" options={views} value={activeView} onChange={setView} className={styles.phoneViews} />
-          ) : null}
-
-          <PageHeader
-            title={tournament?.name ?? 'Live standings'}
-            badge={status ? <Badge tone={status.tone}>{status.label}</Badge> : undefined}
-            description={facts || undefined}
-            actions={(
-              <div className={styles.headerActions}>
-                <span className={styles.updated}>{`${updatedText} · auto-refresh on`}</span>
-                {reconnecting ? <span className={styles.updated} role="status">Reconnecting...</span> : null}
-                {tv ? null : (
-                  <Button size="sm" variant="ghost" icon={<RefreshCw size={ICON_SIZE.md} aria-hidden="true" />} onClick={refresh}>
-                    Refresh
-                  </Button>
-                )}
-              </div>
-            )}
+      {activeView === 'standings' ? (
+        event && division ? (
+          <StandingsCard
+            events={events}
+            event={event}
+            division={division}
+            onEventChange={changeEvent}
+            onDivisionChange={changeDivision}
+            onSquadChange={setSquadId}
+            query={query}
+            onQueryChange={setQuery}
+            tv={tv}
           />
-
-          {!data ? (
-            <Card>
-              <p className={styles.body} role="status">{reconnecting ? 'Unable to reach live standings. Trying again...' : 'Loading live standings...'}</p>
-            </Card>
-          ) : (
-            <>
-              <StatGroup
-                label="Tournament totals"
-                items={[
-                  { label: 'Entries', value: String(entryTotal) },
-                  { label: 'Events', value: String(events.length) },
-                  { label: 'Top score', value: best ? String(best.total) : EMPTY, detail: best ? best.name : 'No scores yet' },
-                ]}
-              />
-
-              {activeView === 'standings' ? (
-                event && division ? (
-                  <StandingsCard
-                    events={events}
-                    event={event}
-                    division={division}
-                    onEventChange={changeEvent}
-                    onDivisionChange={changeDivision}
-                    onSquadChange={setSquadId}
-                    query={query}
-                    onQueryChange={setQuery}
-                    tv={tv}
-                  />
-                ) : (
-                  <Card>
-                    <EmptyState title="No events yet" description="Standings will appear here once the tournament's events are set up." />
-                  </Card>
-                )
-              ) : null}
-              {activeView === 'finals' ? <FinalsView events={events} isPhone={isPhone} /> : null}
-              {activeView === 'all-events' && allEvents ? <AllEventsCard allEvents={allEvents} query={query} onQueryChange={setQuery} tv={tv} /> : null}
-            </>
-          )}
-
-          <Footer />
-        </Page>
-      </main>
-    </div>
+        ) : (
+          <Card>
+            <EmptyState title="No events yet" description="Standings will appear here once the tournament's events are set up." />
+          </Card>
+        )
+      ) : null}
+      {activeView === 'finals' ? <FinalsView events={events} isPhone={isPhone} tournamentId={tournamentId} tv={tv} /> : null}
+      {activeView === 'all-events' && allEvents ? <AllEventsCard allEvents={allEvents} query={query} onQueryChange={setQuery} tv={tv} /> : null}
+    </LiveShell>
   );
 }

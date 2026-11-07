@@ -153,6 +153,7 @@ describe('Scores page', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Scores' })).toBeTruthy();
     expect(screen.getByRole('link', { name: /Open live standings/ }).getAttribute('href')).toBe('/live/42');
+    expect(screen.queryByRole('link', { name: /Open finals view/ })).toBeNull();
     expect(screen.getByText(/Handicap 90% of 220 · Top 5 advance, top 2 cash/)).toBeTruthy();
     expect((table.getByRole('textbox', { name: 'Ann Lee, game 1' }) as HTMLInputElement).value).toBe('200');
     const annRow = table.getByRole('textbox', { name: 'Ann Lee, game 1' }).closest('tr') as HTMLElement;
@@ -283,6 +284,9 @@ describe('Scores page', () => {
       'session', 42, { event_config_id: 'evt-singles', division_config_id: null, squad_config_id: 'sq-am' },
     ));
     const placings = await screen.findByRole('region', { name: 'Placings' });
+    const finalsLink = screen.getByRole('link', { name: /Open finals view/ });
+    expect(finalsLink.getAttribute('href')).toBe('/live/42/finals');
+    expect(finalsLink.getAttribute('target')).toBe('_blank');
     expect(within(placings).getByText('1st')).toBeTruthy();
     expect(within(placings).getByText('Cashes')).toBeTruthy();
     expect(within(placings).getAllByText('Cashes')).toHaveLength(1);

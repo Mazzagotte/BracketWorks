@@ -255,6 +255,7 @@ describe('live standings page', () => {
     expect(within(title).getByText('+23')).toBeInTheDocument();
     expect(within(singles).getAllByText('Ann Lee').length).toBeGreaterThan(0);
     expect(within(singles).getByText('Won the final 214 to 191')).toBeInTheDocument();
+    expect(within(singles).getByRole('link', { name: /Open finals view/ })).toHaveAttribute('href', '/live/tc-58/finals?event=singles&division=open');
 
     const doubles = screen.getByRole('region', { name: 'Doubles finals' });
     expect(within(doubles).getByRole('columnheader', { name: 'W-L-T' })).toBeInTheDocument();

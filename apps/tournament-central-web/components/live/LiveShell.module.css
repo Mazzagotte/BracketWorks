@@ -1,0 +1,113 @@
+/* Public live pages' shell (docs/ui-standards.md section 7a, Live View in the TC shell). */
+
+.shell {
+  min-height: 100dvh;
+  background: var(--bw-page);
+}
+
+.skipLink {
+  position: absolute;
+  left: var(--space-4);
+  top: calc(var(--space-4) * -10);
+  z-index: var(--z-popover);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-card);
+  color: var(--bw-text-title);
+  font: var(--type-button);
+}
+
+.skipLink:focus {
+  top: var(--space-4);
+}
+
+/* The views switch with the segmented control on phones, so the nav items stay on wider screens. */
+.phoneViews {
+  display: none;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.updated,
+.footer {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.footer {
+  padding: var(--space-4) 0 var(--space-6);
+  text-align: center;
+}
+
+/* Pickers (event, division, squad). */
+.segmented {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.select {
+  flex: 0 1 var(--space-64);
+}
+
+@media (max-width: 767px) {
+  .topNav {
+    height: var(--space-14);
+  }
+
+  /* Phones use the full-width segmented control for views, not the Menu disclosure. */
+  .topNav > details {
+    display: none;
+  }
+
+  .topNav .share {
+    width: var(--touch-target-comfortable);
+    height: var(--touch-target-comfortable);
+    padding: 0;
+  }
+
+  .shareLabel {
+    position: absolute;
+    width: var(--space-px);
+    height: var(--space-px);
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .phoneViews {
+    display: flex;
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .phoneViews > * {
+    flex: 1;
+    justify-content: center;
+    min-height: var(--space-10);
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+  }
+
+  .select {
+    flex-basis: 100%;
+  }
+
+  .select select {
+    height: var(--touch-target-comfortable);
+  }
+}

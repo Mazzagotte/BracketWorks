@@ -37,8 +37,11 @@ export function capitalizeFirstLetter(value: string): string {
   return `${value.slice(0, firstLetterIndex)}${value.charAt(firstLetterIndex).toLocaleUpperCase()}${value.slice(firstLetterIndex + 1)}`;
 }
 
-export { BracketMatch, BracketTree, bracketWinningMargin } from './components/Bracket';
+export { BracketChampion, BracketMatch, BracketTree, bracketWinningMargin } from './components/Bracket';
 export type { BracketChampionData, BracketMatchData, BracketMatchProps, BracketPlayerData, BracketRoundData, BracketTreeProps } from './components/Bracket';
+
+export { BracketLadder, BracketTwoSided, RoundRobinGrid, TWO_SIDED_MIN_FIRST_ROUND_MATCHES, ladderWaitingNote } from './components/FinalsBrackets';
+export type { BracketLadderProps, BracketTwoSidedProps, RoundRobinGame, RoundRobinGridProps, RoundRobinPlayer } from './components/FinalsBrackets';
 
 export { AuthShell } from './components/AuthShell';
 export type { AuthFeature, AuthShellProps } from './components/AuthShell';

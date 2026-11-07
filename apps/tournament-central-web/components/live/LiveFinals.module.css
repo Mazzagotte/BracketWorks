@@ -1,0 +1,247 @@
+/* Public live finals (docs/ui-standards.md sections 2, 5, 7, 7a). The shell is LiveShell.module.css;
+   the finals shapes (ladder, two-sided bracket, round robin grid) come from @bracketworks/ui. */
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.strong {
+  font-weight: var(--font-weight-bold);
+}
+
+.overline {
+  margin: 0 0 var(--space-3);
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.pickers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+/* Flush cards (tables edge to edge): padded pieces above the table, room below the last one. */
+.tableCard {
+  padding-bottom: 0;
+}
+
+.inset {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.cardEnd {
+  padding-bottom: var(--space-5);
+}
+
+.table td.rank {
+  width: var(--space-12);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.subTitle {
+  margin: 0;
+  padding-bottom: var(--space-2);
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.subTitleSpaced {
+  padding-top: var(--space-6);
+}
+
+.notes {
+  margin-bottom: var(--space-4);
+}
+
+.placings {
+  padding-top: var(--space-4);
+}
+
+.spaced {
+  margin-top: var(--space-4);
+}
+
+/* ---------- Now bowling ---------- */
+
+.duel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--space-40), 1fr));
+  row-gap: var(--space-4);
+}
+
+.contender {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-right: var(--space-4);
+}
+
+.duel .contender + .contender {
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--bw-border-subtle);
+}
+
+.contenderSeed {
+  font: var(--type-overline);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+  color: var(--bw-text-body);
+}
+
+.contenderName {
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+  overflow-wrap: anywhere;
+}
+
+/* Key numbers per section 2: text-primary, never orange. The placeholder holds the same line height. */
+.contenderScore {
+  margin-top: var(--space-1);
+  font: var(--type-stat);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.upNext {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+/* ---------- Champion ---------- */
+
+.championBlock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.championText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.championTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.trophy {
+  flex-shrink: 0;
+  color: var(--color-success);
+}
+
+.championLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+}
+
+/* ---------- Survivor ---------- */
+
+.survivor {
+  display: flex;
+  gap: var(--space-6);
+  overflow-x: auto;
+}
+
+.survivorRound {
+  flex: 1 0 var(--space-56);
+  min-width: var(--space-56);
+}
+
+.survivorList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.survivorRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-sm);
+  padding: var(--space-1-5) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+  font: var(--type-table);
+  color: var(--bw-text-title);
+}
+
+/* The cut: a stronger line between those still in and those out this round. */
+.survivorCut {
+  border-top-color: var(--bw-border-card);
+}
+
+.survivorOut {
+  color: var(--bw-text-body);
+}
+
+.survivorSeed {
+  flex: 0 0 var(--space-5);
+  color: var(--bw-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.survivorName {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.survivorNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outText {
+  flex-shrink: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.survivorScore {
+  flex-shrink: 0;
+  min-width: var(--space-8);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767px) {
+  .inset {
+    padding: 0 var(--space-4) var(--space-4);
+  }
+
+  .cardEnd {
+    padding-bottom: var(--space-4);
+  }
+
+  .pickers > * {
+    flex: 1 1 100%;
+  }
+
+  .duel .contender + .contender {
+    padding-left: var(--space-4);
+  }
+}

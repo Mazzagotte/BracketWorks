@@ -910,15 +910,28 @@ export default function ScoresPage() {
         title="Scores"
         description="Enter scores as bowlers finish. Standings and the live page update as you type."
         actions={(
-          <ButtonLink
-            variant="secondary"
-            href={liveHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}
-          >
-            Open live standings
-          </ButtonLink>
+          <>
+            <ButtonLink
+              variant="secondary"
+              href={liveHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}
+            >
+              Open live standings
+            </ButtonLink>
+            {view === 'finals' ? (
+              <ButtonLink
+                variant="secondary"
+                href={organizerRoutes.liveFinals(tournamentId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}
+              >
+                Open finals view
+              </ButtonLink>
+            ) : null}
+          </>
         )}
       />
       <SegmentedControl

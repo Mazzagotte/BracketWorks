@@ -16,6 +16,11 @@
   opacity: 0.5;
 }
 
+/* The match being bowled now (section 7a highlight rule: panel background, never orange). */
+.matchCurrent {
+  background: var(--bw-surface-panel);
+}
+
 .matchHeader {
   display: flex;
   align-items: center;
@@ -83,6 +88,14 @@
   min-width: 0;
 }
 
+.playerSeed {
+  flex-shrink: 0;
+  min-width: var(--space-4);
+  color: var(--bw-text-body);
+  font-weight: var(--font-weight-normal);
+  font-variant-numeric: tabular-nums;
+}
+
 .playerNameText {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -96,6 +109,8 @@
 
 .playerScore {
   flex-shrink: 0;
+  /* Room for three digits so a score arriving never shifts the row. */
+  min-width: var(--space-8);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }

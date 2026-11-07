@@ -1,12 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ActivityList,
   Badge,
+  BracketLadder,
   BracketMatch,
   BracketTree,
+  BracketTwoSided,
   Button,
   ButtonLink,
   CheckboxField,
@@ -21,6 +23,7 @@ import {
   PageHeader,
   Pagination,
   ProgressBar,
+  RoundRobinGrid,
   SegmentedControl,
   SortableHeader,
   SideNav,
@@ -302,5 +305,94 @@ describe('shared UI: brackets', () => {
     render(<BracketTree layout="stacked" rounds={rounds} champion={null} />);
     expect(screen.getAllByRole('heading', { level: 3 }).map(h => h.textContent)).toEqual(['Champion', 'Final', 'Semifinals']);
     expect(screen.getByText('Decided after the final')).toBeInTheDocument();
+  });
+});
+
+describe('shared UI: finals shapes', () => {
+  const ladder = [
+    { id: 'm1', label: 'Match 1', players: [{ seed: 4, name: 'Dave Kim', score: 291, winner: true }, { seed: 3, name: 'Terry Wallace', score: 249 }] },
+    { id: 'm2', label: 'Match 2', players: [{ seed: 4, name: 'Dave Kim', score: 201 }, { seed: 2, name: 'Robin Hayes', score: null }] },
+    { id: 'm3', label: 'Title match', players: [{ name: null }, { seed: 1, name: 'Alex Brooks' }] },
+  ] as Parameters<typeof BracketLadder>[0]['matches'];
+
+  it('draws a stepladder bottom-up with the current match, seed waits, and the champion slot', () => {
+    render(<BracketLadder label="Singles stepladder" matches={ladder} highlightMatchId="m2" champion={null} />);
+    const region = screen.getByRole('region', { name: 'Singles stepladder' });
+    // Match 1 comes first in reading order (drawn on the bottom rung), the champion last (drawn on top).
+    const groups = within(region).getAllByRole('group').map((group) => group.getAttribute('aria-label'));
+    expect(groups).toEqual(['Match 1', 'Match 2', 'Title match', 'Champion']);
+    const current = screen.getByRole('group', { name: 'Match 2' });
+    expect(current).toHaveAttribute('aria-current', 'step');
+    expect(current).toHaveTextContent('Now bowling');
+    expect(screen.getByRole('group', { name: 'Match 1' })).not.toHaveAttribute('aria-current');
+    const title = screen.getByRole('group', { name: 'Title match' });
+    expect(title).toHaveTextContent('Seed 1 waits');
+    expect(title).toHaveTextContent('Winner of Match 2');
+    expect(screen.getByText('Decided after the title match')).toBeInTheDocument();
+  });
+
+  it('shows the stepladder champion and To be decided for a rung with no one set', () => {
+    render(
+      <BracketLadder
+        matches={[...ladder.slice(0, 1), { id: 'a', label: 'Match 2', players: [{ name: null }, { name: null }] }]}
+        champion={{ name: 'Robin Hayes', detail: 'Won the title match 284 to 265' }}
+      />,
+    );
+    expect(screen.getByRole('group', { name: 'Match 2' }).textContent).toContain('Winner of Match 1');
+    expect(screen.getByRole('group', { name: 'Match 2' }).textContent).toContain('To be decided');
+    expect(within(screen.getByRole('group', { name: 'Champion' })).getByText('Robin Hayes')).toBeInTheDocument();
+    expect(screen.getByText('Won the title match 284 to 265')).toBeInTheDocument();
+  });
+
+  const eight = (): Parameters<typeof BracketTwoSided>[0]['rounds'] => [
+    { title: 'Quarterfinals', matches: [1, 2, 3, 4].map((n) => ({ id: `q${n}`, label: `Quarterfinal ${n}`, players: [{ name: `Top ${n}` }, { name: `Low ${n}` }] })) },
+    { title: 'Semifinals', matches: [1, 2].map((n) => ({ id: `s${n}`, label: `Semifinal ${n}`, players: [{ name: null }, { name: null }] })) },
+    { title: 'Final', matches: [{ id: 'f', label: 'Final', players: [{ name: null }, { name: null }] }] },
+  ];
+
+  it('splits 8+ match play into two halves converging on the final', () => {
+    render(<BracketTwoSided label="Match play" rounds={eight()} champion={null} />);
+    const left = screen.getByRole('region', { name: 'Quarterfinals, left half' });
+    const right = screen.getByRole('region', { name: 'Quarterfinals, right half' });
+    expect(within(left).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual(['Quarterfinal 1', 'Quarterfinal 2']);
+    expect(within(right).getAllByRole('group').map((group) => group.getAttribute('aria-label'))).toEqual(['Quarterfinal 3', 'Quarterfinal 4']);
+    expect(within(screen.getByRole('region', { name: 'Semifinals, left half' })).getByRole('group', { name: 'Semifinal 1' })).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Semifinals, right half' })).getByRole('group', { name: 'Semifinal 2' })).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Final' })).getByRole('group', { name: 'Final' })).toBeInTheDocument();
+    expect(screen.getByText('Decided after the final')).toBeInTheDocument();
+  });
+
+  it('falls back to the tree for fewer than 8 finalists and on phones', () => {
+    const { unmount } = render(<BracketTwoSided rounds={eight().slice(1)} />);
+    expect(screen.queryByRole('region', { name: /left half/ })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Semifinals', 'Final', 'Champion']);
+    unmount();
+    render(<BracketTwoSided layout="stacked" rounds={eight()} />);
+    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Champion', 'Final', 'Semifinals', 'Quarterfinals']);
+  });
+
+  it('draws a round robin head-to-head grid with W, L, and T in text', () => {
+    render(
+      <RoundRobinGrid
+        label="Doubles head to head"
+        players={[{ key: 'a', seed: 1, name: 'Ann Lee' }, { key: 'b', seed: 2, name: 'Bob Ray' }, { key: 'c', seed: 3, name: 'Cara Diaz' }]}
+        games={[
+          { a: { key: 'a', score: 214 }, b: { key: 'b', score: 190 } },
+          { a: { key: 'a', score: 200 }, b: { key: 'c', score: 200 } },
+          { a: { key: 'b', score: 180 }, b: { key: 'c', score: null } },
+        ]}
+      />,
+    );
+    const table = screen.getByRole('table', { name: 'Doubles head to head' });
+    expect(within(table).getByRole('columnheader', { name: 'Bob Ray' })).toHaveTextContent('2');
+    const rows = within(table).getAllByRole('row').slice(1);
+    const cells = (index: number) => within(rows[index]).getAllByRole('cell').map((cell) => cell.textContent);
+    expect(cells(0)).toEqual(['', '214 W', '200 T']);
+    expect(cells(1)).toEqual(['190 L', '', '180']);
+    expect(cells(2)).toEqual(['200 T', '—', '']);
+    const win = within(rows[0]).getAllByRole('cell')[1];
+    expect(win).toHaveAttribute('data-emphasis', 'true');
+    expect(within(rows[1]).getAllByRole('cell')[0]).toHaveAttribute('data-tone', 'secondary');
+    expect(win).toHaveAttribute('data-align', 'right');
   });
 });

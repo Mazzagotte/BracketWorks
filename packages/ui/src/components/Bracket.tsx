@@ -14,6 +14,10 @@ export interface BracketPlayerData {
   winner?: boolean;
   /** Row background for a searched or selected bowler. Never orange. */
   highlighted?: boolean;
+  /** Finals seed, shown before the name in secondary text. */
+  seed?: number | null;
+  /** Text for an open slot instead of "To be decided", for example "Winner of Match 1". */
+  placeholder?: string;
 }
 
 export interface BracketMatchData {
@@ -25,6 +29,8 @@ export interface BracketMatchData {
   note?: ReactNode;
   /** Fades a match that does not match the current search. */
   dimmed?: boolean;
+  /** The match being bowled now: panel background and "Now bowling" in the header. Never orange. */
+  current?: boolean;
 }
 
 export interface BracketMatchProps extends BracketMatchData {
@@ -68,12 +74,17 @@ export function bracketWinningMargin(players: [BracketPlayerData, BracketPlayerD
 }
 
 /** One match box: header (name and margin), then a row per player. Winner is bold with a check. */
-export function BracketMatch({ label, players, note, dimmed, onPlayerClick, className }: BracketMatchProps) {
+export function BracketMatch({ label, players, note, dimmed, current, onPlayerClick, className }: BracketMatchProps) {
   const decided = players.some((player) => player.winner);
-  const aside = note ?? bracketWinningMargin(players);
+  const aside = note ?? bracketWinningMargin(players) ?? (current ? 'Now bowling' : null);
 
   return (
-    <div className={cx(styles.match, dimmed && styles.dimmed, className)} role="group" aria-label={label}>
+    <div
+      className={cx(styles.match, dimmed && styles.dimmed, current && styles.matchCurrent, className)}
+      role="group"
+      aria-label={label}
+      aria-current={current ? 'step' : undefined}
+    >
       <div className={styles.matchHeader}>
         <span className={styles.matchLabel}>{label}</span>
         {aside ? <span className={styles.matchAside}>{aside}</span> : null}
@@ -90,7 +101,10 @@ export function BracketMatch({ label, players, note, dimmed, onPlayerClick, clas
         const content = (
           <>
             <span className={styles.playerName}>
-              <span className={styles.playerNameText}>{name || 'To be decided'}</span>
+              {typeof player.seed === 'number' ? (
+                <span className={styles.playerSeed}><span className="sr-only">Seed </span>{player.seed}</span>
+              ) : null}
+              <span className={styles.playerNameText}>{name || player.placeholder || 'To be decided'}</span>
               {player.winner ? <CheckIcon /> : null}
             </span>
             <span className={styles.playerScore}>{hasScore(player.score) ? player.score : '-'}</span>
@@ -140,9 +154,10 @@ export interface BracketTreeProps {
   className?: string;
 }
 
-function Champion({ champion }: { champion?: BracketChampionData | null }) {
+/** Trophy, name, and detail for a decided champion; the pending text until then. */
+export function BracketChampion({ champion, pendingText = 'Decided after the final' }: { champion?: BracketChampionData | null; pendingText?: string }) {
   if (!champion) {
-    return <p className={styles.championPending}>Decided after the final</p>;
+    return <p className={styles.championPending}>{pendingText}</p>;
   }
   return (
     <div className={styles.champion}>
@@ -167,7 +182,7 @@ export function BracketTree({ rounds, champion, layout = 'tree', onPlayerClick, 
       <div className={cx(styles.stacked, className)} aria-label={label} role="region">
         <section className={styles.stackedSection} aria-label="Champion">
           <h3 className={styles.roundTitle}>Champion</h3>
-          <Champion champion={champion} />
+          <BracketChampion champion={champion} />
         </section>
         {[...rounds].reverse().map((round) => (
           <section key={round.title} className={styles.stackedSection} aria-label={round.title}>
@@ -210,7 +225,7 @@ export function BracketTree({ rounds, champion, layout = 'tree', onPlayerClick, 
           <div className={styles.roundBody}>
             <div className={styles.pair}>
               <div className={cx(styles.slot, rounds.length > 0 && styles.slotIncoming)}>
-                <Champion champion={champion} />
+                <BracketChampion champion={champion} />
               </div>
             </div>
           </div>
