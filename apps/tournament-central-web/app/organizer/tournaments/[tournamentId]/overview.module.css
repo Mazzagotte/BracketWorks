@@ -51,3 +51,9 @@
 .squadName {
   white-space: nowrap;
 }
+
+/* The bowler fill bar gets a steady width so rows line up. */
+.fillCell {
+  width: var(--space-56);
+  min-width: var(--space-40);
+}

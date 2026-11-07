@@ -2,12 +2,17 @@ import { useState } from 'react';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import PaymentsPage from '@/app/organizer/tournaments/[tournamentId]/payments/page';
+import RegistrationsPage from '@/app/organizer/tournaments/[tournamentId]/registrations/page';
 import { updateTournamentRegistrationPaymentStatus, type OrganizerRegistrationRecord } from './organizerApi';
 
 const mocks = vi.hoisted(() => ({ context: vi.fn() }));
 vi.mock('./TournamentContext', () => ({ useTournamentContext: () => mocks.context() }));
-vi.mock('./organizerApi', () => ({ updateTournamentRegistrationPaymentStatus: vi.fn() }));
+vi.mock('./organizerApi', () => ({
+  updateTournamentRegistrationPaymentStatus: vi.fn(),
+  deleteTournamentEntry: vi.fn(),
+  markTournamentRegistrationsPaid: vi.fn(),
+  updateTournamentEntry: vi.fn(),
+}));
 
 const unpaid: OrganizerRegistrationRecord = {
   id: 7, confirmation_code: 'OPEN-0007', status: 'confirmed', payment_status: 'unpaid',
@@ -27,7 +32,7 @@ function Page() {
       })));
     },
   });
-  return <PaymentsPage />;
+  return <RegistrationsPage />;
 }
 
 beforeEach(() => {
@@ -41,14 +46,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('Payments page recording', () => {
+describe('Recording payments from the registrations list', () => {
   it('records a confirmed payment and refreshes status and totals', async () => {
     const user = userEvent.setup();
     render(<Page />);
-    expect(screen.queryByRole('columnheader', { name: 'Action' })).not.toBeInTheDocument();
     const statusButton = screen.getByRole('button', { name: 'Mark OPEN-0007 as paid' });
     expect(statusButton).toHaveTextContent('Unpaid');
-    expect(statusButton.closest('td')?.cellIndex).toBe(3);
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as paid' }));
     const confirmation = screen.getByRole('alertdialog', { name: 'Record payment?' });
     expect(confirmation).toHaveTextContent('$80.00');
@@ -59,18 +62,18 @@ describe('Payments page recording', () => {
     expect(await screen.findByRole('button', { name: 'Mark OPEN-0007 as unpaid' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' })).toHaveTextContent('Paid');
     expect(screen.queryByRole('button', { name: 'Mark OPEN-0007 as paid' })).not.toBeInTheDocument();
-    const summary = screen.getByLabelText('Payment summary');
-    const paidLabel = within(summary).getByText('Paid', { selector: 'span' });
-    expect(paidLabel.parentElement).toHaveTextContent('$80.00');
-    expect(within(summary).getByText('Unpaid', { selector: 'span' }).parentElement).toHaveTextContent('$0.00');
+    const summary = screen.getByLabelText('Registration summary');
+    const collected = () => within(summary).getByText('Collected', { selector: 'span' }).parentElement;
+    expect(collected()).toHaveTextContent('$80.00');
+    expect(collected()).toHaveTextContent('$0.00 unpaid');
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as paid.');
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as unpaid' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent('does not issue a refund');
     await user.click(screen.getByRole('button', { name: 'Mark unpaid' }));
     expect(updateTournamentRegistrationPaymentStatus).toHaveBeenLastCalledWith('session', 42, 7, 'unpaid');
     expect(await screen.findByRole('button', { name: 'Mark OPEN-0007 as paid' })).toBeInTheDocument();
-    expect(within(summary).getByText('Paid', { selector: 'span' }).parentElement).toHaveTextContent('$0.00');
-    expect(within(summary).getByText('Unpaid', { selector: 'span' }).parentElement).toHaveTextContent('$80.00');
+    expect(collected()).toHaveTextContent('$0.00');
+    expect(collected()).toHaveTextContent('$80.00 unpaid');
     expect(screen.getByRole('status')).toHaveTextContent('OPEN-0007 marked as unpaid.');
   });
 
@@ -102,7 +105,7 @@ describe('Payments page recording', () => {
     render(<Page />);
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as paid' }));
     await user.click(screen.getByRole('button', { name: 'Mark paid' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Payment status was updated, but the payment list could not be refreshed.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Payment status was updated, but the list could not be refreshed.');
     expect(updateTournamentRegistrationPaymentStatus).toHaveBeenCalledTimes(1);
   });
 
@@ -123,14 +126,14 @@ describe('Payments page recording', () => {
         { ...unpaid, id: 4, payment_status: 'refunded' },
       ],
     });
-    render(<PaymentsPage />);
+    render(<RegistrationsPage />);
     expect(screen.queryByRole('button', { name: /as paid/ })).not.toBeInTheDocument();
   });
 
   it('rejects an invalid registration ID with a visible error', async () => {
     mocks.context.mockReturnValue({ tournamentId: 42, registrations: [{ ...unpaid, id: 'invalid' }] });
     const user = userEvent.setup();
-    render(<PaymentsPage />);
+    render(<RegistrationsPage />);
     await user.click(screen.getByRole('button', { name: 'Mark OPEN-0007 as paid' }));
     expect(screen.getByRole('alert')).toHaveTextContent('invalid ID');
     expect(updateTournamentRegistrationPaymentStatus).not.toHaveBeenCalled();

@@ -31,7 +31,7 @@ export default function OrganizerTopNav() {
       ...links,
       { href: base, label: 'Overview' },
       { href: `${base}/registrations`, label: 'Registrations' },
-      { href: `${base}/payments`, label: 'Payments' },
+      { href: `${base}/setup`, label: 'Setup' },
       { href: `${base}/documents`, label: 'Documents' },
       { href: `${base}/team`, label: 'Team' },
     ];

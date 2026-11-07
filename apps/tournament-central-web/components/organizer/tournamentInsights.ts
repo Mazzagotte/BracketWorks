@@ -274,6 +274,8 @@ export type TournamentAttentionItem = {
   id: string;
   message: string;
   href: string;
+  /** Link text for this row when it differs from the list default (for example "Extend deadline"). */
+  actionLabel?: string;
 };
 
 export function buildTournamentAttentionItems(params: {
@@ -284,6 +286,8 @@ export function buildTournamentAttentionItems(params: {
   eventCount: number;
   hasRulesDocument: boolean;
   registrationCloseIso: string | null;
+  registrationCloseTime?: string | null;
+  timeZone?: string | null;
   squadSummaries: SquadSummary[];
   registrationSummary: RegistrationSummary;
   referenceDate?: Date;
@@ -292,7 +296,8 @@ export function buildTournamentAttentionItems(params: {
   const overviewHref = organizerRoutes.overview(params.tournamentId);
   const setupHref = organizerRoutes.setup(params.tournamentId);
   const registrationsHref = organizerRoutes.registrations(params.tournamentId);
-  const squadsHref = organizerRoutes.squads(params.tournamentId);
+  // Squad capacity lives on the overview; the old Squads page redirects there.
+  const squadsHref = overviewHref;
 
   if (!params.isPublished) {
     items.push({ id: 'unpublished', message: 'Setup changes are not published yet.', href: setupHref });
@@ -308,17 +313,20 @@ export function buildTournamentAttentionItems(params: {
   }
   const today = params.referenceDate ?? new Date();
 
-  if (params.registrationCloseIso) {
-    const closeDate = new Date(`${params.registrationCloseIso}T00:00:00`);
-    if (!Number.isNaN(closeDate.getTime())) {
-      const daysUntilClose = Math.ceil((closeDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntilClose >= 0 && daysUntilClose <= 3) {
-        items.push({
-          id: 'closing-soon',
-          message: `Registration closes in ${daysUntilClose} day${daysUntilClose === 1 ? '' : 's'}.`,
-          href: registrationsHref,
-        });
-      }
+  const closeAt = getRegistrationDeadline(params.registrationCloseIso, params.registrationCloseTime, params.timeZone);
+  if (closeAt) {
+    const hoursLeft = (closeAt.getTime() - today.getTime()) / (1000 * 60 * 60);
+    if (hoursLeft > 0 && hoursLeft <= 72) {
+      const daysLeft = Math.floor(hoursLeft / 24);
+      const when = hoursLeft < 24
+        ? `in ${Math.max(1, Math.round(hoursLeft))} hour${Math.round(hoursLeft) === 1 ? '' : 's'}`
+        : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+      items.push({
+        id: 'closing-soon',
+        message: `Registration closes ${when} (${formatRegistrationDeadline(params.registrationCloseIso, params.registrationCloseTime, params.timeZone)}).`,
+        href: setupHref,
+        actionLabel: 'Extend deadline',
+      });
     }
   }
 
@@ -363,4 +371,5 @@ export function buildTournamentAttentionItems(params: {
 
   return items;
 }
+import { formatRegistrationDeadline, getRegistrationDeadline } from './organizerFormatting';
 import { organizerRoutes } from './organizerRoutes';

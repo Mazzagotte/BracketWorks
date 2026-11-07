@@ -23,6 +23,8 @@ type TournamentSetupPayloadSlice = {
   details?: {
     registrationOpenIso?: string;
     registrationCloseIso?: string;
+    registrationCloseTime?: string;
+    timezone?: string;
     rulesText?: string;
   };
 };
@@ -37,6 +39,10 @@ export type TournamentContextValue = {
   hasRulesDocument: boolean;
   registrationOpenIso: string | null;
   registrationCloseIso: string | null;
+  /** Wall-clock close time ("23:59") in the tournament timezone. */
+  registrationCloseTime: string | null;
+  /** IANA timezone of the tournament, for example "America/Boise". */
+  tournamentTimeZone: string | null;
   isTournamentLoading: boolean;
   isSetupLoading: boolean;
   isRegistrationsLoading: boolean;
@@ -85,6 +91,8 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   const [hasRulesDocument, setHasRulesDocument] = useState(false);
   const [registrationOpenIso, setRegistrationOpenIso] = useState<string | null>(null);
   const [registrationCloseIso, setRegistrationCloseIso] = useState<string | null>(null);
+  const [registrationCloseTime, setRegistrationCloseTime] = useState<string | null>(null);
+  const [tournamentTimeZone, setTournamentTimeZone] = useState<string | null>(null);
   const [isTournamentLoading, setIsTournamentLoading] = useState(needsTournament);
   const [isSetupLoading, setIsSetupLoading] = useState(needsSetup);
   const [isRegistrationsLoading, setIsRegistrationsLoading] = useState(needsRegistrations);
@@ -133,6 +141,8 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
       setHasRulesDocument(documents.some((document) => document.doc_type === 'rules') || Boolean(setupState?.payload.details?.rulesText?.trim()));
       setRegistrationOpenIso(setupState?.payload.details?.registrationOpenIso || null);
       setRegistrationCloseIso(setupState?.payload.details?.registrationCloseIso || null);
+      setRegistrationCloseTime(setupState?.payload.details?.registrationCloseTime || null);
+      setTournamentTimeZone(setupState?.payload.details?.timezone || null);
     } catch (caughtError) {
       setSetupError(caughtError instanceof Error ? caughtError.message : 'Unable to load tournament setup.');
       throw caughtError;
@@ -194,6 +204,8 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     hasRulesDocument,
     registrationOpenIso,
     registrationCloseIso,
+    registrationCloseTime,
+    tournamentTimeZone,
     isTournamentLoading,
     isSetupLoading,
     isRegistrationsLoading,
@@ -216,6 +228,8 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
     hasRulesDocument,
     registrationOpenIso,
     registrationCloseIso,
+    registrationCloseTime,
+    tournamentTimeZone,
     isTournamentLoading,
     isSetupLoading,
     isRegistrationsLoading,

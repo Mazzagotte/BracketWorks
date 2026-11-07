@@ -2427,7 +2427,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const previousSection = activeIndex > 0 ? setupSections[activeIndex - 1] : null;
   const nextSection = activeIndex < setupSections.length - 1 ? setupSections[activeIndex + 1] : null;
   const blockingIssueCount = validationIssues.filter((issue) => issue.severity === 'error').length;
-  const builderState = publishedAt
+  const isLive = Boolean(publishedAt) || isSetupPublished;
+  const builderState = isLive
     ? { label: 'Published', tone: 'success' as const }
     : completion === 100
       ? { label: 'Ready to publish', tone: 'info' as const }
@@ -2473,7 +2474,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             <Button variant="secondary" icon={<Save size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
               {isSavingDraft ? 'Saving...' : 'Save'}
             </Button>
-            <Button variant="primary" onClick={() => setActiveSection('review-publish')}>Review and publish</Button>
+            <Button variant="primary" onClick={() => setActiveSection('review-publish')}>
+              {isLive ? 'Publish changes' : 'Review and publish'}
+            </Button>
           </>
         )}
       />

@@ -9,6 +9,8 @@ export type AttentionListItem = {
   href: string;
   /** Accessible name for the row's link. Defaults to "<actionLabel>: <message>". */
   linkLabel?: string;
+  /** Visible link text for this row; overrides the list's actionLabel. */
+  actionLabel?: string;
 };
 
 type AttentionListProps = {
@@ -37,8 +39,8 @@ export default function AttentionList({ items, description, actionLabel = 'Revie
           {items.map((item) => (
             <li key={item.id} className={styles.row}>
               <span>{item.message}</span>
-              <Link href={item.href} className={styles.link} aria-label={item.linkLabel ?? `${actionLabel}: ${item.message}`}>
-                {actionLabel}
+              <Link href={item.href} className={styles.link} aria-label={item.linkLabel ?? `${item.actionLabel ?? actionLabel}: ${item.message}`}>
+                {item.actionLabel ?? actionLabel}
               </Link>
             </li>
           ))}

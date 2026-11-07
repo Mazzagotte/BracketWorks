@@ -20,6 +20,7 @@ import {
   PageHeader,
   Pagination,
   SearchField,
+  SegmentedControl,
   SelectField,
   StatGroup,
   TableToolbar,
@@ -29,7 +30,6 @@ import {
 
 import {
   deleteTournamentEntry,
-  markTournamentRegistrationPaid,
   markTournamentRegistrationsPaid,
   updateTournamentEntry,
   type OrganizerRegistrationRecord,
@@ -38,12 +38,18 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney } from '@/components/organizer/organizerFormatting';
+import { buildParticipantRows, buildPaymentSummary } from '@/components/organizer/tournamentInsights';
+import { usePaymentToggle } from '@/components/organizer/usePaymentToggle';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
 import styles from './registrations.module.css';
 import cells from '@/components/organizer/OrganizerTable.module.css';
 
-type FilterValue = 'all' | 'confirmed' | 'pending' | 'cancelled';
+type FilterValue = 'all' | 'confirmed' | 'pending' | 'waitlisted' | 'cancelled';
+type PaymentFilter = 'all' | 'unpaid' | 'paid';
+type ListView = 'registrations' | 'bowlers';
+
+const EMPTY_CELL = '—';
 
 type RegistrationEntry = NonNullable<OrganizerRegistrationRecord['entries']>[number];
 type EditableBowler = NonNullable<RegistrationEntry['bowlers']>[number];
@@ -145,6 +151,8 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [statusFilter, setStatusFilter] = useState<FilterValue>('all');
   const [squadFilter, setSquadFilter] = useState('all');
   const [eventFilter, setEventFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
+  const [view, setView] = useState<ListView>('registrations');
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
@@ -160,6 +168,15 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [manualRegistrationMessage, setManualRegistrationMessage] = useState<string | null>(null);
   const [manualRegistrationError, setManualRegistrationError] = useState<string | null>(null);
   const pageSize = 10;
+  const payments = usePaymentToggle({ tournamentId, refreshRegistrations });
+
+  // Links from other pages open a view directly: ?view=bowlers or ?payment=unpaid.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('view') === 'bowlers') setView('bowlers');
+    const payment = params.get('payment');
+    if (payment === 'unpaid' || payment === 'paid') setPaymentFilter(payment);
+  }, []);
 
   const manualEvents = useMemo(
     () => (manualRegistrationConfig?.events ?? []).filter((event) => event.enabled !== false),
@@ -411,21 +428,6 @@ export default function OrganizerTournamentRegistrationsPage() {
     }
   };
 
-  const handleMarkPaid = async (registration: OrganizerRegistrationRecord) => {
-    const registrationId = Number(registration.id);
-    const token = sessionStorage.getItem('access_token');
-    if (!token || !Number.isInteger(registrationId)) return;
-    setIsMutating(true);
-    try {
-      await markTournamentRegistrationPaid(token, tournamentId, registrationId);
-      await refreshRegistrations();
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : 'Unable to mark registration as paid.');
-    } finally {
-      setIsMutating(false);
-    }
-  };
-
   const handleBulkMarkPaid = async () => {
     const token = sessionStorage.getItem('access_token');
     if (!token || selectedIds.size === 0) return;
@@ -479,9 +481,30 @@ export default function OrganizerTournamentRegistrationsPage() {
       const entries = registration.entries ?? [];
       const matchesSquad = squadFilter === 'all' || entries.some((entry) => (entry.squad_config_id ?? entry.squad_name ?? 'unassigned') === squadFilter);
       const matchesEvent = eventFilter === 'all' || entries.some((entry) => entry.event_config_id === eventFilter);
-      return matchesSearch && matchesStatus && matchesSquad && matchesEvent;
+      const payment = registration.payment_status ?? 'unpaid';
+      const matchesPayment = paymentFilter === 'all'
+        || (paymentFilter === 'paid' ? payment === 'paid' : payment !== 'paid' && registration.status !== 'cancelled' && registration.status !== 'refunded');
+      return matchesSearch && matchesStatus && matchesSquad && matchesEvent && matchesPayment;
     });
-  }, [eventFilter, registrations, search, squadFilter, statusFilter]);
+  }, [eventFilter, paymentFilter, registrations, search, squadFilter, statusFilter]);
+
+  const paymentSummary = useMemo(() => buildPaymentSummary(registrations), [registrations]);
+
+  // The bowler view lists each person once, across every registration that matches the filters.
+  const bowlerRows = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    // Search applies to each bowler here (team events list several bowlers per registration).
+    const withoutSearch = registrations.filter((registration) => {
+      const entries = registration.entries ?? [];
+      const payment = registration.payment_status ?? 'unpaid';
+      return (statusFilter === 'all' || registration.status === statusFilter)
+        && (squadFilter === 'all' || entries.some((entry) => (entry.squad_config_id ?? entry.squad_name ?? 'unassigned') === squadFilter))
+        && (eventFilter === 'all' || entries.some((entry) => entry.event_config_id === eventFilter))
+        && (paymentFilter === 'all' || (paymentFilter === 'paid' ? payment === 'paid' : payment !== 'paid'));
+    });
+    return buildParticipantRows(withoutSearch).filter((row) => !normalizedSearch
+      || [row.firstName, row.lastName, row.usbcNumber ?? '', row.email ?? ''].join(' ').toLowerCase().includes(normalizedSearch));
+  }, [eventFilter, paymentFilter, registrations, search, squadFilter, statusFilter]);
 
   const metrics = useMemo(() => {
     const confirmed = registrations.filter((registration) => registration.status === 'confirmed').length;
@@ -515,7 +538,7 @@ export default function OrganizerTournamentRegistrationsPage() {
   );
   useEffect(() => {
     setPage(1);
-  }, [eventFilter, search, squadFilter, statusFilter]);
+  }, [eventFilter, paymentFilter, search, squadFilter, statusFilter]);
 
   const exportRegistrations = () => {
     const header = ['Confirmation', 'Contact', 'Email', 'Event', 'Squad', 'Status', 'Payment', 'Total', 'Submitted'];
@@ -568,7 +591,10 @@ export default function OrganizerTournamentRegistrationsPage() {
         description={`Review bowlers, payments, events, and squad assignments for ${tournamentName}.`}
       />
 
+      {payments.confirmationDialog}
       {pageError ? <Notice tone="danger" role="alert">{pageError}</Notice> : null}
+      {payments.actionError ? <Notice tone="danger" role="alert">{payments.actionError}</Notice> : null}
+      {payments.message ? <Notice tone="success" role="status">{payments.message}</Notice> : null}
       {isRegistrationsLoading ? <Notice tone="info" role="status">Loading registrations...</Notice> : null}
 
       {!pageError && !isRegistrationsLoading ? (
@@ -580,15 +606,24 @@ export default function OrganizerTournamentRegistrationsPage() {
               { label: 'Confirmed', value: String(metrics.confirmed), detail: `${metrics.confirmedPercent.toFixed(0)}% of total` },
               { label: 'Pending', value: String(metrics.pending), detail: 'Includes waitlisted' },
               { label: 'Cancelled', value: String(metrics.cancelled), detail: `${metrics.cancelledPercent.toFixed(0)}% of total` },
-              { label: 'Collected', value: formatMoney(metrics.paid) },
+              { label: 'Collected', value: formatMoney(paymentSummary.paidCents), detail: `${formatMoney(paymentSummary.unpaidCents)} unpaid` },
             ]}
           />
 
-          <Card padding="flush" aria-label="Registration list">
+          <Card padding="flush" aria-label={view === 'bowlers' ? 'Bowler list' : 'Registration list'}>
             <CardHeader
-              title="Registration list"
-              description={`${filteredRegistrations.length} of ${metrics.total} registrations shown`}
+              title={view === 'bowlers' ? 'Bowler list' : 'Registration list'}
+              description={view === 'bowlers'
+                ? `${bowlerRows.length} bowler${bowlerRows.length === 1 ? '' : 's'} shown`
+                : `${filteredRegistrations.length} of ${metrics.total} registrations shown`}
               actions={(
+                <>
+                <SegmentedControl
+                  label="List by"
+                  value={view}
+                  onChange={setView}
+                  options={[{ value: 'registrations', label: 'Registrations' }, { value: 'bowlers', label: 'Bowlers' }]}
+                />
                 <Button
                   variant="primary"
                   icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
@@ -597,6 +632,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                 >
                   Manual registration
                 </Button>
+                </>
               )}
             />
             <TableToolbar
@@ -613,7 +649,13 @@ export default function OrganizerTournamentRegistrationsPage() {
                 <option value="all">All statuses</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="pending">Pending</option>
+                <option value="waitlisted">Waitlisted</option>
                 <option value="cancelled">Cancelled</option>
+              </SelectField>
+              <SelectField label="Payment" hideLabel value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value as PaymentFilter)}>
+                <option value="all">All payments</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="paid">Paid</option>
               </SelectField>
               <SelectField label="Squad" hideLabel value={squadFilter} onChange={(event) => setSquadFilter(event.target.value)}>
                 <option value="all">All squads</option>
@@ -638,7 +680,46 @@ export default function OrganizerTournamentRegistrationsPage() {
               </div>
             ) : null}
 
-            {visibleRegistrations.length === 0 ? (
+            {view === 'bowlers' ? (
+              bowlerRows.length === 0 ? (
+                <EmptyState
+                  icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
+                  title={metrics.total === 0 ? 'No bowlers yet' : 'No bowlers match these filters'}
+                  description={metrics.total === 0 ? 'Bowlers appear here once they register.' : 'Try a different search or clear the filters.'}
+                />
+              ) : (
+                <DataTable caption="Bowlers" className={cells.nowrap}>
+                  <thead>
+                    <tr>
+                      <th scope="col">Bowler</th>
+                      <th scope="col">USBC number</th>
+                      <th scope="col" data-align="right">Average</th>
+                      <th scope="col">Events</th>
+                      <th scope="col">Divisions</th>
+                      <th scope="col">Squads</th>
+                      <th scope="col" data-align="right">Entries</th>
+                      <th scope="col">Payment</th>
+                      <th scope="col">Contact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bowlerRows.map((bowler) => (
+                      <tr key={bowler.key}>
+                        <td className={cells.primaryText}>{`${bowler.firstName} ${bowler.lastName}`.trim()}</td>
+                        <td className={cells.code}>{bowler.usbcNumber || EMPTY_CELL}</td>
+                        <td data-align="right">{bowler.average ?? EMPTY_CELL}</td>
+                        <td>{bowler.events.join(', ') || EMPTY_CELL}</td>
+                        <td>{bowler.divisions.join(', ') || EMPTY_CELL}</td>
+                        <td>{bowler.squads.join(', ') || EMPTY_CELL}</td>
+                        <td data-align="right">{bowler.entryCount}</td>
+                        <td><OrganizerStatusBadge status={bowler.paymentStatus} /></td>
+                        <td data-tone="secondary">{bowler.email || bowler.phone || EMPTY_CELL}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </DataTable>
+              )
+            ) : visibleRegistrations.length === 0 ? (
               <EmptyState
                 icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
                 title={metrics.total === 0 ? 'No registrations yet' : 'No registrations match these filters'}
@@ -706,7 +787,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                         <td>{entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
                         <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
                         <td><OrganizerStatusBadge status={registration.status ?? 'pending'} /></td>
-                        <td><OrganizerStatusBadge status={payment} /></td>
+                        <td>{payments.renderPaymentCell(registration)}</td>
                         <td data-align="right">{formatMoney(registration.total_cents, registration.currency)}</td>
                         <td>
                           <span className={cells.stack}>
@@ -715,7 +796,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                           </span>
                         </td>
                         <td data-align="right">
-                          {entries.length > 0 || payment !== 'paid' ? (
+                          {entries.length > 0 ? (
                             <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
                               {entries.map((registrationEntry) => (
                                 <MenuItem
@@ -727,12 +808,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                                   {entries.length > 1 ? `Edit ${entryLabel(registrationEntry, 'event')}` : 'Edit entry'}
                                 </MenuItem>
                               ))}
-                              {payment !== 'paid' ? (
-                                <MenuItem icon={<CircleDollarSign size={ICON_SIZE.md} />} onSelect={() => { void handleMarkPaid(registration); }} disabled={isMutating}>
-                                  Mark as paid
-                                </MenuItem>
-                              ) : null}
-                              {entries.length > 0 ? <MenuDivider /> : null}
+                              <MenuDivider />
                               {entries.map((registrationEntry) => (
                                 <MenuItem
                                   key={`delete-${registrationEntry.id}`}
@@ -754,12 +830,12 @@ export default function OrganizerTournamentRegistrationsPage() {
               </DataTable>
             )}
 
-            <Pagination
+            {view === 'registrations' ? <Pagination
               page={page}
               pageCount={pageCount}
               onPageChange={setPage}
               summary={`Showing ${pageStart}-${pageEnd} of ${filteredRegistrations.length}`}
-            />
+            /> : null}
           </Card>
         </>
       ) : null}

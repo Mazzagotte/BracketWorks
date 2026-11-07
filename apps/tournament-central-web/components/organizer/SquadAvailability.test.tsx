@@ -3,7 +3,6 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import OverviewPage from '@/app/organizer/tournaments/[tournamentId]/page';
-import SquadsPage from '@/app/organizer/tournaments/[tournamentId]/squads/page';
 import TournamentInformation from '@/components/public/TournamentInformation';
 import { emptySquad } from './setupFactories';
 
@@ -11,7 +10,7 @@ vi.mock('./TournamentContext', () => ({
   useTournamentContext: () => ({
     tournamentId: 1,
     tournament: null,
-    squads: [{ ...emptySquad(), id: '1130', name: '11:30 AM', capacity: 75 }],
+    squads: [{ ...emptySquad(), id: '1130', name: '11:30 AM', startTime: '11:30', capacity: 75 }],
     registrations: [{
       id: 1,
       status: 'confirmed',
@@ -34,11 +33,8 @@ afterEach(() => {
 });
 
 describe('squad availability labels', () => {
-  it.each([
-    ['organizer overview', OverviewPage],
-    ['organizer squads', SquadsPage],
-  ])('shows registrations, bowlers, and bowler spots separately on the %s', (_name, Page) => {
-    render(<Page />);
+  it('shows registrations, bowler fill, and open spots on the organizer overview', () => {
+    render(<OverviewPage />);
 
     const table = screen.getByRole('table');
     const headers = within(table).getAllByRole('columnheader').map((header) => header.textContent);
@@ -47,14 +43,12 @@ describe('squad availability labels', () => {
     const cells = within(row).getAllByRole('cell');
     for (const [label, value] of [
       ['Registrations', '1'],
-      ['Bowlers', '2'],
-      ['Bowler capacity', '75'],
-      ['Bowler spots available', '73'],
-      ['Waitlisted registrations', '0'],
-      ['Waitlisted bowlers', '0'],
+      ['Bowlers', '2 of 75'],
+      ['Spots open', '73'],
     ]) {
       expect(cells[headers.indexOf(label)]).toHaveTextContent(new RegExp(`^${value}$`));
     }
+    expect(headers).not.toContain('Waitlisted bowlers');
   });
 
   it.each([

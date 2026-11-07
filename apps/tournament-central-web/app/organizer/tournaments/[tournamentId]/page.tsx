@@ -13,6 +13,7 @@ import {
   Page,
   PageColumns,
   PageHeader,
+  ProgressBar,
   StatGroup,
   buttonClassName,
 } from '@bracketworks/ui';
@@ -22,7 +23,13 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import AttentionList from '@/components/organizer/AttentionList';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import TournamentStatusBadge from '@/components/organizer/dashboard/TournamentStatusBadge';
-import { formatRegistrationTimestamp, formatTournamentDateRange } from '@/components/organizer/organizerFormatting';
+import {
+  formatRegistrationDeadline,
+  formatRegistrationTimestamp,
+  formatSquadTime,
+  formatTournamentDate,
+  formatTournamentDateRange,
+} from '@/components/organizer/organizerFormatting';
 import { organizerRoutes } from '@/components/organizer/organizerRoutes';
 import {
   buildRegistrationSummary,
@@ -33,6 +40,20 @@ import type { RegistrationSummary, SquadSummary } from '@/components/organizer/t
 import styles from './overview.module.css';
 
 const EMPTY_VALUE = '—';
+
+/** Squad labels: just the time when every squad is on one day, otherwise date and time. */
+function squadLabels(summaries: SquadSummary[]): { sharedDate: string | null; label: (summary: SquadSummary) => string } {
+  const dates = new Set(summaries.map(({ squad }) => squad.dateIso || ''));
+  const sharedDate = dates.size === 1 && [...dates][0] ? [...dates][0] : null;
+  return {
+    sharedDate,
+    label: ({ squad }) => {
+      if (!squad.startTime) return squad.name;
+      const time = formatSquadTime(squad.startTime);
+      return sharedDate || !squad.dateIso ? time : `${formatTournamentDate(squad.dateIso)} · ${time}`;
+    },
+  };
+}
 
 function buildStats(registrationSummary: RegistrationSummary, squadSummaries: SquadSummary[]): StatItem[] {
   const stats: StatItem[] = [
@@ -69,6 +90,8 @@ export default function OrganizerTournamentOverviewPage() {
     eventCount,
     hasRulesDocument,
     registrationCloseIso,
+    registrationCloseTime,
+    tournamentTimeZone,
     isTournamentLoading,
     isSetupLoading,
     isRegistrationsLoading,
@@ -93,10 +116,12 @@ export default function OrganizerTournamentOverviewPage() {
       eventCount,
       hasRulesDocument,
       registrationCloseIso,
+      registrationCloseTime,
+      timeZone: tournamentTimeZone,
       squadSummaries,
       registrationSummary,
     });
-  }, [eventCount, hasRulesDocument, registrationCloseIso, registrationSummary, setupSummary, squadSummaries, tournament, tournamentId]);
+  }, [eventCount, hasRulesDocument, registrationCloseIso, registrationCloseTime, registrationSummary, setupSummary, squadSummaries, tournament, tournamentId, tournamentTimeZone]);
 
   const location = tournament?.location?.trim() || 'Location not set';
   const publicUrl = tournament?.is_public ? organizerRoutes.publicPage(tournamentId) : null;
@@ -107,7 +132,7 @@ export default function OrganizerTournamentOverviewPage() {
         { label: 'Location', value: location },
         { label: 'Visibility', value: tournament.is_public ? 'Public: anyone can view and register' : 'Private: only invited users can view' },
         { label: 'Setup', value: setupSummary?.is_published ? 'Published' : 'Draft changes are pending' },
-        ...(registrationCloseIso ? [{ label: 'Registration closes', value: formatRegistrationTimestamp(registrationCloseIso) }] : []),
+        ...(registrationCloseIso ? [{ label: 'Registration closes', value: formatRegistrationDeadline(registrationCloseIso, registrationCloseTime, tournamentTimeZone) }] : []),
         ...(setupSummary ? [{ label: 'Last updated', value: formatRegistrationTimestamp(setupSummary.updated_at) }] : []),
       ]
     : [];
@@ -160,8 +185,8 @@ export default function OrganizerTournamentOverviewPage() {
             {isDataLoaded ? (
               <AttentionList
                 items={attentionItems}
-                description="Resolve these before or during the tournament."
-                actionLabel="Resolve"
+                description="Things to handle before or during the tournament."
+                actionLabel="Review"
               />
             ) : null}
 
@@ -199,39 +224,57 @@ export default function OrganizerTournamentOverviewPage() {
         }
       />
 
-      {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (
-        <Card padding="flush" aria-label="Squads">
-          <CardHeader title="Squads" description="Capacity and availability are measured in bowler spots." />
-          <DataTable caption="Registrations and bowlers for each squad">
-            <thead>
-              <tr>
-                <th scope="col">Squad</th>
-                <th scope="col" data-align="right">Registrations</th>
-                <th scope="col" data-align="right">Bowlers</th>
-                <th scope="col" data-align="right">Bowler capacity</th>
-                <th scope="col" data-align="right">Bowler spots available</th>
-                <th scope="col" data-align="right">Waitlisted registrations</th>
-                <th scope="col" data-align="right">Waitlisted bowlers</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {squadSummaries.map(({ squad, registrationCount, bowlerCount, waitlistedRegistrationCount, waitlistedBowlerCount, availableBowlerSpots, status }) => (
-                <tr key={squad.id}>
-                  <td className={styles.squadName}>{squad.name}</td>
-                  <td data-align="right">{registrationCount}</td>
-                  <td data-align="right">{bowlerCount}</td>
-                  <td data-align="right">{squad.capacity > 0 ? squad.capacity : EMPTY_VALUE}</td>
-                  <td data-align="right">{availableBowlerSpots === null ? EMPTY_VALUE : availableBowlerSpots}</td>
-                  <td data-align="right">{waitlistedRegistrationCount}</td>
-                  <td data-align="right">{waitlistedBowlerCount}</td>
-                  <td><OrganizerStatusBadge status={status} /></td>
+      {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (() => {
+        const { sharedDate, label } = squadLabels(squadSummaries);
+        const hasWaitlist = squadSummaries.some((summary) => summary.waitlistedBowlerCount > 0);
+        return (
+          <Card padding="flush" aria-label="Squads">
+            <CardHeader
+              title="Squads"
+              description={sharedDate
+                ? `All squads are on ${formatTournamentDate(sharedDate)}. Capacity is counted in bowler spots.`
+                : 'Capacity is counted in bowler spots.'}
+            />
+            <DataTable caption="Registrations and bowlers for each squad">
+              <thead>
+                <tr>
+                  <th scope="col">Squad</th>
+                  <th scope="col" data-align="right">Registrations</th>
+                  <th scope="col">Bowlers</th>
+                  <th scope="col" data-align="right">Spots open</th>
+                  {hasWaitlist ? <th scope="col" data-align="right">Waitlisted bowlers</th> : null}
+                  <th scope="col">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </DataTable>
-        </Card>
-      ) : null}
+              </thead>
+              <tbody>
+                {squadSummaries.map((summary) => {
+                  const { squad, registrationCount, bowlerCount, waitlistedBowlerCount, availableBowlerSpots, status } = summary;
+                  const name = label(summary);
+                  return (
+                    <tr key={squad.id}>
+                      <td className={styles.squadName}>{name}</td>
+                      <td data-align="right">{registrationCount}</td>
+                      <td className={styles.fillCell}>
+                        {squad.capacity > 0 ? (
+                          <ProgressBar
+                            value={bowlerCount}
+                            max={squad.capacity}
+                            label={`${name} bowlers`}
+                            valueText={`${bowlerCount} of ${squad.capacity}`}
+                          />
+                        ) : `${bowlerCount}`}
+                      </td>
+                      <td data-align="right">{availableBowlerSpots === null ? EMPTY_VALUE : availableBowlerSpots}</td>
+                      {hasWaitlist ? <td data-align="right">{waitlistedBowlerCount}</td> : null}
+                      <td><OrganizerStatusBadge status={status} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </DataTable>
+          </Card>
+        );
+      })() : null}
     </Page>
   );
 }

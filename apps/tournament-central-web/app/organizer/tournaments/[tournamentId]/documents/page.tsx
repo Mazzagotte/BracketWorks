@@ -158,7 +158,7 @@ export default function OrganizerTournamentDocumentsPage() {
   };
 
   return (
-    <Page width="narrow">
+    <Page>
       {confirmationDialog}
       <PageHeader
         title="Documents"
