@@ -6,19 +6,13 @@
   margin: 0;
 }
 
+/* One line per detail, label left and value right, matching the Needs attention rows. */
 .detailRow {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-3) 0;
-}
-
-.detailRow:first-child {
-  padding-top: 0;
-}
-
-.detailRow:last-child {
-  padding-bottom: 0;
 }
 
 .detailRow + .detailRow {
@@ -26,7 +20,8 @@
 }
 
 .detailRow dt {
-  font: var(--type-body-small);
+  flex-shrink: 0;
+  font: var(--type-body);
   color: var(--bw-text-body);
 }
 
@@ -34,6 +29,7 @@
   margin: 0;
   font: var(--type-body);
   color: var(--bw-text-title);
+  text-align: right;
   overflow-wrap: anywhere;
 }
 
