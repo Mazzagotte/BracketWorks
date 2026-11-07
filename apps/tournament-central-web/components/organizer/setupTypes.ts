@@ -6,6 +6,8 @@ export type TournamentDetails = {
   subtitle: string;
   organizer: string;
   tournamentType: string;
+  /** The starting template the organizer picked ("handicap-singles", "association"...), or '' for blank. */
+  formatTemplateId?: string;
   startDateIso: string;
   endDateIso: string;
   venueId: number | null;

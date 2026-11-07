@@ -1,3 +1,4 @@
+import { defaultDivisionRules, defaultEventRules, defaultSideEvent } from './formatTypes';
 import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, LocationConfig, SquadConfig } from './types';
 
 export function buildClientId(prefix: string): string {
@@ -33,6 +34,7 @@ export function emptyEvent(order: number): EventConfig {
     connectedDivisionIds: [],
     connectedSquadIds: [],
     entryFeeCents: 0,
+    rules: defaultEventRules('singles', 'handicap'),
   };
 }
 
@@ -49,6 +51,7 @@ export function emptyDivision(): DivisionConfig {
     eligibilityNotes: '',
     enabled: true,
     eventIds: [],
+    rules: defaultDivisionRules(),
   };
 }
 
@@ -95,6 +98,7 @@ export function emptyFee(order: number): FeeConfig {
     eventIds: [],
     divisionIds: [],
     squadIds: [],
+    sideEvent: defaultSideEvent('fee'),
   };
 }
 

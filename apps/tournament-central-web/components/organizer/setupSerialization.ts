@@ -3,6 +3,7 @@ import { assertValidRegistrationDates } from '@/lib/registrationDates';
 import { normalizeSquadDefaults } from './setupFactories';
 import { DRAFT_VERSION, defaultTournamentDetails, getDraftStorageKey } from './setupDefaults';
 import { initialRegistrationFields } from './setupConfig';
+import { normalizeDivisionRules, normalizeEventRules, normalizeSideEvent } from './formatTypes';
 import type {
   CustomQuestionConfig,
   DivisionConfig,
@@ -61,6 +62,10 @@ export function normalizeEventConfig(event: LegacyEventConfig): EventConfig {
     enabled: event.enabled !== false,
     requireDivision: Boolean(event.requireDivision),
     requireSquad: Boolean(event.requireSquad),
+    rules: normalizeEventRules(event.rules, {
+      scoring: event.scoring === 'both' ? 'no-tap' : event.scoring,
+      maxPlayers: Number(event.maxPlayers) || 1,
+    }),
   };
 }
 
@@ -378,14 +383,18 @@ export function normalizeOrganizerDraft(params: {
     tournamentId,
     details: normalizedDetails,
     events: Array.isArray(payload.events) ? normalizeEventList(payload.events as EventConfig[]) : [],
-    divisions: Array.isArray(payload.divisions) ? payload.divisions : [],
+    divisions: Array.isArray(payload.divisions)
+      ? (payload.divisions as DivisionConfig[]).map((division) => ({ ...division, rules: normalizeDivisionRules(division.rules) }))
+      : [],
     squads: Array.isArray(payload.squads)
       ? normalizeSquadList(payload.squads as SquadConfig[], {
         locationName: normalizedDetails.bowlingCenter,
         registrationDeadlineIso: normalizedDetails.registrationCloseIso,
       })
       : [],
-    fees: Array.isArray(payload.fees) ? payload.fees : [],
+    fees: Array.isArray(payload.fees)
+      ? (payload.fees as FeeConfig[]).map((fee) => ({ ...fee, sideEvent: normalizeSideEvent(fee.sideEvent) }))
+      : [],
     locations: Array.isArray(payload.locations) ? payload.locations : [],
     questions: Array.isArray(payload.questions) ? payload.questions : [],
     fields: normalizeRegistrationFieldsList(payload.fields as RegistrationFieldConfig[] | undefined),

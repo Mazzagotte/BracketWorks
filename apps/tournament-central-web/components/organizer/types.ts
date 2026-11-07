@@ -1,3 +1,5 @@
+import type { DivisionRules, EventRules, SideEventSettings } from './formatTypes';
+
 export type SetupStatus = 'complete' | 'incomplete' | 'needs-attention' | 'not-used';
 
 export type SetupSectionKey =
@@ -30,6 +32,8 @@ export type EventConfig = {
   connectedDivisionIds: string[];
   connectedSquadIds: string[];
   entryFeeCents: number;
+  /** Format, games, handicap, averages, team rules, finals. Filled in by normalizeEventConfig. */
+  rules?: EventRules;
 };
 
 export type DivisionMode = 'scratch' | 'handicap' | 'both';
@@ -46,6 +50,8 @@ export type DivisionConfig = {
   eligibilityNotes: string;
   enabled: boolean;
   eventIds: string[];
+  /** Gender and prize type. Filled in when the draft is normalized. */
+  rules?: DivisionRules;
 };
 
 export type SquadConfig = {
@@ -118,6 +124,8 @@ export type FeeConfig = {
   eventIds: string[];
   divisionIds: string[];
   squadIds: string[];
+  /** What the fee is (plain fee, brackets, a pot) and how bowlers buy it. Filled in when the draft is normalized. */
+  sideEvent?: SideEventSettings;
 };
 
 export type LocationConfig = {
