@@ -5,13 +5,14 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { ArrowRight, CalendarDays, Link2, LocateFixed, Minus, Plus } from 'lucide-react';
+import { ArrowRight, CalendarDays, Link2, ListOrdered, LocateFixed, Minus, Plus } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { PublicTournamentDirectoryItem, PublicTournamentDirectoryResponse } from '@bracketworks/types';
 import styles from './home.module.css';
 import { formatTournamentDate, formatTournamentDateRange, parseTournamentDate } from '@/lib/tournamentDates';
 import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
+import { livePagePath } from '@/components/live/liveStandingsPaths';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
 import { sideEventPayload, type PublicFeeConfig } from '@/components/public/registrationSideEvents';
 import type { SideEventSelection } from '@/components/organizer/formatTypes';
@@ -19,6 +20,7 @@ import {
   Avatar,
   Badge,
   Button,
+  ButtonLink,
   Card,
   CardDivider,
   CardHeader,
@@ -1825,6 +1827,11 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         closeLabel="Close tournament details"
         footer={detailTournament ? (
           <>
+            {detailTournament.id.startsWith('tc-') ? (
+              <ButtonLink variant="secondary" href={livePagePath(detailTournament.id)} icon={<ListOrdered size={ICON_SIZE.md} aria-hidden="true" />}>
+                Live standings
+              </ButtonLink>
+            ) : null}
             <Button variant="secondary" icon={<Link2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => void copyDetailLink()}>Copy link</Button>
             <Button
               variant="primary"

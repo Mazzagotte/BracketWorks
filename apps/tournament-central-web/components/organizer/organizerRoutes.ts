@@ -11,6 +11,9 @@ export const organizerRoutes = {
   overview: (tournamentId: number | string) => tournamentRoute(tournamentId),
   registrations: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/registrations`,
   checkIn: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/check-in`,
+  scores: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/scores`,
+  /** The public live standings page. */
+  liveStandings: (tournamentId: number | string) => `/live/${encodeURIComponent(String(tournamentId))}`,
   squads: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/squads`,
   participants: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/participants`,
   payments: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/payments`,

@@ -1,0 +1,94 @@
+/* Scores page: event and squad pickers, the editable score grid, and finals score entry. */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.controls > * {
+  flex: 0 1 var(--space-72);
+  min-width: 0;
+}
+
+.saveStatus {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+  white-space: nowrap;
+}
+
+.grid th[scope='row'] {
+  font: var(--type-table);
+  text-align: left;
+  color: var(--bw-text-title);
+}
+
+.entryCell {
+  min-width: var(--space-40);
+}
+
+/* Compact numeric cell input (docs/ui-standards.md section 7, editable tables). */
+.scoreInput {
+  box-sizing: border-box;
+  width: var(--space-16);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-2);
+  border: 1px solid var(--bw-border-card);
+  border-radius: var(--radius-md);
+  background: var(--bw-page);
+  color: var(--bw-text-title);
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.scoreInput:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.scoreInput[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.cellError {
+  display: block;
+  margin-top: var(--space-1);
+  font: var(--type-body-small);
+  color: var(--color-danger);
+}
+
+.footnote {
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.subsectionTitle {
+  margin: 0 0 var(--space-4);
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.bodyText {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+@media (max-width: 767px) {
+  .controls > * {
+    flex-basis: 100%;
+  }
+
+  .scoreInput {
+    font-size: var(--font-size-xl);
+  }
+
+  .footnote {
+    padding: var(--space-3) var(--space-4);
+  }
+}

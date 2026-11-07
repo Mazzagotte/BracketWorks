@@ -28,10 +28,21 @@ describe('share card', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Registration link copied.');
   });
 
+  it('shows the live standings link and copies it', async () => {
+    const user = userEvent.setup();
+    render(<ShareTournamentCard {...props} isPublic />);
+    const link = `${window.location.origin}/live/tc-58`;
+    expect(await screen.findByText(link)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Copy live standings link' }));
+    expect(await navigator.clipboard.readText()).toBe(link);
+    expect(screen.getByRole('status')).toHaveTextContent('Live standings link copied.');
+  });
+
   it('explains how to get a link when the tournament is not public', () => {
     render(<ShareTournamentCard {...props} isPublic={false} />);
     expect(screen.getByText(/Publish the tournament with public visibility/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Live standings link')).not.toBeInTheDocument();
   });
 
   it('asks to allow pop-ups when the flyer window is blocked', async () => {

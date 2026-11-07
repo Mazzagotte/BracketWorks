@@ -1,10 +1,11 @@
 'use client';
 
-import { Button, Card, CardHeader, ICON_SIZE, Notice } from '@bracketworks/ui';
+import { Button, Card, CardDivider, CardHeader, ICON_SIZE, Notice } from '@bracketworks/ui';
 import { Download, Link2, Printer } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
 
+import { livePagePath } from '@/components/live/liveStandingsPaths';
 import { organizerRoutes } from './organizerRoutes';
 import styles from './ShareTournamentCard.module.css';
 
@@ -29,19 +30,21 @@ function escapeHtml(value: string): string {
 export default function ShareTournamentCard({ tournamentId, tournamentName, dateText, locationText, isPublic }: ShareTournamentCardProps) {
   const qrWrapRef = useRef<HTMLDivElement | null>(null);
   const [publicUrl, setPublicUrl] = useState('');
+  const [liveUrl, setLiveUrl] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
 
   useEffect(() => {
     setPublicUrl(new URL(organizerRoutes.publicPage(tournamentId), window.location.origin).toString());
+    setLiveUrl(new URL(livePagePath(tournamentId), window.location.origin).toString());
   }, [tournamentId]);
 
   const qrDataUrl = () => qrWrapRef.current?.querySelector('canvas')?.toDataURL('image/png') ?? '';
   const fileSlug = tournamentName.toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-|-$/gu, '') || 'tournament';
 
-  const copyLink = async () => {
+  const copyLink = async (url = publicUrl, copiedText = 'Registration link copied.') => {
     try {
-      await navigator.clipboard.writeText(publicUrl);
-      setMessage({ tone: 'success', text: 'Registration link copied.' });
+      await navigator.clipboard.writeText(url);
+      setMessage({ tone: 'success', text: copiedText });
     } catch {
       setMessage({ tone: 'danger', text: 'Unable to copy. Select the link and copy it instead.' });
     }
@@ -87,6 +90,16 @@ h1{font-size:32px;margin:0 0 12px}p{font-size:18px;margin:4px 0}img{width:320px;
             <Button variant="secondary" icon={<Link2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void copyLink(); }}>Copy link</Button>
             <Button variant="ghost" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} onClick={downloadQr}>Download QR code</Button>
             <Button variant="ghost" icon={<Printer size={ICON_SIZE.md} aria-hidden="true" />} onClick={printFlyer}>Print flyer</Button>
+          </div>
+          <CardDivider />
+          <div className={styles.liveLink}>
+            <h3 className={styles.liveTitle}>Live standings link</h3>
+            <p className={styles.url}>{liveUrl}</p>
+          </div>
+          <div className={styles.actions}>
+            <Button variant="secondary" icon={<Link2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void copyLink(liveUrl, 'Live standings link copied.'); }}>
+              Copy live standings link
+            </Button>
           </div>
         </div>
       ) : (

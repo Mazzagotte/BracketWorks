@@ -38,3 +38,15 @@
   font: var(--type-body);
   color: var(--bw-text-body);
 }
+
+.liveLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.liveTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}

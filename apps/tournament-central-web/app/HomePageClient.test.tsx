@@ -64,6 +64,14 @@ describe('public tournament discovery', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('links the details modal to the live standings page', async () => {
+    window.history.replaceState(null, '', '/?tournament=tc-1');
+    render(<HomePageClient initialDirectory={directory} />);
+    const dialog = await screen.findByRole('dialog', { name: 'Fall Open' });
+    expect(within(dialog).getByRole('link', { name: 'Live standings' })).toHaveAttribute('href', '/live/tc-1');
+    expect(within(dialog).getByRole('button', { name: 'Register' })).toBeInTheDocument();
+  });
+
   it('updates the address bar and follows browser Back and Forward', async () => {
     const user = userEvent.setup();
     render(<HomePageClient initialDirectory={directory} />);

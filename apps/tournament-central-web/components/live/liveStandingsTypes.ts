@@ -115,18 +115,22 @@ export type FinalsMatch = {
   round: number;
   /** "Match 1", "Semifinal", "Final", "Title match". */
   label: string;
+  /** Null when this slot waits on an earlier match ("To be decided"). */
   a: FinalsSide | null;
-  /** Null for a bye. */
+  /** Null for a bye when `a` is set; null with `a` null means both slots are still to be decided. */
   b: FinalsSide | null;
 };
 
 export type FinalsRound = {
   round: number;
   label: string;
-  rows: Array<{ seed: number; name: string; score: number | null; eliminated: boolean }>;
+  /** `key` is stable across refreshes (the finalist's seed key); optional for older payloads. */
+  rows: Array<{ key?: string; seed: number; name: string; score: number | null; eliminated: boolean }>;
 };
 
 export type RoundRobinRow = {
+  /** Stable across refreshes (the finalist's seed key); optional for older payloads. */
+  key?: string;
   rank: number;
   seed: number;
   name: string;
