@@ -1,4 +1,4 @@
-/* Tournament Central home: the original layout (search, map and state panel, featured row) on the standard. */
+/* Tournament Central home: search and filters, map beside the results, then closing-soon and organizer cards. */
 
 .shell {
   min-height: 100vh;
@@ -71,6 +71,10 @@
   gap: var(--space-2);
 }
 
+.stateSelect {
+  width: var(--space-56);
+}
+
 /* Map and state panel */
 .layoutGrid {
   display: grid;
@@ -110,17 +114,6 @@
   background: var(--bw-surface-panel);
   font: var(--type-body-small);
   color: var(--bw-text-body);
-}
-
-.mapActivate {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  cursor: pointer;
-}
-
-.mapActivate[data-active='true'] {
-  pointer-events: none;
 }
 
 .mapSvg {
@@ -177,8 +170,16 @@
   pointer-events: none;
 }
 
+.resultsColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  scroll-margin-top: var(--space-4);
+}
+
 .statePanel {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-4);
   max-height: var(--size-2xl);
@@ -202,47 +203,14 @@
 
 .stateTitle {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
 }
 
-.counts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0;
-  padding: var(--space-3) 0;
-  border-top: 1px solid var(--bw-border-subtle);
-  border-bottom: 1px solid var(--bw-border-subtle);
-}
-
-.counts > div {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: 0 var(--space-3);
-}
-
-.counts > div:first-child {
-  padding-left: 0;
-}
-
-.counts > div + div {
-  border-left: 1px solid var(--bw-border-subtle);
-}
-
-.counts dt {
-  font: var(--type-overline);
-  letter-spacing: var(--type-overline-tracking);
-  text-transform: uppercase;
-  color: var(--bw-text-body);
-}
-
-.counts dd {
-  margin: 0;
-  font: var(--type-section-title);
-  font-variant-numeric: tabular-nums;
-  color: var(--bw-text-title);
+.clearFilters {
+  flex-shrink: 0;
 }
 
 .stateList {
@@ -381,7 +349,8 @@
 .featuredFacts dd {
   display: flex;
   flex-direction: column;
-  gap: var(--space-0-5);
+  align-items: flex-start;
+  gap: var(--space-1);
   margin: var(--space-0-5) 0 0;
   font: var(--type-body);
   color: var(--bw-text-title);
@@ -390,11 +359,6 @@
 .brandBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-}
-
-.brandMarks {
-  display: flex;
   gap: var(--space-3);
 }
 
@@ -451,6 +415,31 @@
 
   .statePanel {
     max-height: none;
+  }
+
+  /* Stacked: results come before the map. */
+  .resultsColumn {
+    order: -1;
+  }
+}
+
+@media (max-width: 639px) {
+  .filters > * {
+    flex: 1 1 100%;
+  }
+
+  .stateSelect {
+    width: 100%;
+  }
+
+  .filters .statusFilter {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch;
+  }
+
+  .filters .statusFilter > button {
+    justify-content: center;
   }
 }
 

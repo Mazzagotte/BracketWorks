@@ -15,6 +15,26 @@ const directory = { tournaments: [{
   registration_close_date: '2099-11-15',
 }] };
 
+const isoInDays = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+const nationalDirectory = { tournaments: [
+  ...directory.tournaments,
+  {
+    id: 'tc-2', name: 'Lone Star Shootout', start_date: isoInDays(10), end_date: isoInDays(10),
+    location: 'Lone Star Hall, Dallas, TX', state_code: 'TX', latitude: 32.8, longitude: -96.8,
+    registration_url: '/api/v1/public/tc-tournament/2/registration', registration_close_date: isoInDays(3),
+  },
+  {
+    id: 'tc-3', name: 'Late Entry Classic', start_date: isoInDays(5), end_date: isoInDays(5),
+    location: 'Summit Lanes, Denver, CO', state_code: 'CO', latitude: 39.7, longitude: -105,
+    registration_url: '/api/v1/public/tc-tournament/3/registration', registration_close_date: isoInDays(-1),
+  },
+] };
+
 beforeEach(() => {
   window.history.replaceState(null, '', '/');
   localStorage.clear();
@@ -150,6 +170,67 @@ describe('public tournament discovery', () => {
     await waitFor(() => expect(trigger).toHaveFocus());
     expect(screen.getByText('Closes Nov 15, 2099')).toBeInTheDocument();
     expect(screen.queryByText(/Aug 29/)).not.toBeInTheDocument();
+  });
+
+  it('lists every state by default, filters by state, and keeps filters in the URL', async () => {
+    const user = userEvent.setup();
+    render(<HomePageClient initialDirectory={nationalDirectory} />);
+    const results = screen.getByRole('region', { name: 'All states' });
+    expect(within(results).getByText('Fall Open')).toBeInTheDocument();
+    expect(within(results).getByText('Lone Star Shootout')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'State' }), 'TX');
+    const texas = screen.getByRole('region', { name: 'Texas' });
+    expect(within(texas).queryByText('Fall Open')).not.toBeInTheDocument();
+    expect(within(texas).getByText('Lone Star Shootout')).toBeInTheDocument();
+    await waitFor(() => expect(window.location.search).toBe('?state=TX'));
+
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await waitFor(() => expect(window.location.search).toBe(''));
+    expect(screen.getByRole('region', { name: 'All states' })).toBeInTheDocument();
+  });
+
+  it('restores search and status filters from a shared URL', async () => {
+    window.history.replaceState(null, '', '/?q=lone&status=in-progress');
+    render(<HomePageClient initialDirectory={nationalDirectory} />);
+    expect(await screen.findByRole('region', { name: 'Results for "lone"' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /In progress/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('No matching tournaments')).toBeInTheDocument();
+  });
+
+  it('shows deadlines, warns when registration closes soon, and hides Register once closed', () => {
+    render(<HomePageClient initialDirectory={nationalDirectory} />);
+    const results = screen.getByRole('region', { name: 'All states' });
+    expect(within(results).getByText('Closes in 3 days')).toBeInTheDocument();
+    expect(within(results).getByText('Registration closed')).toBeInTheDocument();
+    const closedRow = within(results).getByText('Late Entry Classic').closest('li') as HTMLElement;
+    expect(within(closedRow).queryByRole('button', { name: 'Register' })).not.toBeInTheDocument();
+    const closingSoon = screen.getByRole('region', { name: 'Registration closing soon' });
+    expect(within(closingSoon).getAllByRole('listitem')[0]).toHaveTextContent('Lone Star Shootout');
+  });
+
+  it('sorts by distance with Near me and explains a blocked location', async () => {
+    const user = userEvent.setup();
+    let allow = true;
+    vi.stubGlobal('navigator', Object.assign(Object.create(navigator), {
+      geolocation: {
+        getCurrentPosition: (ok: PositionCallback, fail: PositionErrorCallback) => (allow
+          ? ok({ coords: { latitude: 32.8, longitude: -96.8 } } as GeolocationPosition)
+          : fail({ code: 1, PERMISSION_DENIED: 1 } as GeolocationPositionError)),
+      },
+    }));
+    render(<HomePageClient initialDirectory={nationalDirectory} />);
+    await user.click(screen.getByRole('button', { name: 'Near me' }));
+    const near = screen.getByRole('region', { name: 'Near you' });
+    const rows = within(near).getAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent('Lone Star Shootout');
+    expect(rows[0]).toHaveTextContent('Under 1 mi away');
+    expect(within(near).getByText(/Nearest first/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Near me' }));
+    allow = false;
+    await user.click(screen.getByRole('button', { name: 'Near me' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Location access is blocked.');
   });
 
   it.each([320, 375, 390])('keeps every filter keyboard operable at %ipx', async (width) => {
