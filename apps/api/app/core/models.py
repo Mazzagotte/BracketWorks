@@ -397,6 +397,13 @@ class TournamentPlayer(Base):
     division: Mapped[Optional[str]] = mapped_column(String, nullable=True, default="Open")
     usbc_number: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     amount_paid: Mapped[Optional[float]] = mapped_column(Float, nullable=True, default=0.0)
+    # Where the row came from: None for players added in BracketWorks, "tc" for Tournament Central sync.
+    source: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    source_ref: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+
+    __table_args__ = (
+        Index("uq_tournament_players_source_ref", "tournament_id", "source_ref", unique=True),
+    )
 
     name = synonym("full_name")
     handicap = synonym("handicap_pins")
@@ -759,6 +766,12 @@ class TcRegistrationBowler(Base):
     city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     state: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     zip_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    checked_in_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    checked_in_by_user_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
@@ -838,6 +851,28 @@ class TcEntryBowler(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     role: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+
+
+class TcBracketWorksLink(Base):
+    """Links a Tournament Central tournament to the BracketWorks tournament it sends bowlers to."""
+
+    __tablename__ = "tc_bracketworks_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tc_tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tc_tournaments.id"), nullable=False, unique=True, index=True
+    )
+    bw_tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tournaments.id"), nullable=False, unique=True, index=True
+    )
+    created_by_user_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
+    )
+    last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_sync_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
 
 class TcRegistrationAnswer(Base):

@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     FROM_EMAIL: str = "no-reply@bracketworks.app"
     FROM_NAME: str = "BracketWorks"
     FRONTEND_URL: str = "https://bracketworks.app"
+    # Tournament Central bowler emails. Blank template ids send the built-in HTML and text body.
+    TC_FROM_NAME: str = "Tournament Central"
+    TC_REGISTRATION_CONFIRMATION_TEMPLATE_ID: str = ""
+    TC_WAITLIST_PROMOTION_TEMPLATE_ID: str = ""
+    TC_MESSAGE_MAX_RECIPIENTS: int = 500
 
     # Logging
     LOG_LEVEL: str = "INFO"

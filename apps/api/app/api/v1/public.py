@@ -3,7 +3,7 @@ Public read-only endpoints for the bowler-facing tournament view.
 No authentication required — intended for QR-code accessible display pages.
 """
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Any, Literal, Optional
@@ -23,6 +23,7 @@ from ...services.bracket_persistence_simple import load_brackets_simple, load_ge
 from ...services.payouts import get_tournament_winners_summary, extract_bracket_winners
 from ...services.side_pots import calculate_side_pot_accounting
 from ...services.tc_tournament_documents import build_content_disposition
+from ...services import tc_emails
 
 router = APIRouter()
 
@@ -944,6 +945,7 @@ def download_public_tc_document(
 def submit_public_tc_tournament_registration(
     tournament_id: int,
     payload: PublicRegistrationSubmissionRequest,
+    background_tasks: BackgroundTasks,
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     db: Session = Depends(get_db),
 ):
@@ -1300,6 +1302,16 @@ def submit_public_tc_tournament_registration(
             },
         )
         raise HTTPException(status_code=500, detail="Failed to submit registration")
+
+    # The registration is saved; the confirmation email is best effort and sent after the response.
+    try:
+        confirmation_email = tc_emails.build_registration_confirmation(db, registration)
+        if confirmation_email is not None:
+            background_tasks.add_task(
+                tc_emails.send_email, confirmation_email, log_context="tc-registration-confirmation",
+            )
+    except Exception:
+        logger.exception("Could not prepare registration confirmation email", extra={"tournament_id": tournament_id})
 
     return response_body
 

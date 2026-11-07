@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import timezone
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel
@@ -63,6 +64,18 @@ def _serialize_venue(venue: models.TcVenue | None) -> dict | None:
     return schemas.TcVenue.model_validate(venue).model_dump(mode="json")
 
 
+def _has_bracketworks_link(tournament: models.TournamentCentral) -> bool:
+    """True when this TC tournament has been sent to a BracketWorks tournament."""
+    from sqlalchemy.orm import object_session
+
+    session = object_session(tournament)
+    if session is None or tournament.id is None:
+        return False
+    return session.query(models.TcBracketWorksLink.id).filter(
+        models.TcBracketWorksLink.tc_tournament_id == tournament.id
+    ).first() is not None
+
+
 def _tc_tournament_to_dict(
     tournament: models.TournamentCentral,
     entry_count: int = 0,
@@ -78,7 +91,7 @@ def _tc_tournament_to_dict(
     # Keep compatibility with existing TournamentSummary consumers.
     tournament_dict["entry_count"] = max(entry_count, 0)
     tournament_dict["amount_paid_cents"] = max(amount_paid_cents, 0)
-    tournament_dict["brackets_configured"] = False
+    tournament_dict["brackets_configured"] = _has_bracketworks_link(tournament)
     tournament_dict["has_logo"] = bool(tournament.logo_blob)
     tournament_dict["logo_file_name"] = tournament.logo_file_name
     tournament_dict["logo_mime_type"] = tournament.logo_mime_type
@@ -559,6 +572,15 @@ def delete_tournament_document(
     return {"ok": True}
 
 
+def _checked_in_at_iso(bowler: models.TcRegistrationBowler) -> str | None:
+    value = bowler.checked_in_at
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.isoformat()
+
+
 @router.get("/{tournament_id}/registrations")
 def list_tournament_registrations(
     tournament_id: int,
@@ -649,6 +671,7 @@ def list_tournament_registrations(
                                 "phone": bowler.phone,
                                 "usbc_number": bowler.usbc_number,
                                 "average": bowler.average,
+                                "checked_in_at": _checked_in_at_iso(bowler),
                             }
                             for _, bowler in db.query(models.TcEntryBowler, models.TcRegistrationBowler)
                             .join(models.TcRegistrationBowler, models.TcRegistrationBowler.id == models.TcEntryBowler.bowler_id)
