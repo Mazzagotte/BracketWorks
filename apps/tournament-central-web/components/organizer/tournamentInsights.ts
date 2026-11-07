@@ -377,3 +377,37 @@ export function buildTournamentAttentionItems(params: {
 }
 import { formatRegistrationDeadline, getRegistrationDeadline } from './organizerFormatting';
 import { organizerRoutes } from './organizerRoutes';
+
+/** "12 confirmed · 2 pending · 1 waitlisted"; pending and waitlisted only when there are some. */
+export function registrationStatusDetail(summary: RegistrationSummary): string {
+  return [
+    `${summary.confirmed} confirmed`,
+    summary.pending > 0 ? `${summary.pending} pending` : null,
+    summary.waitlisted > 0 ? `${summary.waitlisted} waitlisted` : null,
+  ].filter(Boolean).join(' · ');
+}
+
+/** Today's date as YYYY-MM-DD in the browser's local time zone. */
+export function localIsoDate(date: Date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** The YYYY-MM-DD before the given YYYY-MM-DD. */
+function previousIsoDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day - 1));
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * True from the day before the tournament starts through its last day, so the
+ * check-in, scores, and live standings shortcuts are at hand when they are needed.
+ */
+export function isTournamentDayWindow(startDate: string | null | undefined, endDate: string | null | undefined, today: string = localIsoDate()): boolean {
+  const start = startDate?.slice(0, 10) ?? '';
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(start)) return false;
+  const endCandidate = endDate?.slice(0, 10) ?? '';
+  const end = /^\d{4}-\d{2}-\d{2}$/u.test(endCandidate) && endCandidate >= start ? endCandidate : start;
+  return today >= previousIsoDate(start) && today <= end;
+}

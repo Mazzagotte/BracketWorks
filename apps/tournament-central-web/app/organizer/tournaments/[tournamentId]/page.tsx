@@ -37,6 +37,8 @@ import {
   buildRegistrationSummary,
   buildSquadSummaries,
   buildTournamentAttentionItems,
+  isTournamentDayWindow,
+  registrationStatusDetail,
 } from '@/components/organizer/tournamentInsights';
 import type { RegistrationSummary, SquadSummary } from '@/components/organizer/tournamentInsights';
 import styles from './overview.module.css';
@@ -59,7 +61,7 @@ function squadLabels(summaries: SquadSummary[]): { sharedDate: string | null; la
 
 function buildStats(registrationSummary: RegistrationSummary, squadSummaries: SquadSummary[]): StatItem[] {
   const stats: StatItem[] = [
-    { label: 'Registrations', value: String(registrationSummary.total) },
+    { label: 'Registrations', value: String(registrationSummary.total), detail: registrationStatusDetail(registrationSummary) },
     {
       label: 'Paid',
       value: String(registrationSummary.paid),
@@ -139,12 +141,59 @@ export default function OrganizerTournamentOverviewPage() {
       ]
     : [];
 
-  const statusRows = [
-    { label: 'Confirmed', value: registrationSummary.confirmed },
-    { label: 'Pending', value: registrationSummary.pending },
-    { label: 'Waitlisted', value: registrationSummary.waitlisted },
-    { label: 'Cancelled', value: registrationSummary.cancelled },
-  ];
+  const isTournamentDay = Boolean(tournament) && isTournamentDayWindow(tournament?.start_date, tournament?.end_date);
+
+  const squadsCard = !isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (() => {
+    const { sharedDate, label } = squadLabels(squadSummaries);
+    const hasWaitlist = squadSummaries.some((summary) => summary.waitlistedBowlerCount > 0);
+    return (
+      <Card padding="flush" aria-label="Squads">
+        <CardHeader
+          title="Squads"
+          description={sharedDate
+            ? `All squads are on ${formatTournamentDate(sharedDate)}. Capacity is counted in bowler spots.`
+            : 'Capacity is counted in bowler spots.'}
+        />
+        <DataTable caption="Registrations and bowlers for each squad">
+          <thead>
+            <tr>
+              <th scope="col">Squad</th>
+              <th scope="col" data-align="right">Registrations</th>
+              <th scope="col">Bowlers</th>
+              <th scope="col" data-align="right">Spots open</th>
+              {hasWaitlist ? <th scope="col" data-align="right">Waitlisted bowlers</th> : null}
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {squadSummaries.map((summary) => {
+              const { squad, registrationCount, bowlerCount, waitlistedBowlerCount, availableBowlerSpots, status } = summary;
+              const name = label(summary);
+              return (
+                <tr key={squad.id}>
+                  <td className={styles.squadName}>{name}</td>
+                  <td data-align="right">{registrationCount}</td>
+                  <td className={styles.fillCell}>
+                    {squad.capacity > 0 ? (
+                      <ProgressBar
+                        value={bowlerCount}
+                        max={squad.capacity}
+                        label={`${name} bowlers`}
+                        valueText={`${bowlerCount} of ${squad.capacity}`}
+                      />
+                    ) : `${bowlerCount}`}
+                  </td>
+                  <td data-align="right">{availableBowlerSpots === null ? EMPTY_VALUE : availableBowlerSpots}</td>
+                  {hasWaitlist ? <td data-align="right">{waitlistedBowlerCount}</td> : null}
+                  <td><OrganizerStatusBadge status={status} /></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </DataTable>
+      </Card>
+    );
+  })() : null;
 
   return (
     <Page>
@@ -184,6 +233,26 @@ export default function OrganizerTournamentOverviewPage() {
       <PageColumns
         main={
           <>
+            {isTournamentDay ? (
+              <Card aria-label="Tournament day">
+                <CardHeader title="Tournament day" description="Check bowlers in, enter scores, and follow the live standings." />
+                <div className={styles.dayActions}>
+                  <Link href={organizerRoutes.checkIn(tournamentId)} className={buttonClassName({ variant: 'secondary' })}>Check-in</Link>
+                  <Link href={organizerRoutes.scores(tournamentId)} className={buttonClassName({ variant: 'secondary' })}>Scores</Link>
+                  <ButtonLink
+                    href={organizerRoutes.liveStandings(tournamentId)}
+                    variant="secondary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    icon={<ExternalLink size={ICON_SIZE.md} aria-hidden="true" />}
+                    aria-label="Live standings (opens in a new tab)"
+                  >
+                    Live standings
+                  </ButtonLink>
+                </div>
+              </Card>
+            ) : null}
+
             {isDataLoaded ? (
               <AttentionList
                 items={attentionItems}
@@ -192,19 +261,7 @@ export default function OrganizerTournamentOverviewPage() {
               />
             ) : null}
 
-            {!isRegistrationsLoading && tournament ? (
-              <Card aria-label="Registration status">
-                <CardHeader title="Registration status" />
-                <dl className={styles.details}>
-                  {statusRows.map((item) => (
-                    <div key={item.label} className={`${styles.detailRow} ${styles.countRow}`}>
-                      <dt>{item.label}</dt>
-                      <dd>{item.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </Card>
-            ) : null}
+            {squadsCard}
           </>
         }
         side={
@@ -222,7 +279,6 @@ export default function OrganizerTournamentOverviewPage() {
                 </dl>
               </Card>
             ) : null}
-            {tournament ? <SendToBracketWorksCard tournamentId={tournamentId} /> : null}
             {tournament ? (
               <ShareTournamentCard
                 tournamentId={tournamentId}
@@ -232,61 +288,10 @@ export default function OrganizerTournamentOverviewPage() {
                 isPublic={Boolean(tournament.is_public)}
               />
             ) : null}
+            {tournament ? <SendToBracketWorksCard tournamentId={tournamentId} /> : null}
           </>
         }
       />
-
-      {!isSetupLoading && !isRegistrationsLoading && squadSummaries.length > 0 ? (() => {
-        const { sharedDate, label } = squadLabels(squadSummaries);
-        const hasWaitlist = squadSummaries.some((summary) => summary.waitlistedBowlerCount > 0);
-        return (
-          <Card padding="flush" aria-label="Squads">
-            <CardHeader
-              title="Squads"
-              description={sharedDate
-                ? `All squads are on ${formatTournamentDate(sharedDate)}. Capacity is counted in bowler spots.`
-                : 'Capacity is counted in bowler spots.'}
-            />
-            <DataTable caption="Registrations and bowlers for each squad">
-              <thead>
-                <tr>
-                  <th scope="col">Squad</th>
-                  <th scope="col" data-align="right">Registrations</th>
-                  <th scope="col">Bowlers</th>
-                  <th scope="col" data-align="right">Spots open</th>
-                  {hasWaitlist ? <th scope="col" data-align="right">Waitlisted bowlers</th> : null}
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {squadSummaries.map((summary) => {
-                  const { squad, registrationCount, bowlerCount, waitlistedBowlerCount, availableBowlerSpots, status } = summary;
-                  const name = label(summary);
-                  return (
-                    <tr key={squad.id}>
-                      <td className={styles.squadName}>{name}</td>
-                      <td data-align="right">{registrationCount}</td>
-                      <td className={styles.fillCell}>
-                        {squad.capacity > 0 ? (
-                          <ProgressBar
-                            value={bowlerCount}
-                            max={squad.capacity}
-                            label={`${name} bowlers`}
-                            valueText={`${bowlerCount} of ${squad.capacity}`}
-                          />
-                        ) : `${bowlerCount}`}
-                      </td>
-                      <td data-align="right">{availableBowlerSpots === null ? EMPTY_VALUE : availableBowlerSpots}</td>
-                      {hasWaitlist ? <td data-align="right">{waitlistedBowlerCount}</td> : null}
-                      <td><OrganizerStatusBadge status={status} /></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </DataTable>
-          </Card>
-        );
-      })() : null}
     </Page>
   );
 }

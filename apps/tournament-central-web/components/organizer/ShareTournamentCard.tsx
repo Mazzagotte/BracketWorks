@@ -1,7 +1,7 @@
 'use client';
 
-import { Button, Card, CardDivider, CardHeader, ICON_SIZE, Notice } from '@bracketworks/ui';
-import { Download, Link2, Printer } from 'lucide-react';
+import { Button, Card, CardHeader, ICON_SIZE, Modal, Notice } from '@bracketworks/ui';
+import { Download, Link2, Printer, QrCode } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -9,7 +9,7 @@ import { livePagePath } from '@/components/live/liveStandingsPaths';
 import { organizerRoutes } from './organizerRoutes';
 import styles from './ShareTournamentCard.module.css';
 
-/** Pixel size the QR code is drawn at, so the downloaded image prints sharply. The card scales it down with CSS. */
+/** Pixel size the QR code is drawn at, so the downloaded image prints sharply. The dialog scales it down with CSS. */
 const QR_RENDER_SIZE = 512;
 // The library sets the drawn size inline; clearing it lets the stylesheet set the on-screen size.
 const QR_DISPLAY_STYLE = { width: undefined, height: undefined };
@@ -26,12 +26,13 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/gu, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character] ?? character));
 }
 
-/** Share kit: the public registration link as a QR code, plus copy, download, and a printable flyer. */
+/** Share kit: copy the registration and live standings links; the QR code and printable flyer open in a dialog. */
 export default function ShareTournamentCard({ tournamentId, tournamentName, dateText, locationText, isPublic }: ShareTournamentCardProps) {
   const qrWrapRef = useRef<HTMLDivElement | null>(null);
   const [publicUrl, setPublicUrl] = useState('');
   const [liveUrl, setLiveUrl] = useState('');
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
+  const [isQrOpen, setIsQrOpen] = useState(false);
 
   useEffect(() => {
     setPublicUrl(new URL(organizerRoutes.publicPage(tournamentId), window.location.origin).toString());
@@ -76,24 +77,26 @@ h1{font-size:32px;margin:0 0 12px}p{font-size:18px;margin:4px 0}img{width:320px;
     flyer.document.close();
   };
 
+  const openQr = () => { setMessage(null); setIsQrOpen(true); };
+  const closeQr = () => { setMessage(null); setIsQrOpen(false); };
+  const messageNotice = message
+    ? <Notice tone={message.tone} role={message.tone === 'danger' ? 'alert' : 'status'}>{message.text}</Notice>
+    : null;
+
   return (
     <Card aria-label="Share">
       <CardHeader title="Share" description="Post this at the bowling center or send the link to bowlers." />
       {isPublic ? (
         <div className={styles.body}>
-          <div ref={qrWrapRef} className={styles.qr}>
-            {publicUrl ? <QRCodeCanvas value={publicUrl} size={QR_RENDER_SIZE} marginSize={2} style={QR_DISPLAY_STYLE} title={`QR code for ${tournamentName} registration`} /> : null}
+          <div className={styles.linkGroup}>
+            <h3 className={styles.linkTitle}>Registration link</h3>
+            <p className={styles.url}>{publicUrl}</p>
           </div>
-          <p className={styles.url}>{publicUrl}</p>
-          {message ? <Notice tone={message.tone} role={message.tone === 'danger' ? 'alert' : 'status'}>{message.text}</Notice> : null}
           <div className={styles.actions}>
             <Button variant="secondary" icon={<Link2 size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void copyLink(); }}>Copy link</Button>
-            <Button variant="ghost" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} onClick={downloadQr}>Download QR code</Button>
-            <Button variant="ghost" icon={<Printer size={ICON_SIZE.md} aria-hidden="true" />} onClick={printFlyer}>Print flyer</Button>
           </div>
-          <CardDivider />
-          <div className={styles.liveLink}>
-            <h3 className={styles.liveTitle}>Live standings link</h3>
+          <div className={styles.linkGroup}>
+            <h3 className={styles.linkTitle}>Live standings link</h3>
             <p className={styles.url}>{liveUrl}</p>
           </div>
           <div className={styles.actions}>
@@ -101,6 +104,32 @@ h1{font-size:32px;margin:0 0 12px}p{font-size:18px;margin:4px 0}img{width:320px;
               Copy live standings link
             </Button>
           </div>
+          {isQrOpen ? null : messageNotice}
+          <div className={styles.actions}>
+            <Button variant="ghost" icon={<QrCode size={ICON_SIZE.md} aria-hidden="true" />} onClick={openQr}>QR code and flyer</Button>
+          </div>
+          <Modal
+            open={isQrOpen}
+            onClose={closeQr}
+            size="sm"
+            title="QR code and flyer"
+            description="Bowlers scan the code to open the registration page."
+            closeLabel="Close QR code and flyer"
+            footer={(
+              <>
+                <Button variant="secondary" icon={<Download size={ICON_SIZE.md} aria-hidden="true" />} onClick={downloadQr}>Download QR code</Button>
+                <Button variant="secondary" icon={<Printer size={ICON_SIZE.md} aria-hidden="true" />} onClick={printFlyer}>Print flyer</Button>
+              </>
+            )}
+          >
+            <div className={styles.body}>
+              <div ref={qrWrapRef} className={styles.qr}>
+                {publicUrl ? <QRCodeCanvas value={publicUrl} size={QR_RENDER_SIZE} marginSize={2} style={QR_DISPLAY_STYLE} title={`QR code for ${tournamentName} registration`} /> : null}
+              </div>
+              <p className={styles.url}>{publicUrl}</p>
+              {isQrOpen ? messageNotice : null}
+            </div>
+          </Modal>
         </div>
       ) : (
         <p className={styles.helper}>Publish the tournament with public visibility to get a link and QR code bowlers can use to register.</p>

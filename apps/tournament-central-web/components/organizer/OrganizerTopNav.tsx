@@ -31,11 +31,10 @@ export default function OrganizerTopNav() {
     return [
       ...links,
       { href: base, label: 'Overview' },
+      { href: `${base}/setup`, label: 'Setup' },
       { href: `${base}/registrations`, label: 'Registrations' },
       { href: `${base}/check-in`, label: 'Check-in' },
       { href: `${base}/scores`, label: 'Scores' },
-      { href: `${base}/setup`, label: 'Setup' },
-      { href: `${base}/documents`, label: 'Documents' },
       { href: `${base}/team`, label: 'Team' },
     ];
   }, [tournamentId]);

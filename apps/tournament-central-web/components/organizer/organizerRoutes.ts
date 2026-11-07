@@ -18,7 +18,6 @@ export const organizerRoutes = {
   squads: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/squads`,
   participants: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/participants`,
   payments: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/payments`,
-  documents: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/documents`,
   team: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/team`,
   setup: (tournamentId: number | string, section?: string) => {
     const path = `${tournamentRoute(tournamentId)}/setup`;

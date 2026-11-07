@@ -1,14 +1,8 @@
-/* Scores page: event and squad pickers, the editable score grid, and finals score entry. */
+/* Scores page: the editable score grid and finals score entry. */
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.controls > * {
-  flex: 0 1 var(--space-72);
-  min-width: 0;
+/* The finals card is padded, so its toolbar drops the flush-card side padding (doubled class outranks the shared toolbar rule). */
+.toolbarInCard.toolbarInCard {
+  padding: 0;
 }
 
 .saveStatus {
@@ -80,10 +74,6 @@
 }
 
 @media (max-width: 767px) {
-  .controls > * {
-    flex-basis: 100%;
-  }
-
   .scoreInput {
     font-size: var(--font-size-xl);
   }

@@ -1,4 +1,4 @@
-/* Share card: QR code on a light tile so phones can scan it, the link, then actions. */
+/* Share card: the links with copy actions; the QR code (on a light tile so phones can scan it) is in a dialog. */
 
 .body {
   display: flex;
@@ -39,13 +39,13 @@
   color: var(--bw-text-body);
 }
 
-.liveLink {
+.linkGroup {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-.liveTitle {
+.linkTitle {
   margin: 0;
   font: var(--type-subsection-title);
   color: var(--bw-text-title);

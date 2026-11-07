@@ -79,6 +79,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('Registrations page actions', () => {
+  it('puts Email bowlers, Export, and Manual registration in the page header, not the list card', () => {
+    renderPage();
+    const header = screen.getByRole('heading', { level: 1, name: 'Registrations' }).closest('header') as HTMLElement;
+    expect(within(header).getByRole('button', { name: 'Email bowlers' })).toBeInTheDocument();
+    expect(within(header).getByRole('button', { name: 'Export' })).toBeInTheDocument();
+    expect(within(header).getByRole('button', { name: 'Manual registration' })).toBeInTheDocument();
+    const list = screen.getByRole('region', { name: 'Registration list' });
+    expect(within(list).queryByRole('button', { name: 'Export' })).not.toBeInTheDocument();
+    expect(within(list).queryByRole('button', { name: 'Email bowlers' })).not.toBeInTheDocument();
+    expect(within(list).getByRole('group', { name: 'List by' })).toBeInTheDocument();
+  });
+});
+
 describe('Email bowlers', () => {
   it('shows the recipient count and sends the message', async () => {
     const user = userEvent.setup();

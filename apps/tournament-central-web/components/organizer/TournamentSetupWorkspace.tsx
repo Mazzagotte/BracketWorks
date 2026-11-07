@@ -2500,9 +2500,21 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             <Button variant="secondary" icon={<Save size={ICON_SIZE.md} aria-hidden="true" />} onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
               {isSavingDraft ? 'Saving...' : 'Save'}
             </Button>
-            <Button variant="primary" onClick={() => setActiveSection('review-publish')}>
-              {isLive ? 'Publish changes' : 'Review and publish'}
-            </Button>
+            {activeSection === 'review-publish' ? (
+              // On the review step the primary publishes; elsewhere it opens the review step.
+              <Button
+                variant="primary"
+                icon={<CircleCheck size={ICON_SIZE.md} aria-hidden="true" />}
+                onClick={() => { void handlePublish(); }}
+                disabled={blockingIssueCount > 0 || isSavingDraft || isPublishing}
+              >
+                {isPublishing ? 'Publishing...' : isLive ? 'Publish changes' : 'Review and publish'}
+              </Button>
+            ) : (
+              <Button variant="primary" onClick={() => setActiveSection('review-publish')}>
+                {isLive ? 'Publish changes' : 'Review and publish'}
+              </Button>
+            )}
           </>
         )}
       />
@@ -3102,7 +3114,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
             <>
               <StepHeader
                 title="Add-ons, payments, and documents"
-                description="Optional extras, how payment is collected, and the rules bowlers can read before registering."
+                description="Optional extras, how payment is collected, and the rules and documents bowlers can read before registering."
                 status={statusBySection['fees-payments-documents']}
               />
               <div className={layout.cardGrid}>
@@ -3258,30 +3270,6 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </Card>
               ) : null}
 
-              <Card aria-label="Publish">
-                <CardHeader
-                  title={blockingIssueCount > 0 ? 'Publishing is blocked' : 'Ready to publish'}
-                  description={blockingIssueCount > 0
-                    ? `Resolve ${blockingIssueCount} required issue${blockingIssueCount === 1 ? '' : 's'} before publishing.`
-                    : 'Publishing makes this tournament available according to the visibility you chose.'}
-                  headingLevel="h3"
-                  actions={(
-                    <>
-                      <Button variant="secondary" onClick={() => { void handleSaveDraft(); }} disabled={isSavingDraft || isPublishing}>
-                        {isSavingDraft ? 'Saving...' : 'Save'}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        icon={<CircleCheck size={ICON_SIZE.md} aria-hidden="true" />}
-                        onClick={() => { void handlePublish(); }}
-                        disabled={blockingIssueCount > 0 || isSavingDraft || isPublishing}
-                      >
-                        {isPublishing ? 'Publishing...' : 'Publish tournament'}
-                      </Button>
-                    </>
-                  )}
-                />
-              </Card>
             </>
           )}
           <nav className={layout.stepFooter} aria-label="Setup step navigation">

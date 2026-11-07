@@ -152,6 +152,7 @@ describe('Scores page', () => {
     const table = within(await renderGrid());
 
     expect(screen.getByRole('heading', { level: 1, name: 'Scores' })).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Score grid' })).getByLabelText('Event')).toBeTruthy();
     expect(screen.getByRole('link', { name: /Open live standings/ }).getAttribute('href')).toBe('/live/42');
     expect(screen.queryByRole('link', { name: /Open finals view/ })).toBeNull();
     expect(screen.getByText(/Handicap 90% of 220 · Top 5 advance, top 2 cash/)).toBeTruthy();

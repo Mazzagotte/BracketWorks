@@ -125,7 +125,8 @@ describe('Check-in page', () => {
   it('switches the list when another squad is picked', async () => {
     render(<CheckInPage />);
 
-    await userEvent.click(screen.getByRole('button', { name: '1:00 PM' }));
+    const card = screen.getByRole('region', { name: 'Bowlers' });
+    await userEvent.click(within(card).getByRole('button', { name: '1:00 PM' }));
 
     const table = within(bowlerTable());
     expect(table.getByText('Dee Dusk')).toBeTruthy();

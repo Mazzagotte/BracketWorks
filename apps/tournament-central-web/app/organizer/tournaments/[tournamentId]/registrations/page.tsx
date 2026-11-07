@@ -814,6 +814,28 @@ export default function OrganizerTournamentRegistrationsPage() {
         overline="Tournament registrations"
         title="Registrations"
         description={`Review bowlers, payments, events, and squad assignments for ${tournamentName}.`}
+        actions={!pageError && !isRegistrationsLoading ? (
+          <>
+            <Button
+              variant="secondary"
+              icon={<Mail size={ICON_SIZE.md} aria-hidden="true" />}
+              onClick={() => setIsEmailOpen(true)}
+            >
+              Email bowlers
+            </Button>
+            <Button variant="secondary" icon={<ArrowDownToLine size={ICON_SIZE.md} aria-hidden="true" />} onClick={exportRegistrations}>
+              Export
+            </Button>
+            <Button
+              variant="primary"
+              icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
+              onClick={() => { void openManualRegistration(); }}
+              disabled={isManualRegistrationLoading}
+            >
+              Manual registration
+            </Button>
+          </>
+        ) : undefined}
       />
 
       {payments.confirmationDialog}
@@ -844,29 +866,12 @@ export default function OrganizerTournamentRegistrationsPage() {
                 ? `${bowlerRows.length} bowler${bowlerRows.length === 1 ? '' : 's'} shown`
                 : `${filteredRegistrations.length} of ${metrics.total} registrations shown`}
               actions={(
-                <>
                 <SegmentedControl
                   label="List by"
                   value={view}
                   onChange={setView}
                   options={[{ value: 'registrations', label: 'Registrations' }, { value: 'bowlers', label: 'Bowlers' }]}
                 />
-                <Button
-                  variant="secondary"
-                  icon={<Mail size={ICON_SIZE.md} aria-hidden="true" />}
-                  onClick={() => setIsEmailOpen(true)}
-                >
-                  Email bowlers
-                </Button>
-                <Button
-                  variant="primary"
-                  icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
-                  onClick={() => { void openManualRegistration(); }}
-                  disabled={isManualRegistrationLoading}
-                >
-                  Manual registration
-                </Button>
-                </>
               )}
             />
             <TableToolbar
@@ -899,9 +904,6 @@ export default function OrganizerTournamentRegistrationsPage() {
                 <option value="all">All events</option>
                 {eventOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </SelectField>
-              <Button variant="secondary" icon={<ArrowDownToLine size={ICON_SIZE.md} aria-hidden="true" />} onClick={exportRegistrations}>
-                Export
-              </Button>
             </TableToolbar>
 
             {selectedIds.size > 0 ? (

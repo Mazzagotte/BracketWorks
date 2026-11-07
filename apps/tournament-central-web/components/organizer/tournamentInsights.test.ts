@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { OrganizerRegistrationRecord } from './organizerApi';
 import { emptySquad } from './setupFactories';
-import { buildSquadSummaries } from './tournamentInsights';
+import { buildRegistrationSummary, buildSquadSummaries, isTournamentDayWindow, localIsoDate, registrationStatusDetail } from './tournamentInsights';
 
 const squad = { ...emptySquad(), id: '1130', name: '11:30 AM', capacity: 75 };
 type Entry = NonNullable<OrganizerRegistrationRecord['entries']>[number];
@@ -92,5 +92,36 @@ describe('buildSquadSummaries', () => {
       registrationCount: 0, bowlerCount: 0, availableBowlerSpots: null, status: 'Open',
     });
     expect(buildSquadSummaries([], [])).toEqual([]);
+  });
+});
+
+describe('tournament day window', () => {
+  it('opens the day before the start and closes after the last day', () => {
+    expect(isTournamentDayWindow('2026-11-14', '2026-11-15', '2026-11-12')).toBe(false);
+    expect(isTournamentDayWindow('2026-11-14', '2026-11-15', '2026-11-13')).toBe(true);
+    expect(isTournamentDayWindow('2026-11-14', '2026-11-15', '2026-11-14')).toBe(true);
+    expect(isTournamentDayWindow('2026-11-14', '2026-11-15', '2026-11-15')).toBe(true);
+    expect(isTournamentDayWindow('2026-11-14', '2026-11-15', '2026-11-16')).toBe(false);
+  });
+
+  it('treats a missing end date as a one-day tournament and crosses month boundaries', () => {
+    expect(isTournamentDayWindow('2026-12-01', null, '2026-11-30')).toBe(true);
+    expect(isTournamentDayWindow('2026-12-01', null, '2026-12-02')).toBe(false);
+    expect(isTournamentDayWindow(null, null, '2026-12-01')).toBe(false);
+  });
+
+  it('formats the local date as YYYY-MM-DD', () => {
+    expect(localIsoDate(new Date(2026, 0, 5, 23, 30))).toBe('2026-01-05');
+  });
+});
+
+describe('registration status detail', () => {
+  it('always shows confirmed and only nonzero pending and waitlisted counts', () => {
+    const registration = (status: string) => ({ id: 1, status } as OrganizerRegistrationRecord);
+    expect(registrationStatusDetail(buildRegistrationSummary([registration('confirmed')]))).toBe('1 confirmed');
+    expect(registrationStatusDetail(buildRegistrationSummary([]))).toBe('0 confirmed');
+    expect(registrationStatusDetail(buildRegistrationSummary([
+      registration('confirmed'), registration('pending'), registration('waitlisted'), registration('cancelled'),
+    ]))).toBe('1 confirmed · 1 pending · 1 waitlisted');
   });
 });

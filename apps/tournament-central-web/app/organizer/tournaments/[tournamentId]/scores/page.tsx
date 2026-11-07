@@ -21,6 +21,7 @@ import {
   PageHeader,
   SegmentedControl,
   SelectField,
+  TableToolbar,
 } from '@bracketworks/ui';
 import type { BracketMatchData, BracketRoundData } from '@bracketworks/ui';
 
@@ -355,18 +356,6 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
 
   return (
     <>
-      <div className={styles.controls}>
-        <SelectField label="Event" value={grid.event_id ?? ''} onChange={(event) => setEventId(event.target.value)}>
-          {grid.events.map((event) => <option key={event.id} value={event.id}>{event.name}</option>)}
-        </SelectField>
-        {grid.squads.length > 1 ? (
-          <SelectField label="Squad" value={squadId} onChange={(event) => setSquadId(event.target.value)}>
-            <option value={ALL_SQUADS}>All squads</option>
-            {grid.squads.map((squad) => <option key={squad.id} value={squad.id}>{squad.label}</option>)}
-          </SelectField>
-        ) : null}
-      </div>
-
       {autosave.status.kind === 'error' ? (
         <Notice
           tone="danger"
@@ -384,6 +373,17 @@ function QualifyingView({ tournamentId }: { tournamentId: number }) {
           description={linesSummary(grid, squadId)}
           actions={<SaveStatusText status={autosave.status} />}
         />
+        <TableToolbar>
+          <SelectField label="Event" hideLabel value={grid.event_id ?? ''} onChange={(event) => setEventId(event.target.value)}>
+            {grid.events.map((event) => <option key={event.id} value={event.id}>{event.name}</option>)}
+          </SelectField>
+          {grid.squads.length > 1 ? (
+            <SelectField label="Squad" hideLabel value={squadId} onChange={(event) => setSquadId(event.target.value)}>
+              <option value={ALL_SQUADS}>All squads</option>
+              {grid.squads.map((squad) => <option key={squad.id} value={squad.id}>{squad.label}</option>)}
+            </SelectField>
+          ) : null}
+        </TableToolbar>
         {grid.rows.length === 0 ? (
           <EmptyState
             icon={<Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />}
@@ -507,7 +507,7 @@ function SquadPicker({ squads, value, onChange }: { squads: SquadOption[]; value
     return <SegmentedControl label="Squad" value={value} onChange={onChange} options={squads} />;
   }
   return (
-    <SelectField label="Squad" value={value} onChange={(event) => onChange(event.target.value)}>
+    <SelectField label="Squad" hideLabel value={value} onChange={(event) => onChange(event.target.value)}>
       {squads.map((squad) => <option key={squad.value} value={squad.value}>{squad.label}</option>)}
     </SelectField>
   );
@@ -714,26 +714,27 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
 
   const finals = state?.finals ?? null;
   const isDouble = state?.finals_type === 'match-play-double';
+  // Event and squad pickers sit in the toolbar of whichever finals card is showing.
+  const pickers = options.length > 1 || (option?.squads.length ?? 0) > 1 ? (
+    <>
+      {options.length > 1 ? (
+        <SelectField
+          label="Event and division"
+          hideLabel
+          value={option?.value ?? ''}
+          onChange={(event) => { setSelected(event.target.value); setSelectedSquad(''); }}
+        >
+          {options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+        </SelectField>
+      ) : null}
+      {option && option.squads.length > 1 ? (
+        <SquadPicker squads={option.squads} value={squad?.value ?? ''} onChange={setSelectedSquad} />
+      ) : null}
+    </>
+  ) : null;
 
   return (
     <>
-      {options.length > 1 || (option?.squads.length ?? 0) > 1 ? (
-        <div className={styles.controls}>
-          {options.length > 1 ? (
-            <SelectField
-              label="Event and division"
-              value={option?.value ?? ''}
-              onChange={(event) => { setSelected(event.target.value); setSelectedSquad(''); }}
-            >
-              {options.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </SelectField>
-          ) : null}
-          {option && option.squads.length > 1 ? (
-            <SquadPicker squads={option.squads} value={squad?.value ?? ''} onChange={setSelectedSquad} />
-          ) : null}
-        </div>
-      ) : null}
-
       {autosave.status.kind === 'error' ? (
         <Notice
           tone="danger"
@@ -755,6 +756,7 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
               <Button variant="primary" disabled={!state.can_start} onClick={() => setConfirm('start')}>Start finals</Button>
             )}
           />
+          {pickers ? <TableToolbar>{pickers}</TableToolbar> : null}
           {state.qualifiers.length === 0 ? (
             <EmptyState
               icon={<Trophy size={ICON_SIZE['2xl']} aria-hidden="true" />}
@@ -804,6 +806,7 @@ function FinalsView({ tournamentId }: { tournamentId: number }) {
               </>
             )}
           />
+          {pickers ? <TableToolbar className={styles.toolbarInCard}>{pickers}</TableToolbar> : null}
           {finals.champion && finals.type !== 'stepladder' && finals.type !== 'match-play-single' ? (
             <Notice tone="success">{`Champion: ${finals.champion.name}. ${finals.champion.detail}`}</Notice>
           ) : null}

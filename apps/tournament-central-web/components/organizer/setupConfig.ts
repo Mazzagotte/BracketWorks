@@ -2,10 +2,10 @@ import type { RegistrationFieldConfig, SetupSection, SetupSectionKey } from './t
 
 export const setupSections: SetupSection[] = [
   { key: 'tournament-details', label: 'Tournament details', description: 'Identity, dates, location, and publishing' },
-  { key: 'squads-availability', label: 'Squads and availability', description: 'Date and time groups with capacities and availability' },
   { key: 'events-divisions', label: 'Events and divisions', description: 'Event types, division eligibility, and squad assignments' },
+  { key: 'squads-availability', label: 'Squads and availability', description: 'Date and time groups with capacities and availability' },
   { key: 'registration-setup', label: 'Registration setup', description: 'Fields and custom questions' },
-  { key: 'fees-payments-documents', label: 'Add-ons, payments, and documents', description: 'Optional add-ons, payment methods, and rules' },
+  { key: 'fees-payments-documents', label: 'Add-ons, payments, and documents', description: 'Optional add-ons, payment methods, rules, and documents' },
   { key: 'review-publish', label: 'Review and publish', description: 'Validation and publishing checks' },
 ];
 

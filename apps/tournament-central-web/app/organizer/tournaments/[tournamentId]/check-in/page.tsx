@@ -257,7 +257,7 @@ export default function CheckInPage() {
   const isLoading = isRegistrationsLoading || isSetupLoading;
   const squadName = currentSquad ? squadLabel(currentSquad, false) : '';
   const squadPicker = squadOptions.length > 5 ? (
-    <SelectField label="Squad" value={squadId} onChange={(event) => setSelectedSquad(event.target.value)}>
+    <SelectField label="Squad" hideLabel value={squadId} onChange={(event) => setSelectedSquad(event.target.value)}>
       {squadOptions.map((option) => (
         <option key={option.id} value={option.id}>{squadLabel(option, singleDay)}</option>
       ))}
@@ -318,8 +318,6 @@ export default function CheckInPage() {
           </Card>
         ) : (
           <>
-            {squadOptions.length > 1 ? <div className={styles.screenOnly}>{squadPicker}</div> : null}
-
             <StatGroup
               className={styles.screenOnly}
               label={`Check-in summary for ${squadName || 'this squad'}`}
@@ -356,7 +354,9 @@ export default function CheckInPage() {
                     placeholder="Find a bowler"
                   />
                 )}
-              />
+              >
+                {squadOptions.length > 1 ? squadPicker : null}
+              </TableToolbar>
               {visibleRows.length === 0 ? (
                 <EmptyState
                   icon={<Users size={ICON_SIZE['2xl']} aria-hidden="true" />}
