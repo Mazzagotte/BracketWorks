@@ -950,6 +950,80 @@ class TcRegistrationSideEvent(Base):
     )
 
 
+class TcScore(Base):
+    """One qualifying game for one bowler on a TC entry. A null score means it was cleared."""
+
+    __tablename__ = "tc_scores"
+    __table_args__ = (
+        UniqueConstraint("entry_id", "bowler_id", "game_number", name="uq_tc_scores_entry_bowler_game"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tc_tournaments.id"), nullable=False, index=True)
+    entry_id: Mapped[int] = mapped_column(Integer, ForeignKey("tc_entries.id"), nullable=False, index=True)
+    bowler_id: Mapped[int] = mapped_column(Integer, ForeignKey("tc_registration_bowlers.id"), nullable=False, index=True)
+    game_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    entered_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class TcFinals(Base):
+    """Finals for one TC event and division, with the seeds taken from qualifying when they started."""
+
+    __tablename__ = "tc_finals"
+    __table_args__ = (
+        UniqueConstraint("tournament_id", "event_config_id", "division_key", name="uq_tc_finals_event_division"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    tournament_id: Mapped[int] = mapped_column(Integer, ForeignKey("tc_tournaments.id"), nullable=False, index=True)
+    event_config_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    division_config_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    # division_config_id or "" so the unique constraint also covers events without divisions.
+    division_key: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    finals_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    # [{seed, key, name, entryIds, bowlerIds, handicapPerGame, qualifyingTotal}]
+    seeds: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="in-progress")
+    created_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class TcFinalsGame(Base):
+    """One finals game score (as entered, scratch) for one seed in one round and match.
+
+    Stepladder and match play: round and match place the game in the ladder or bracket. Round robin:
+    round and match from the round robin schedule. Survivor: one match per round. ``game_number``
+    leaves room for multi-game matches and roll-offs later.
+    """
+
+    __tablename__ = "tc_finals_games"
+    __table_args__ = (
+        UniqueConstraint("finals_id", "round", "match_number", "seed", "game_number", name="uq_tc_finals_games_slot"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    finals_id: Mapped[int] = mapped_column(Integer, ForeignKey("tc_finals.id"), nullable=False, index=True)
+    round: Mapped[int] = mapped_column(Integer, nullable=False)
+    match_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    game_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    entered_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
 class TournamentBracketSettings(Base):
     __tablename__ = "tournament_bracket_settings"
 
