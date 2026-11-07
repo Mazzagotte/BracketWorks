@@ -1,0 +1,13 @@
+/* Email bowlers dialog: one column of fields with the standard field gap. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.count {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}

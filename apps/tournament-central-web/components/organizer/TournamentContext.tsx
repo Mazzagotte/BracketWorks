@@ -79,9 +79,9 @@ export function TournamentProvider({ tournamentId, children }: TournamentProvide
   const routeSection = pathname.split('/').filter(Boolean).slice(3).join('/');
   const isSetupEditorRoute = routeSection === 'setup';
   const needsTournament = !isSetupEditorRoute;
-  const needsSetup = routeSection === '' || routeSection === 'squads';
+  const needsSetup = routeSection === '' || routeSection === 'squads' || routeSection === 'check-in';
   const needsRegistrations = routeSection === ''
-    || ['registrations', 'participants', 'payments', 'squads'].includes(routeSection);
+    || ['registrations', 'participants', 'payments', 'squads', 'check-in'].includes(routeSection);
 
   const [tournament, setTournament] = useState<TournamentContract | null>(null);
   const [setupSummary, setSetupSummary] = useState<TournamentSetupStateSummaryContract | undefined>(undefined);

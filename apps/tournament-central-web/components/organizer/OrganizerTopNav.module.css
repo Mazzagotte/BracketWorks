@@ -1,0 +1,7 @@
+/* The organizer top bar never prints (for example the check-in sign-in sheet). */
+
+@media print {
+  .topNav {
+    display: none;
+  }
+}

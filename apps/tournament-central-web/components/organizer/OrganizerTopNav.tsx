@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { signOut } from '../auth/authSession';
 import { useAuthSession } from '../auth/useAuthSession';
+import styles from './OrganizerTopNav.module.css';
 
 export default function OrganizerTopNav() {
   const pathname = usePathname();
@@ -31,6 +32,7 @@ export default function OrganizerTopNav() {
       ...links,
       { href: base, label: 'Overview' },
       { href: `${base}/registrations`, label: 'Registrations' },
+      { href: `${base}/check-in`, label: 'Check-in' },
       { href: `${base}/setup`, label: 'Setup' },
       { href: `${base}/documents`, label: 'Documents' },
       { href: `${base}/team`, label: 'Team' },
@@ -61,6 +63,7 @@ export default function OrganizerTopNav() {
 
   return (
     <TopNav
+      className={styles.topNav}
       navLabel="Organizer"
       brand={
         <Link href="/organizer" className={topNavBrandClassName()}>

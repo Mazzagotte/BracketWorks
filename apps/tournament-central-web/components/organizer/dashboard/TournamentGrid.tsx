@@ -11,6 +11,7 @@ type TournamentGridProps = {
   tournaments: OrganizerDashboardTournament[];
   deletingTournamentId: number | null;
   onDeleteTournament: (tournament: OrganizerDashboardTournament) => void;
+  onDuplicateTournament?: (tournament: OrganizerDashboardTournament) => void;
 };
 
 type When = 'upcoming' | 'past' | 'all';
@@ -26,7 +27,7 @@ function isPast(tournament: OrganizerDashboardTournament, today: string): boolea
   return Boolean(lastDay && lastDay < today);
 }
 
-export default function TournamentGrid({ tournaments, deletingTournamentId, onDeleteTournament }: TournamentGridProps) {
+export default function TournamentGrid({ tournaments, deletingTournamentId, onDeleteTournament, onDuplicateTournament }: TournamentGridProps) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [when, setWhen] = useState<When>('upcoming');
@@ -88,6 +89,7 @@ export default function TournamentGrid({ tournaments, deletingTournamentId, onDe
               tournament={tournament}
               isDeleting={deletingTournamentId === tournament.id}
               onDelete={onDeleteTournament}
+              onDuplicate={onDuplicateTournament}
             />
           ))}
         </div>

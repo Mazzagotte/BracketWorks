@@ -6,6 +6,7 @@ import { useOrganizerDashboard } from './useOrganizerDashboard';
 import { listMyTcStaffInvitations } from '../organizerApi';
 
 vi.mock('./useOrganizerDashboard', () => ({ useOrganizerDashboard: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('../organizerApi', () => ({
   deleteTournament: vi.fn(), listMyTcStaffInvitations: vi.fn(), respondToTcStaffInvitation: vi.fn(),
 }));

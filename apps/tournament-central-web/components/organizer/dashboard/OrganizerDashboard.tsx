@@ -15,12 +15,15 @@ import {
 } from '@bracketworks/ui';
 import { Plus, Trophy } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import DuplicateTournamentModal from './DuplicateTournamentModal';
 import OrganizerAttentionList from './OrganizerAttentionList';
 import TournamentGrid from './TournamentGrid';
 import {
   deleteTournament,
+  duplicateTournament,
   listMyTcStaffInvitations,
   respondToTcStaffInvitation,
   type TcStaffInvitationEntry,
@@ -47,6 +50,10 @@ export default function OrganizerDashboard() {
   const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<OrganizerDashboardTournament | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<OrganizerDashboardTournament | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const router = useRouter();
   const [staffInvitations, setStaffInvitations] = useState<TcStaffInvitationEntry[]>([]);
   const [invitationError, setInvitationError] = useState<string | null>(null);
   const [respondingInvitationId, setRespondingInvitationId] = useState<number | null>(null);
@@ -121,6 +128,27 @@ export default function OrganizerDashboard() {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'Failed to delete tournament.');
     } finally {
       setDeletingTournamentId(null);
+    }
+  };
+
+  const handleDuplicate = async (options: { name: string; startDate: string; includeDocuments: boolean }) => {
+    const source = duplicateSource;
+    if (!source) return;
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      setDuplicateError('Your session expired. Please sign in again.');
+      return;
+    }
+    setIsDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const copy = await duplicateTournament(token, source.id, options);
+      setDuplicateSource(null);
+      router.push(organizerRoutes.setup(copy.id));
+    } catch (caughtError) {
+      setDuplicateError(caughtError instanceof Error ? caughtError.message : 'Unable to duplicate this tournament.');
+    } finally {
+      setIsDuplicating(false);
     }
   };
 
@@ -209,6 +237,7 @@ export default function OrganizerDashboard() {
               tournaments={tournaments}
               deletingTournamentId={deletingTournamentId}
               onDeleteTournament={handleDeleteRequest}
+              onDuplicateTournament={(tournament) => { setDuplicateError(null); setDuplicateSource(tournament); }}
             />
           }
           side={
@@ -233,6 +262,14 @@ export default function OrganizerDashboard() {
           }
         />
       )}
+
+      <DuplicateTournamentModal
+        tournament={duplicateSource}
+        busy={isDuplicating}
+        error={duplicateError}
+        onCancel={() => setDuplicateSource(null)}
+        onConfirm={(options) => { void handleDuplicate(options); }}
+      />
 
       <ConfirmDialog
         open={Boolean(deleteConfirmation)}

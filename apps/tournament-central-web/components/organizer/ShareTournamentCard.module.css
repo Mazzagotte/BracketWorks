@@ -1,0 +1,40 @@
+/* Share card: QR code on a light tile so phones can scan it, the link, then actions. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* QR codes need dark modules on a light background to scan reliably. */
+.qr {
+  align-self: flex-start;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  line-height: 0;
+}
+
+.qr canvas {
+  width: var(--space-40);
+  height: var(--space-40);
+}
+
+.url {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.helper {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}

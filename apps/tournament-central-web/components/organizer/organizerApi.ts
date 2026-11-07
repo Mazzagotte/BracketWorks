@@ -46,6 +46,7 @@ export type OrganizerRegistrationRecord = {
       phone?: string | null;
       usbc_number?: string | null;
       average?: number | null;
+      checked_in_at?: string | null;
     }>;
   }>;
   form?: {
@@ -148,6 +149,19 @@ export function deleteTournamentEntry(token: string, tournamentId: number, entry
 
 export function deleteTournament(token: string, tournamentId: number): Promise<{ ok: boolean }> {
   return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}`, 'DELETE');
+}
+
+/** Copies a tournament's setup, logo, and documents into a new unpublished tournament. */
+export function duplicateTournament(
+  token: string,
+  tournamentId: number,
+  options: { name: string; startDate?: string; includeDocuments: boolean },
+): Promise<{ id: number; name: string }> {
+  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/duplicate`, 'POST', {
+    name: options.name,
+    start_date: options.startDate || null,
+    include_documents: options.includeDocuments,
+  });
 }
 
 export function markTournamentRegistrationPaid(token: string, tournamentId: number, registrationId: number): Promise<{ ok: boolean }> {

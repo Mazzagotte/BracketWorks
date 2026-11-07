@@ -1,0 +1,68 @@
+/* Check-in page: the check-in cell and the printed sign-in sheet. */
+
+.checkIn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  cursor: pointer;
+}
+
+.checkIn input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkIn input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkInTime {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Only exists on paper. */
+.printSheet {
+  display: none;
+}
+
+.printTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}
+
+.printMeta {
+  margin: var(--space-1) 0 var(--space-4);
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.signatureCell {
+  width: 40%;
+}
+
+@media print {
+  .page.page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .page .screenOnly {
+    display: none;
+  }
+
+  /* Dark text on paper: the screen palette is light text on a dark page. */
+  .page .printSheet {
+    display: block;
+    --bw-text-title: var(--color-black);
+    --bw-text-body: var(--color-gray-700);
+    --bw-border-subtle: var(--color-gray-300);
+    --bw-surface-card: var(--color-white-pure);
+    --bw-surface-panel: var(--color-white-pure);
+    color: var(--bw-text-title);
+  }
+}

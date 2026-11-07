@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDownToLine, CircleDollarSign, MoreHorizontal, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
+import { ArrowDownToLine, CircleDollarSign, Mail, MoreHorizontal, Pencil, Trash2, UserCheck, UserPlus, Users } from 'lucide-react';
 import {
   Button,
   Card,
   CardDivider,
   CardHeader,
+  CheckboxField,
   DataTable,
   EmptyState,
   FormGrid,
@@ -37,9 +38,17 @@ import {
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
-import { formatMoney } from '@/components/organizer/organizerFormatting';
-import { buildParticipantRows, buildPaymentSummary } from '@/components/organizer/tournamentInsights';
+import { formatMoney, formatSquadTime, formatTournamentDate } from '@/components/organizer/organizerFormatting';
+import { loadOrganizerSetupState } from '@/components/organizer/organizerApi';
+import type { DivisionConfig, EventConfig, SquadConfig } from '@/components/organizer/types';
+import { buildParticipantRows, buildPaymentSummary, buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import { usePaymentToggle } from '@/components/organizer/usePaymentToggle';
+import EmailBowlersModal from '@/components/organizer/EmailBowlersModal';
+import {
+  loadTournamentSquads,
+  promoteWaitlistedRegistration,
+  resendRegistrationConfirmation,
+} from '@/components/organizer/messagesApi';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
 import styles from './registrations.module.css';
@@ -48,6 +57,15 @@ import cells from '@/components/organizer/OrganizerTable.module.css';
 type FilterValue = 'all' | 'confirmed' | 'pending' | 'waitlisted' | 'cancelled';
 type PaymentFilter = 'all' | 'unpaid' | 'paid';
 type ListView = 'registrations' | 'bowlers';
+
+/** Events, divisions, and squads from setup, so an entry can be moved by picking from lists instead of typing IDs. */
+type EntryOptions = { events: EventConfig[]; divisions: DivisionConfig[]; squads: SquadConfig[] };
+
+function squadOptionLabel(squad: Pick<SquadConfig, 'name' | 'dateIso' | 'startTime'>): string {
+  const when = [squad.dateIso ? formatTournamentDate(squad.dateIso) : '', squad.startTime ? formatSquadTime(squad.startTime) : '']
+    .filter(Boolean).join(' · ');
+  return when && squad.name && !squad.name.includes(formatSquadTime(squad.startTime)) ? `${squad.name} (${when})` : when || squad.name;
+}
 
 const EMPTY_CELL = '—';
 
@@ -136,6 +154,34 @@ function entryLabel(entry: RegistrationEntry, key: 'event' | 'squad'): string {
   return entry.squad_name || entry.squad_config_id || 'Unassigned';
 }
 
+function registrationName(registration: OrganizerRegistrationRecord): string {
+  return `${registration.contact_first_name ?? registration.form?.first_name ?? ''} ${registration.contact_last_name ?? registration.form?.last_name ?? ''}`.trim() || 'Unnamed bowler';
+}
+
+/** Squads that would go over capacity if this waitlisted registration were confirmed. */
+function capacityWarnings(
+  registration: OrganizerRegistrationRecord,
+  squads: SquadConfig[],
+  registrations: OrganizerRegistrationRecord[],
+): string[] {
+  const summaries = buildSquadSummaries(squads, registrations);
+  const warnings: string[] = [];
+  for (const entry of registration.entries ?? []) {
+    if (entry.status !== 'waitlisted' || !entry.squad_config_id) continue;
+    const summary = summaries.find((item) => item.squad.id === entry.squad_config_id);
+    if (!summary || summary.squad.capacity <= 0) continue;
+    if (summary.bowlerCount + entry.bowler_count > summary.squad.capacity) {
+      const squadName = summary.squad.name || entryLabel(entry, 'squad');
+      const open = Math.max(summary.squad.capacity - summary.bowlerCount, 0);
+      const state = open === 0
+        ? `is full (${summary.bowlerCount} of ${summary.squad.capacity} bowlers)`
+        : `has ${open} open spot${open === 1 ? '' : 's'}`;
+      warnings.push(`${squadName} ${state}. Confirming this registration puts it over capacity.`);
+    }
+  }
+  return warnings;
+}
+
 export default function OrganizerTournamentRegistrationsPage() {
   const {
     tournamentId,
@@ -145,6 +191,7 @@ export default function OrganizerTournamentRegistrationsPage() {
     isRegistrationsLoading,
     tournamentError,
     registrationsError,
+    squads: contextSquads,
   } = useTournamentContext();
   const tournamentName = tournament?.name || 'Tournament';
   const [search, setSearch] = useState('');
@@ -157,6 +204,7 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
   const [editForm, setEditForm] = useState<EntryEditForm | null>(null);
+  const [entryOptions, setEntryOptions] = useState<EntryOptions | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [pendingDeleteEntry, setPendingDeleteEntry] = useState<RegistrationEntry | null>(null);
@@ -167,8 +215,92 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [isManualRegistrationSubmitting, setIsManualRegistrationSubmitting] = useState(false);
   const [manualRegistrationMessage, setManualRegistrationMessage] = useState<string | null>(null);
   const [manualRegistrationError, setManualRegistrationError] = useState<string | null>(null);
+  const [isEmailOpen, setIsEmailOpen] = useState(false);
+  const [rowMessage, setRowMessage] = useState<string | null>(null);
+  const [rowError, setRowError] = useState<string | null>(null);
+  const [promoteTarget, setPromoteTarget] = useState<OrganizerRegistrationRecord | null>(null);
+  const [promoteNotify, setPromoteNotify] = useState(true);
+  const [promoteWarnings, setPromoteWarnings] = useState<string[]>([]);
+  const [isPromoting, setIsPromoting] = useState(false);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
   const pageSize = 10;
   const payments = usePaymentToggle({ tournamentId, refreshRegistrations });
+
+  const handleResendConfirmation = async (registration: OrganizerRegistrationRecord) => {
+    setRowMessage(null);
+    setRowError(null);
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      setRowError('Your session expired. Please sign in again.');
+      return;
+    }
+    const registrationId = Number(registration.id);
+    if (!Number.isInteger(registrationId)) {
+      setRowError('This registration has an invalid ID. Reload the page and try again.');
+      return;
+    }
+    try {
+      const response = await resendRegistrationConfirmation(token, tournamentId, registrationId);
+      if (response.sent) {
+        setRowMessage(`Confirmation sent to ${registration.contact_email || registrationName(registration)}.`);
+      } else {
+        setRowError('The confirmation email could not be sent. Check the contact email and try again in a few minutes.');
+      }
+    } catch (caughtError) {
+      setRowError(caughtError instanceof Error ? caughtError.message : 'Unable to send the confirmation email.');
+    }
+  };
+
+  const openPromote = async (registration: OrganizerRegistrationRecord) => {
+    setRowMessage(null);
+    setRowError(null);
+    setPromoteError(null);
+    setPromoteNotify(true);
+    setPromoteWarnings([]);
+    setPromoteTarget(registration);
+    let squads = contextSquads ?? [];
+    if (squads.length === 0) {
+      const token = sessionStorage.getItem('access_token');
+      // Capacity is advisory: if squad settings cannot load, the dialog still works without the warning.
+      squads = token ? await loadTournamentSquads(token, tournamentId).catch(() => []) : [];
+    }
+    setPromoteWarnings(capacityWarnings(registration, squads, registrations));
+  };
+
+  const handlePromote = async () => {
+    if (!promoteTarget) return;
+    const token = sessionStorage.getItem('access_token');
+    if (!token) {
+      setPromoteError('Your session expired. Please sign in again.');
+      return;
+    }
+    const registrationId = Number(promoteTarget.id);
+    if (!Number.isInteger(registrationId)) {
+      setPromoteError('This registration has an invalid ID. Reload the page and try again.');
+      return;
+    }
+    setIsPromoting(true);
+    setPromoteError(null);
+    try {
+      const response = await promoteWaitlistedRegistration(token, tournamentId, registrationId, promoteNotify);
+      const reference = promoteTarget.confirmation_code ?? registrationName(promoteTarget);
+      let emailNote = '';
+      if (promoteNotify) {
+        emailNote = response.notified ? ' The bowler was emailed.' : ' The email to the bowler could not be sent.';
+      }
+      setPromoteTarget(null);
+      setRowMessage(`${reference} moved off the waitlist.${emailNote}`);
+      try {
+        await refreshRegistrations();
+      } catch {
+        setRowError('The registration was confirmed, but the list could not be refreshed. Reload the page to see it.');
+      }
+    } catch (caughtError) {
+      setPromoteError(caughtError instanceof Error ? caughtError.message : 'Unable to move this registration off the waitlist.');
+    } finally {
+      setIsPromoting(false);
+    }
+  };
 
   // Links from other pages open a view directly: ?view=bowlers or ?payment=unpaid.
   useEffect(() => {
@@ -358,6 +490,22 @@ export default function OrganizerTournamentRegistrationsPage() {
   const openEntryEditor = (entry: RegistrationEntry, registration: OrganizerRegistrationRecord) => {
     const registrationId = Number(registration.id);
     setEditingEntry({ entry, registrationId });
+    setEntryOptions(null);
+    const token = sessionStorage.getItem('access_token');
+    if (token) {
+      void loadOrganizerSetupState<Partial<EntryOptions>>(token, tournamentId)
+        .then((state) => {
+          const payload = state?.payload;
+          if (!payload) return;
+          setEntryOptions({
+            events: (payload.events ?? []).filter((event) => event.enabled !== false),
+            divisions: (payload.divisions ?? []).filter((division) => division.enabled !== false),
+            squads: payload.squads ?? [],
+          });
+        })
+        // Without setup lists the selects still show the entry's current values.
+        .catch(() => setEntryOptions({ events: [], divisions: [], squads: [] }));
+    }
     setEditForm({
       eventConfigId: entry.event_config_id,
       eventName: entry.event_name,
@@ -463,6 +611,11 @@ export default function OrganizerTournamentRegistrationsPage() {
   const squadOptions = useMemo(
     () => Array.from(new Map(allEntries.map((entry) => [entry.squad_config_id ?? entry.squad_name ?? 'unassigned', entryLabel(entry, 'squad')])).entries()),
     [allEntries],
+  );
+
+  const emailSquadOptions = useMemo(
+    () => squadOptions.filter(([value]) => allEntries.some((entry) => entry.squad_config_id === value)),
+    [allEntries, squadOptions],
   );
 
   const eventOptions = useMemo(
@@ -573,6 +726,32 @@ export default function OrganizerTournamentRegistrationsPage() {
     setEditForm((current) => (current ? { ...current, [key]: value } : current));
   };
 
+  const selectEvent = (eventId: string) => {
+    const event = entryOptions?.events.find((item) => item.id === eventId);
+    setEditForm((current) => (current && event ? { ...current, eventConfigId: event.id, eventName: event.name } : current));
+  };
+  const selectDivision = (divisionId: string) => {
+    const division = entryOptions?.divisions.find((item) => item.id === divisionId);
+    setEditForm((current) => (current
+      ? { ...current, divisionConfigId: division?.id ?? '', divisionName: division?.name ?? '' }
+      : current));
+  };
+  const selectSquad = (squadId: string) => {
+    const squad = entryOptions?.squads.find((item) => item.id === squadId);
+    setEditForm((current) => (current && squad
+      ? { ...current, squadConfigId: squad.id, squadName: squad.name, squadDate: squad.dateIso ?? '', squadTime: squad.startTime ?? '' }
+      : current));
+  };
+  const squadSpotsLeft = (squadId: string): number | null => {
+    const squad = entryOptions?.squads.find((item) => item.id === squadId);
+    if (!squad || !(squad.capacity > 0)) return null;
+    const taken = registrations.flatMap((registration) => registration.entries ?? [])
+      .filter((entry) => entry.squad_config_id === squadId && entry.status !== 'cancelled' && entry.status !== 'waitlisted'
+        && entry.id !== editingEntry?.entry.id)
+      .reduce((total, entry) => total + Math.max(1, entry.bowlers?.length ?? 1), 0);
+    return squad.capacity - taken;
+  };
+
   const updateBowler = (bowlerId: EditableBowler['id'], changes: Partial<EditableBowler>) => {
     setEditForm((current) => (current
       ? { ...current, bowlers: current.bowlers.map((item) => (item.id === bowlerId ? { ...item, ...changes } : item)) }
@@ -595,6 +774,8 @@ export default function OrganizerTournamentRegistrationsPage() {
       {pageError ? <Notice tone="danger" role="alert">{pageError}</Notice> : null}
       {payments.actionError ? <Notice tone="danger" role="alert">{payments.actionError}</Notice> : null}
       {payments.message ? <Notice tone="success" role="status">{payments.message}</Notice> : null}
+      {rowError ? <Notice tone="danger" role="alert">{rowError}</Notice> : null}
+      {rowMessage ? <Notice tone="success" role="status">{rowMessage}</Notice> : null}
       {isRegistrationsLoading ? <Notice tone="info" role="status">Loading registrations...</Notice> : null}
 
       {!pageError && !isRegistrationsLoading ? (
@@ -624,6 +805,13 @@ export default function OrganizerTournamentRegistrationsPage() {
                   onChange={setView}
                   options={[{ value: 'registrations', label: 'Registrations' }, { value: 'bowlers', label: 'Bowlers' }]}
                 />
+                <Button
+                  variant="secondary"
+                  icon={<Mail size={ICON_SIZE.md} aria-hidden="true" />}
+                  onClick={() => setIsEmailOpen(true)}
+                >
+                  Email bowlers
+                </Button>
                 <Button
                   variant="primary"
                   icon={<UserPlus size={ICON_SIZE.md} aria-hidden="true" />}
@@ -796,7 +984,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                           </span>
                         </td>
                         <td data-align="right">
-                          {entries.length > 0 ? (
+                          {entries.length > 0 || Number.isInteger(registrationId) ? (
                             <Menu triggerLabel={`More actions for ${name}`} trigger={<MoreHorizontal size={ICON_SIZE.md} aria-hidden="true" />}>
                               {entries.map((registrationEntry) => (
                                 <MenuItem
@@ -808,7 +996,23 @@ export default function OrganizerTournamentRegistrationsPage() {
                                   {entries.length > 1 ? `Edit ${entryLabel(registrationEntry, 'event')}` : 'Edit entry'}
                                 </MenuItem>
                               ))}
-                              <MenuDivider />
+                              <MenuItem
+                                icon={<Mail size={ICON_SIZE.md} />}
+                                onSelect={() => { void handleResendConfirmation(registration); }}
+                                disabled={isMutating}
+                              >
+                                Resend confirmation
+                              </MenuItem>
+                              {registration.status === 'waitlisted' ? (
+                                <MenuItem
+                                  icon={<UserCheck size={ICON_SIZE.md} />}
+                                  onSelect={() => { void openPromote(registration); }}
+                                  disabled={isMutating}
+                                >
+                                  Move off waitlist
+                                </MenuItem>
+                              ) : null}
+                              {entries.length > 0 ? <MenuDivider /> : null}
                               {entries.map((registrationEntry) => (
                                 <MenuItem
                                   key={`delete-${registrationEntry.id}`}
@@ -906,14 +1110,47 @@ export default function OrganizerTournamentRegistrationsPage() {
             <section className={styles.editSection} aria-labelledby="edit-entry-competition">
               <h3 id="edit-entry-competition" className={styles.subsectionTitle}>Competition entry</h3>
               <FormGrid>
-                <TextField label="Event name" value={editForm.eventName} onChange={updateEditField('eventName')} />
-                <TextField label="Event ID" value={editForm.eventConfigId} onChange={updateEditField('eventConfigId')} />
-                <TextField label="Division name" value={editForm.divisionName} onChange={updateEditField('divisionName')} />
-                <TextField label="Division ID" value={editForm.divisionConfigId} onChange={updateEditField('divisionConfigId')} />
-                <TextField label="Squad name" value={editForm.squadName} onChange={updateEditField('squadName')} />
-                <TextField label="Squad ID" value={editForm.squadConfigId} onChange={updateEditField('squadConfigId')} />
-                <TextField label="Squad date" value={editForm.squadDate} onChange={updateEditField('squadDate')} />
-                <TextField label="Squad time" value={editForm.squadTime} onChange={updateEditField('squadTime')} />
+                {entryOptions ? (
+                  <>
+                    <SelectField label="Event" value={editForm.eventConfigId} onChange={(event) => selectEvent(event.target.value)}>
+                      {entryOptions.events.some((item) => item.id === editForm.eventConfigId) ? null : (
+                        <option value={editForm.eventConfigId}>{editForm.eventName || 'Current event'}</option>
+                      )}
+                      {entryOptions.events.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </SelectField>
+                    <SelectField label="Division" optional value={editForm.divisionConfigId} onChange={(event) => selectDivision(event.target.value)}>
+                      <option value="">No division</option>
+                      {editForm.divisionConfigId && !entryOptions.divisions.some((item) => item.id === editForm.divisionConfigId) ? (
+                        <option value={editForm.divisionConfigId}>{editForm.divisionName || 'Current division'}</option>
+                      ) : null}
+                      {entryOptions.divisions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </SelectField>
+                    <SelectField
+                      label="Squad"
+                      fullRow
+                      value={editForm.squadConfigId}
+                      onChange={(event) => selectSquad(event.target.value)}
+                      helper={(() => {
+                        const left = squadSpotsLeft(editForm.squadConfigId);
+                        if (left === null) return 'Moving an entry keeps its payment and confirmation number.';
+                        return left > 0
+                          ? `${left} bowler spot${left === 1 ? '' : 's'} left in this squad.`
+                          : 'This squad is full. Saving will go over capacity.';
+                      })()}
+                    >
+                      {editForm.squadConfigId && !entryOptions.squads.some((item) => item.id === editForm.squadConfigId) ? (
+                        <option value={editForm.squadConfigId}>{editForm.squadName || 'Current squad'}</option>
+                      ) : null}
+                      {!editForm.squadConfigId ? <option value="">Not assigned</option> : null}
+                      {entryOptions.squads.map((item) => <option key={item.id} value={item.id}>{squadOptionLabel(item)}</option>)}
+                    </SelectField>
+                  </>
+                ) : (
+                  <>
+                    <TextField label="Event" value={editForm.eventName} readOnly helper="Loading events, divisions, and squads..." />
+                    <TextField label="Squad" value={editForm.squadName} readOnly />
+                  </>
+                )}
                 <SelectField label="Status" value={editForm.status} onChange={updateEditField('status')}>
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
@@ -965,6 +1202,46 @@ export default function OrganizerTournamentRegistrationsPage() {
         }}
         onCancel={() => setPendingDeleteEntry(null)}
       />
+
+      <EmailBowlersModal
+        open={isEmailOpen}
+        onClose={() => setIsEmailOpen(false)}
+        tournamentId={tournamentId}
+        squadOptions={emailSquadOptions}
+      />
+
+      <Modal
+        open={Boolean(promoteTarget)}
+        onClose={() => setPromoteTarget(null)}
+        title="Move off waitlist?"
+        description={promoteTarget
+          ? `${registrationName(promoteTarget)} (${promoteTarget.confirmation_code ?? promoteTarget.id}) and their waitlisted entries will be confirmed.`
+          : undefined}
+        size="sm"
+        role="alertdialog"
+        closeLabel="Close move off waitlist"
+        dismissible={!isPromoting}
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setPromoteTarget(null)} disabled={isPromoting}>Cancel</Button>
+            <Button variant="primary" onClick={() => { void handlePromote(); }} disabled={isPromoting}>
+              {isPromoting ? 'Moving...' : 'Move off waitlist'}
+            </Button>
+          </>
+        )}
+      >
+        <div className={styles.editForm}>
+          {promoteWarnings.map((warning) => <Notice key={warning} tone="warning">{warning}</Notice>)}
+          <CheckboxField
+            label="Notify by email"
+            helper="Tells the bowler a spot opened and they are confirmed."
+            checked={promoteNotify}
+            onChange={(event) => setPromoteNotify(event.target.checked)}
+            disabled={isPromoting}
+          />
+          {promoteError ? <Notice tone="danger" role="alert">{promoteError}</Notice> : null}
+        </div>
+      </Modal>
     </Page>
   );
 }

@@ -1,0 +1,98 @@
+/* BracketWorks handoff card and preview dialog (docs/ui-standards.md sections 5, 7, and 8). */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Label and value divider rows, matching the overview Details card. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.row:first-child {
+  padding-top: 0;
+}
+
+.row:last-child {
+  padding-bottom: 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.row dt {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.row dd {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.groupTitle {
+  margin: 0;
+  font: var(--type-subsection-title);
+  color: var(--bw-text-title);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li {
+  padding: var(--space-1) 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.list strong {
+  font-weight: 600;
+  color: var(--bw-text-title);
+}
+
+@media (max-width: 767px) {
+  .actions > * {
+    flex: 1 1 100%;
+  }
+}

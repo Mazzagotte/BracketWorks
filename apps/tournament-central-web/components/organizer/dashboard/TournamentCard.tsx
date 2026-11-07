@@ -1,7 +1,8 @@
 import { Avatar, ICON_SIZE, Menu, MenuItem, MenuNote, buttonClassName, menuItemClassName } from '@bracketworks/ui';
-import { ArrowUpRight, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowUpRight, Copy, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
@@ -9,6 +10,31 @@ import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
 import { formatMoney } from '../organizerFormatting';
+import { fetchTournamentLogoBlobUrl } from '../setupPersistence';
+
+/** The logo endpoint needs the organizer's token, which a plain image request can't send, so load it as a blob. */
+function useTournamentLogo(tournamentId: number, hasLogo: boolean): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hasLogo) return undefined;
+    const token = sessionStorage.getItem('access_token');
+    if (!token) return undefined;
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    fetchTournamentLogoBlobUrl(token, tournamentId)
+      .then((next) => {
+        objectUrl = next;
+        if (!cancelled) setUrl(next);
+        else if (next) URL.revokeObjectURL(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [hasLogo, tournamentId]);
+  return url;
+}
 
 /** Intrinsic size of a tournament logo, matching the 32px avatar (`--space-8`). */
 const LOGO_SIZE = 32;
@@ -17,16 +43,18 @@ type TournamentCardProps = {
   tournament: OrganizerDashboardTournament;
   isDeleting: boolean;
   onDelete: (tournament: OrganizerDashboardTournament) => void;
+  onDuplicate?: (tournament: OrganizerDashboardTournament) => void;
 };
 
 /** One tournament as a divider row: Manage is the one visible action; the rest live in the "More" menu. */
-export default function TournamentCard({ tournament, isDeleting, onDelete }: TournamentCardProps) {
+export default function TournamentCard({ tournament, isDeleting, onDelete, onDuplicate }: TournamentCardProps) {
   const hasRegistrations = (tournament.entryCount ?? 0) > 0;
+  const logoUrl = useTournamentLogo(tournament.id, tournament.hasLogo);
   return (
     <article className={styles.tournamentRow} aria-label={tournament.name}>
       <div className={styles.tournamentIdentity}>
-        {tournament.hasLogo ? (
-          <Image className={styles.logo} src={`/api/v1/tc/tournaments/${tournament.id}/logo`} alt="" width={LOGO_SIZE} height={LOGO_SIZE} unoptimized />
+        {logoUrl ? (
+          <Image className={styles.logo} src={logoUrl} alt="" width={LOGO_SIZE} height={LOGO_SIZE} unoptimized />
         ) : (
           <Avatar name={tournament.name} />
         )}
@@ -69,6 +97,11 @@ export default function TournamentCard({ tournament, isDeleting, onDelete }: Tou
               <ExternalLink size={ICON_SIZE.md} aria-hidden="true" />
               View public page
             </Link>
+          ) : null}
+          {onDuplicate ? (
+            <MenuItem icon={<Copy size={ICON_SIZE.md} />} onSelect={() => onDuplicate(tournament)} aria-label={`Duplicate ${tournament.name}`}>
+              Duplicate
+            </MenuItem>
           ) : null}
           <MenuItem
             tone="danger"

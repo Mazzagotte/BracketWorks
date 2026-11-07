@@ -2,10 +2,15 @@ export const organizerRoutes = {
   dashboard: '/organizer',
   account: '/organizer/account',
   /** The tournament's public details page on the TC home page. */
-  publicPage: (tournamentId: number | string) => `/?tournament=${encodeURIComponent(String(tournamentId))}`,
+  publicPage: (tournamentId: number | string) => {
+    // Public links use the directory id ("tc-58"), which the home page validates.
+    const id = String(tournamentId);
+    return `/?tournament=${encodeURIComponent(id.startsWith('tc-') ? id : `tc-${id}`)}`;
+  },
   newTournamentSetup: '/organizer/tournaments/new/setup',
   overview: (tournamentId: number | string) => tournamentRoute(tournamentId),
   registrations: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/registrations`,
+  checkIn: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/check-in`,
   squads: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/squads`,
   participants: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/participants`,
   payments: (tournamentId: number | string) => `${tournamentRoute(tournamentId)}/payments`,

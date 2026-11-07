@@ -22,6 +22,8 @@ import type { StatItem } from '@bracketworks/ui';
 import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import AttentionList from '@/components/organizer/AttentionList';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
+import SendToBracketWorksCard from '@/components/organizer/SendToBracketWorksCard';
+import ShareTournamentCard from '@/components/organizer/ShareTournamentCard';
 import TournamentStatusBadge from '@/components/organizer/dashboard/TournamentStatusBadge';
 import {
   formatRegistrationDeadline,
@@ -219,6 +221,16 @@ export default function OrganizerTournamentOverviewPage() {
                   ))}
                 </dl>
               </Card>
+            ) : null}
+            {tournament ? <SendToBracketWorksCard tournamentId={tournamentId} /> : null}
+            {tournament ? (
+              <ShareTournamentCard
+                tournamentId={tournamentId}
+                tournamentName={tournament.name || 'Tournament'}
+                dateText={formatTournamentDateRange(tournament.start_date, tournament.end_date)}
+                locationText={location}
+                isPublic={Boolean(tournament.is_public)}
+              />
             ) : null}
           </>
         }
