@@ -210,7 +210,9 @@ const STATE_FIPS_TO_CODE: Record<string, string> = {
 const USA_STATES_GEO_URL = '/us-states-10m.json';
 const DEFAULT_MAP_VIEWPORT: MapViewport = { center: [-96, 38], zoom: 1 };
 const HEARTBEAT_INTERVAL_MS = 15000;
-const HEARTBEAT_STALE_AFTER_MS = 60000;
+const HEARTBEAT_STALE_AFTER_MS = 30000;
+// Coming back to the tab refreshes the list unless it was loaded in the last few seconds.
+const REFOCUS_REFRESH_AFTER_MS = 5000;
 const MIN_MAP_ZOOM = 1;
 const MAX_MAP_ZOOM = 3.5;
 const MAP_PAN_PADDING = 52;
@@ -728,7 +730,8 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
     setHeartbeatState('checking');
 
     try {
-      const response = await fetch('/api/v1/public/tournaments?source=tc&limit=300');
+      // Bypass the browser cache so organizer changes show up on the next check.
+      const response = await fetch('/api/v1/public/tournaments?source=tc&limit=300', { cache: 'no-store' });
 
       if (!response.ok) {
         throw new Error('Unable to load tournament directory.');
@@ -776,7 +779,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
       }
 
       const elapsedMs = Date.now() - lastSuccessfulHeartbeatRef.current;
-      if (elapsedMs >= HEARTBEAT_STALE_AFTER_MS) {
+      if (elapsedMs >= REFOCUS_REFRESH_AFTER_MS) {
         setHeartbeatState('checking');
         void loadDirectory();
       }

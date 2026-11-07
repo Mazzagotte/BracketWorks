@@ -1,3 +1,4 @@
+import { requestPublicDirectoryRefresh } from './publicDirectoryRefresh';
 import type { TournamentContract, TournamentSetupStateSummaryContract } from '@bracketworks/types';
 
 export type OrganizerSetupStateResponse<TPayload> = {
@@ -162,8 +163,10 @@ export function deleteTournamentEntry(token: string, tournamentId: number, entry
   return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}/entries/${entryId}`, 'DELETE');
 }
 
-export function deleteTournament(token: string, tournamentId: number): Promise<{ ok: boolean }> {
-  return organizerMutation(token, `/api/v1/tc/tournaments/${tournamentId}`, 'DELETE');
+export async function deleteTournament(token: string, tournamentId: number): Promise<{ ok: boolean }> {
+  const result = await organizerMutation<{ ok: boolean }>(token, `/api/v1/tc/tournaments/${tournamentId}`, 'DELETE');
+  requestPublicDirectoryRefresh();
+  return result;
 }
 
 /** Copies a tournament's setup, logo, and documents into a new unpublished tournament. */

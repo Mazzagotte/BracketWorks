@@ -1,3 +1,4 @@
+import { requestPublicDirectoryRefresh } from './publicDirectoryRefresh';
 import { getJsonErrorDetail, loadOrganizerSetupState as loadOrganizerSetupStateApi } from './organizerApi';
 import { assertValidRegistrationDates } from '@/lib/registrationDates';
 import type {
@@ -69,6 +70,7 @@ export async function saveTournamentRecord(params: {
     throw new Error(detail);
   }
 
+  requestPublicDirectoryRefresh();
   return responseData as PersistedTournament;
 }
 
@@ -110,6 +112,7 @@ export async function uploadTournamentLogo(params: {
     throw new Error(detail);
   }
 
+  requestPublicDirectoryRefresh();
   return responseData as TournamentLogoUploadResponse;
 }
 
@@ -164,6 +167,7 @@ export async function deleteTournamentLogo(params: { token: string; tournamentId
       : `Failed to remove tournament logo (${response.status})`;
     throw new Error(detail);
   }
+  requestPublicDirectoryRefresh();
 }
 
 export async function saveOrganizerSetupState(params: {
@@ -205,5 +209,6 @@ export async function saveOrganizerSetupState(params: {
     throw new Error(detail);
   }
 
+  requestPublicDirectoryRefresh();
   return responseData as OrganizerSetupStateResponse;
 }

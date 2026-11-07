@@ -610,7 +610,8 @@ def list_public_tournaments(
             for tid, score_count, g1_s, g2_s, g3_s, g1_h, g2_h, g3_h in score_stats
         }
 
-    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
+    # Short cache: organizer edits should reach the public directory within seconds.
+    _set_public_cache_headers(response, max_age=15, stale_while_revalidate=60)
 
     directory_rows: list[dict] = [
         {
@@ -792,7 +793,7 @@ def get_public_tc_tournament_logo(
     if not tournament or not tournament.logo_blob:
         raise HTTPException(status_code=404, detail="Tournament logo not found")
 
-    _set_public_cache_headers(response, max_age=300, stale_while_revalidate=1200)
+    _set_public_cache_headers(response, max_age=60, stale_while_revalidate=300)
 
     headers = {}
     if tournament.logo_file_name:
@@ -932,7 +933,7 @@ def get_public_tc_tournament_registration_config(
         .order_by(models.TcTournamentDocument.id)
         .all()
     )
-    _set_public_cache_headers(response, max_age=120, stale_while_revalidate=600)
+    _set_public_cache_headers(response, max_age=15, stale_while_revalidate=60)
     return {
         "tournament_id": tournament.id,
         "tournament_name": tournament.name,
