@@ -20,8 +20,22 @@ export type OrganizerRegistrationRecord = {
   contact_email?: string;
   contact_phone?: string | null;
   notes?: string | null;
+  subtotal_cents?: number;
+  fees_cents?: number;
   total_cents?: number;
   currency?: string;
+  /** Side events and fees bought on this registration. `bowler_id` is null for per-registration fees. */
+  side_events?: Array<{
+    id: number;
+    fee_id: string;
+    name: string;
+    kind: string;
+    scoring?: 'handicap' | 'scratch' | null;
+    bowler_id: number | null;
+    quantity: number;
+    unit_cents: number;
+    total_cents: number;
+  }>;
   entry_count?: number;
   submitted_at?: string;
   entries?: Array<{
@@ -46,6 +60,7 @@ export type OrganizerRegistrationRecord = {
       phone?: string | null;
       usbc_number?: string | null;
       average?: number | null;
+      gender?: string | null;
       checked_in_at?: string | null;
     }>;
   }>;

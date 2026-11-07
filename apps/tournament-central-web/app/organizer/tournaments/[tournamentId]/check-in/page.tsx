@@ -47,6 +47,8 @@ type CheckInRow = {
   usbcNumber: string;
   email: string;
   events: string[];
+  /** Brackets bought at registration, so the desk can confirm the count. */
+  brackets: number;
   registration: OrganizerRegistrationRecord;
   checkedInAt: string | null;
 };
@@ -129,6 +131,16 @@ function squadLabel(option: SquadOption, singleDay: boolean): string {
   return parts.length ? parts.join(', ') : option.name;
 }
 
+function bracketsBought(registration: OrganizerRegistrationRecord, bowlerId: number): number {
+  return (registration.side_events ?? [])
+    .filter((record) => record.kind === 'brackets' && record.bowler_id === bowlerId)
+    .reduce((total, record) => total + record.quantity, 0);
+}
+
+function sellsBrackets(registrations: OrganizerRegistrationRecord[]): boolean {
+  return registrations.some((registration) => (registration.side_events ?? []).some((record) => record.kind === 'brackets'));
+}
+
 function buildRows(registrations: OrganizerRegistrationRecord[], squadId: string): CheckInRow[] {
   const rows = new Map<number, CheckInRow>();
   registrations.filter(isActiveRegistration).forEach((registration) => {
@@ -150,6 +162,7 @@ function buildRows(registrations: OrganizerRegistrationRecord[], squadId: string
           usbcNumber: bowler.usbc_number ?? '',
           email: bowler.email ?? '',
           events: entry.event_name ? [entry.event_name] : [],
+          brackets: bracketsBought(registration, bowler.id),
           registration,
           checkedInAt: bowler.checked_in_at ?? null,
         });
@@ -199,6 +212,7 @@ export default function CheckInPage() {
     row.bowlerId in overrides ? { ...row, checkedInAt: overrides[row.bowlerId] } : row
   )), [registrations, squadId, overrides]);
 
+  const showBrackets = useMemo(() => sellsBrackets(registrations ?? []), [registrations]);
   const checkedInCount = rows.filter((row) => row.checkedInAt).length;
   const unpaidCount = rows.filter((row) => (row.registration.payment_status ?? 'unpaid') === 'unpaid').length;
 
@@ -357,6 +371,7 @@ export default function CheckInPage() {
                     <tr>
                       <th scope="col">Bowler</th>
                       <th scope="col">Event</th>
+                      {showBrackets ? <th scope="col" data-align="right">Brackets</th> : null}
                       <th scope="col">Payment</th>
                       <th scope="col">Checked in</th>
                     </tr>
@@ -373,6 +388,7 @@ export default function CheckInPage() {
                             </div>
                           </td>
                           <td>{row.events.join(', ') || 'Not selected'}</td>
+                          {showBrackets ? <td data-align="right">{row.brackets}</td> : null}
                           <td>{payments.renderPaymentCell(row.registration)}</td>
                           <td>
                             <label className={styles.checkIn}>
@@ -405,6 +421,7 @@ export default function CheckInPage() {
                     <th scope="col">Bowler</th>
                     <th scope="col">USBC</th>
                     <th scope="col">Event</th>
+                    {showBrackets ? <th scope="col" data-align="right">Brackets</th> : null}
                     <th scope="col">Payment</th>
                     <th scope="col">Checked in</th>
                     <th scope="col" className={styles.signatureCell}>Signature</th>
@@ -416,6 +433,7 @@ export default function CheckInPage() {
                       <td>{row.name}</td>
                       <td className={cells.code}>{row.usbcNumber}</td>
                       <td>{row.events.join(', ')}</td>
+                      {showBrackets ? <td data-align="right">{row.brackets}</td> : null}
                       <td>{row.registration.payment_status === 'paid' ? 'Paid' : 'Unpaid'}</td>
                       <td>{row.checkedInAt ? formatCheckInTime(row.checkedInAt) : ''}</td>
                       <td className={styles.signatureCell} />

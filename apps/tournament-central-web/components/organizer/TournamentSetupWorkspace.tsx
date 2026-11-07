@@ -16,6 +16,10 @@ import { organizerRoutes } from './organizerRoutes';
 import TournamentRegistrationForm from '../public/TournamentRegistrationForm';
 import TournamentDetailsSection from './setup/TournamentDetailsSection';
 import RulesDocumentsSection from './setup/RulesDocumentsSection';
+import TemplateChooser from './setup/TemplateChooser';
+import { applyTournamentTemplate } from './tournamentTemplates';
+import { eventRulesSummary, sideEventSummary } from './formatSummaries';
+import { SIDE_EVENT_LABEL } from './formatTypes';
 import { setupSections } from './setupConfig';
 import {
   countTournamentSquads,
@@ -38,6 +42,7 @@ import {
   emptySquad,
 } from './setupFactories';
 import {
+  formatRuleIssues,
   getRequiredBowlerCountFromEvent,
   isRegistrationQuestionAnswered,
   normalizeRegistrationFieldKey,
@@ -299,6 +304,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
   const [isSubmittingSignupPreview, setIsSubmittingSignupPreview] = useState(false);
   const [signupPreviewSubmitMessage, setSignupPreviewSubmitMessage] = useState<string | null>(null);
   const [signupPreviewForm, setSignupPreviewForm] = useState<OrganizerRegistrationFormState>(EMPTY_ORGANIZER_REGISTRATION_FORM);
+  const [isChangingTemplate, setIsChangingTemplate] = useState(false);
   const currentSetupPayload = useCallback((detailsForSave: TournamentDetails) => buildOrganizerSetupPayload({
     details: detailsForSave, events, divisions, squads, fees, locations, questions, fields,
     hasRulesDocument, paymentMode, paymentProcessorConnected, paymentPayoutConfigured,
@@ -872,10 +878,10 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
 <style>${TOURNAMENT_SUMMARY_PRINT_CSS}</style></head>
 <body><main class="page"><p class="eyebrow">Tournament Central | Tournament Summary</p><h1>${escapeHtml(details.name || 'Untitled Tournament')}</h1><p class="meta">${escapeHtml(details.subtitle || details.organizer || 'Tournament configuration export')}</p>
 <section class="grid"><div class="fact"><b>DATES</b>${escapeHtml([details.startDateIso, details.endDateIso].filter(Boolean).join(' to ') || 'Not set')}</div><div class="fact"><b>LOCATION</b>${escapeHtml(location || 'Not set')}</div><div class="fact"><b>ORGANIZER</b>${escapeHtml(details.organizer || 'Not set')}</div><div class="fact"><b>REGISTRATION</b>${escapeHtml([details.registrationOpenIso, details.registrationCloseIso].filter(Boolean).join(' to ') || 'Not set')}</div></section>
-<h2>Events</h2><table><thead><tr><th>Event</th><th>Format</th><th>Players</th><th>Entry Fee</th></tr></thead><tbody>${rows(events.filter((event) => event.enabled).map((event) => [event.name || 'Untitled Event', event.scoring, `${event.minPlayers}-${event.maxPlayers}`, formatCurrency(event.entryFeeCents)])) || '<tr><td colspan="4">No events configured.</td></tr>'}</tbody></table>
+<h2>Events</h2><table><thead><tr><th>Event</th><th>Format</th><th>Players</th><th>Entry Fee</th></tr></thead><tbody>${rows(events.filter((event) => event.enabled).map((event) => [event.name || 'Untitled Event', event.rules ? eventRulesSummary(event.rules, event.scoring) : event.scoring, `${event.minPlayers}-${event.maxPlayers}`, formatCurrency(event.entryFeeCents)])) || '<tr><td colspan="4">No events configured.</td></tr>'}</tbody></table>
 <h2>Divisions</h2><table><thead><tr><th>Division</th><th>Average</th><th>Age</th><th>Mode</th></tr></thead><tbody>${rows(divisions.map((division) => [division.name || 'Untitled Division', `${division.minAverage ?? 'Any'}-${division.maxAverage ?? 'Any'}`, `${division.minAge ?? 'Any'}-${division.maxAge ?? 'Any'}`, division.mode])) || '<tr><td colspan="4">No divisions configured.</td></tr>'}</tbody></table>
 <h2>Squads</h2><table><thead><tr><th>Squad</th><th>Date</th><th>Start</th><th>Capacity</th></tr></thead><tbody>${rows([...squads].sort((a, b) => `${a.dateIso}${a.startTime}`.localeCompare(`${b.dateIso}${b.startTime}`)).map((squad) => [squad.name || 'Squad', squad.dateIso || 'Not set', squad.startTime || 'Not set', String(squad.capacity)])) || '<tr><td colspan="4">No squads configured.</td></tr>'}</tbody></table>
-<h2>Fees and Registration</h2><table><thead><tr><th>Add-on</th><th>Amount</th><th>Required</th></tr></thead><tbody>${rows(fees.filter((fee) => fee.enabled).map((fee) => [fee.name || 'Untitled Add-on', formatCurrency(fee.amountCents), fee.required ? 'Yes' : 'No'])) || '<tr><td colspan="3">No add-ons configured.</td></tr>'}</tbody></table>
+<h2>Fees and Registration</h2><table><thead><tr><th>Add-on</th><th>Type</th><th>Amount</th><th>Required</th></tr></thead><tbody>${rows(fees.filter((fee) => fee.enabled).map((fee) => [fee.name || 'Untitled Add-on', fee.sideEvent ? sideEventSummary(fee.sideEvent) : SIDE_EVENT_LABEL.fee, formatCurrency(fee.amountCents), fee.required ? 'Yes' : 'No'])) || '<tr><td colspan="4">No add-ons configured.</td></tr>'}</tbody></table>
 <p class="footer">Generated ${escapeHtml(new Date().toLocaleString())}. This report excludes registrations, payments, and uploaded files.</p></main></body></html>`;
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -1358,6 +1364,8 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     }
 
     // Cash-only mode is active for this release; online processor checks come later.
+
+    issues.push(...formatRuleIssues(events, fees));
 
     return issues;
   }, [details, divisions, events, fees, fields, persistedTournamentId, questions, squads, userTournaments]);
@@ -2420,6 +2428,22 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     void applyLogoFile(event.dataTransfer.files?.[0] ?? null);
   };
 
+  // A new, never-saved tournament starts by picking a tournament type (or blank).
+  const isNewUnsavedTournament = routeTournamentId === null && !persistedTournamentId;
+  const showTemplateChooser = isNewUnsavedTournament
+    && (isChangingTemplate || (events.length === 0 && details.formatTemplateId === undefined));
+  const handleChooseTemplate = (templateId: string | null) => {
+    const next = applyTournamentTemplate({ details, events, divisions, fees, questions, fields }, templateId);
+    setDetails(next.details);
+    setEvents(next.events);
+    setDivisions(next.divisions);
+    setFees(next.fees);
+    setQuestions(next.questions);
+    setFields(next.fields);
+    setIsChangingTemplate(false);
+    setActiveSection('tournament-details');
+  };
+
   const selectedEvent = selectedEventId ? events.find((entry) => entry.id === selectedEventId) ?? null : null;
   const selectedDivision = selectedDivisionId ? divisions.find((entry) => entry.id === selectedDivisionId) ?? null : null;
   const activeIndex = setupSections.findIndex((section) => section.key === activeSection);
@@ -2450,9 +2474,11 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       <PageHeader
         overline="Tournament setup"
         title={details.name.trim() || 'Untitled tournament'}
-        badge={<Badge tone={builderState.tone}>{builderState.label}</Badge>}
-        description={`Step ${activeIndex + 1} of ${setupSections.length}: ${activeLabel} · ${autosaveStatusLabel}`}
-        actions={(
+        badge={showTemplateChooser ? undefined : <Badge tone={builderState.tone}>{builderState.label}</Badge>}
+        description={showTemplateChooser
+          ? 'Start by choosing the kind of tournament.'
+          : `Step ${activeIndex + 1} of ${setupSections.length}: ${activeLabel} · ${autosaveStatusLabel}`}
+        actions={showTemplateChooser ? undefined : (
           <>
             <input
               ref={templateInputRef}
@@ -2486,6 +2512,13 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
       {publishedAt ? <Notice tone="success" role="status">Tournament published {new Date(publishedAt).toLocaleString()}.</Notice> : null}
       {draftSavedAt && !publishedAt ? <Notice tone="info" role="status">Draft saved {new Date(draftSavedAt).toLocaleString()}.</Notice> : null}
 
+      {showTemplateChooser ? (
+        <TemplateChooser
+          onChoose={handleChooseTemplate}
+          onCancel={isChangingTemplate ? () => setIsChangingTemplate(false) : undefined}
+          currentTemplateId={details.formatTemplateId}
+        />
+      ) : (
       <div className={layout.layout}>
         <aside className={layout.nav}>
           <ProgressBar
@@ -2554,6 +2587,9 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 title="Events and divisions"
                 description="Define registration offerings and optional eligibility groups."
                 status={statusBySection['events-divisions']}
+                actions={isNewUnsavedTournament ? (
+                  <Button variant="secondary" onClick={() => setIsChangingTemplate(true)}>Change tournament type</Button>
+                ) : undefined}
               />
               <div className={layout.cardGrid}>
                 <Card aria-label="Events">
@@ -2609,6 +2645,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                                   `${formatMoney(ev.entryFeeCents)} entry fee`,
                                 ].join(' · ')}
                               </span>
+                              {ev.rules ? <span className={layout.rowMeta}>{eventRulesSummary(ev.rules, ev.scoring)}</span> : null}
                             </div>
                             <div className={layout.rowActions}>
                               <Button size="sm" variant="secondary" onClick={() => setSelectedEventId(ev.id)} aria-label={`Edit ${name}`}>Edit</Button>
@@ -3094,7 +3131,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                           <li key={fee.id} className={layout.row}>
                             <div className={layout.rowText}>
                               <span className={layout.rowTitle}>{name}</span>
-                              <span className={layout.rowMeta}>Optional during registration</span>
+                              <span className={layout.rowMeta}>{fee.sideEvent ? `${sideEventSummary(fee.sideEvent)} · Optional` : 'Optional during registration'}</span>
                             </div>
                             <div className={layout.rowActions}>
                               <span className={layout.amount}>{formatMoney(fee.amountCents)}</span>
@@ -3205,6 +3242,22 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
                 </Card>
               </div>
 
+              {enabledEvents.length > 0 ? (
+                <Card aria-label="Event formats">
+                  <CardHeader title="Event formats" description="What bowlers will see about each event." headingLevel="h3" />
+                  <ul className={layout.rows}>
+                    {enabledEvents.map((event) => (
+                      <li key={event.id} className={layout.row}>
+                        <div className={layout.rowText}>
+                          <span className={layout.rowTitle}>{event.name || 'Untitled event'}</span>
+                          <span className={layout.rowMeta}>{event.rules ? eventRulesSummary(event.rules, event.scoring) : capitalizeFirstLetter(event.scoring)}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              ) : null}
+
               <Card aria-label="Publish">
                 <CardHeader
                   title={blockingIssueCount > 0 ? 'Publishing is blocked' : 'Ready to publish'}
@@ -3245,6 +3298,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
           </nav>
         </div>
       </div>
+      )}
 
       <Modal
         open={isTournamentModalOpen}

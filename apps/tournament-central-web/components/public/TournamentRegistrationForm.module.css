@@ -168,6 +168,149 @@
   margin: 0;
 }
 
+/* Side events: divider rows, name and price on the left, controls on the right. */
+.sideEventsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sideEventList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sideEventRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.sideEventRow:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.sideEventText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.sideEventName {
+  font: var(--type-label);
+  color: var(--bw-text-title);
+}
+
+.sideEventControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.stepperRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stepperLabel {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stepperValue {
+  min-width: var(--space-6);
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+  text-align: center;
+}
+
+.amount {
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.costList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.costList > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.costList dt {
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.costList dd {
+  margin: 0;
+  font: var(--type-table);
+  font-variant-numeric: tabular-nums;
+  color: var(--bw-text-title);
+}
+
+.costTotal {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.costTotal dt,
+.costTotal dd {
+  font-weight: var(--font-weight-bold);
+  color: var(--bw-text-title);
+}
+
+/* Eligibility problems: body-small danger text with an icon. */
+.eligibility {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.problemList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.problemList li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1-5);
+}
+
+.problemList svg {
+  flex-shrink: 0;
+  margin-top: var(--space-0-5);
+}
+
 .confirmation {
   display: flex;
   flex-direction: column;

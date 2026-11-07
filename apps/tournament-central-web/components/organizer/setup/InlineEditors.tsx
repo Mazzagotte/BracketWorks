@@ -5,8 +5,22 @@ import type { FormEvent, ReactNode } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button, CardDivider, CheckboxField, FormGrid, ICON_SIZE, Notice, SelectField, TextAreaField, TextField } from '@bracketworks/ui';
 
+import {
+  EVENT_FORMAT_LABEL,
+  FINALS_LABEL,
+  FORMAT_PLAYERS,
+  SIDE_EVENT_LABEL,
+  defaultDivisionRules,
+  defaultEventRules,
+  defaultSideEvent,
+  normalizeSideEvent,
+} from '../formatTypes';
+import type { AverageSource, BracketRules, DivisionRules, EventFormat, EventRules, FinalsType, SideEventKind, SideEventSettings } from '../formatTypes';
+import { bracketPayoutSummary, handicapExample, payoutRatioText } from '../formatSummaries';
 import { normalizeEventConfig, normalizeSquadConfig } from '../setupSerialization';
 import { buildSquadDisplayName, formatEntryFeeInput, normalizeEntryFeeInput, parseEntryFeeInputToCents } from '../setupFormatting';
+import { eventRuleProblems, sideEventProblems } from '../setupValidation';
+import type { RuleProblem } from '../setupValidation';
 import type { CustomQuestionConfig, DivisionConfig, EventConfig, FeeConfig, LocationConfig, RegistrationFieldConfig, SquadConfig } from '../types';
 import styles from './InlineEditors.module.css';
 
@@ -95,6 +109,277 @@ function CheckboxGroup<T extends { id: string }>({ legend, items, selectedIds, l
 
 const toggleId = (ids: string[], id: string) => (ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]);
 const numberOrNull = (value: string) => (value ? Number(value) : null);
+const errorFor = (problems: RuleProblem[], field: string) => problems.find((problem) => problem.field === field && problem.severity === 'error')?.message;
+
+/** A dollar amount typed as text and kept in cents, the same pattern as the event entry fee. */
+function MoneyField({ label, cents, onChange, error, helper }: {
+  label: string;
+  cents: number;
+  onChange: (cents: number) => void;
+  error?: string;
+  helper?: ReactNode;
+}) {
+  const [input, setInput] = useState(() => formatEntryFeeInput(cents));
+  return (
+    <TextField
+      label={label}
+      inputMode="decimal"
+      value={input}
+      error={error}
+      helper={helper}
+      onChange={(changeEvent) => {
+        const value = normalizeEntryFeeInput(changeEvent.target.value);
+        setInput(value);
+        onChange(parseEntryFeeInputToCents(value));
+      }}
+      onBlur={() => setInput(formatEntryFeeInput(cents))}
+    />
+  );
+}
+
+const AVERAGE_SOURCE_LABEL: Record<AverageSource, string> = {
+  'highest-current-or-last': 'Higher of current or last season',
+  current: 'Current season',
+  'last-season': 'Last season',
+  'organizer-assigned': 'Assigned by the organizer',
+};
+
+/** Format rules for one event: handicap, averages, team rules, re-entry scoring, finals, payouts. */
+function EventRulesSections({ draft, setDraft, problems }: {
+  draft: EventConfig;
+  setDraft: (update: (previous: EventConfig) => EventConfig) => void;
+  problems: RuleProblem[];
+}) {
+  const rules = draft.rules ?? defaultEventRules();
+  const playerCount = Math.max(draft.minPlayers, draft.maxPlayers, 1);
+  const setRules = (patch: Partial<EventRules>) => setDraft((previous) => ({ ...previous, rules: { ...(previous.rules ?? defaultEventRules()), ...patch } }));
+  const handicap = draft.scoring === 'handicap' ? rules.handicap : null;
+  const finals = rules.finals;
+  const cutChoice = finals.cut ? finals.cut.by : 'all';
+
+  const changeFinalsType = (type: FinalsType) => {
+    const defaultCut = type === 'cut' ? { by: 'percent' as const, value: 25 } : type === 'stepladder' ? { by: 'count' as const, value: 5 } : null;
+    setRules({
+      finals: {
+        ...finals,
+        type,
+        cut: type === 'none' ? null : finals.cut ?? defaultCut,
+        roundRobinScoring: type === 'round-robin' ? finals.roundRobinScoring ?? 'bonus-pins' : null,
+        winBonusPins: type === 'round-robin' ? finals.winBonusPins ?? 30 : null,
+      },
+    });
+  };
+  const changeCutChoice = (choice: string) => {
+    setRules({ finals: { ...finals, cut: choice === 'all' ? null : { by: choice === 'percent' ? 'percent' : 'count', value: finals.cut?.value ?? 0 } } });
+  };
+
+  return (
+    <>
+      {handicap ? (
+        <EditorSection title="Handicap" description="Each game's handicap is a percent of the difference between the basis score and the bowler's average.">
+          <div className={styles.grid3}>
+            <TextField
+              label="Percent"
+              type="number"
+              min={1}
+              max={100}
+              value={handicap.percent}
+              error={errorFor(problems, 'handicapPercent')}
+              onChange={(e) => setRules({ handicap: { ...handicap, percent: Number(e.target.value) } })}
+            />
+            <TextField
+              label="Basis score"
+              type="number"
+              min={1}
+              value={handicap.basis}
+              error={errorFor(problems, 'handicapBasis')}
+              onChange={(e) => setRules({ handicap: { ...handicap, basis: Number(e.target.value) } })}
+            />
+            <TextField
+              label="Most pins per game"
+              optional
+              type="number"
+              min={0}
+              placeholder="No limit"
+              value={handicap.maxPins ?? ''}
+              error={errorFor(problems, 'handicapMaxPins')}
+              onChange={(e) => setRules({ handicap: { ...handicap, maxPins: numberOrNull(e.target.value) } })}
+            />
+          </div>
+          {playerCount === 2 || handicap.perPair ? (
+            <CheckboxField
+              label="Figure handicap from the pair's combined average"
+              checked={handicap.perPair}
+              onChange={(e) => setRules({ handicap: { ...handicap, perPair: e.target.checked } })}
+            />
+          ) : null}
+          <p className={styles.helper} aria-live="polite">{handicapExample(handicap)}</p>
+        </EditorSection>
+      ) : null}
+
+      <EditorSection title="Entering average" description="Which average bowlers enter with, and what happens without one.">
+        <FormGrid>
+          <SelectField label="Average to use" value={rules.average.source} onChange={(e) => setRules({ average: { ...rules.average, source: e.target.value as AverageSource } })}>
+            {(Object.keys(AVERAGE_SOURCE_LABEL) as AverageSource[]).map((source) => <option key={source} value={source}>{AVERAGE_SOURCE_LABEL[source]}</option>)}
+          </SelectField>
+          <TextField
+            label="Minimum games behind the average"
+            type="number"
+            min={0}
+            value={rules.average.minGames}
+            error={errorFor(problems, 'averageMinGames')}
+            onChange={(e) => setRules({ average: { ...rules.average, minGames: Number(e.target.value) } })}
+          />
+          <SelectField
+            label="Bowlers without an average"
+            value={rules.average.noAverage}
+            onChange={(e) => setRules({ average: { ...rules.average, noAverage: e.target.value === 'not-eligible' ? 'not-eligible' : 'assigned-average' } })}
+          >
+            <option value="assigned-average">Bowl with an assigned average</option>
+            <option value="not-eligible">Not eligible</option>
+          </SelectField>
+          {rules.average.noAverage === 'assigned-average' ? (
+            <TextField
+              label="Assigned average"
+              optional
+              type="number"
+              min={0}
+              placeholder="Not set"
+              value={rules.average.assignedAverage ?? ''}
+              error={errorFor(problems, 'assignedAverage')}
+              onChange={(e) => setRules({ average: { ...rules.average, assignedAverage: numberOrNull(e.target.value) } })}
+            />
+          ) : null}
+        </FormGrid>
+      </EditorSection>
+
+      {playerCount >= 2 ? (
+        <EditorSection title="Team rules" description="Rules for who can bowl together on one entry.">
+          <CheckboxField
+            label="Mixed: each entry needs at least one man and one woman"
+            checked={rules.team.mixedRequired}
+            onChange={(e) => setRules({ team: { ...rules.team, mixedRequired: e.target.checked } })}
+          />
+          <FormGrid>
+            <TextField
+              label="Combined average limit"
+              optional
+              type="number"
+              min={1}
+              placeholder="No limit"
+              value={rules.team.combinedAverageMax ?? ''}
+              error={errorFor(problems, 'combinedAverageMax')}
+              onChange={(e) => setRules({ team: { ...rules.team, combinedAverageMax: numberOrNull(e.target.value) } })}
+            />
+          </FormGrid>
+        </EditorSection>
+      ) : null}
+
+      <EditorSection title="Re-entry" description="Whether a bowler may enter this event more than once.">
+        <CheckboxField
+          label="Allow bowlers to enter this event more than once"
+          checked={draft.allowReentry}
+          onChange={(e) => {
+            const checked = e.target.checked;
+            setDraft((previous) => ({ ...previous, allowReentry: checked, maxReentries: checked ? Math.max(previous.maxReentries, 1) : 0 }));
+          }}
+        />
+        {draft.allowReentry ? (
+          <FormGrid>
+            <SelectField
+              label="Re-entry scoring"
+              value={rules.reentryScoring}
+              onChange={(e) => setRules({ reentryScoring: e.target.value === 'best-counts' ? 'best-counts' : 'all-count' })}
+            >
+              <option value="all-count">Every set counts</option>
+              <option value="best-counts">Only the best set counts</option>
+            </SelectField>
+          </FormGrid>
+        ) : null}
+      </EditorSection>
+
+      <EditorSection title="Finals" description="What happens after qualifying.">
+        <FormGrid>
+          <SelectField label="Finals" value={finals.type} onChange={(e) => changeFinalsType(e.target.value as FinalsType)}>
+            {(Object.keys(FINALS_LABEL) as FinalsType[]).map((type) => <option key={type} value={type}>{FINALS_LABEL[type]}</option>)}
+          </SelectField>
+          {finals.type !== 'none' ? (
+            <SelectField label="Who advances" value={cutChoice} onChange={(e) => changeCutChoice(e.target.value)}>
+              {finals.type !== 'cut' ? <option value="all">Everyone</option> : null}
+              <option value="count">A set number of bowlers</option>
+              <option value="percent">A percent of the field</option>
+            </SelectField>
+          ) : null}
+          {finals.type !== 'none' && finals.cut ? (
+            <TextField
+              label={finals.cut.by === 'percent' ? 'Percent who advance' : 'Bowlers who advance'}
+              type="number"
+              min={1}
+              max={finals.cut.by === 'percent' ? 100 : undefined}
+              value={finals.cut.value || ''}
+              error={errorFor(problems, 'cutValue')}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setRules({ finals: { ...finals, cut: { by: finals.cut?.by ?? 'count', value } } });
+              }}
+            />
+          ) : null}
+          {finals.type === 'round-robin' ? (
+            <SelectField
+              label="Round robin scoring"
+              value={finals.roundRobinScoring ?? 'bonus-pins'}
+              onChange={(e) => setRules({ finals: { ...finals, roundRobinScoring: e.target.value === 'petersen' ? 'petersen' : 'bonus-pins' } })}
+            >
+              <option value="bonus-pins">Bonus pins for each win</option>
+              <option value="petersen">Petersen points</option>
+            </SelectField>
+          ) : null}
+          {finals.type === 'round-robin' && finals.roundRobinScoring !== 'petersen' ? (
+            <TextField
+              label="Bonus pins for a win"
+              type="number"
+              min={0}
+              value={finals.winBonusPins ?? ''}
+              helper="A tie usually earns half."
+              onChange={(e) => setRules({ finals: { ...finals, winBonusPins: numberOrNull(e.target.value) } })}
+            />
+          ) : null}
+          {finals.type !== 'none' ? (
+            <TextAreaField
+              label="Finals notes"
+              optional
+              fullRow
+              placeholder="For example: Top 5 bowl a stepladder, one game per match."
+              value={finals.notes}
+              onChange={(e) => setRules({ finals: { ...finals, notes: e.target.value } })}
+            />
+          ) : null}
+        </FormGrid>
+      </EditorSection>
+
+      <EditorSection title="Payouts and membership">
+        <FormGrid>
+          <TextField
+            label="Entries per cash prize"
+            optional
+            type="number"
+            min={1}
+            placeholder="Not stated"
+            value={rules.payoutRatio ?? ''}
+            error={errorFor(problems, 'payoutRatio')}
+            helper={payoutRatioText(rules.payoutRatio) ?? 'For example, 5 means about 1 in 5 entries cash.'}
+            onChange={(e) => setRules({ payoutRatio: numberOrNull(e.target.value) })}
+          />
+        </FormGrid>
+        <CheckboxField
+          label="Bowlers must have a current USBC membership"
+          checked={rules.usbcRequired}
+          onChange={(e) => setRules({ usbcRequired: e.target.checked })}
+        />
+      </EditorSection>
+    </>
+  );
+}
 
 type InlineEventEditorProps = {
   event: EventConfig;
@@ -114,7 +399,28 @@ export function InlineEventEditor({ event, divisions, squads, onSave, onCancel, 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(normalizeEventConfig(event)) || entryFeeInput !== formatEntryFeeInput(event.entryFeeCents);
   const squadsAreInvalid = draft.requireSquad && draft.connectedSquadIds.length === 0;
   const divisionsAreInvalid = draft.requireDivision && draft.connectedDivisionIds.length === 0;
-  const isValid = Boolean(draft.name.trim()) && requiredBowlerCount >= 1 && !squadsAreInvalid && !divisionsAreInvalid;
+  const rules = draft.rules ?? defaultEventRules();
+  const ruleProblems = eventRuleProblems(draft);
+  const rulesAreInvalid = ruleProblems.some((problem) => problem.severity === 'error');
+  const isValid = Boolean(draft.name.trim()) && requiredBowlerCount >= 1 && !squadsAreInvalid && !divisionsAreInvalid && !rulesAreInvalid;
+
+  /** Suggests the usual team size for the new format unless the organizer already changed it. */
+  const changeFormat = (format: EventFormat) => {
+    setDraft((previous) => {
+      const previousRules = previous.rules ?? defaultEventRules();
+      const count = Math.max(previous.minPlayers, previous.maxPlayers, 1);
+      const players = count === FORMAT_PLAYERS[previousRules.format] ? FORMAT_PLAYERS[format] : count;
+      const handicap = previousRules.handicap ? { ...previousRules.handicap, perPair: format === 'scotch-doubles' } : null;
+      return { ...previous, minPlayers: players, maxPlayers: players, rules: { ...previousRules, format, handicap } };
+    });
+  };
+  const changeScoring = (scoring: EventConfig['scoring']) => {
+    setDraft((previous) => {
+      const previousRules = previous.rules ?? defaultEventRules();
+      const handicap = scoring === 'handicap' ? previousRules.handicap ?? defaultEventRules(previousRules.format, 'handicap').handicap : null;
+      return { ...previous, scoring, rules: { ...previousRules, handicap } };
+    });
+  };
 
   const setDivisionRequirement = (value: string) => {
     setDraft(value === 'none'
@@ -144,8 +450,11 @@ export function InlineEventEditor({ event, divisions, squads, onSave, onCancel, 
         </FormGrid>
       </EditorSection>
 
-      <EditorSection title="Format and pricing" description="Team size, scoring method, and entry price.">
+      <EditorSection title="Format and pricing" description="How the event is bowled, team size, scoring method, games, and entry price.">
         <div className={styles.grid3}>
+          <SelectField label="Format" value={rules.format} onChange={(e) => changeFormat(e.target.value as EventFormat)}>
+            {(Object.keys(EVENT_FORMAT_LABEL) as EventFormat[]).map((format) => <option key={format} value={format}>{EVENT_FORMAT_LABEL[format]}</option>)}
+          </SelectField>
           <TextField
             label="Bowlers per entry"
             type="number"
@@ -156,7 +465,17 @@ export function InlineEventEditor({ event, divisions, squads, onSave, onCancel, 
               setDraft({ ...draft, minPlayers: count, maxPlayers: count });
             }}
           />
-          <SelectField label="Scoring" value={draft.scoring} onChange={(e) => setDraft({ ...draft, scoring: e.target.value as EventConfig['scoring'] })}>
+          <TextField
+            label="Games"
+            optional
+            type="number"
+            min={0}
+            placeholder="Not stated"
+            value={rules.games || ''}
+            error={errorFor(ruleProblems, 'games')}
+            onChange={(e) => setDraft({ ...draft, rules: { ...rules, games: Number(e.target.value) || 0 } })}
+          />
+          <SelectField label="Scoring" value={draft.scoring} onChange={(e) => changeScoring(e.target.value as EventConfig['scoring'])}>
             <option value="handicap">Handicap</option>
             <option value="scratch">Scratch</option>
             <option value="no-tap">No-tap</option>
@@ -175,13 +494,7 @@ export function InlineEventEditor({ event, divisions, squads, onSave, onCancel, 
         </div>
       </EditorSection>
 
-      <EditorSection title="Re-entry" description="Whether a bowler may enter this event more than once.">
-        <CheckboxField
-          label="Allow bowlers to enter this event more than once"
-          checked={draft.allowReentry}
-          onChange={(e) => setDraft({ ...draft, allowReentry: e.target.checked, maxReentries: e.target.checked ? 1 : 0 })}
-        />
-      </EditorSection>
+      <EventRulesSections draft={draft} setDraft={setDraft} problems={ruleProblems} />
 
       <EditorSection
         title="Squads"
@@ -233,8 +546,10 @@ type InlineDivisionEditorProps = {
 };
 
 export function InlineDivisionEditor({ division, usedByEventNames, onSave, onCancel, onDelete }: InlineDivisionEditorProps) {
-  const [draft, setDraft] = useState<DivisionConfig>(division);
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(division);
+  const [draft, setDraft] = useState<DivisionConfig>(() => ({ ...division, rules: division.rules ?? defaultDivisionRules() }));
+  const divisionRules = draft.rules ?? defaultDivisionRules();
+  const setDivisionRules = (patch: Partial<DivisionRules>) => setDraft((previous) => ({ ...previous, rules: { ...(previous.rules ?? defaultDivisionRules()), ...patch } }));
+  const isDirty = JSON.stringify(draft) !== JSON.stringify({ ...division, rules: division.rules ?? defaultDivisionRules() });
   const averageRangeIsInvalid = draft.minAverage !== null && draft.maxAverage !== null && draft.minAverage > draft.maxAverage;
   const ageRangeIsInvalid = draft.minAge !== null && draft.maxAge !== null && draft.minAge > draft.maxAge;
   const negativeValueIsInvalid = [draft.minAverage, draft.maxAverage, draft.minAge, draft.maxAge].some((value) => value !== null && value < 0);
@@ -267,6 +582,20 @@ export function InlineDivisionEditor({ division, usedByEventNames, onSave, onCan
           <TextField label="Maximum average" optional type="number" placeholder="No limit" value={draft.maxAverage ?? ''} onChange={(e) => setDraft({ ...draft, maxAverage: numberOrNull(e.target.value) })} />
           <TextField label="Minimum age" optional type="number" placeholder="No limit" value={draft.minAge ?? ''} onChange={(e) => setDraft({ ...draft, minAge: numberOrNull(e.target.value) })} />
           <TextField label="Maximum age" optional type="number" placeholder="No limit" value={draft.maxAge ?? ''} onChange={(e) => setDraft({ ...draft, maxAge: numberOrNull(e.target.value) })} />
+          <SelectField label="Gender" value={divisionRules.gender} onChange={(e) => setDivisionRules({ gender: e.target.value as DivisionRules['gender'] })}>
+            <option value="any">Any</option>
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+          </SelectField>
+          <SelectField
+            label="Prizes"
+            value={divisionRules.prizeType}
+            helper={divisionRules.prizeType === 'scholarship' ? 'Scholarships protect youth bowlers\' amateur eligibility.' : undefined}
+            onChange={(e) => setDivisionRules({ prizeType: e.target.value === 'scholarship' ? 'scholarship' : 'cash' })}
+          >
+            <option value="cash">Cash</option>
+            <option value="scholarship">Scholarship</option>
+          </SelectField>
         </FormGrid>
         {averageRangeIsInvalid ? <Notice tone="danger" role="alert">Minimum average cannot be greater than maximum average.</Notice> : null}
         {ageRangeIsInvalid ? <Notice tone="danger" role="alert">Minimum age cannot be greater than maximum age.</Notice> : null}
@@ -490,7 +819,28 @@ type FeeEditorProps = {
 };
 
 export function FeeEditor({ fee, events, divisions, squads, onSave }: FeeEditorProps) {
-  const [draft, setDraft] = useState<FeeConfig>({ ...fee, required: false });
+  const [draft, setDraft] = useState<FeeConfig>(() => ({ ...fee, required: false, sideEvent: fee.sideEvent ?? normalizeSideEvent(undefined) }));
+  const sideEvent: SideEventSettings = draft.sideEvent ?? defaultSideEvent('fee');
+  const brackets = sideEvent.kind === 'brackets' ? sideEvent.brackets : null;
+  const problems = sideEventProblems(draft);
+  const payoutWarning = problems.find((problem) => problem.field === 'bracketPayouts');
+  const hasErrors = problems.some((problem) => problem.severity === 'error');
+  const setSideEvent = (patch: Partial<SideEventSettings>) => setDraft((previous) => ({ ...previous, sideEvent: { ...(previous.sideEvent ?? defaultSideEvent('fee')), ...patch } }));
+  const setBrackets = (patch: Partial<BracketRules>) => {
+    if (!brackets) return;
+    setSideEvent({ brackets: { ...brackets, ...patch } });
+  };
+  const changeKind = (kind: SideEventKind) => {
+    setDraft((previous) => {
+      const previousLabel = previous.sideEvent ? SIDE_EVENT_LABEL[previous.sideEvent.kind] : '';
+      const keepsName = previous.name.trim() && previous.name !== previousLabel;
+      return {
+        ...previous,
+        name: keepsName || kind === 'fee' ? previous.name : SIDE_EVENT_LABEL[kind],
+        sideEvent: defaultSideEvent(kind),
+      };
+    });
+  };
   const scopeGroups: Array<{ legend: string; items: Array<{ id: string; name: string }>; key: 'eventIds' | 'divisionIds' | 'squadIds' }> = [
     { legend: 'Events', items: events, key: 'eventIds' },
     { legend: 'Divisions', items: divisions, key: 'divisionIds' },
@@ -501,18 +851,67 @@ export function FeeEditor({ fee, events, divisions, squads, onSave }: FeeEditorP
     <EditorForm onSubmit={() => onSave({ ...draft, required: false })}>
       <EditorSection first title="Add-on" description="Base entry fees are set in each event.">
         <FormGrid>
+          <SelectField label="Type" value={sideEvent.kind} onChange={(e) => changeKind(e.target.value as SideEventKind)}>
+            {(Object.keys(SIDE_EVENT_LABEL) as SideEventKind[]).map((kind) => <option key={kind} value={kind}>{SIDE_EVENT_LABEL[kind]}</option>)}
+          </SelectField>
           <TextField label="Name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required />
-          <TextField
-            label="Amount (USD)"
-            type="number"
-            min={0}
-            step="0.01"
-            value={(draft.amountCents / 100).toFixed(2)}
-            onChange={(e) => setDraft({ ...draft, amountCents: Math.round(Number(e.target.value || '0') * 100) })}
-          />
+          <MoneyField label="Price (USD)" cents={draft.amountCents} onChange={(amountCents) => setDraft((previous) => ({ ...previous, amountCents }))} />
+          <SelectField label="Charged" value={sideEvent.per} onChange={(e) => setSideEvent({ per: e.target.value === 'registration' ? 'registration' : 'bowler' })}>
+            <option value="bowler">Per bowler</option>
+            <option value="registration">Once per registration</option>
+          </SelectField>
         </FormGrid>
+        <CheckboxField
+          label="Bowlers choose a quantity"
+          helper="For example, 5 brackets. Otherwise it's yes or no."
+          checked={sideEvent.allowQuantity}
+          onChange={(e) => setSideEvent({ allowQuantity: e.target.checked, maxQuantity: e.target.checked ? sideEvent.maxQuantity : null })}
+        />
+        {sideEvent.allowQuantity ? (
+          <FormGrid>
+            <TextField
+              label="Most a bowler can buy"
+              optional
+              type="number"
+              min={1}
+              placeholder="No limit"
+              value={sideEvent.maxQuantity ?? ''}
+              error={errorFor(problems, 'maxQuantity')}
+              onChange={(e) => setSideEvent({ maxQuantity: numberOrNull(e.target.value) })}
+            />
+          </FormGrid>
+        ) : null}
         <CheckboxField label="Offer this add-on" checked={draft.enabled} onChange={(e) => setDraft({ ...draft, enabled: e.target.checked })} />
       </EditorSection>
+
+      {brackets ? (
+        <EditorSection title="Brackets" description="Single elimination over three games, using each bowler's main event scores.">
+          <div className={styles.grid3}>
+            <SelectField label="Scoring" value={brackets.scoring} onChange={(e) => setBrackets({ scoring: e.target.value === 'scratch' ? 'scratch' : 'handicap' })}>
+              <option value="handicap">Handicap</option>
+              <option value="scratch">Scratch</option>
+            </SelectField>
+            <TextField
+              label="Bowlers per bracket"
+              type="number"
+              min={2}
+              value={brackets.size || ''}
+              error={errorFor(problems, 'bracketSize')}
+              onChange={(e) => setBrackets({ size: Number(e.target.value) || 0 })}
+            />
+            <MoneyField label="1st place (USD)" cents={brackets.firstPlaceCents} onChange={(firstPlaceCents) => setBrackets({ firstPlaceCents })} />
+            <MoneyField label="2nd place (USD)" cents={brackets.secondPlaceCents} onChange={(secondPlaceCents) => setBrackets({ secondPlaceCents })} />
+            <MoneyField label="House (USD)" cents={brackets.houseCents} onChange={(houseCents) => setBrackets({ houseCents })} />
+          </div>
+          <CheckboxField
+            label="Refund entries in brackets that don't fill"
+            checked={brackets.refundUnfilled}
+            onChange={(e) => setBrackets({ refundUnfilled: e.target.checked })}
+          />
+          <p className={styles.helper} aria-live="polite">{bracketPayoutSummary(draft.amountCents, brackets)}</p>
+          {payoutWarning ? <Notice tone="warning" role="status">{payoutWarning.message}</Notice> : null}
+        </EditorSection>
+      ) : null}
 
       <EditorSection title="Applies to">
         <div className={styles.grid3}>
@@ -529,7 +928,7 @@ export function FeeEditor({ fee, events, divisions, squads, onSave }: FeeEditorP
         </div>
       </EditorSection>
 
-      <EditorActions saveLabel="Save add-on" />
+      <EditorActions saveLabel="Save add-on" canSave={!hasErrors} />
     </EditorForm>
   );
 }

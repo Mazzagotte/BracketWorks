@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import { ArrowRight, Check, Info } from 'lucide-react';
+import { ArrowRight, Check, CircleAlert, Info, Minus, Plus } from 'lucide-react';
 import {
   Button,
   CardDivider,
@@ -20,6 +20,17 @@ import {
 import styles from './TournamentRegistrationForm.module.css';
 import TournamentRules, { type PublicTournamentDocument } from './TournamentRules';
 import { getMyAccount } from '@/components/organizer/organizerApi';
+import type { SideEventSelection } from '@/components/organizer/formatTypes';
+import { checkRegistrationEligibility, parseReferenceDate, requiredBowlerFields } from './registrationEligibility';
+import {
+  bracketPayoutLine,
+  formatSideEventMoney,
+  keepOfferedSelections,
+  offeredSideEvents,
+  sideEventLines,
+  type OfferedSideEvent,
+  type PublicFeeConfig,
+} from './registrationSideEvents';
 
 export type RegistrationQuestionAnswerValue = string | boolean | string[];
 
@@ -31,6 +42,10 @@ export type RegistrationFormState = {
   notes: string;
   bowlerQuestionAnswers: Array<Record<string, RegistrationQuestionAnswerValue>>;
   acceptTerms: boolean;
+  /** Optional side events picked on the form. The server adds required fees and prices every line. */
+  sideEvents?: SideEventSelection[];
+  /** Staff only: register even though the bowlers don't meet the rules (`eligibility="warn"`). */
+  overrideEligibility?: boolean;
 };
 
 type RegistrationFieldConfigLike = {
@@ -55,10 +70,35 @@ type RegistrationOptionLike = {
   name: string;
 };
 
+type RegistrationEventLike = RegistrationOptionLike & {
+  entryFeeCents?: number;
+  /** Event rules from setup (EventRules), used for eligibility checks. */
+  rules?: unknown;
+};
+
+type RegistrationDivisionLike = RegistrationOptionLike & {
+  minAverage?: number | null;
+  maxAverage?: number | null;
+  minAge?: number | null;
+  maxAge?: number | null;
+  /** Division rules from setup (DivisionRules), used for the gender check. */
+  rules?: unknown;
+};
+
 type RegistrationSquadLike = RegistrationOptionLike & {
   dateIso?: string;
   startTime?: string;
 };
+
+/** Fields the event or division rules need when setup doesn't already ask for them. */
+const RULE_FIELDS: RegistrationFieldConfigLike[] = [
+  { id: 'rule-usbc_number', key: 'usbc_number', label: 'USBC number', mode: 'required', validation: 'Pattern' },
+  { id: 'rule-date_of_birth', key: 'date_of_birth', label: 'Date of birth', mode: 'required', validation: 'Date' },
+  { id: 'rule-average', key: 'average', label: 'Average', mode: 'required', validation: 'Number' },
+  { id: 'rule-gender', key: 'gender', label: 'Gender', mode: 'required', validation: 'Enum' },
+];
+
+const GENDER_OPTIONS: Array<[string, string]> = [['M', 'Man'], ['F', 'Woman']];
 
 type TournamentRegistrationFormProps = {
   tournamentName: string;
@@ -66,9 +106,18 @@ type TournamentRegistrationFormProps = {
   tournamentLocation?: string;
   tournamentLogoUrl?: string | null;
   squads: RegistrationSquadLike[];
-  events: RegistrationOptionLike[];
-  divisions: RegistrationOptionLike[];
+  events: RegistrationEventLike[];
+  divisions: RegistrationDivisionLike[];
   fields: RegistrationFieldConfigLike[];
+  /** Fees and side events from the public registration config. */
+  fees?: PublicFeeConfig[];
+  /** First tournament day (YYYY-MM-DD), for division age limits. */
+  startDate?: string | null;
+  /**
+   * `block` (default): bowlers who don't meet the rules can't continue.
+   * `warn`: staff see the same problems and may tick "Register anyway".
+   */
+  eligibility?: 'block' | 'warn';
   questions: RegistrationQuestionConfigLike[];
   requiredBowlerCount: number;
   formState: RegistrationFormState;
@@ -146,7 +195,10 @@ export default function TournamentRegistrationForm({
   squads,
   events,
   divisions,
-  fields,
+  fields: configuredFields,
+  fees,
+  startDate,
+  eligibility = 'block',
   questions,
   requiredBowlerCount,
   formState,
@@ -172,6 +224,72 @@ export default function TournamentRegistrationForm({
   const confirmationRef = useRef<HTMLHeadingElement>(null);
   const mountedRef = useRef(true);
   const disclosureAgreementRef = useRef<HTMLInputElement | null>(null);
+  const eligibilityRef = useRef<HTMLDivElement>(null);
+  const sideEventsHeadingId = useId();
+  const [showEligibility, setShowEligibility] = useState(false);
+
+  const eventConfig = events.find((entry) => entry.id === formState.eventId) ?? null;
+  const divisionConfig = divisions.find((entry) => entry.id === formState.divisionId) ?? null;
+
+  // Rules can need a field setup doesn't ask for (gender for a women's division): ask for it, required.
+  // A setup may ask gender as a custom "Gender" question instead of the built-in field; use its answer.
+  const genderQuestionId = questions.find((question) => question.label.trim().toLowerCase() === 'gender')?.id ?? null;
+  const ruleFieldKeys = useMemo(() => requiredBowlerFields(eventConfig, divisionConfig), [eventConfig, divisionConfig]);
+  const fields = useMemo(() => {
+    const list = configuredFields.map((field) => (
+      ruleFieldKeys.has(normalizeRegistrationFieldKey(field.key)) && field.mode !== 'required' ? { ...field, mode: 'required' as const } : field
+    ));
+    const asked = new Set(list.map((field) => normalizeRegistrationFieldKey(field.key)));
+    if (genderQuestionId) asked.add('gender');
+    return [...list, ...RULE_FIELDS.filter((field) => ruleFieldKeys.has(field.key) && !asked.has(field.key))];
+  }, [configuredFields, ruleFieldKeys, genderQuestionId]);
+
+  const eligibilityProblems = useMemo(() => checkRegistrationEligibility({
+    event: eventConfig,
+    division: divisionConfig,
+    bowlers: formState.bowlers.map((bowler, index) => {
+      const answer = genderQuestionId ? formState.bowlerQuestionAnswers[index]?.[genderQuestionId] : undefined;
+      return !bowler.gender && typeof answer === 'string' ? { ...bowler, gender: answer } : bowler;
+    }),
+    referenceDate: parseReferenceDate(startDate),
+  }), [eventConfig, divisionConfig, formState.bowlers, formState.bowlerQuestionAnswers, genderQuestionId, startDate]);
+
+  const offered = useMemo(
+    () => offeredSideEvents(fees, { eventId: formState.eventId, divisionId: formState.divisionId, squadId: formState.squadId }),
+    [fees, formState.eventId, formState.divisionId, formState.squadId],
+  );
+  const bowlerCount = formState.bowlers.length;
+  const lines = useMemo(() => sideEventLines(offered, formState.sideEvents, bowlerCount), [offered, formState.sideEvents, bowlerCount]);
+  const sideEventsTotal = lines.reduce((total, line) => total + line.totalCents, 0);
+  const entryFeeCents = typeof eventConfig?.entryFeeCents === 'number' ? Math.max(0, eventConfig.entryFeeCents) : 0;
+
+  // Drop picks that no longer apply after the event, division, squad, or bowler count changes.
+  useEffect(() => {
+    const current = formState.sideEvents ?? [];
+    const kept = keepOfferedSelections(current, offered, bowlerCount);
+    if (JSON.stringify(kept) !== JSON.stringify(current)) {
+      setFormState((prev) => ({ ...prev, sideEvents: kept }));
+    }
+  }, [offered, bowlerCount, formState.sideEvents, setFormState]);
+
+  // An override only applies while there is something to override.
+  useEffect(() => {
+    if (eligibilityProblems.length === 0 && formState.overrideEligibility) {
+      setFormState((prev) => ({ ...prev, overrideEligibility: false }));
+    }
+  }, [eligibilityProblems.length, formState.overrideEligibility, setFormState]);
+
+  const setSideEventQuantity = (feeId: string, bowlerIndex: number | null, quantity: number) => {
+    setFormState((prev) => {
+      const rest = (prev.sideEvents ?? []).filter((item) => !(item.feeId === feeId && item.bowlerIndex === bowlerIndex));
+      return { ...prev, sideEvents: quantity > 0 ? [...rest, { feeId, bowlerIndex, quantity }] : rest };
+    });
+  };
+
+  const bowlerName = (index: number): string => {
+    const bowler = formState.bowlers[index] ?? {};
+    return `${bowler.first_name ?? ''} ${bowler.last_name ?? ''}`.trim() || `Bowler ${index + 1}`;
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -228,6 +346,11 @@ export default function TournamentRegistrationForm({
     const inputs = bodyRef.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea');
     for (const input of inputs ?? []) {
       if (!input.reportValidity()) return;
+    }
+    if (eligibilityProblems.length > 0 && (eligibility === 'block' || !formState.overrideEligibility)) {
+      setShowEligibility(true);
+      window.setTimeout(() => eligibilityRef.current?.focus(), 0);
+      return;
     }
     setFormState((prev) => ({ ...prev, acceptTerms: false }));
     setIsDisclosureOpen(true);
@@ -355,6 +478,88 @@ export default function TournamentRegistrationForm({
     return answer || 'Not provided';
   };
 
+  const formatFieldValue = (key: string, value: string | undefined): string => {
+    if (key === 'gender') return GENDER_OPTIONS.find(([code]) => code === value)?.[1] ?? (value || 'Not provided');
+    return value || 'Not provided';
+  };
+
+  const renderSideEventControl = (item: OfferedSideEvent, bowlerIndex: number | null) => {
+    const name = item.fee.name || 'Side event';
+    const who = bowlerIndex !== null && bowlerCount > 1 ? bowlerName(bowlerIndex) : null;
+    const forWho = bowlerIndex !== null ? ` for ${bowlerName(bowlerIndex)}` : '';
+    const quantity = (formState.sideEvents ?? [])
+      .find((selection) => selection.feeId === item.fee.id && selection.bowlerIndex === bowlerIndex)?.quantity ?? 0;
+    const key = `${item.fee.id}-${bowlerIndex ?? 'registration'}`;
+
+    if (!item.settings.allowQuantity) {
+      return (
+        <CheckboxField
+          key={key}
+          label={who ? `Add for ${who}` : `Add ${name}`}
+          checked={quantity > 0}
+          onChange={(event) => setSideEventQuantity(item.fee.id, bowlerIndex, event.target.checked ? 1 : 0)}
+        />
+      );
+    }
+    return (
+      <div key={key} className={styles.stepperRow} role="group" aria-label={`${name}${forWho}`}>
+        {who ? <span className={styles.stepperLabel}>{who}</span> : null}
+        <span className={styles.stepper}>
+          <Button
+            size="sm"
+            variant="secondary"
+            iconOnly
+            icon={<Minus size={ICON_SIZE.md} />}
+            aria-label={`Fewer ${name}${forWho}`}
+            disabled={quantity <= 0}
+            onClick={() => setSideEventQuantity(item.fee.id, bowlerIndex, quantity - 1)}
+          />
+          <output className={styles.stepperValue} aria-live="polite">{quantity}</output>
+          <Button
+            size="sm"
+            variant="secondary"
+            iconOnly
+            icon={<Plus size={ICON_SIZE.md} />}
+            aria-label={`More ${name}${forWho}`}
+            disabled={quantity >= item.maxQuantity}
+            onClick={() => setSideEventQuantity(item.fee.id, bowlerIndex, quantity + 1)}
+          />
+        </span>
+      </div>
+    );
+  };
+
+  const renderSideEvent = (item: OfferedSideEvent) => {
+    const price = formatSideEventMoney(item.amountCents);
+    const per = item.settings.per === 'bowler' ? 'per bowler' : 'per registration';
+    const priceText = item.settings.allowQuantity
+      ? `${price} each, up to ${item.maxQuantity} ${per}`
+      : `${price} ${per}`;
+    const payout = bracketPayoutLine(item.settings);
+    const indexes: Array<number | null> = item.settings.per === 'bowler'
+      ? Array.from({ length: bowlerCount }, (_, index) => index)
+      : [null];
+    return (
+      <li key={item.fee.id} className={styles.sideEventRow}>
+        <div className={styles.sideEventText}>
+          <span className={styles.sideEventName}>{item.fee.name || 'Side event'}</span>
+          <span className={styles.helper}>{priceText}</span>
+          {payout ? <span className={styles.helper}>{payout}</span> : null}
+        </div>
+        <div className={styles.sideEventControls} role="group" aria-label={item.fee.name || 'Side event'}>
+          {item.fee.required
+            ? <span className={styles.helper}>Included with every entry</span>
+            : indexes.map((bowlerIndex) => renderSideEventControl(item, bowlerIndex))}
+        </div>
+      </li>
+    );
+  };
+
+  const lineLabel = (line: (typeof lines)[number]): string => {
+    const name = line.quantity > 1 ? `${line.name} x${line.quantity}` : line.name;
+    return line.bowlerIndex !== null && bowlerCount > 1 ? `${name}, ${bowlerName(line.bowlerIndex)}` : name;
+  };
+
   const footer = confirmation ? (
     <Button variant="primary" onClick={onClose}>Done</Button>
   ) : (
@@ -466,6 +671,21 @@ export default function TournamentRegistrationForm({
                 {fields.map((field) => {
                   const key = normalizeRegistrationFieldKey(field.key);
                   const shouldCapitalize = isNameOrLocationField(field);
+                  if (key === 'gender') {
+                    return (
+                      <SelectField
+                        key={`${field.id}-${bowlerIndex}`}
+                        label={field.customLabel || field.label || 'Gender'}
+                        optional={field.mode === 'optional'}
+                        value={bowlerFields[key] || ''}
+                        required={field.mode === 'required'}
+                        onChange={(event) => setBowlerField(bowlerIndex, key, event.target.value)}
+                      >
+                        <option value="">Select an option</option>
+                        {GENDER_OPTIONS.map(([value, optionLabel]) => <option key={value} value={value}>{optionLabel}</option>)}
+                      </SelectField>
+                    );
+                  }
                   return (
                     <TextField
                       key={`${field.id}-${bowlerIndex}`}
@@ -486,6 +706,23 @@ export default function TournamentRegistrationForm({
             </section>
           ))}
 
+          {offered.length > 0 ? (
+            <section className={styles.bowler} aria-labelledby={sideEventsHeadingId}>
+              <CardDivider />
+              <div className={styles.sideEventsHeader}>
+                <h3 id={sideEventsHeadingId} className={styles.subsectionTitle}>Side events</h3>
+                <p className={styles.helper}>Pick any extras. They are paid with your entry at check-in.</p>
+              </div>
+              <ul className={styles.sideEventList}>
+                {offered.map((item) => renderSideEvent(item))}
+              </ul>
+              <p className={styles.body}>
+                {'Side events total: '}
+                <strong className={styles.amount}>{formatSideEventMoney(sideEventsTotal)}</strong>
+              </p>
+            </section>
+          ) : null}
+
           <CardDivider />
           <TextAreaField
             label="Notes for the organizer"
@@ -494,6 +731,34 @@ export default function TournamentRegistrationForm({
             onChange={(event) => setFormState((prev) => ({ ...prev, notes: event.target.value }))}
             rows={3}
           />
+
+          {showEligibility && eligibilityProblems.length > 0 ? (
+            <div ref={eligibilityRef} tabIndex={-1} className={styles.eligibility} role="alert">
+              {eligibility === 'warn' ? (
+                <Notice tone="warning">
+                  {"These bowlers don't meet the tournament rules. Check with the tournament director before registering them anyway."}
+                </Notice>
+              ) : (
+                <p className={styles.body}>{"These bowlers can't enter as entered. Fix the following, or pick another event or division:"}</p>
+              )}
+              <ul className={styles.problemList}>
+                {eligibilityProblems.map((problem) => (
+                  <li key={problem} className={styles.error}>
+                    <CircleAlert size={ICON_SIZE.sm} aria-hidden="true" />
+                    {problem}
+                  </li>
+                ))}
+              </ul>
+              {eligibility === 'warn' ? (
+                <CheckboxField
+                  label="Register anyway"
+                  helper="Staff only. The registration is saved even though the rules above aren't met."
+                  checked={Boolean(formState.overrideEligibility)}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, overrideEligibility: event.target.checked }))}
+                />
+              ) : null}
+            </div>
+          ) : null}
 
           {submitMessage ? <Notice tone="info" role="status">{submitMessage}</Notice> : null}
         </div>
@@ -540,7 +805,7 @@ export default function TournamentRegistrationForm({
               <h3 className={styles.subsectionTitle}>Bowler {index + 1}</h3>
               <dl className={styles.reviewList}>
                 {fields.map((field) => (
-                  <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{bowler[normalizeRegistrationFieldKey(field.key)] || 'Not provided'}</dd></div>
+                  <div key={field.id}><dt>{field.customLabel || field.label}</dt><dd>{formatFieldValue(normalizeRegistrationFieldKey(field.key), bowler[normalizeRegistrationFieldKey(field.key)])}</dd></div>
                 ))}
                 {questions.map((question) => (
                   <div key={question.id}><dt>{question.label}</dt><dd>{formatAnswer(formState.bowlerQuestionAnswers[index]?.[question.id])}</dd></div>
@@ -548,6 +813,22 @@ export default function TournamentRegistrationForm({
               </dl>
             </div>
           ))}
+          {lines.length > 0 ? (
+            <div className={styles.reviewGroup}>
+              <CardDivider />
+              <h3 className={styles.subsectionTitle}>Cost</h3>
+              <dl className={styles.costList}>
+                <div><dt>Entry fee</dt><dd>{formatSideEventMoney(entryFeeCents)}</dd></div>
+                {lines.map((line) => (
+                  <div key={`${line.feeId}-${line.bowlerIndex ?? 'registration'}`}>
+                    <dt>{lineLabel(line)}</dt>
+                    <dd>{formatSideEventMoney(line.totalCents)}</dd>
+                  </div>
+                ))}
+                <div className={styles.costTotal}><dt>Total due at check-in</dt><dd>{formatSideEventMoney(entryFeeCents + sideEventsTotal)}</dd></div>
+              </dl>
+            </div>
+          ) : null}
           <CardDivider />
           {formState.notes ? <p className={styles.body}>Notes: {formState.notes}</p> : null}
           <p className={styles.body}>Payment: cash at the venue during check-in. No online payment is collected.</p>

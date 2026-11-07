@@ -51,6 +51,7 @@ import {
 } from '@/components/organizer/messagesApi';
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
+import { sideEventPayload, summarizeSideEvents, type PublicFeeConfig } from '@/components/public/registrationSideEvents';
 import styles from './registrations.module.css';
 import cells from '@/components/organizer/OrganizerTable.module.css';
 
@@ -99,13 +100,26 @@ type ManualRegistrationEvent = {
   maxPlayers?: number;
   connectedDivisionIds?: string[];
   connectedSquadIds?: string[];
+  entryFeeCents?: number;
+  rules?: unknown;
 };
 
 type ManualRegistrationConfig = {
   tournament_id: number;
   tournament_name: string;
   events: ManualRegistrationEvent[];
-  divisions: Array<{ id: string; name: string; enabled?: boolean }>;
+  divisions: Array<{
+    id: string;
+    name: string;
+    enabled?: boolean;
+    minAverage?: number | null;
+    maxAverage?: number | null;
+    minAge?: number | null;
+    maxAge?: number | null;
+    rules?: unknown;
+  }>;
+  fees?: PublicFeeConfig[];
+  start_date?: string | null;
   squads: Array<{ id: string; name: string; dateIso?: string; startTime?: string }>;
   fields: Array<{ id: string; key: string; label: string; customLabel?: string; mode: 'required' | 'optional' | 'dont-ask'; validation?: string; displayOrder?: number }>;
   questions: Array<{ id: string; label: string; type?: 'short-text' | 'long-text' | 'number' | 'yes-no' | 'dropdown' | 'multiple-choice' | 'checkbox' | 'date'; required: boolean; enabled?: boolean; options?: string[]; displayOrder?: number }>;
@@ -142,6 +156,15 @@ function formatSubmittedAt(value: string | undefined): { date: string; time: str
     date: parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
     time: parsed.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }),
   };
+}
+
+type SideEventRecord = NonNullable<OrganizerRegistrationRecord['side_events']>[number];
+
+/** "Brackets x5, High game": one name per side event, quantities added across bowlers. */
+function summarizeRecords(records: SideEventRecord[]): string {
+  const totals = new Map<string, number>();
+  records.forEach((record) => totals.set(record.name, (totals.get(record.name) ?? 0) + record.quantity));
+  return summarizeSideEvents([...totals.entries()].map(([name, quantity]) => ({ name, quantity })));
 }
 
 function labelStatus(status: string | undefined): string {
@@ -440,9 +463,17 @@ export default function OrganizerTournamentRegistrationsPage() {
     setManualRegistrationMessage(null);
     try {
       const firstBowler = manualRegistrationForm.bowlers[0] ?? {};
+      const overrideEligibility = Boolean(manualRegistrationForm.overrideEligibility);
+      const token = sessionStorage.getItem('access_token');
+      if (overrideEligibility && !token) {
+        throw new Error('Your session expired. Sign in again to register a bowler anyway.');
+      }
       const response = await fetch(`/api/v1/public/tc-tournament/${tournamentId}/registration`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(overrideEligibility && token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           tournamentId,
           tournamentName: tournamentName,
@@ -462,6 +493,8 @@ export default function OrganizerTournamentRegistrationsPage() {
             bowlerQuestionAnswers: manualRegistrationForm.bowlerQuestionAnswers,
             fieldValues: firstBowler,
             acceptTerms: manualRegistrationForm.acceptTerms,
+            side_events: sideEventPayload(manualRegistrationForm.sideEvents),
+            override_eligibility: overrideEligibility,
           },
         }),
       });
@@ -643,6 +676,16 @@ export default function OrganizerTournamentRegistrationsPage() {
 
   const paymentSummary = useMemo(() => buildPaymentSummary(registrations), [registrations]);
 
+  const sideEventsByBowler = useMemo(() => {
+    const byBowler = new Map<number, SideEventRecord[]>();
+    registrations.forEach((registration) => (registration.side_events ?? []).forEach((record) => {
+      if (record.bowler_id === null) return;
+      byBowler.set(record.bowler_id, [...(byBowler.get(record.bowler_id) ?? []), record]);
+    }));
+    return byBowler;
+  }, [registrations]);
+  const hasSideEvents = useMemo(() => registrations.some((registration) => (registration.side_events ?? []).length > 0), [registrations]);
+
   // The bowler view lists each person once, across every registration that matches the filters.
   const bowlerRows = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -694,7 +737,7 @@ export default function OrganizerTournamentRegistrationsPage() {
   }, [eventFilter, paymentFilter, search, squadFilter, statusFilter]);
 
   const exportRegistrations = () => {
-    const header = ['Confirmation', 'Contact', 'Email', 'Event', 'Squad', 'Status', 'Payment', 'Total', 'Submitted'];
+    const header = ['Confirmation', 'Contact', 'Email', 'Event', 'Squad', 'Status', 'Payment', 'Entry fees', 'Side events', 'Side events total', 'Total', 'Submitted'];
     const rows = filteredRegistrations.map((registration) => {
       const entry = registration.entries?.[0];
       const submitted = formatSubmittedAt(registration.submitted_at);
@@ -706,6 +749,9 @@ export default function OrganizerTournamentRegistrationsPage() {
         entry ? entryLabel(entry, 'squad') : '',
         labelStatus(registration.status),
         labelStatus(registration.payment_status),
+        formatMoney(registration.subtotal_cents ?? registration.total_cents, registration.currency),
+        summarizeRecords(registration.side_events ?? []),
+        formatMoney(registration.fees_cents ?? 0, registration.currency),
         formatMoney(registration.total_cents, registration.currency),
         `${submitted.date} ${submitted.time}`,
       ].map((value) => `"${String(value).replaceAll('"', '""')}"`).join(',');
@@ -886,6 +932,7 @@ export default function OrganizerTournamentRegistrationsPage() {
                       <th scope="col">Divisions</th>
                       <th scope="col">Squads</th>
                       <th scope="col" data-align="right">Entries</th>
+                      {hasSideEvents ? <th scope="col">Side events</th> : null}
                       <th scope="col">Payment</th>
                       <th scope="col">Contact</th>
                     </tr>
@@ -900,6 +947,9 @@ export default function OrganizerTournamentRegistrationsPage() {
                         <td>{bowler.divisions.join(', ') || EMPTY_CELL}</td>
                         <td>{bowler.squads.join(', ') || EMPTY_CELL}</td>
                         <td data-align="right">{bowler.entryCount}</td>
+                        {hasSideEvents ? (
+                          <td>{summarizeRecords(bowler.bowlerIds.flatMap((id) => sideEventsByBowler.get(id) ?? [])) || EMPTY_CELL}</td>
+                        ) : null}
                         <td><OrganizerStatusBadge status={bowler.paymentStatus} /></td>
                         <td data-tone="secondary">{bowler.email || bowler.phone || EMPTY_CELL}</td>
                       </tr>
@@ -972,7 +1022,14 @@ export default function OrganizerTournamentRegistrationsPage() {
                             <span className={cells.secondaryText}>{registration.contact_email ?? registration.form?.email ?? 'No email'}</span>
                           </span>
                         </td>
-                        <td>{entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</td>
+                        <td>
+                          {(registration.side_events ?? []).length > 0 ? (
+                            <span className={cells.stack}>
+                              <span>{entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}</span>
+                              <span className={cells.secondaryText}>{summarizeRecords(registration.side_events ?? [])}</span>
+                            </span>
+                          ) : entries.map((item) => entryLabel(item, 'event')).join(', ') || 'Not selected'}
+                        </td>
                         <td>{entry ? entryLabel(entry, 'squad') : 'Not selected'}</td>
                         <td><OrganizerStatusBadge status={registration.status ?? 'pending'} /></td>
                         <td>{payments.renderPaymentCell(registration)}</td>
@@ -1054,6 +1111,9 @@ export default function OrganizerTournamentRegistrationsPage() {
           events={manualEventsForSquad}
           divisions={manualDivisionsForEvent}
           fields={manualFields}
+          fees={manualRegistrationConfig.fees}
+          startDate={manualRegistrationConfig.start_date}
+          eligibility="warn"
           questions={manualQuestions}
           requiredBowlerCount={manualRequiredBowlerCount}
           formState={manualRegistrationForm}

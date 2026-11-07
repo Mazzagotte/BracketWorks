@@ -57,6 +57,8 @@ export type ParticipantRow = {
   squads: string[];
   entryCount: number;
   paymentStatus: 'paid' | 'unpaid' | 'mixed';
+  /** Registration bowler ids behind this person, for looking up their side events. */
+  bowlerIds: number[];
 };
 
 // A participant is a unique bowler, distinct from the registration submission that added them.
@@ -110,6 +112,7 @@ export function buildParticipantRows(registrations: OrganizerRegistrationRecord[
             squads: [],
             entryCount: 0,
             paymentStatus: 'unpaid',
+            bowlerIds: [],
             paidCount: 0,
             unpaidCount: 0,
           };
@@ -117,6 +120,7 @@ export function buildParticipantRows(registrations: OrganizerRegistrationRecord[
         }
 
         row.entryCount += 1;
+        if (entry.bowlers && entry.bowlers.length > 0 && !row.bowlerIds.includes(bowler.id)) row.bowlerIds.push(bowler.id);
         if (isPaid) {
           row.paidCount += 1;
         } else {

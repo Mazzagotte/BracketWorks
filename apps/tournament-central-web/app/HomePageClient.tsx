@@ -13,6 +13,8 @@ import { formatTournamentDate, formatTournamentDateRange, parseTournamentDate } 
 import PublicAccountNav from '@/components/public/PublicAccountNav';
 import TournamentInformation from '@/components/public/TournamentInformation';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
+import { sideEventPayload, type PublicFeeConfig } from '@/components/public/registrationSideEvents';
+import type { SideEventSelection } from '@/components/organizer/formatTypes';
 import {
   Avatar,
   Badge,
@@ -149,6 +151,8 @@ type PublicTcRegistrationConfigResponse = {
   squads: RegistrationSquadConfig[];
   fields: RegistrationFieldConfig[];
   questions: RegistrationQuestionConfig[];
+  fees?: PublicFeeConfig[];
+  start_date?: string | null;
   details?: { rulesText?: string };
   documents?: PublicTournamentDocument[];
 };
@@ -161,6 +165,7 @@ type RegistrationFormState = {
   notes: string;
   bowlerQuestionAnswers: Array<Record<string, RegistrationQuestionAnswerValue>>;
   acceptTerms: boolean;
+  sideEvents?: SideEventSelection[];
 };
 
 const EMPTY_REGISTRATION_FORM: RegistrationFormState = {
@@ -1226,6 +1231,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         bowlerQuestionAnswers: registrationForm.bowlerQuestionAnswers,
         fieldValues: registrationForm.bowlers[0] || {},
         acceptTerms: registrationForm.acceptTerms,
+        side_events: sideEventPayload(registrationForm.sideEvents),
       },
     };
 
@@ -1863,6 +1869,8 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
           events={eventsForSelectedSquad}
           divisions={divisionsForSelectedEvent}
           fields={registrationFields}
+          fees={registrationConfig?.fees}
+          startDate={registrationConfig?.start_date}
           questions={registrationQuestions}
           requiredBowlerCount={requiredBowlerCount}
           formState={registrationForm}

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { formatTournamentDate, parseTournamentDate } from '@/lib/tournamentDates';
 import { formatMoney, formatSquadTime } from '@/components/organizer/organizerFormatting';
 import { Badge, Button, CardDivider, Notice, capitalizeFirstLetter } from '@bracketworks/ui';
+import { normalizeDivisionRules, normalizeEventRules, normalizeSideEvent } from '@/components/organizer/formatTypes';
+import { bracketPayoutSummary, divisionLimitParts, eventRulesParts, payoutRatioText } from '@/components/organizer/formatSummaries';
 import styles from './publicInfo.module.css';
 import TournamentRules from './TournamentRules';
 
@@ -14,8 +16,15 @@ type PublicInformation = {
     registrationCloseTime?: string; timezone?: string;
     rulesText?: string;
   };
-  events: Array<{ id: string; name: string; scoring?: string; description?: string; entryFeeCents?: number }>;
-  divisions: Array<{ id: string; name: string; eligibilityNotes?: string }>;
+  events: Array<{
+    id: string; name: string; scoring?: string; description?: string; entryFeeCents?: number;
+    maxPlayers?: number; rules?: unknown;
+  }>;
+  divisions: Array<{
+    id: string; name: string; eligibilityNotes?: string;
+    minAverage?: number | null; maxAverage?: number | null; minAge?: number | null; maxAge?: number | null; rules?: unknown;
+  }>;
+  fees?: Array<{ id: string; name: string; amountCents?: number; enabled?: boolean; sideEvent?: unknown }>;
   squads: Array<{ id: string; name: string; dateIso?: string; startTime?: string; capacity?: number; registeredCount?: number }>;
   documents: Array<{ name: string; kind: string; url: string }>;
 };
@@ -60,6 +69,7 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
   const divisions = information.divisions ?? [];
   const squads = information.squads ?? [];
   const documents = information.documents ?? [];
+  const sideEvents = (information.fees ?? []).filter((fee) => fee.enabled !== false && fee.name);
   const prices = events.flatMap((event) => typeof event.entryFeeCents === 'number' ? [event.entryFeeCents] : []);
   const organizerNames = [...new Set([details.organizer, details.contactName].map((name) => name?.trim()).filter(Boolean))];
 
@@ -88,7 +98,7 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
               <li key={event.id} className={styles.row}>
                 <div className={styles.rowText}>
                   <span className={styles.rowTitle}>{event.name}</span>
-                  {event.scoring ? <span className={styles.meta}>{capitalizeFirstLetter(event.scoring.replaceAll('-', ' '))}</span> : null}
+                  <EventFormatDetails event={event} />
                   {event.description ? <p className={styles.meta}>{event.description}</p> : null}
                 </div>
                 {typeof event.entryFeeCents === 'number' ? <span className={styles.amount}>{formatMoney(event.entryFeeCents)}</span> : null}
@@ -108,10 +118,42 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
                 <li key={division.id} className={styles.row}>
                   <div className={styles.rowText}>
                     <span className={styles.rowTitle}>{division.name}</span>
+                    {divisionText(division) ? <span className={styles.meta}>{divisionText(division)}</span> : null}
                     {division.eligibilityNotes ? <p className={styles.meta}>{division.eligibilityNotes}</p> : null}
                   </div>
                 </li>
               ))}
+            </ul>
+          </section>
+        </>
+      ) : null}
+
+      {sideEvents.length > 0 ? (
+        <>
+          <CardDivider />
+          <section className={styles.section}>
+            <h3 className={styles.heading}>Side events and add-ons</h3>
+            <ul className={styles.rows}>
+              {sideEvents.map((fee) => {
+                const amountCents = typeof fee.amountCents === 'number' ? fee.amountCents : 0;
+                const sideEvent = fee.sideEvent ? normalizeSideEvent(fee.sideEvent) : null;
+                const meta = sideEvent ? [
+                  sideEvent.per === 'bowler' ? 'Per bowler' : 'Per registration',
+                  sideEvent.allowQuantity ? (sideEvent.maxQuantity ? `Buy up to ${sideEvent.maxQuantity}` : 'Buy as many as you like') : null,
+                  sideEvent.brackets ? `${capitalizeFirstLetter(sideEvent.brackets.scoring)} brackets` : null,
+                ].filter(Boolean).join(' · ') : '';
+                return (
+                  <li key={fee.id} className={styles.row}>
+                    <div className={styles.rowText}>
+                      <span className={styles.rowTitle}>{fee.name}</span>
+                      {meta ? <span className={styles.meta}>{meta}</span> : null}
+                      {sideEvent?.brackets ? <span className={styles.meta}>{bracketPayoutSummary(amountCents, sideEvent.brackets)}</span> : null}
+                      {sideEvent?.brackets?.refundUnfilled ? <span className={styles.meta}>Unfilled brackets are refunded.</span> : null}
+                    </div>
+                    <span className={styles.amount}>{formatMoney(amountCents)}</span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         </>
@@ -179,4 +221,30 @@ export default function TournamentInformation({ configUrl }: { configUrl: string
       <TournamentRules rulesText={details.rulesText} documents={documents} />
     </div>
   );
+}
+
+type PublicEvent = PublicInformation['events'][number];
+
+/** Format, games, handicap, and finals for one event. Events saved before rules existed show their scoring only. */
+function EventFormatDetails({ event }: { event: PublicEvent }) {
+  const scoring = event.scoring === 'scratch' || event.scoring === 'no-tap' ? event.scoring : 'handicap';
+  if (!event.rules) {
+    return event.scoring ? <span className={styles.meta}>{capitalizeFirstLetter(event.scoring.replaceAll('-', ' '))}</span> : null;
+  }
+  const rules = normalizeEventRules(event.rules, { scoring, maxPlayers: Number(event.maxPlayers) || 1 });
+  const extras = [
+    payoutRatioText(rules.payoutRatio),
+    rules.usbcRequired ? 'USBC membership required' : null,
+  ].filter(Boolean).join(' · ');
+  return (
+    <>
+      <span className={styles.meta}>{eventRulesParts(rules, scoring).join(' · ')}</span>
+      {rules.finals.type !== 'none' && rules.finals.notes.trim() ? <span className={styles.meta}>{rules.finals.notes}</span> : null}
+      {extras ? <span className={styles.meta}>{extras}</span> : null}
+    </>
+  );
+}
+
+function divisionText(division: PublicInformation['divisions'][number]): string {
+  return divisionLimitParts({ ...division, rules: division.rules ? normalizeDivisionRules(division.rules) : undefined }).join(' · ');
 }

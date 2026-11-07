@@ -22,6 +22,8 @@ export const initialRegistrationFields: RegistrationFieldConfig[] = [
   { id: 'rf-10', key: 'state', label: 'State', customLabel: '', helpText: '', mode: 'dont-ask', displayOrder: 10, validation: 'Text' },
   { id: 'rf-11', key: 'zip', label: 'ZIP', customLabel: '', helpText: '', mode: 'dont-ask', displayOrder: 11, validation: 'ZIP' },
   { id: 'rf-12', key: 'bowling_hand', label: 'Bowling Hand', customLabel: '', helpText: '', mode: 'dont-ask', displayOrder: 12, validation: 'Enum' },
+  // Asked as Man or Woman. Needed by women's or men's divisions and mixed events (the form asks for it then).
+  { id: 'rf-13', key: 'gender', label: 'Gender', customLabel: '', helpText: '', mode: 'dont-ask', displayOrder: 13, validation: 'Enum' },
 ];
 
 export const sectionOrder: SetupSectionKey[] = setupSections.map((section) => section.key);
