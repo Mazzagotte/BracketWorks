@@ -1,13 +1,13 @@
-/* Layout Styles */
+/* App layout: the scrolling main area under the top bar. Pages use the shared Page component,
+   which brings its own width and gutters, so these wrappers add no padding or width of their own. */
 
-/* Main content area */
 .main {
+  position: relative;
   height: 100dvh;
   max-height: 100dvh;
-  overflow-y: auto;
   overflow-x: hidden;
+  overflow-y: auto;
   background: var(--bw-page);
-  position: relative;
 }
 
 /* The shared TopNav sits in the page flow above main, so main fills the rest of the screen. */
@@ -16,91 +16,39 @@
   max-height: calc(100dvh - var(--space-16));
 }
 
-/* Pages on the shared Page component bring their own width and gutters. */
-.main:has(.bw-page) {
-  padding: 0;
-}
-
-.contentCard:has(.bw-page) {
-  max-width: none;
-  margin: 0;
-}
-
-.mainDesktop {
-  margin-left: 0;
-  width: 100%;
-  padding: 0 var(--space-page-x) var(--space-page-y);
-}
-
+.mainDesktop,
+.mainMobile,
 .mainPublic {
-  margin-top: 0;
-  height: 100dvh;
-  max-height: 100dvh;
-  min-height: 100dvh;
-  margin-left: 0;
   width: 100%;
+  margin: 0;
   padding: 0;
-  background: var(--bw-app-bg);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 .mainMobile {
-  margin-left: 0;
-  width: 100%;
-  padding: var(--space-5);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-@media (max-width: 767px) {
-  .mainMobile {
-    padding: var(--space-3);
-    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
-  }
-}
-
-/* Page header strip — title + injected page actions */
-
-/* Page content container */
 .contentCard {
-  max-width: var(--size-11xl);
-  margin: var(--space-5) auto 0 auto;
   box-sizing: border-box;
 }
 
 .devNoticeWrap {
+  box-sizing: border-box;
   width: 100%;
   max-width: var(--size-10xl);
   margin: var(--space-5) auto 0;
   padding-inline: var(--bw-page-gutter);
-  box-sizing: border-box;
 }
 
-.contentCardMobile {
-  padding: 0;
-}
-
-
+.contentCardMobile,
 .contentCardNoAuth {
-  margin: 0 auto;
+  margin: 0;
 }
 
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .mainDesktop { padding-inline: var(--space-6); }
-}
-
-@media (min-width: 1280px) {
-  .mainDesktop { padding-inline: var(--space-7); }
-}
-
-@media (min-width: 1440px) {
-  .contentCard,
-  .devNoticeWrap { max-width: var(--size-10xl); }
-}
 .gateLoading {
-  min-height: var(--space-44);
   display: grid;
   place-items: center;
-  color: var(--bw-text-muted);
-  font-size: var(--font-size-base);
+  min-height: var(--space-44);
+  font: var(--type-body);
+  color: var(--bw-text-body);
 }

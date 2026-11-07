@@ -4,8 +4,6 @@
 */
 @import './tokens.css';
 @import './reset.css';
-@import './components.css';
-@import '../src/bracketworks-public-header.css';
 @import './theme.css';
 @import './base.css';
 @import './app-theme.css';

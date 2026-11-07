@@ -6,7 +6,7 @@ BracketWorks and Tournament Central load one shared stylesheet first, from
 `app/layout.tsx`: `@bracketworks/ui/styles/globals.css`. It imports, in order:
 
 - `packages/ui/styles/tokens.css`: type, spacing, radius, sizing, motion, and elevation scales.
-- `packages/ui/styles/reset.css` and `components.css`: element reset and shared primitives.
+- `packages/ui/styles/reset.css`: element reset. Shared components live in `packages/ui/src/components`.
 - `packages/ui/styles/theme.css`: base color token catalog and compatibility aliases.
 - `packages/ui/styles/base.css`: shared global layout, typography, buttons, inputs, and common classes.
 - `packages/ui/styles/app-theme.css`: canonical palette, extended status palette, z-index scale,
