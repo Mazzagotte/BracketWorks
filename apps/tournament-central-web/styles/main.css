@@ -6,12 +6,11 @@
 */
 
 /* Tournament Central uses higher-contrast muted text and input borders for
-   public registration forms, and solid (non-translucent) cards. */
+   public registration forms. Cards use the shared card color, same as BracketWorks. */
 :root {
   --color-text-muted: var(--color-text-secondary);
   --color-text-disabled: #9999a3;
   --color-border-input: #686872;
-  --bw-surface-card: var(--color-surface-primary);
   --bw-surface-card-strong: var(--color-surface-primary);
 }
 

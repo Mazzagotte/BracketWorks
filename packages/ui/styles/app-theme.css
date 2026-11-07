@@ -23,13 +23,13 @@
   --z-legal-gate: 10020;
 
   /* Canonical BracketWorks color system */
-  --color-bg-primary: #09090c;
-  --color-bg-secondary: #111119;
-  --color-surface-primary: #18181f;
-  --color-surface-secondary: #202028;
-  --color-surface-hover: #24242d;
-  --color-border-primary: #2a2a33;
-  --color-border-subtle: #22222a;
+  --color-bg-primary: #0e0e13;
+  --color-bg-secondary: #1a1a22;
+  --color-surface-primary: #1a1a22;
+  --color-surface-secondary: #262630;
+  --color-surface-hover: #2c2c36;
+  --color-border-primary: #383843;
+  --color-border-subtle: #2c2c36;
   --color-accent-primary: #ff7a00;
   --color-accent-hover: #e96f00;
   --color-accent-active: #d96600;
@@ -215,11 +215,12 @@
   --color-status-purple: #dc52e9;
 
   /* State map fills (Tournament Central discovery map) */
-  --color-map-fill-selected: #313131;
-  --color-map-fill-in-progress: #292929;
-  --color-map-fill-upcoming: #202020;
-  --color-map-fill-past: #191919;
-  --color-map-fill-none: #111111;
+  /* States with tournaments carry a warm tint; in progress uses the success color; selected is strongest. */
+  --color-map-fill-selected: color-mix(in srgb, var(--color-accent-primary) 42%, var(--color-surface-secondary));
+  --color-map-fill-in-progress: color-mix(in srgb, var(--color-success) 26%, var(--color-surface-secondary));
+  --color-map-fill-upcoming: color-mix(in srgb, var(--color-accent-primary) 20%, var(--color-surface-secondary));
+  --color-map-fill-past: var(--color-surface-hover);
+  --color-map-fill-none: var(--color-surface-secondary);
 
   /* Warm semantic bridge tokens for legacy CSS */
   --color-primary: var(--color-accent-primary);

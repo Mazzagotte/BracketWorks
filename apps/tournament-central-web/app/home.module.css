@@ -136,9 +136,13 @@
 .state[data-tone='upcoming'] { fill: var(--color-map-fill-upcoming); }
 .state[data-tone='inprogress'] { fill: var(--color-map-fill-in-progress); }
 
+.state:not([data-tone='none']):hover {
+  fill: var(--color-map-fill-selected);
+}
+
 .state[data-selected='true'] {
   fill: var(--color-map-fill-selected);
-  stroke: var(--bw-text-body);
+  stroke: var(--color-accent-primary);
   stroke-width: 1.5;
 }
 
@@ -154,6 +158,8 @@
 
 .markerDot {
   fill: var(--color-accent-primary);
+  stroke: var(--bw-page);
+  stroke-width: 0.75;
 }
 
 .marker:focus-visible .markerDot {
