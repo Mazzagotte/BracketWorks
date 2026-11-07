@@ -762,6 +762,8 @@ class TcRegistrationBowler(Base):
     usbc_number: Mapped[Optional[str]] = mapped_column(String(40), nullable=True, index=True)
     average: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     date_of_birth: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    # "M" or "F" when the registration asked for it (division gender rules, mixed events).
+    gender: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
     address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     state: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
@@ -905,6 +907,46 @@ class TcRegistrationAnswer(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         index=True,
+    )
+
+
+class TcRegistrationSideEvent(Base):
+    """A side event or fee bought on a registration (brackets, a pot, a lineage fee), priced by the server."""
+
+    __tablename__ = "tc_registration_side_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    registration_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_registrations.id"),
+        nullable=False,
+        index=True,
+    )
+    tournament_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("tc_tournaments.id"),
+        nullable=False,
+        index=True,
+    )
+    # Set for per-bowler side events (brackets, pots); null when charged once per registration.
+    bowler_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("tc_registration_bowlers.id"),
+        nullable=True,
+        index=True,
+    )
+    fee_config_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    name_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False, default="fee")
+    # Brackets only: "handicap" or "scratch", kept so later setup edits don't change what was bought.
+    scoring: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    unit_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_cents: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
     )
 
 

@@ -4,6 +4,10 @@ The first send creates a private BracketWorks tournament owned by the TC owner a
 two. Later sends add new bowlers and update name, USBC number, and average on bowlers that came
 from TC. Bowlers added by hand in BracketWorks are never changed, and bowlers removed from TC are
 reported but never deleted.
+
+When the TC setup sells brackets as a side event, each bowler's bracket purchases become their
+BracketWorks program entry counts ("handicap" and "scratch"). Counts are set on create and updated
+only when they change, and a squad whose counts changed is reported as needing new brackets.
 """
 
 from __future__ import annotations
@@ -19,9 +23,10 @@ from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
-from ...core.bracket_programs import normalize_division
+from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_division
 from ...core.handicap import calculate_handicap_pins
 from ...services.payouts import reset_payouts_if_needed
+from ...services.tc_side_events import bracket_counts, enabled_fees, normalize_side_event
 from ...services.tournament_access import (
     require_tc_tournament_permission,
     require_tournament_permission,
@@ -54,6 +59,8 @@ class _DesiredPlayer:
     usbc_number: str | None
     average: int | None
     division: str | None
+    # {"handicap": n, "scratch": m} when TC sells brackets, else None (BracketWorks counts are left alone).
+    bracket_entries: dict[str, int] | None = None
 
 
 def _normalize_name(value: str | None) -> str:
@@ -114,6 +121,29 @@ def _require_bw_access(db: Session, bw_tournament_id: int, user: models.User) ->
         raise
 
 
+def _sells_brackets(db: Session, tc_tournament_id: int) -> bool:
+    """True when the TC setup has a brackets side event, or any registration bought brackets."""
+    state = db.query(models.TournamentCentralSetupState).filter(
+        models.TournamentCentralSetupState.tournament_id == tc_tournament_id
+    ).first()
+    payload = state.payload if state is not None and isinstance(state.payload, dict) else {}
+    snapshot = payload.get("_publishedSnapshot")
+    source = snapshot if isinstance(snapshot, dict) else payload
+    if any(normalize_side_event(fee.get("sideEvent")).kind == "brackets" for fee in enabled_fees(source.get("fees"))):
+        return True
+    return db.query(models.TcRegistrationSideEvent.id).filter(
+        models.TcRegistrationSideEvent.tournament_id == tc_tournament_id,
+        models.TcRegistrationSideEvent.kind == "brackets",
+    ).first() is not None
+
+
+def _bracket_entries_differ(player: models.TournamentPlayer, desired: dict[str, int]) -> bool:
+    current = normalize_bowler_bracket_entries(
+        player.program_entry_counts, player.handicap_entry_count, player.scratch_entry_count
+    )
+    return any(current.get(key, 0) != value for key, value in desired.items())
+
+
 def _collect_desired_players(
     db: Session, tc: models.TournamentCentral, include_pending: bool
 ) -> tuple[dict[str, _DesiredPlayer], list[dict]]:
@@ -141,6 +171,29 @@ def _collect_desired_players(
         )
         for link, bowler in rows:
             bowlers_by_entry.setdefault(link.entry_id, []).append(bowler)
+
+    sells_brackets = _sells_brackets(db, tc.id)
+    bracket_rows_by_bowler: dict[int, list[models.TcRegistrationSideEvent]] = {}
+    if sells_brackets:
+        bowler_ids = [bowler.id for bowlers in bowlers_by_entry.values() for bowler in bowlers]
+        if bowler_ids:
+            for row in db.query(models.TcRegistrationSideEvent).filter(
+                models.TcRegistrationSideEvent.bowler_id.in_(bowler_ids),
+                models.TcRegistrationSideEvent.kind == "brackets",
+            ).all():
+                bracket_rows_by_bowler.setdefault(row.bowler_id, []).append(row)
+    counted_bowlers: dict[str, set[int]] = {}
+
+    def add_brackets(item: _DesiredPlayer, bowler: models.TcRegistrationBowler) -> None:
+        if not sells_brackets:
+            return
+        seen = counted_bowlers.setdefault(item.ref, set())
+        if bowler.id in seen:
+            return
+        seen.add(bowler.id)
+        counts = bracket_counts(bracket_rows_by_bowler.get(bowler.id, []))
+        totals = item.bracket_entries or {"handicap": 0, "scratch": 0}
+        item.bracket_entries = {key: totals.get(key, 0) + counts.get(key, 0) for key in ("handicap", "scratch")}
 
     desired: dict[str, _DesiredPlayer] = {}
     skipped: list[dict] = []
@@ -175,6 +228,7 @@ def _collect_desired_players(
                     existing.average = bowler.average
                 if existing.division is None:
                     existing.division = _clear_division(entry.division_name_snapshot)
+                add_brackets(existing, bowler)
                 continue
             desired[ref] = _DesiredPlayer(
                 ref=ref,
@@ -185,6 +239,7 @@ def _collect_desired_players(
                 average=bowler.average,
                 division=_clear_division(entry.division_name_snapshot),
             )
+            add_brackets(desired[ref], bowler)
     return desired, skipped
 
 
@@ -282,6 +337,8 @@ def sync_to_bracketworks(
                 changes["usbc_number"] = item.usbc_number
             if item.average is not None and player.average != item.average:
                 changes["average"] = item.average
+            if item.bracket_entries is not None and _bracket_entries_differ(player, item.bracket_entries):
+                changes["bracket_entries"] = item.bracket_entries
             if changes:
                 to_update.append((player, item, changes))
             else:
@@ -323,6 +380,11 @@ def sync_to_bracketworks(
     changed_squad_ids = {
         squads_by_key[item.squad_key].id for item in to_create if item.squad_key in squads_by_key
     }
+    # New bracket counts change who is in the brackets, so those squads need new brackets too.
+    changed_squad_ids |= {
+        player.squad_id for player, _item, changes in to_update
+        if "bracket_entries" in changes and player.squad_id in squad_by_id
+    }
     squads_needing_regeneration: list[dict] = []
     if bw and changed_squad_ids:
         with_brackets = {
@@ -350,6 +412,7 @@ def sync_to_bracketworks(
         "squads_created": len(new_squad_keys),
         "players_created": len(to_create),
         "players_updated": len(to_update),
+        "bracket_entries_updated": sum(1 for _player, _item, changes in to_update if "bracket_entries" in changes),
         "unchanged": unchanged,
         "skipped": skipped,
         "possible_duplicates": possible_duplicates,
@@ -410,6 +473,9 @@ def sync_to_bracketworks(
                     average=item.average,
                     usbc_number=item.usbc_number,
                     division=item.division,
+                    program_entry_counts=item.bracket_entries,
+                    handicap_entry_count=item.bracket_entries.get("handicap") if item.bracket_entries else None,
+                    scratch_entry_count=item.bracket_entries.get("scratch") if item.bracket_entries else None,
                 ),
                 bw.user_id,
             )
@@ -425,6 +491,14 @@ def sync_to_bracketworks(
             if "average" in changes:
                 player.average = changes["average"]
                 player.handicap_pins = _handicap_for(db, bw.id, player.average)
+            if "bracket_entries" in changes:
+                merged = normalize_bowler_bracket_entries(
+                    player.program_entry_counts, player.handicap_entry_count, player.scratch_entry_count
+                )
+                merged.update(changes["bracket_entries"])
+                player.program_entry_counts = merged
+                player.handicap_entry_count = merged.get("handicap", 0)
+                player.scratch_entry_count = merged.get("scratch", 0)
             if player.squad_id is not None:
                 affected_squad_ids.add(player.squad_id)
 

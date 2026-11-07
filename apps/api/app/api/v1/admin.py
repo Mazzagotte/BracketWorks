@@ -680,6 +680,14 @@ def _hard_delete_tc_registration(db: Session, registration_id: int) -> None:
             )
         )
     )
+    db.execute(
+        delete(models.TcRegistrationSideEvent).where(
+            or_(
+                models.TcRegistrationSideEvent.registration_id == registration_id,
+                models.TcRegistrationSideEvent.bowler_id.in_(bowler_ids),
+            )
+        )
+    )
     db.execute(delete(models.TcEntry).where(models.TcEntry.registration_id == registration_id))
     db.execute(delete(models.TcRegistrationBowler).where(models.TcRegistrationBowler.registration_id == registration_id))
     db.execute(delete(models.TcRegistration).where(models.TcRegistration.id == registration_id))
@@ -1004,6 +1012,7 @@ def _hard_delete_user(db: Session, user_id: int) -> dict[str, int]:
             )
         )
     )
+    db.execute(delete(models.TcRegistrationSideEvent).where(models.TcRegistrationSideEvent.bowler_id.in_(tc_bowler_ids)))
     db.execute(delete(models.TcEntry).where(models.TcEntry.id.in_(tc_entry_ids)))
     db.execute(delete(models.TcRegistrationBowler).where(models.TcRegistrationBowler.id.in_(tc_bowler_ids)))
     db.execute(delete(models.TcTournamentDocument).where(models.TcTournamentDocument.user_id == user_id))

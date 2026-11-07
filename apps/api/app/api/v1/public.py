@@ -3,7 +3,7 @@ Public read-only endpoints for the bowler-facing tournament view.
 No authentication required — intended for QR-code accessible display pages.
 """
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Any, Literal, Optional
@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel, Field
 
-from ..deps import get_db
+from ..deps import get_current_user, get_db, oauth2_scheme
 from ...core import models
 from ...core.idempotency import IdempotencyReplay, begin_request, complete_request, fail_request
 from ...core.bracket_programs import normalize_bowler_bracket_entries, normalize_division
@@ -24,6 +24,9 @@ from ...services.payouts import get_tournament_winners_summary, extract_bracket_
 from ...services.side_pots import calculate_side_pot_accounting
 from ...services.tc_tournament_documents import build_content_disposition
 from ...services import tc_emails
+from ...services.tc_eligibility import check_registration_eligibility, normalize_gender, parse_reference_date
+from ...services.tc_side_events import SideEventError, enabled_fees, normalize_side_event, price_side_events
+from ...services.tournament_access import user_has_tc_tournament_permission
 
 router = APIRouter()
 
@@ -274,6 +277,19 @@ class PublicRegistrationSubmissionForm(BaseModel):
     bowlerQuestionAnswers: list[dict[str, Any]] = Field(default_factory=list)
     fieldValues: dict[str, Any] = Field(default_factory=dict)
     acceptTerms: bool
+    # Side events and optional fees picked on the form. Amounts are priced on the server from setup.
+    side_events: list["PublicSideEventSelection"] = Field(default_factory=list)
+    # Staff only: register even when eligibility rules fail. Needs a signed-in user with manage_entries.
+    override_eligibility: bool = False
+
+
+class PublicSideEventSelection(BaseModel):
+    fee_id: str
+    bowler_index: Optional[int] = None
+    quantity: int = 1
+
+
+PublicRegistrationSubmissionForm.model_rebuild()
 
 
 class PublicRegistrationSubmissionRequest(BaseModel):
@@ -789,6 +805,25 @@ def get_public_tc_tournament_logo(
     )
 
 
+def _public_side_event(raw: Any) -> dict:
+    settings = normalize_side_event(raw)
+    brackets = raw.get("brackets") if isinstance(raw, dict) and isinstance(raw.get("brackets"), dict) else {}
+    return {
+        "kind": settings.kind,
+        "allowQuantity": settings.allow_quantity,
+        "maxQuantity": settings.max_quantity,
+        "per": settings.per,
+        "brackets": {
+            "scoring": settings.scoring,
+            "size": brackets.get("size") if isinstance(brackets.get("size"), int) else 8,
+            "firstPlaceCents": brackets.get("firstPlaceCents") if isinstance(brackets.get("firstPlaceCents"), int) else 3000,
+            "secondPlaceCents": brackets.get("secondPlaceCents") if isinstance(brackets.get("secondPlaceCents"), int) else 1000,
+            "houseCents": brackets.get("houseCents") if isinstance(brackets.get("houseCents"), int) else 0,
+            "refundUnfilled": brackets.get("refundUnfilled") is not False,
+        } if settings.kind == "brackets" else None,
+    }
+
+
 @router.get("/tc-tournament/{tournament_id}/registration")
 def get_public_tc_tournament_registration_config(
     tournament_id: int,
@@ -836,6 +871,21 @@ def get_public_tc_tournament_registration_config(
     questions = [
         question for question in (payload.get("questions") or [])
         if isinstance(question, dict) and bool(question.get("enabled", True))
+    ]
+    # Fees and side events bowlers can buy, with side-event settings filled in for older setups.
+    fees = [
+        {
+            "id": str(fee.get("id")),
+            "name": str(fee.get("name") or ""),
+            "amountCents": max(int(fee["amountCents"]), 0) if isinstance(fee.get("amountCents"), (int, float)) and not isinstance(fee.get("amountCents"), bool) else 0,
+            "required": bool(fee.get("required")),
+            "displayOrder": fee.get("displayOrder") or 0,
+            "eventIds": fee.get("eventIds") if isinstance(fee.get("eventIds"), list) else [],
+            "divisionIds": fee.get("divisionIds") if isinstance(fee.get("divisionIds"), list) else [],
+            "squadIds": fee.get("squadIds") if isinstance(fee.get("squadIds"), list) else [],
+            "sideEvent": _public_side_event(fee.get("sideEvent")),
+        }
+        for fee in enabled_fees(payload.get("fees"))
     ]
 
     details = payload.get("details") if isinstance(payload.get("details"), dict) else {}
@@ -891,6 +941,8 @@ def get_public_tc_tournament_registration_config(
         "squads": squads,
         "fields": fields,
         "questions": questions,
+        "fees": fees,
+        "start_date": _clean_text(details.get("startDateIso")) or _clean_text(tournament.start_date) or None,
         "details": {
             key: details[key] for key in public_detail_keys if details.get(key)
         },
@@ -946,7 +998,9 @@ def submit_public_tc_tournament_registration(
     tournament_id: int,
     payload: PublicRegistrationSubmissionRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
     """Persist a public registration submission as relational registration records."""
@@ -966,6 +1020,15 @@ def submit_public_tc_tournament_registration(
 
     form = payload.form
     idempotency_record = None
+
+    # Only signed-in tournament staff who can manage entries may register a bowler past eligibility rules.
+    if form.override_eligibility:
+        staff_user = get_current_user(request, token, db)
+        if not user_has_tc_tournament_permission(db, tournament, staff_user, "manage_entries"):
+            raise HTTPException(
+                status_code=403,
+                detail="Only tournament staff who manage entries can register a bowler who doesn't meet the rules.",
+            )
 
     if idempotency_key:
         replay_or_record = begin_request(
@@ -1135,6 +1198,48 @@ def submit_public_tc_tournament_registration(
     if not form.acceptTerms:
         raise HTTPException(status_code=400, detail="Tournament terms must be accepted")
 
+    # Setups that ask gender as a custom "Gender" question (rather than the built-in field) still count.
+    gender_question_ids = [
+        str(question.get("id") or "")
+        for question in configured_questions
+        if _clean_text(question.get("label")).lower() == "gender"
+    ]
+    for bowler_index, bowler_values in enumerate(normalized_bowlers):
+        if normalize_gender(bowler_values.get("gender")) or bowler_index >= len(normalized_bowler_question_answers):
+            continue
+        answers = normalized_bowler_question_answers[bowler_index]
+        for question_id in gender_question_ids:
+            answer = answers.get(question_id)
+            if isinstance(answer, str) and normalize_gender(answer):
+                bowler_values["gender"] = answer
+                break
+
+    if not form.override_eligibility:
+        details = state_payload.get("details") if isinstance(state_payload.get("details"), dict) else {}
+        eligibility_problems = check_registration_eligibility(
+            event=event,
+            division=division,
+            bowlers=normalized_bowlers,
+            reference_date=parse_reference_date(details.get("startDateIso")) or parse_reference_date(tournament.start_date),
+        )
+        if eligibility_problems:
+            raise HTTPException(
+                status_code=400,
+                detail="These bowlers can't enter as entered: " + " ".join(eligibility_problems),
+            )
+
+    try:
+        priced_side_events = price_side_events(
+            state_payload.get("fees"),
+            [selection.model_dump() for selection in form.side_events],
+            event_id=form.eventId,
+            division_id=form.divisionId,
+            squad_id=form.squadId,
+            bowler_count=len(normalized_bowlers),
+        )
+    except SideEventError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
     submission_id = _next_confirmation_code(db, tournament)
     submitted_at = _safe_iso_to_datetime(payload.submittedAt)
     now_dt = datetime.now(timezone.utc)
@@ -1172,7 +1277,9 @@ def submit_public_tc_tournament_registration(
 
     entry_status = registration_status
     event_entry_fee_cents = int(event.get("entryFeeCents") or 0)
-    total_cents = max(event_entry_fee_cents, 0)
+    subtotal_cents = max(event_entry_fee_cents, 0)
+    side_event_fees_cents = sum(line.total_cents for line in priced_side_events)
+    total_cents = subtotal_cents + side_event_fees_cents
 
     registration = models.TcRegistration(
         confirmation_code=submission_id,
@@ -1184,8 +1291,8 @@ def submit_public_tc_tournament_registration(
         contact_phone=_clean_text(form.phone) or None,
         status=registration_status,
         payment_status="unpaid",
-        subtotal_cents=total_cents,
-        fees_cents=0,
+        subtotal_cents=subtotal_cents,
+        fees_cents=side_event_fees_cents,
         total_cents=total_cents,
         currency="USD",
         notes=_clean_text(form.notes) or None,
@@ -1193,7 +1300,7 @@ def submit_public_tc_tournament_registration(
         submitted_at=submitted_at,
         created_at=now_dt,
         updated_at=now_dt,
-        source="public",
+        source="organizer" if form.override_eligibility else "public",
     )
     db.add(registration)
     db.flush()
@@ -1217,6 +1324,7 @@ def submit_public_tc_tournament_registration(
             usbc_number=_clean_text(bowler_values.get("usbc_number")) or None,
             average=average_number,
             date_of_birth=_clean_text(bowler_values.get("date_of_birth")) or None,
+            gender=normalize_gender(bowler_values.get("gender")),
             address=_clean_text(bowler_values.get("address")) or None,
             city=_clean_text(bowler_values.get("city")) or None,
             state=_clean_text(bowler_values.get("state")) or None,
@@ -1241,7 +1349,7 @@ def submit_public_tc_tournament_registration(
         entry_number=None,
         reentry_number=0,
         status=entry_status,
-        entry_fee_cents=total_cents,
+        entry_fee_cents=subtotal_cents,
     )
     db.add(entry)
     db.flush()
@@ -1275,11 +1383,30 @@ def submit_public_tc_tournament_registration(
                 answer_json={"value": answer_value},
             ))
 
+    for line in priced_side_events:
+        bowler_record = bowler_records[line.bowler_index] if line.bowler_index is not None else None
+        db.add(models.TcRegistrationSideEvent(
+            registration_id=registration.id,
+            tournament_id=tournament_id,
+            bowler_id=bowler_record.id if bowler_record else None,
+            fee_config_id=line.fee_id,
+            name_snapshot=line.name[:255],
+            kind=line.kind,
+            scoring=line.scoring,
+            quantity=line.quantity,
+            unit_cents=line.unit_cents,
+            total_cents=line.total_cents,
+        ))
+
     response_body = {
         "status": registration_status,
         "registration_id": registration.confirmation_code,
         "submission_id": registration.confirmation_code,
         "submitted_at": registration.submitted_at.isoformat(),
+        "subtotal_cents": subtotal_cents,
+        "fees_cents": side_event_fees_cents,
+        "total_cents": total_cents,
+        "side_events": [line.as_response() for line in priced_side_events],
     }
 
     try:

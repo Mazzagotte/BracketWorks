@@ -627,6 +627,26 @@ def list_tournament_registrations(
         for entry in entries_query.order_by(models.TcEntry.id.asc()).all():
             entries_by_registration.setdefault(entry.registration_id, []).append(entry)
 
+    side_events_by_registration: dict[int, list[dict]] = {}
+    if registration_ids:
+        for side_event in (
+            db.query(models.TcRegistrationSideEvent)
+            .filter(models.TcRegistrationSideEvent.registration_id.in_(registration_ids))
+            .order_by(models.TcRegistrationSideEvent.id.asc())
+            .all()
+        ):
+            side_events_by_registration.setdefault(side_event.registration_id, []).append({
+                "id": side_event.id,
+                "fee_id": side_event.fee_config_id,
+                "name": side_event.name_snapshot,
+                "kind": side_event.kind,
+                "scoring": side_event.scoring,
+                "bowler_id": side_event.bowler_id,
+                "quantity": side_event.quantity,
+                "unit_cents": side_event.unit_cents,
+                "total_cents": side_event.total_cents,
+            })
+
     rows = []
     for registration in registrations:
         registration_entries = entries_by_registration.get(registration.id, [])
@@ -645,8 +665,11 @@ def list_tournament_registrations(
                 "contact_phone": registration.contact_phone,
                 "notes": registration.notes,
                 "submitted_at": registration.submitted_at.isoformat() if registration.submitted_at else None,
+                "subtotal_cents": registration.subtotal_cents,
+                "fees_cents": registration.fees_cents,
                 "total_cents": registration.total_cents,
                 "currency": registration.currency,
+                "side_events": side_events_by_registration.get(registration.id, []),
                 "entry_count": len(registration_entries),
                 "entries": [
                     {
@@ -671,6 +694,7 @@ def list_tournament_registrations(
                                 "phone": bowler.phone,
                                 "usbc_number": bowler.usbc_number,
                                 "average": bowler.average,
+                                "gender": bowler.gender,
                                 "checked_in_at": _checked_in_at_iso(bowler),
                             }
                             for _, bowler in db.query(models.TcEntryBowler, models.TcRegistrationBowler)
@@ -985,6 +1009,9 @@ def delete_tournament_entry(
     if registration and remaining_entries == 0:
         db.query(models.TcRegistrationAnswer).filter(
             models.TcRegistrationAnswer.registration_id == registration.id,
+        ).delete(synchronize_session=False)
+        db.query(models.TcRegistrationSideEvent).filter(
+            models.TcRegistrationSideEvent.registration_id == registration.id,
         ).delete(synchronize_session=False)
         db.query(models.TcRegistrationBowler).filter(
             models.TcRegistrationBowler.registration_id == registration.id,

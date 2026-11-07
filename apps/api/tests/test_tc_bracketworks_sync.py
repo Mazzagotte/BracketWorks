@@ -299,3 +299,76 @@ def test_tc_staff_without_bw_access_cannot_sync_linked_tournament(
     finalized = _sync(api_client, tc, auth_identity.headers, dry_run=True)
     assert finalized.status_code == 409
     assert "finalized or archived" in finalized.json()["detail"]
+
+
+def _buy_brackets(db, tc, registration, bowler, quantity, scoring="handicap"):
+    db.add(models.TcRegistrationSideEvent(
+        registration_id=registration.id,
+        tournament_id=tc.id,
+        bowler_id=bowler.id,
+        fee_config_id=f"fee-{scoring}",
+        name_snapshot=f"{scoring.title()} brackets",
+        kind="brackets",
+        scoring=scoring,
+        quantity=quantity,
+        unit_cents=500,
+        total_cents=500 * quantity,
+    ))
+    db.commit()
+
+
+def test_bracket_side_events_set_program_entry_counts(api_client, db_session, auth_identity):
+    tc = _tc_tournament(db_session, auth_identity.user)
+    registration, bowler, _ = _register(db_session, tc, "Ann", "Lee", average=180)
+    _buy_brackets(db_session, tc, registration, bowler, 5)
+    _buy_brackets(db_session, tc, registration, bowler, 2, scoring="scratch")
+    _register(db_session, tc, "Bob", "Ray", average=170)
+
+    bw_id = _sync(api_client, tc, auth_identity.headers, dry_run=False).json()["bw_tournament_id"]
+
+    ann, bob = _bw_players(db_session, bw_id)
+    assert ann.program_entry_counts == {"handicap": 5, "scratch": 2}
+    assert (ann.handicap_entry_count, ann.scratch_entry_count) == (5, 2)
+    # TC sells brackets, so a bowler who bought none gets zero entries rather than BracketWorks defaults.
+    assert bob.program_entry_counts == {"handicap": 0, "scratch": 0}
+
+
+def test_changed_bracket_counts_update_player_and_need_regeneration(api_client, db_session, auth_identity):
+    tc = _tc_tournament(db_session, auth_identity.user)
+    registration, bowler, _ = _register(db_session, tc, "Ann", "Lee", average=180)
+    _buy_brackets(db_session, tc, registration, bowler, 3)
+    bw_id = _sync(api_client, tc, auth_identity.headers, dry_run=False).json()["bw_tournament_id"]
+    squad = db_session.query(models.TournamentSquad).filter_by(tournament_id=bw_id).one()
+    db_session.add(models.BracketSnapshot(tournament_id=bw_id, squad_id=squad.id, payload={}, is_current=True))
+    player = _bw_players(db_session, bw_id)[0]
+    player.program_entry_counts = {"handicap": 3, "scratch": 0, "womens_scratch": 1}
+    db_session.commit()
+
+    unchanged = _sync(api_client, tc, auth_identity.headers, dry_run=True).json()
+    assert unchanged["players_updated"] == 0
+    assert unchanged["squads_needing_regeneration"] == []
+
+    _buy_brackets(db_session, tc, registration, bowler, 2)
+    body = _sync(api_client, tc, auth_identity.headers, dry_run=False).json()
+
+    assert body["players_updated"] == 1
+    assert body["bracket_entries_updated"] == 1
+    assert body["squads_needing_regeneration"] == [{"squad_id": squad.id, "label": "Squad A"}]
+    player = _bw_players(db_session, bw_id)[0]
+    # Other BracketWorks programs the organizer set by hand are kept.
+    assert player.program_entry_counts == {"handicap": 5, "scratch": 0, "womens_scratch": 1}
+    assert player.handicap_entry_count == 5
+
+
+def test_without_bracket_side_events_counts_are_left_alone(api_client, db_session, auth_identity):
+    tc = _tc_tournament(db_session, auth_identity.user)
+    _register(db_session, tc, "Ann", "Lee", average=180)
+    bw_id = _sync(api_client, tc, auth_identity.headers, dry_run=False).json()["bw_tournament_id"]
+    player = _bw_players(db_session, bw_id)[0]
+    player.program_entry_counts = {"handicap": 4}
+    db_session.commit()
+
+    body = _sync(api_client, tc, auth_identity.headers, dry_run=False).json()
+
+    assert body["players_updated"] == 0
+    assert _bw_players(db_session, bw_id)[0].program_entry_counts == {"handicap": 4}

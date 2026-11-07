@@ -289,6 +289,35 @@ def _entry_lines(db: Session, registration: models.TcRegistration) -> list[str]:
     return lines
 
 
+def _side_event_lines(db: Session, registration: models.TcRegistration) -> list[str]:
+    """One line per side event or fee, for example "Brackets x5 for Ann Lee: $25.00"."""
+    rows = (
+        db.query(models.TcRegistrationSideEvent)
+        .filter(models.TcRegistrationSideEvent.registration_id == registration.id)
+        .order_by(models.TcRegistrationSideEvent.id.asc())
+        .all()
+    )
+    if not rows:
+        return []
+    bowler_ids = [row.bowler_id for row in rows if row.bowler_id is not None]
+    names: dict[int, str] = {}
+    if bowler_ids:
+        for bowler in (
+            db.query(models.TcRegistrationBowler)
+            .filter(models.TcRegistrationBowler.id.in_(bowler_ids))
+            .all()
+        ):
+            names[bowler.id] = " ".join(f"{bowler.first_name or ''} {bowler.last_name or ''}".split())
+    lines: list[str] = []
+    for row in rows:
+        label = f"{row.name_snapshot} x{row.quantity}" if row.quantity > 1 else row.name_snapshot
+        who = names.get(row.bowler_id) if row.bowler_id is not None else None
+        if who:
+            label = f"{label} for {who}"
+        lines.append(f"{label}: {_format_money(row.total_cents, registration.currency)}")
+    return lines
+
+
 # --- Rendering -------------------------------------------------------------------------------
 
 
@@ -357,6 +386,7 @@ def build_registration_confirmation(db: Session, registration: models.TcRegistra
     facts = _tournament_facts(db, tournament)
     status = _STATUS_LABELS.get(registration.status, registration.status.title())
     entries = _entry_lines(db, registration)
+    side_events = _side_event_lines(db, registration)
     total = _format_money(registration.total_cents, registration.currency)
     first_name = (registration.contact_first_name or "").strip()
 
@@ -373,6 +403,13 @@ def build_registration_confirmation(db: Session, registration: models.TcRegistra
         ("Status", status),
         ("Date", facts["tournament_dates"]),
         ("Location", facts["tournament_location"]),
+        *(
+            [
+                ("Entry fees", _format_money(registration.subtotal_cents, registration.currency)),
+                ("Side events and fees", _format_money(registration.fees_cents, registration.currency)),
+            ]
+            if side_events else []
+        ),
         ("Total", total),
     ]
     rows = [(label, value) for label, value in rows if value]
@@ -393,9 +430,10 @@ def build_registration_confirmation(db: Session, registration: models.TcRegistra
             "status": status,
             "total": total,
             "entries": "\n".join(entries),
+            "side_events": "\n".join(side_events),
         },
-        text=_render_text(paragraphs, rows=rows, items=entries),
-        html_body=_render_html(paragraphs, rows=rows, items=entries),
+        text=_render_text(paragraphs, rows=rows, items=[*entries, *side_events]),
+        html_body=_render_html(paragraphs, rows=rows, items=[*entries, *side_events]),
     )
 
 
