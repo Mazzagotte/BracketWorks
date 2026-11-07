@@ -215,8 +215,9 @@
   --color-status-purple: #dc52e9;
 
   /* State map fills (Tournament Central discovery map) */
-  /* States with tournaments carry a warm tint; in progress uses the success color; selected is strongest. */
-  --color-map-fill-selected: color-mix(in srgb, var(--color-accent-primary) 42%, var(--color-surface-secondary));
+  /* States with tournaments carry a warm tint and in progress uses the success color. Hover is a stronger tint;
+     the selected state is shown with an outline, not a fill. */
+  --color-map-fill-hover: color-mix(in srgb, var(--color-accent-primary) 32%, var(--color-surface-secondary));
   --color-map-fill-in-progress: color-mix(in srgb, var(--color-success) 26%, var(--color-surface-secondary));
   --color-map-fill-upcoming: color-mix(in srgb, var(--color-accent-primary) 20%, var(--color-surface-secondary));
   --color-map-fill-past: var(--color-surface-hover);

@@ -1581,7 +1581,8 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
                             data-selected={stateCode === selectedStateCode ? 'true' : 'false'}
                             data-tone={tone}
                             onClick={(event) => {
-                              if (stateCode) handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
+                              // States without any tournaments are not selectable.
+                              if (stateCode && tone !== 'none') handleStateSelect(stateCode, event as ReactMouseEvent<SVGPathElement>);
                             }}
                             style={mapGeographyStyle}
                           />

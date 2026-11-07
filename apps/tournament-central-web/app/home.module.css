@@ -131,19 +131,20 @@
   transition: fill var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-.state[data-tone='none'] { fill: var(--color-map-fill-none); }
+.state[data-tone='none'] { fill: var(--color-map-fill-none); cursor: default; }
 .state[data-tone='past'] { fill: var(--color-map-fill-past); }
 .state[data-tone='upcoming'] { fill: var(--color-map-fill-upcoming); }
 .state[data-tone='inprogress'] { fill: var(--color-map-fill-in-progress); }
 
+/* Only states with tournaments respond to the pointer. */
 .state:not([data-tone='none']):hover {
-  fill: var(--color-map-fill-selected);
+  fill: var(--color-map-fill-hover);
 }
 
+/* The selected state keeps its fill and gets an accent outline. */
 .state[data-selected='true'] {
-  fill: var(--color-map-fill-selected);
   stroke: var(--color-accent-primary);
-  stroke-width: 1.5;
+  stroke-width: 2;
 }
 
 .marker {
