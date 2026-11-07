@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button, Notice, Page } from '@bracketworks/ui';
+import { installAuthRetry } from '../auth/authRetry';
 import { useAuthSession } from '../auth/useAuthSession';
 
 type OrganizerAuthGuardProps = {
@@ -13,13 +14,18 @@ type OrganizerAuthGuardProps = {
 // Single place that enforces organizer authentication; API authorization remains the real security boundary.
 export default function OrganizerAuthGuard({ children }: OrganizerAuthGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { displayName: session, error, retry } = useAuthSession();
+
+  // An expired token refreshes quietly on the next API call; if it can't, the session clears and we redirect below.
+  useEffect(() => installAuthRetry(), []);
 
   useEffect(() => {
     if (session === '') {
-      router.replace('/login?expired=true');
+      const next = `${pathname ?? '/organizer'}${window.location.search}`;
+      router.replace(`/login?expired=true&next=${encodeURIComponent(next)}`);
     }
-  }, [router, session]);
+  }, [pathname, router, session]);
 
   if (error) {
     return (

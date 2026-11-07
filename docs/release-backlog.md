@@ -62,7 +62,7 @@ tournament_location, organizer_name, organizer_email, first_name, confirmation_c
 
 ## 3. Housekeeping before release
 
-- [ ] **Expired sign-in on organizer pages.** When the session expires, the dashboard shows "Could not validate credentials" and "We couldn't load your tournaments" instead of sending the organizer to sign in (and back). Redirect to login on a 401.
+- [x] **Expired sign-in on organizer pages.** When the session expires, the dashboard shows "Could not validate credentials" and "We couldn't load your tournaments" instead of sending the organizer to sign in (and back). Redirect to login on a 401.
 - [ ] **Live scoring follow-ups:** double elimination finals; an "Add game" button for extra qualifying games; reseeding finals when qualifying changes after finals start; a roll-off record for tied finals games; tie-breaks at the cut line (today alphabetical).
 
 - [ ] **Migrations.** Committed migrations go 0045 > 0048 > 0049. The unfinished SSO work has 0046 and 0047 locally. When SSO lands, add a merge migration (or move 0046 to follow 0049).

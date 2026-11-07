@@ -427,7 +427,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const hasToken = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('access_token'));
     const hasUser = typeof window !== 'undefined' && Boolean(localStorage.getItem('user_id'));
     if (!hasToken || !hasUser) {
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
     }
   }, [router]);
 
@@ -660,7 +660,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 
@@ -677,7 +677,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 
@@ -736,7 +736,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 
@@ -1431,7 +1431,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 
@@ -1494,7 +1494,7 @@ export default function TournamentSetupWorkspace({ initialTournamentId = null }:
     const token = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
     if (!token) {
       setSaveError('Your session expired. Please sign in again.');
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 

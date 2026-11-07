@@ -61,7 +61,7 @@ export default function OrganizerAccountSettingsPage() {
   useEffect(() => {
     const token = sessionStorage.getItem('access_token');
     if (!token) {
-      router.replace('/login?expired=true');
+      router.replace(`/login?expired=true&next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
     getMyAccount(token)

@@ -9,6 +9,7 @@ import AuthShell from './AuthShell';
 import ResetPasswordModal from './ResetPasswordModal';
 import SignupModal from './SignupModal';
 import styles from './authForm.module.css';
+import { safeNextPath } from './authRetry';
 import { persistAuthSession } from './authSession';
 
 type LoginResponse = Partial<AuthTokenResponse>;
@@ -187,7 +188,8 @@ export default function SignInForm() {
         sessionId: data.session_id,
       });
 
-      router.replace('/organizer');
+      // Back to the page the organizer was on when their session expired, if any.
+      router.replace(safeNextPath(searchParams.get('next')));
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to sign in.';
       setError(message);
