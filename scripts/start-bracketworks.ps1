@@ -501,7 +501,7 @@ if ($BackendMode -eq "docker") {
         "Write-Host 'Skipping database migrations (BRACKETWORKS_SKIP_MIGRATIONS=true).' -ForegroundColor Yellow; "
     } else {
         "Write-Host 'Running database migrations...' -ForegroundColor Yellow; " +
-        "& '$PythonCmd' -m alembic upgrade head; " +
+        "& '$PythonCmd' -m alembic upgrade heads; " +
         "if (`$LASTEXITCODE -ne 0) { " +
         "  Write-Host 'Database migration failed. Backend will not start.' -ForegroundColor Red; " +
         "  $ClosePromptCmd; " +

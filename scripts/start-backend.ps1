@@ -17,7 +17,7 @@ Set-Location $backendPath
 if (Test-Path '.venv/Scripts/python.exe') {
   $env:DATABASE_URL = $databaseUrl
   Write-Host 'Running database migrations...' -ForegroundColor Yellow
-  & ./.venv/Scripts/python.exe -m alembic upgrade head
+  & ./.venv/Scripts/python.exe -m alembic upgrade heads
   if ($LASTEXITCODE -ne 0) {
     Write-Error 'Database migration failed. Backend will not start.'
     exit $LASTEXITCODE
@@ -28,7 +28,7 @@ if (Test-Path '.venv/Scripts/python.exe') {
 } elseif (Get-Command python -ErrorAction SilentlyContinue) {
   $env:DATABASE_URL = $databaseUrl
   Write-Host 'Running database migrations...' -ForegroundColor Yellow
-  & python -m alembic upgrade head
+  & python -m alembic upgrade heads
   if ($LASTEXITCODE -ne 0) {
     Write-Error 'Database migration failed. Backend will not start.'
     exit $LASTEXITCODE
