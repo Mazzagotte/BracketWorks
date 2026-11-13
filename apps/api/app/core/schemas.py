@@ -215,6 +215,9 @@ class UserCreate(BaseModel):
     email: EmailStr
     organization: Optional[str] = None
     password: str
+    # Which site the person signed up on: "bracketworks" or "tournament_central".
+    # Brands their account emails. Anything else, or nothing, means BracketWorks.
+    site: Optional[str] = None
 
 
 class UserOut(BaseModel):
@@ -253,6 +256,9 @@ class AccountDeletionRequest(BaseModel):
 
 class PasswordResetRequest(BaseModel):
     email: EmailStr
+    # The site the reset was asked for on, so the email and its link match it.
+    # Left out: the site the person signed up on.
+    site: Optional[str] = None
 
 
 class PasswordResetVerifyRequest(BaseModel):

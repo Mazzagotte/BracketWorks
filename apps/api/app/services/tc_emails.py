@@ -4,7 +4,7 @@ Every email goes to exactly one recipient, so addresses are never shown to each 
 sent through Resend (the same provider as ``email_service``). When a ``TC_*_TEMPLATE_ID`` setting is
 set, that hosted template is used with the variables below; otherwise the built-in HTML and text
 body is sent, which needs no provider-side setup beyond ``RESEND_API_KEY`` and a verified
-``FROM_EMAIL`` domain. Sending never raises: failures are logged and reported as ``False`` or counted.
+``TC_FROM_EMAIL`` domain (tournamentcentral.app). Sending never raises: failures are logged and reported as ``False`` or counted.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ _STATUS_LABELS = {
 
 
 def _from_address() -> str:
-    return f"{settings.TC_FROM_NAME} <{settings.FROM_EMAIL}>"
+    return f"{settings.TC_FROM_NAME} <{settings.TC_FROM_EMAIL}>"
 
 
 def _post_resend(path: str, body: dict | list) -> bool:

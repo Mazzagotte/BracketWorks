@@ -81,7 +81,7 @@ BracketWorks is a web platform for running bowling tournaments with bracket gene
 | Scope | Required Variables |
 |---|---|
 | Backend | `DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, `CORS_ORIGINS`, `FRONTEND_URL`, `ENVIRONMENT`, `DEBUG` |
-| Backend (optional) | `FROM_EMAIL`, `FROM_NAME`, `RESEND_API_KEY`, `LOG_LEVEL`, `RATE_LIMIT_*_PER_MINUTE` |
+| Backend (optional) | `FROM_EMAIL`, `FROM_NAME`, `TC_FROM_EMAIL`, `TC_FROM_NAME`, `TC_FRONTEND_URL`, `RESEND_API_KEY`, `LOG_LEVEL`, `RATE_LIMIT_*_PER_MINUTE` |
 | Frontend | `NEXT_PUBLIC_BACKEND_URL` |
 
 Rate limiter defaults: login 10/min, password reset 6/min, public 120/min, bracket generation 20/min. Falls back to in-memory if `REDIS_URL` is unavailable.

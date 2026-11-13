@@ -6,141 +6,132 @@ from urllib.parse import urlencode
 from urllib import request as url_request
 
 from ..core.config import settings
+from .email_brands import EmailBrand, get_brand
 
 logger = logging.getLogger(__name__)
 
+# Hosted Resend template ids. The templates are shared by BracketWorks and Tournament Central and
+# take the brand variables from ``EmailBrand.template_variables``.
 RESET_PASSWORD_TEMPLATE_ID = "reset-password"
-RESET_PASSWORD_SUBJECT = "Reset your BracketWorks password"
-RESET_PASSWORD_SUPPORT_EMAIL = "support@bracketworks.app"
-RESET_PASSWORD_EXPIRATION_MINUTES = 10
-RESET_PASSWORD_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 VERIFY_EMAIL_TEMPLATE_ID = "verify-email"
-VERIFY_EMAIL_SUBJECT = "Verify your BracketWorks email"
-VERIFY_EMAIL_EXPIRATION_MINUTES = 30
-VERIFY_EMAIL_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 WELCOME_EMAIL_TEMPLATE_ID = "welcome-email"
-WELCOME_EMAIL_SUBJECT = "Welcome to BracketWorks"
-WELCOME_EMAIL_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 PASSWORD_CHANGE_TEMPLATE_ID = "password-change"
-PASSWORD_CHANGE_SUBJECT = "Your BracketWorks password was changed"
-PASSWORD_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 EMAIL_CHANGE_TEMPLATE_ID = "email-change"
-EMAIL_CHANGE_SUBJECT = "Your BracketWorks email was changed"
-EMAIL_CHANGE_FROM = f"{settings.FROM_NAME} <{settings.FROM_EMAIL}>"
 STAFF_INVITE_TEMPLATE_ID = "tournament-staff-invite"
-STAFF_INVITE_SUBJECT = "You were invited to a BracketWorks tournament"
+
+SUPPORT_EMAIL = "support@bracketworks.app"
+# Kept for older imports; the support address is the same for both brands.
+RESET_PASSWORD_SUPPORT_EMAIL = SUPPORT_EMAIL
+RESET_PASSWORD_EXPIRATION_MINUTES = 10
+VERIFY_EMAIL_EXPIRATION_MINUTES = 30
 
 
-def _base_template_variables() -> dict[str, str]:
+def _base_template_variables(brand: EmailBrand) -> dict[str, str]:
     return {
-        "logo_url": _frontend_url("/logo_no_text.svg"),
-        "support_email": RESET_PASSWORD_SUPPORT_EMAIL,
+        **brand.template_variables(),
+        "support_email": SUPPORT_EMAIL,
     }
 
 
-def _reset_password_template_variables(reset_url: str) -> dict[str, str]:
+def _payload(brand: EmailBrand, to: str, subject: str, template_id: str, variables: dict[str, str]) -> dict:
+    """A hosted-template email. The subject is set here, so it is branded too: the API's subject
+    replaces the template's own."""
     return {
-        **_base_template_variables(),
-        "reset_url": reset_url,
-        "expiration_minutes": str(RESET_PASSWORD_EXPIRATION_MINUTES),
+        "from": brand.from_address,
+        "to": to,
+        "subject": subject,
+        "template": {"id": template_id, "variables": {**_base_template_variables(brand), **variables}},
     }
 
 
-def _verify_email_template_variables(verification_url: str) -> dict[str, str]:
-    return {
-        **_base_template_variables(),
-        "verify_url": verification_url,
-        "verification_url": verification_url,
-        "verify_email_url": verification_url,
-        "verification_link": verification_url,
-        "action_url": verification_url,
-        "button_url": verification_url,
-        "link_url": verification_url,
-        "expiration_minutes": str(VERIFY_EMAIL_EXPIRATION_MINUTES),
-    }
+def build_reset_password_url(reset_token: str, *, site: str | None = None) -> str:
+    return f"{get_brand(site).url('/reset-password')}?{urlencode({'token': reset_token})}"
 
 
-def _welcome_email_template_variables(first_name: str) -> dict[str, str]:
-    return {
-        **_base_template_variables(),
-        "first_name": first_name,
-    }
+def build_verify_email_url(verification_token: str, *, site: str | None = None) -> str:
+    return f"{get_brand(site).url('/verify-email')}?{urlencode({'token': verification_token})}"
 
 
-def _password_change_template_variables(first_name: str) -> dict[str, str]:
-    return {
-        **_base_template_variables(),
-        "first_name": first_name,
-    }
-
-
-def _email_change_template_variables(first_name: str, previous_email: str, new_email: str) -> dict[str, str]:
-    return {
-        **_base_template_variables(),
-        "first_name": first_name,
-        "previous_email": previous_email,
-        "new_email": new_email,
-    }
-
-
-def build_reset_password_payload(user_email: str, *, reset_token: str | None = None, reset_url: str | None = None) -> dict | None:
-    resolved_reset_url = (reset_url or "").strip() or build_reset_password_url((reset_token or "").strip())
+def build_reset_password_payload(
+    user_email: str,
+    *,
+    reset_token: str | None = None,
+    reset_url: str | None = None,
+    site: str | None = None,
+) -> dict | None:
+    brand = get_brand(site)
+    resolved_reset_url = (reset_url or "").strip()
+    if not resolved_reset_url and (reset_token or "").strip():
+        resolved_reset_url = build_reset_password_url(reset_token.strip(), site=brand.site)
     if not resolved_reset_url:
         logger.error("Missing reset token or reset URL for password reset email")
         return None
 
-    return {
-        "from": RESET_PASSWORD_FROM,
-        "to": user_email,
-        "subject": RESET_PASSWORD_SUBJECT,
-        "template": {
-            "id": RESET_PASSWORD_TEMPLATE_ID,
-            "variables": _reset_password_template_variables(resolved_reset_url),
-        },
-    }
+    return _payload(
+        brand,
+        user_email,
+        f"Reset your {brand.product_name} password",
+        RESET_PASSWORD_TEMPLATE_ID,
+        {"reset_url": resolved_reset_url, "expiration_minutes": str(RESET_PASSWORD_EXPIRATION_MINUTES)},
+    )
 
 
-def build_verify_email_payload(user_email: str, *, verification_token: str | None = None, verification_url: str | None = None) -> dict | None:
-    resolved_verification_url = (verification_url or "").strip() or build_verify_email_url((verification_token or "").strip())
-    if not resolved_verification_url:
+def build_verify_email_payload(
+    user_email: str,
+    *,
+    verification_token: str | None = None,
+    verification_url: str | None = None,
+    site: str | None = None,
+) -> dict | None:
+    brand = get_brand(site)
+    resolved_url = (verification_url or "").strip()
+    if not resolved_url and (verification_token or "").strip():
+        resolved_url = build_verify_email_url(verification_token.strip(), site=brand.site)
+    if not resolved_url:
         logger.error("Missing verification token or verification URL for verify email")
         return None
 
-    return {
-        "from": VERIFY_EMAIL_FROM,
-        "to": user_email,
-        "subject": VERIFY_EMAIL_SUBJECT,
-        "template": {
-            "id": VERIFY_EMAIL_TEMPLATE_ID,
-            "variables": _verify_email_template_variables(resolved_verification_url),
+    return _payload(
+        brand,
+        user_email,
+        f"Verify your {brand.product_name} email",
+        VERIFY_EMAIL_TEMPLATE_ID,
+        {
+            "verification_url": resolved_url,
+            # Older names for the same link, kept for templates that still use them.
+            "verify_url": resolved_url,
+            "verify_email_url": resolved_url,
+            "verification_link": resolved_url,
+            "action_url": resolved_url,
+            "button_url": resolved_url,
+            "link_url": resolved_url,
+            "expiration_minutes": str(VERIFY_EMAIL_EXPIRATION_MINUTES),
         },
-    }
+    )
 
 
-def build_welcome_email_payload(user_email: str, *, first_name: str | None = None) -> dict:
-    resolved_first_name = (first_name or "").strip()
-    return {
-        "from": WELCOME_EMAIL_FROM,
-        "to": user_email,
-        "subject": WELCOME_EMAIL_SUBJECT,
-        "template": {
-            "id": WELCOME_EMAIL_TEMPLATE_ID,
-            "variables": _welcome_email_template_variables(resolved_first_name),
-        },
-    }
+def build_welcome_email_payload(user_email: str, *, first_name: str | None = None, site: str | None = None) -> dict:
+    brand = get_brand(site)
+    return _payload(
+        brand,
+        user_email,
+        f"Welcome to {brand.product_name}",
+        WELCOME_EMAIL_TEMPLATE_ID,
+        {"first_name": (first_name or "").strip(), "login_url": brand.url("/login")},
+    )
 
 
-def build_password_change_email_payload(user_email: str, *, first_name: str | None = None) -> dict:
-    resolved_first_name = (first_name or "").strip()
-    return {
-        "from": PASSWORD_CHANGE_FROM,
-        "to": user_email,
-        "subject": PASSWORD_CHANGE_SUBJECT,
-        "template": {
-            "id": PASSWORD_CHANGE_TEMPLATE_ID,
-            "variables": _password_change_template_variables(resolved_first_name),
-        },
-    }
+def build_password_change_email_payload(
+    user_email: str, *, first_name: str | None = None, site: str | None = None
+) -> dict:
+    brand = get_brand(site)
+    return _payload(
+        brand,
+        user_email,
+        f"Your {brand.product_name} password was changed",
+        PASSWORD_CHANGE_TEMPLATE_ID,
+        {"first_name": (first_name or "").strip()},
+    )
 
 
 def build_email_change_email_payload(
@@ -149,55 +140,44 @@ def build_email_change_email_payload(
     first_name: str | None = None,
     previous_email: str | None = None,
     new_email: str | None = None,
+    site: str | None = None,
 ) -> dict:
-    resolved_first_name = (first_name or "").strip()
-    resolved_previous_email = (previous_email or "").strip().lower()
-    resolved_new_email = (new_email or "").strip().lower()
-    return {
-        "from": EMAIL_CHANGE_FROM,
-        "to": user_email,
-        "subject": EMAIL_CHANGE_SUBJECT,
-        "template": {
-            "id": EMAIL_CHANGE_TEMPLATE_ID,
-            "variables": _email_change_template_variables(
-                resolved_first_name,
-                resolved_previous_email,
-                resolved_new_email,
-            ),
+    brand = get_brand(site)
+    return _payload(
+        brand,
+        user_email,
+        f"Your {brand.product_name} email was changed",
+        EMAIL_CHANGE_TEMPLATE_ID,
+        {
+            "first_name": (first_name or "").strip(),
+            "previous_email": (previous_email or "").strip().lower(),
+            "new_email": (new_email or "").strip().lower(),
         },
-    }
+    )
 
 
-def _frontend_url(path: str) -> str:
-    return f"{settings.FRONTEND_URL.rstrip('/')}{path}"
-
-
-def build_reset_password_url(reset_token: str) -> str:
-    query_string = urlencode({"token": reset_token})
-    return f"{_frontend_url('/reset-password')}?{query_string}"
-
-
-def build_verify_email_url(verification_token: str) -> str:
-    query_string = urlencode({"token": verification_token})
-    return f"{_frontend_url('/verify-email')}?{query_string}"
-
-
-def sendTournamentStaffInviteEmail(user_email: str, *, tournament_name: str, role: str, invitation_id: int, invitation_token: str) -> bool:
+def sendTournamentStaffInviteEmail(
+    user_email: str,
+    *,
+    tournament_name: str,
+    role: str,
+    invitation_id: int,
+    invitation_token: str,
+    site: str | None = None,
+) -> bool:
+    brand = get_brand(site)
     query_string = urlencode({"staff_invitation_id": invitation_id, "staff_invitation_token": invitation_token})
-    payload = {
-        "from": RESET_PASSWORD_FROM,
-        "to": user_email,
-        "subject": STAFF_INVITE_SUBJECT,
-        "template": {
-            "id": STAFF_INVITE_TEMPLATE_ID,
-            "variables": {
-                **_base_template_variables(),
-                "tournament_name": tournament_name,
-                "role": role.replace("_", " ").title(),
-                "action_url": f"{_frontend_url('/dashboard')}?{query_string}",
-            },
+    payload = _payload(
+        brand,
+        user_email,
+        f"You were invited to a {brand.product_name} tournament",
+        STAFF_INVITE_TEMPLATE_ID,
+        {
+            "tournament_name": tournament_name,
+            "role": role.replace("_", " ").title(),
+            "action_url": f"{brand.url('/dashboard')}?{query_string}",
         },
-    }
+    )
     return _send_template_email(payload, log_context="tournament-staff-invite", recipient_email=user_email)
 
 
@@ -246,31 +226,41 @@ def _send_template_email(payload: dict, *, log_context: str, recipient_email: st
         return False
 
 
-def sendResetPasswordEmail(user_email: str, reset_token: str | None = None, reset_url: str | None = None) -> bool:
-    payload = build_reset_password_payload(user_email, reset_token=reset_token, reset_url=reset_url)
+def sendResetPasswordEmail(
+    user_email: str,
+    reset_token: str | None = None,
+    reset_url: str | None = None,
+    *,
+    site: str | None = None,
+) -> bool:
+    payload = build_reset_password_payload(user_email, reset_token=reset_token, reset_url=reset_url, site=site)
     if not payload:
         return False
-
     return _send_template_email(payload, log_context="password-reset", recipient_email=user_email)
 
 
-def sendVerifyEmail(user_email: str, verification_token: str | None = None, verification_url: str | None = None) -> bool:
-    payload = build_verify_email_payload(user_email, verification_token=verification_token, verification_url=verification_url)
+def sendVerifyEmail(
+    user_email: str,
+    verification_token: str | None = None,
+    verification_url: str | None = None,
+    *,
+    site: str | None = None,
+) -> bool:
+    payload = build_verify_email_payload(
+        user_email, verification_token=verification_token, verification_url=verification_url, site=site
+    )
     if not payload:
         return False
-
     return _send_template_email(payload, log_context="verify-email", recipient_email=user_email)
 
 
-def sendWelcomeEmail(user_email: str, first_name: str | None = None) -> bool:
-    payload = build_welcome_email_payload(user_email, first_name=first_name)
-
+def sendWelcomeEmail(user_email: str, first_name: str | None = None, *, site: str | None = None) -> bool:
+    payload = build_welcome_email_payload(user_email, first_name=first_name, site=site)
     return _send_template_email(payload, log_context="welcome-email", recipient_email=user_email)
 
 
-def sendPasswordChangeEmail(user_email: str, first_name: str | None = None) -> bool:
-    payload = build_password_change_email_payload(user_email, first_name=first_name)
-
+def sendPasswordChangeEmail(user_email: str, first_name: str | None = None, *, site: str | None = None) -> bool:
+    payload = build_password_change_email_payload(user_email, first_name=first_name, site=site)
     return _send_template_email(payload, log_context="password-change", recipient_email=user_email)
 
 
@@ -280,12 +270,13 @@ def sendEmailChangeEmail(
     first_name: str | None = None,
     previous_email: str | None = None,
     new_email: str | None = None,
+    site: str | None = None,
 ) -> bool:
     payload = build_email_change_email_payload(
         user_email,
         first_name=first_name,
         previous_email=previous_email,
         new_email=new_email,
+        site=site,
     )
-
     return _send_template_email(payload, log_context="email-change", recipient_email=user_email)

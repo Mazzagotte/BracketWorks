@@ -70,6 +70,9 @@ class User(Base):
     email_verified_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime, nullable=True, index=True
     )
+    # The site the account was created on ("bracketworks" or "tournament_central"). It brands the
+    # account's emails. NULL for accounts made before it was recorded: those are BracketWorks.
+    signup_site: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
     dev_notice_version_accepted: Mapped[Optional[str]] = mapped_column(
         String(10), nullable=True
     )
