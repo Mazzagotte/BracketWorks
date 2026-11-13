@@ -6,6 +6,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Button, FormGrid, Notice, PasswordField, TextField, capitalizeFirstLetter } from '@bracketworks/ui';
 
 import AuthShell from './AuthShell';
+import { ACCOUNT_SITE } from './accountSite';
 import styles from './authForm.module.css';
 
 type RegisterValues = {
@@ -104,6 +105,7 @@ export default function RegisterForm() {
           email: values.email.trim().toLowerCase(),
           organization: values.organization.trim() || undefined,
           password: values.password,
+          site: ACCOUNT_SITE,
         }),
       });
 

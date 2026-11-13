@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 
+import { ACCOUNT_SITE } from './accountSite';
 import styles from './authForm.module.css';
 import { Button, Modal, Notice, TextField } from '@bracketworks/ui';
 
@@ -41,6 +42,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess }: Reset
         },
         body: JSON.stringify({
           email: email.trim(),
+          site: ACCOUNT_SITE,
         }),
       });
 

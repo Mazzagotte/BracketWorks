@@ -6,6 +6,7 @@ import { FormEvent, useState } from 'react';
 import { Button, Notice, TextField } from '@bracketworks/ui';
 
 import AuthShell from './AuthShell';
+import { ACCOUNT_SITE } from './accountSite';
 import styles from './authForm.module.css';
 
 const GENERIC_SUCCESS_MESSAGE = 'If an account exists for this email, a password reset link has been sent.';
@@ -36,6 +37,7 @@ export default function ForgotPasswordForm() {
         },
         body: JSON.stringify({
           email: email.trim(),
+          site: ACCOUNT_SITE,
         }),
       });
 

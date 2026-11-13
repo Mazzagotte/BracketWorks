@@ -77,8 +77,12 @@ class Settings(BaseSettings):
     FROM_EMAIL: str = "no-reply@bracketworks.app"
     FROM_NAME: str = "BracketWorks"
     FRONTEND_URL: str = "https://bracketworks.app"
-    # Tournament Central bowler emails. Blank template ids send the built-in HTML and text body.
+    # Tournament Central branding for emails: bowler emails, and account emails for people who
+    # signed up on Tournament Central. TC_FROM_EMAIL must be on a domain verified in Resend.
     TC_FROM_NAME: str = "Tournament Central"
+    TC_FROM_EMAIL: str = "no-reply@tournamentcentral.app"
+    TC_FRONTEND_URL: str = "https://tournamentcentral.app"
+    # Tournament Central bowler emails. Blank template ids send the built-in HTML and text body.
     TC_REGISTRATION_CONFIRMATION_TEMPLATE_ID: str = ""
     TC_WAITLIST_PROMOTION_TEMPLATE_ID: str = ""
     TC_MESSAGE_MAX_RECIPIENTS: int = 500

@@ -8,6 +8,7 @@ from ...core.config import settings
 from ...core.password_policy import PasswordPolicyError, validate_password_policy
 from ...core import legal_disclosure
 from ..deps import get_db, get_current_user, require_admin_user
+from ...services.email_brands import normalize_site
 from ...services.email_service import (
     sendEmailChangeEmail,
     sendPasswordChangeEmail,
@@ -557,6 +558,7 @@ def update_my_account(
             first_name=current_user.first_name,
             previous_email=previous_email,
             new_email=current_user.email,
+            site=current_user.signup_site,
         )
         _issue_email_verification(db, current_user, background_tasks)
 
@@ -595,7 +597,9 @@ def change_my_password(
         session.is_revoked = True
         session.revoked_at = now
     db.commit()
-    background_tasks.add_task(sendPasswordChangeEmail, current_user.email, current_user.first_name)
+    background_tasks.add_task(
+        sendPasswordChangeEmail, current_user.email, current_user.first_name, site=current_user.signup_site
+    )
 
     return {"message": "Password updated successfully"}
 
@@ -1173,7 +1177,7 @@ def _get_valid_email_verification_record(db: Session, token: str) -> models.Emai
 def _issue_email_verification(db: Session, user: models.User, background_tasks: BackgroundTasks) -> str:
     token = create_email_verification_token(user.email)
     _save_email_verification_token(db, user.id, user.email, token)
-    background_tasks.add_task(sendVerifyEmail, user.email, token, None)
+    background_tasks.add_task(sendVerifyEmail, user.email, token, None, site=user.signup_site)
     return token
 
 @router.post("/request-password-reset")
@@ -1188,7 +1192,9 @@ def request_password_reset(payload: schemas.PasswordResetRequest, background_tas
 
     token = create_reset_token(email)
     _save_reset_token(db, user.id, token)
-    background_tasks.add_task(sendResetPasswordEmail, email, token, None)
+    # Brand it for the site the reset was asked on, else the one the person signed up on.
+    site = normalize_site(payload.site) if payload.site else user.signup_site
+    background_tasks.add_task(sendResetPasswordEmail, email, token, None, site=site)
     return generic_response
 
 @router.post("/verify-reset-code")
@@ -1264,6 +1270,7 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
         password=hashed_password,
         is_admin=False,
         email_verified_at=None,
+        signup_site=normalize_site(user.site),
     )
     db.add(db_user)
     db.commit()
@@ -1274,7 +1281,7 @@ def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Sess
         except Exception:
             db.rollback()
             logger.exception("Failed to create duplicate-user review for user %s", db_user.id)
-    background_tasks.add_task(sendWelcomeEmail, db_user.email, db_user.first_name)
+    background_tasks.add_task(sendWelcomeEmail, db_user.email, db_user.first_name, site=db_user.signup_site)
     _issue_email_verification(db, db_user, background_tasks)
     return db_user
 
