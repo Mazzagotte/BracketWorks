@@ -230,6 +230,22 @@ def _format_money(cents: int | None, currency: str | None) -> str:
     return f"{prefix}{amount:,.2f}"
 
 
+def _setup_payload(db: Session, tournament_id: int) -> dict:
+    state = db.query(models.TournamentCentralSetupState).filter(
+        models.TournamentCentralSetupState.tournament_id == tournament_id,
+    ).first()
+    return state.payload if state is not None and isinstance(state.payload, dict) else {}
+
+
+def tournament_url(tournament_id: int) -> str:
+    """The tournament's public page on Tournament Central."""
+    return f"{settings.TC_FRONTEND_URL.rstrip('/')}/?tournament=tc-{tournament_id}"
+
+
+def organizer_registrations_url(tournament_id: int) -> str:
+    return f"{settings.TC_FRONTEND_URL.rstrip('/')}/organizer/tournaments/{tournament_id}/registrations"
+
+
 def _tournament_facts(db: Session, tournament: models.TournamentCentral) -> dict[str, str]:
     details = _setup_details(db, tournament.id)
     start = _format_date(_text(details.get("startDateIso")) or tournament.start_date)
@@ -242,14 +258,24 @@ def _tournament_facts(db: Session, tournament: models.TournamentCentral) -> dict
     place = ", ".join(part for part in (center, city, state) if part)
     location = place or (tournament.location or "").strip()
 
+    street = ", ".join(
+        part for part in (_text(details.get("venueAddressLine1")), _text(details.get("venueAddressLine2"))) if part
+    )
+    region = " ".join(part for part in (state, _text(details.get("venueZip"))) if part)
+    locality = ", ".join(part for part in (city, region) if part)
+    address = ", ".join(part for part in (street, locality) if part) if street else ""
+
     support_email = _normalize_email(_text(details.get("supportEmail"))) or ""
     organizer_name = _text(details.get("contactName")) or _text(details.get("organizer"))
     return {
         "tournament_name": tournament.name,
         "tournament_dates": dates,
         "tournament_location": location,
+        "tournament_address": address,
+        "tournament_url": tournament_url(tournament.id),
         "organizer_name": organizer_name,
         "organizer_email": support_email,
+        "organizer_phone": _text(details.get("supportPhone")),
     }
 
 
@@ -318,39 +344,141 @@ def _side_event_lines(db: Session, registration: models.TcRegistration) -> list[
     return lines
 
 
+
+
+def _full_name(first: str | None, last: str | None) -> str:
+    return " ".join(f"{first or ''} {last or ''}".split())
+
+
+def _bowlers(db: Session, registration: models.TcRegistration) -> list[models.TcRegistrationBowler]:
+    return (
+        db.query(models.TcRegistrationBowler)
+        .filter(models.TcRegistrationBowler.registration_id == registration.id)
+        .order_by(models.TcRegistrationBowler.id.asc())
+        .all()
+    )
+
+
 # --- Rendering -------------------------------------------------------------------------------
+#
+# A light email in the Tournament Central look: a white card on a gray page, sections split by
+# thin lines, one orange button. Tables and inline styles only, so mail apps draw it the same.
+
+_FONT = "Inter, 'Segoe UI', Helvetica, Arial, sans-serif"
+_PAGE, _CARD, _BORDER = "#f4f4f5", "#ffffff", "#e4e4e7"
+_TEXT, _TEXT2, _ACCENT, _ON_ACCENT, _LINK = "#18181b", "#52525b", "#ff7a00", "#17120c", "#c2410c"
+
+Section = tuple[str, list[tuple[str, str]], list[str]]
 
 
-def _render_html(paragraphs: list[str], *, rows: list[tuple[str, str]] | None = None, items: list[str] | None = None) -> str:
-    """Small, plain email body. All values are escaped here."""
-    parts = ['<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #1f2328;">']
-    for paragraph in paragraphs[:1]:
-        parts.append(f"<p>{html.escape(paragraph)}</p>")
+def _p(text: str, *, size: int = 15, color: str = _TEXT2, weight: int = 400, bottom: int = 12) -> str:
+    return (
+        f'<p style="margin-top:0;margin-bottom:{bottom}px;font-family:{_FONT};font-size:{size}px;'
+        f'line-height:1.5;font-weight:{weight};color:{color};">{text}</p>'
+    )
+
+
+def _divider() -> str:
+    return (
+        '<tr><td style="padding-left:28px;padding-right:28px;">'
+        '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation"><tr>'
+        f'<td height="1" bgcolor="{_BORDER}" style="height:1px;line-height:1px;font-size:1px;'
+        f'background-color:{_BORDER};">&nbsp;</td></tr></table></td></tr>'
+    )
+
+
+def _cell(inner: str, *, top: int = 20, bottom: int = 20) -> str:
+    return (
+        f'<tr><td style="padding-top:{top}px;padding-bottom:{bottom}px;padding-left:28px;'
+        f'padding-right:28px;">{inner}</td></tr>'
+    )
+
+
+def _render_section_html(heading: str, rows: list[tuple[str, str]], items: list[str]) -> str:
+    parts = [_p(html.escape(heading), size=13, color=_TEXT, weight=600, bottom=8)]
     if rows:
-        parts.append('<table cellpadding="4" cellspacing="0" style="border-collapse: collapse;">')
+        parts.append('<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">')
         for label, value in rows:
             parts.append(
-                f'<tr><td style="color: #59636e; padding-right: 16px;">{html.escape(label)}</td>'
-                f"<td>{html.escape(value)}</td></tr>"
+                f'<tr><td valign="top" width="40%" style="padding-top:4px;padding-bottom:4px;padding-right:12px;'
+                f'font-family:{_FONT};font-size:14px;line-height:1.5;color:{_TEXT2};">{html.escape(label)}</td>'
+                f'<td valign="top" style="padding-top:4px;padding-bottom:4px;font-family:{_FONT};font-size:14px;'
+                f'line-height:1.5;font-weight:600;color:{_TEXT};">{html.escape(value)}</td></tr>'
             )
         parts.append("</table>")
-    if items:
-        parts.append("<ul>" + "".join(f"<li>{html.escape(item)}</li>" for item in items) + "</ul>")
-    for paragraph in paragraphs[1:]:
-        parts.append(f"<p>{html.escape(paragraph)}</p>")
-    parts.append("</div>")
+    for item in items:
+        parts.append(_p(html.escape(item), size=14, color=_TEXT, bottom=4))
     return "".join(parts)
 
 
-def _render_text(paragraphs: list[str], *, rows: list[tuple[str, str]] | None = None, items: list[str] | None = None) -> str:
-    lines: list[str] = paragraphs[:1] + [""]
-    if rows:
-        lines += [f"{label}: {value}" for label, value in rows] + [""]
-    if items:
-        lines += [f"- {item}" for item in items] + [""]
-    for paragraph in paragraphs[1:]:
-        lines += [paragraph, ""]
-    return "\n".join(lines).strip() + "\n"
+def _render_document(
+    *,
+    title: str,
+    lead: list[str],
+    sections: list[Section],
+    closing: list[str],
+    button: tuple[str, str] | None = None,
+    footer: str = "",
+) -> tuple[str, str]:
+    """The HTML and plain-text bodies of one email. Every value is escaped here."""
+    sections = [section for section in sections if section[1] or section[2]]
+
+    body = [
+        _cell(_p("Tournament Central", size=15, color=_TEXT, weight=700, bottom=0), top=24, bottom=20),
+        _divider(),
+    ]
+    main = _p(html.escape(title), size=24, color=_TEXT, weight=700, bottom=12)
+    main += "".join(_p(html.escape(line), bottom=12) for line in lead)
+    if button:
+        label, url = button
+        main += (
+            '<table cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin-top:8px;"><tr>'
+            f'<td align="center" bgcolor="{_ACCENT}" style="border-radius:8px;background-color:{_ACCENT};">'
+            f'<a href="{html.escape(url, quote=True)}" style="display:inline-block;padding-top:12px;padding-bottom:12px;'
+            f'padding-left:22px;padding-right:22px;font-family:{_FONT};font-size:15px;line-height:16px;font-weight:600;'
+            f'color:{_ON_ACCENT};text-decoration:none;border-radius:8px;">{html.escape(label)}</a></td></tr></table>'
+        )
+    body.append(_cell(main, top=24, bottom=24))
+    for heading, rows, items in sections:
+        body.append(_divider())
+        body.append(_cell(_render_section_html(heading, rows, items)))
+    if closing:
+        body.append(_divider())
+        body.append(_cell("".join(_p(html.escape(line), size=14, bottom=8) for line in closing), bottom=16))
+
+    footer_html = _p(html.escape(footer), size=12, bottom=0) if footer else ""
+    html_body = (
+        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        '<meta name="color-scheme" content="light"></head>'
+        f'<body bgcolor="{_PAGE}" style="margin:0;padding:0;background-color:{_PAGE};">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="{_PAGE}">'
+        '<tr><td align="center" style="padding-top:32px;padding-bottom:32px;padding-left:12px;padding-right:12px;">'
+        f'<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="{_CARD}" '
+        f'style="max-width:600px;background-color:{_CARD};border-top:1px solid {_BORDER};border-bottom:1px solid {_BORDER};'
+        f'border-left:1px solid {_BORDER};border-right:1px solid {_BORDER};border-radius:16px;">'
+        + "".join(body)
+        + '</table><table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" '
+        'style="max-width:600px;"><tr><td align="center" style="padding-top:16px;padding-left:28px;padding-right:28px;">'
+        + footer_html
+        + "</td></tr></table></td></tr></table></body></html>"
+    )
+
+    lines: list[str] = [title, ""]
+    for line in lead:
+        lines += [line, ""]
+    if button:
+        lines += [f"{button[0]}: {button[1]}", ""]
+    for heading, rows, items in sections:
+        lines.append(heading)
+        lines += [f"{label}: {value}" for label, value in rows]
+        lines += [f"- {item}" for item in items]
+        lines.append("")
+    for line in closing:
+        lines += [line, ""]
+    if footer:
+        lines += ["--", footer]
+    return html_body, "\n".join(lines).strip() + "\n"
 
 
 def _clean_subject(subject: str) -> str:
@@ -373,79 +501,231 @@ def _with_body(message: dict, *, template_id: str, variables: dict[str, str], te
     return message
 
 
+def _tournament_section(facts: dict[str, str]) -> Section:
+    rows = [
+        ("Tournament", facts["tournament_name"]),
+        ("Date", facts["tournament_dates"]),
+        ("Location", facts["tournament_location"]),
+        ("Address", facts["tournament_address"]),
+        ("Organizer", facts["organizer_name"]),
+        ("Organizer email", facts["organizer_email"]),
+        ("Organizer phone", facts["organizer_phone"]),
+    ]
+    return ("Tournament", [(label, value) for label, value in rows if value], [])
+
+
+def _money_rows(registration: models.TcRegistration, has_side_events: bool) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    if has_side_events:
+        rows.append(("Entry fees", _format_money(registration.subtotal_cents, registration.currency)))
+        rows.append(("Side events and fees", _format_money(registration.fees_cents, registration.currency)))
+    rows.append(("Total", _format_money(registration.total_cents, registration.currency)))
+    return rows
+
+
 # --- Registration confirmation ---------------------------------------------------------------
 
 
-def build_registration_confirmation(db: Session, registration: models.TcRegistration) -> dict | None:
-    """The confirmation email for the registration's contact, or None when there is no valid email."""
-    to = _normalize_email(registration.contact_email)
+def _confirmation_recipients(
+    db: Session, registration: models.TcRegistration
+) -> list[tuple[str, str, bool]]:
+    """(email, first name, is the contact) for everyone on the registration, each email once."""
+    people: list[tuple[str | None, str, bool]] = [
+        (registration.contact_email, (registration.contact_first_name or "").strip(), True),
+    ]
+    people += [(bowler.email, (bowler.first_name or "").strip(), False) for bowler in _bowlers(db, registration)]
+    seen: set[str] = set()
+    recipients: list[tuple[str, str, bool]] = []
+    for email, first_name, is_contact in people:
+        normalized = _normalize_email(email)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            recipients.append((normalized, first_name, is_contact))
+    return recipients
+
+
+def build_registration_confirmations(db: Session, registration: models.TcRegistration) -> list[dict]:
+    """One confirmation per person on the registration: the contact and every bowler with an email."""
     tournament = db.get(models.TournamentCentral, registration.tournament_id)
-    if not to or tournament is None:
-        return None
+    recipients = _confirmation_recipients(db, registration)
+    if tournament is None or not recipients:
+        return []
 
     facts = _tournament_facts(db, tournament)
     status = _STATUS_LABELS.get(registration.status, registration.status.title())
+    payment = "Paid" if registration.payment_status == "paid" else registration.payment_status.replace("_", " ").capitalize()
     entries = _entry_lines(db, registration)
     side_events = _side_event_lines(db, registration)
-    total = _format_money(registration.total_cents, registration.currency)
-    first_name = (registration.contact_first_name or "").strip()
+    contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
+    bowler_names = [_full_name(bowler.first_name, bowler.last_name) for bowler in _bowlers(db, registration)]
 
     if registration.status == "waitlisted":
-        lead = f"You're on the waitlist for {tournament.name}. We'll email you if a spot opens."
+        state_line = "is on the waitlist. We'll email you if a spot opens."
     elif registration.status == "confirmed":
-        lead = f"You're registered for {tournament.name}."
+        state_line = "is confirmed."
     else:
-        lead = f"We received your registration for {tournament.name}. The organizer will confirm it soon."
-    greeting = f"Hi {first_name}, {lead[0].lower()}{lead[1:]}" if first_name else lead
+        state_line = "was received. The organizer will confirm it soon."
 
-    rows = [
-        ("Confirmation code", registration.confirmation_code),
-        ("Status", status),
-        ("Date", facts["tournament_dates"]),
-        ("Location", facts["tournament_location"]),
-        *(
-            [
-                ("Entry fees", _format_money(registration.subtotal_cents, registration.currency)),
-                ("Side events and fees", _format_money(registration.fees_cents, registration.currency)),
-            ]
-            if side_events else []
-        ),
-        ("Total", total),
+    sections: list[Section] = [
+        _tournament_section(facts),
+        ("Registration", [(label, value) for label, value in (
+            ("Confirmation code", registration.confirmation_code),
+            ("Status", status),
+            ("Payment", payment),
+            ("Registered by", contact_name),
+        ) if value], []),
+        ("Bowlers", [], [name for name in bowler_names if name]),
+        ("Entries", [], entries),
+        ("Side events and fees", [], side_events),
+        ("Fees", _money_rows(registration, bool(side_events)), []),
     ]
-    rows = [(label, value) for label, value in rows if value]
     closing = [line for line in (
         "Keep this email. You'll need your confirmation code if you contact the organizer.",
         _organizer_line(facts),
     ) if line]
-    paragraphs = [greeting, *closing]
+    variables = {
+        **facts,
+        "confirmation_code": registration.confirmation_code,
+        "status": status,
+        "payment_status": payment,
+        "registered_by": contact_name,
+        "bowlers": "\n".join(bowler_names),
+        "total": _format_money(registration.total_cents, registration.currency),
+        "entries": "\n".join(entries),
+        "side_events": "\n".join(side_events),
+    }
+    template_id = settings.TC_REGISTRATION_CONFIRMATION_TEMPLATE_ID.strip()
 
-    message = _base_message(to, f"Registration received: {tournament.name}", facts)
-    return _with_body(
-        message,
-        template_id=settings.TC_REGISTRATION_CONFIRMATION_TEMPLATE_ID.strip(),
-        variables={
-            **facts,
-            "first_name": first_name,
-            "confirmation_code": registration.confirmation_code,
-            "status": status,
-            "total": total,
-            "entries": "\n".join(entries),
-            "side_events": "\n".join(side_events),
-        },
-        text=_render_text(paragraphs, rows=rows, items=[*entries, *side_events]),
-        html_body=_render_html(paragraphs, rows=rows, items=[*entries, *side_events]),
-    )
+    messages: list[dict] = []
+    for email, first_name, is_contact in recipients:
+        if is_contact:
+            lead = f"Your registration for {tournament.name} {state_line}"
+        else:
+            registrant = contact_name or "Someone"
+            lead = f"{registrant} registered you for {tournament.name}. The registration {state_line}"
+        greeting = f"Hi {first_name}," if first_name else ""
+        html_body, text = _render_document(
+            title=f"Registration {'confirmed' if registration.status == 'confirmed' else 'received'}",
+            lead=[line for line in (greeting, lead) if line],
+            sections=sections,
+            closing=closing,
+            button=("View tournament", facts["tournament_url"]),
+            footer=f"You're getting this because you're on a registration for {tournament.name}.",
+        )
+        message = _base_message(email, f"Registration received: {tournament.name}", facts)
+        messages.append(_with_body(
+            message,
+            template_id=template_id,
+            variables={**variables, "first_name": first_name, "lead": lead},
+            text=text,
+            html_body=html_body,
+        ))
+    return messages
+
+
+def build_registration_confirmation(db: Session, registration: models.TcRegistration) -> dict | None:
+    """The contact's confirmation, or None when there is no valid email."""
+    messages = build_registration_confirmations(db, registration)
+    return messages[0] if messages else None
 
 
 def send_registration_confirmation(db: Session, registration: models.TcRegistration) -> bool:
+    """Send the confirmation to everyone on the registration. True when at least one was sent."""
     try:
-        message = build_registration_confirmation(db, registration)
+        messages = build_registration_confirmations(db, registration)
     except Exception:
         logger.exception("Could not build registration confirmation", extra={"registration_id": registration.id})
         return False
-    if message is None:
+    if not messages:
         return False
-    return send_email(message, log_context="tc-registration-confirmation")
+    sent, _ = send_email_batch(messages, log_context="tc-registration-confirmation")
+    return sent > 0
+
+
+# --- New registration notice for the organizer -----------------------------------------------
+
+
+def organizer_notice_recipient(db: Session, tournament: models.TournamentCentral) -> str | None:
+    """Where new-registration emails go, or None when the organizer has them turned off.
+
+    Read from the saved setup, not the published one, so turning them on or off takes effect at once.
+    The address is the one set for notifications, else the tournament's contact email, else the
+    owner's account email.
+    """
+    details = _setup_payload(db, tournament.id).get("details")
+    details = details if isinstance(details, dict) else {}
+    if details.get("registrationNotifications") is not True:
+        return None
+    owner = db.get(models.User, tournament.user_id)
+    return (
+        _normalize_email(_text(details.get("registrationNotificationEmail")))
+        or _normalize_email(_text(details.get("supportEmail")))
+        or _normalize_email(owner.email if owner else None)
+    )
+
+
+def build_organizer_registration_notice(db: Session, registration: models.TcRegistration) -> dict | None:
+    """The organizer's email about a new registration, or None when notices are off."""
+    tournament = db.get(models.TournamentCentral, registration.tournament_id)
+    if tournament is None:
+        return None
+    recipient = organizer_notice_recipient(db, tournament)
+    if not recipient:
+        return None
+
+    facts = _tournament_facts(db, tournament)
+    status = _STATUS_LABELS.get(registration.status, registration.status.title())
+    payment = "Paid" if registration.payment_status == "paid" else registration.payment_status.replace("_", " ").capitalize()
+    contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
+    contact_email = _normalize_email(registration.contact_email) or (registration.contact_email or "").strip()
+    bowlers = [
+        " ".join(part for part in (
+            _full_name(bowler.first_name, bowler.last_name),
+            f"({bowler.email.strip()})" if (bowler.email or "").strip() else "",
+        ) if part)
+        for bowler in _bowlers(db, registration)
+    ]
+    entries = _entry_lines(db, registration)
+    side_events = _side_event_lines(db, registration)
+    notes = (registration.notes or "").strip()
+
+    html_body, text = _render_document(
+        title="New registration",
+        lead=[f"{contact_name or 'Someone'} registered for {tournament.name}."],
+        sections=[
+            ("Registration", [(label, value) for label, value in (
+                ("Confirmation code", registration.confirmation_code),
+                ("Status", status),
+                ("Payment", payment),
+            ) if value], []),
+            ("Contact", [(label, value) for label, value in (
+                ("Name", contact_name),
+                ("Email", contact_email),
+                ("Phone", (registration.contact_phone or "").strip()),
+            ) if value], []),
+            ("Bowlers", [], [line for line in bowlers if line]),
+            ("Entries", [], entries),
+            ("Side events and fees", [], side_events),
+            ("Fees", _money_rows(registration, bool(side_events)), []),
+            ("Notes", [], [notes] if notes else []),
+        ],
+        closing=["Reply to this email to reach the person who registered."] if contact_email else [],
+        button=("View registrations", organizer_registrations_url(tournament.id)),
+        footer=(
+            f"You're getting this because new-registration emails are on for {tournament.name}. "
+            "Turn them off in the tournament's setup, under Registration emails."
+        ),
+    )
+    message: dict = {
+        "from": _from_address(),
+        "to": [recipient],
+        "subject": _clean_subject(f"New registration: {contact_name or registration.confirmation_code} - {tournament.name}"),
+        "text": text,
+        "html": html_body,
+    }
+    if _normalize_email(registration.contact_email):
+        message["reply_to"] = _normalize_email(registration.contact_email)
+    return message
 
 
 # --- Waitlist promotion ----------------------------------------------------------------------
@@ -460,20 +740,18 @@ def send_waitlist_promotion(db: Session, registration: models.TcRegistration) ->
 
     facts = _tournament_facts(db, tournament)
     entries = _entry_lines(db, registration)
-    rows = [
-        (label, value) for label, value in (
-            ("Confirmation code", registration.confirmation_code),
-            ("Status", "Confirmed"),
-            ("Date", facts["tournament_dates"]),
-            ("Location", facts["tournament_location"]),
-        ) if value
-    ]
-    paragraphs = [
-        f"Good news: a spot opened up and you're now confirmed for {tournament.name}.",
-        *[line for line in (_organizer_line(facts),) if line],
-    ]
-    text = _render_text(paragraphs, rows=rows, items=entries)
-    html_body = _render_html(paragraphs, rows=rows, items=entries)
+    html_body, text = _render_document(
+        title="You're off the waitlist",
+        lead=[f"Good news: a spot opened up and you're now confirmed for {tournament.name}."],
+        sections=[
+            _tournament_section(facts),
+            ("Registration", [("Confirmation code", registration.confirmation_code), ("Status", "Confirmed")], []),
+            ("Entries", [], entries),
+        ],
+        closing=[line for line in (_organizer_line(facts),) if line],
+        button=("View tournament", facts["tournament_url"]),
+        footer=f"You're getting this because you're on a registration for {tournament.name}.",
+    )
     template_id = settings.TC_WAITLIST_PROMOTION_TEMPLATE_ID.strip()
     variables = {**facts, "confirmation_code": registration.confirmation_code, "entries": "\n".join(entries)}
 
