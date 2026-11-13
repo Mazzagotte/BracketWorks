@@ -58,7 +58,7 @@ def get_brand(site: str | None) -> EmailBrand:
             site=SITE_TOURNAMENT_CENTRAL,
             product_name="Tournament Central",
             site_url=settings.TC_FRONTEND_URL,
-            logo_path="/TC_logo_No_Text.svg",
+            logo_path="/email-logo.png",
             from_name=settings.TC_FROM_NAME,
             from_email=settings.TC_FROM_EMAIL,
         )
@@ -66,7 +66,7 @@ def get_brand(site: str | None) -> EmailBrand:
         site=SITE_BRACKETWORKS,
         product_name="BracketWorks",
         site_url=settings.FRONTEND_URL,
-        logo_path="/logo_no_text.svg",
+        logo_path="/email-logo.png",
         from_name=settings.FROM_NAME,
         from_email=settings.FROM_EMAIL,
     )

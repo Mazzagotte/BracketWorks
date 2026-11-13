@@ -423,8 +423,16 @@ def _render_document(
     """The HTML and plain-text bodies of one email. Every value is escaped here."""
     sections = [section for section in sections if section[1] or section[2]]
 
+    logo_url = f"{settings.TC_FRONTEND_URL.rstrip('/')}/email-logo.png"
+    header = (
+        '<table cellpadding="0" cellspacing="0" border="0" role="presentation"><tr>'
+        f'<td valign="middle"><img src="{html.escape(logo_url, quote=True)}" alt="" width="40" height="40" '
+        'style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;" /></td>'
+        f'<td valign="middle" style="padding-left:10px;font-family:{_FONT};font-size:16px;line-height:1.3;'
+        f'font-weight:700;color:{_TEXT};">Tournament Central</td></tr></table>'
+    )
     body = [
-        _cell(_p("Tournament Central", size=15, color=_TEXT, weight=700, bottom=0), top=24, bottom=20),
+        _cell(header, top=20, bottom=16),
         _divider(),
     ]
     main = _p(html.escape(title), size=24, color=_TEXT, weight=700, bottom=12)
