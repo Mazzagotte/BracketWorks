@@ -26,7 +26,7 @@ def test_bracketworks_payload_keeps_bracketworks_sender_and_links():
     variables = payload["template"]["variables"]
     assert variables["product_name"] == "BracketWorks"
     assert variables["site_url"] == "https://bracketworks.app"
-    assert variables["logo_url"] == "https://bracketworks.app/logo_no_text.svg"
+    assert variables["logo_url"] == "https://bracketworks.app/email-logo.png"
     assert variables["reset_url"] == "https://bracketworks.app/reset-password?token=tok"
     assert variables["support_email"] == "support@bracketworks.app"
 
@@ -47,7 +47,7 @@ def test_tournament_central_payloads_use_tc_sender_name_and_links():
         variables = payload["template"]["variables"]
         assert variables["product_name"] == "Tournament Central"
         assert variables["site_url"] == "https://tournamentcentral.app"
-        assert variables["logo_url"] == "https://tournamentcentral.app/TC_logo_No_Text.svg"
+        assert variables["logo_url"] == "https://tournamentcentral.app/email-logo.png"
 
     assert reset["template"]["variables"]["reset_url"] == "https://tournamentcentral.app/reset-password?token=tok"
     assert verify["template"]["variables"]["verification_url"] == "https://tournamentcentral.app/verify-email?token=v"
