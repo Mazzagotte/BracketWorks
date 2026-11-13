@@ -36,3 +36,22 @@ describe('existing tournament deadline errors', () => {
     expect(screen.getByLabelText(/Registration closes/)).toHaveAttribute('aria-invalid', 'false');
   });
 });
+
+describe('registration emails', () => {
+  it('is off by default and hides the address field', () => {
+    render(section(defaultTournamentDetails));
+    expect(screen.getByLabelText('Email me when someone registers')).not.toBeChecked();
+    expect(screen.queryByLabelText(/Send to/)).toBeNull();
+  });
+
+  it('shows the address field when on, with the contact email as the placeholder', () => {
+    render(section({ ...defaultTournamentDetails, supportEmail: 'director@example.com', registrationNotifications: true }));
+    expect(screen.getByLabelText('Email me when someone registers')).toBeChecked();
+    expect(screen.getByLabelText(/Send to/)).toHaveAttribute('placeholder', 'director@example.com');
+  });
+
+  it('flags an address that is not an email', () => {
+    render(section({ ...defaultTournamentDetails, registrationNotifications: true, registrationNotificationEmail: 'nope' }));
+    expect(screen.getByLabelText(/Send to/)).toHaveAttribute('aria-invalid', 'true');
+  });
+});

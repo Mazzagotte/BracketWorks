@@ -1,5 +1,5 @@
 import { PencilLine, Trash2, Upload } from 'lucide-react';
-import { Button, Card, CardDivider, CardHeader, FormGrid, ICON_SIZE, Notice, SegmentedControl, SelectField, TextField } from '@bracketworks/ui';
+import { Button, Card, CardDivider, CardHeader, CheckboxField, FormGrid, ICON_SIZE, Notice, SegmentedControl, SelectField, TextField } from '@bracketworks/ui';
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, Dispatch, DragEvent, RefObject, SetStateAction } from 'react';
 
@@ -168,6 +168,10 @@ export default function TournamentDetailsSection({
   const closeTimeError = dateErrors.registrationCloseTime || dateErrors.registrationCloseIso || undefined;
   const contactNameError = contactTouched.name && !details.contactName.trim() ? 'Contact name is required.' : undefined;
   const contactEmailError = contactTouched.email && !supportEmailLooksValid ? 'Enter a valid contact email.' : undefined;
+  const notificationEmail = details.registrationNotificationEmail.trim();
+  const notificationEmailError = notificationEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(notificationEmail)
+    ? 'Enter a valid email, or leave it blank to use the contact email.'
+    : undefined;
   const contactPhoneError = contactTouched.phone && details.preferredContactMethod === 'phone' && !details.supportPhone.trim()
     ? 'Phone is required when it is the preferred contact method.'
     : undefined;
@@ -554,6 +558,37 @@ export default function TournamentDetailsSection({
               placeholder="Email preferred. Responses within two business days."
               helper={`${details.contactNote.length}/160 characters`}
             />
+          </FormGrid>
+        </Card>
+
+        <Card id="details-notifications" aria-labelledby="details-notifications-title">
+          <CardHeader
+            title={<span id="details-notifications-title">Registration emails</span>}
+            description="Only you see this. Bowlers always get a confirmation email when they register."
+            headingLevel="h3"
+          />
+          <FormGrid>
+            <CheckboxField
+              className={local.fullRow}
+              label="Email me when someone registers"
+              helper="Each email has the registration details: bowlers, entries, side events, and fees."
+              checked={details.registrationNotifications}
+              onChange={(event) => setDetails((prev) => ({ ...prev, registrationNotifications: event.target.checked }))}
+            />
+            {details.registrationNotifications ? (
+              <TextField
+                label="Send to"
+                optional
+                fullRow
+                type="email"
+                value={details.registrationNotificationEmail}
+                onChange={(event) => setDetails((prev) => ({ ...prev, registrationNotificationEmail: event.target.value.toLowerCase() }))}
+                placeholder={details.supportEmail || 'you@example.com'}
+                autoComplete="email"
+                helper="Leave blank to use the contact email."
+                error={notificationEmailError}
+              />
+            ) : null}
           </FormGrid>
         </Card>
       </div>

@@ -364,7 +364,9 @@ def test_promote_and_resend_are_scoped_to_the_tournament(api_client, db_session,
     assert outbox == []
 
 
-def test_resend_confirmation_sends_details_to_the_contact(api_client, db_session, make_auth_headers, roster, outbox):
+def test_resend_confirmation_sends_details_to_everyone_on_the_registration(
+    api_client, db_session, make_auth_headers, roster, outbox
+):
     owner, tournament = roster
     registration = db_session.query(models.TcRegistration).filter_by(confirmation_code="FC-1").one()
     response = api_client.post(
@@ -373,18 +375,22 @@ def test_resend_confirmation_sends_details_to_the_contact(api_client, db_session
     )
     assert response.status_code == 200
     assert response.json() == {"sent": True}
-    assert len(outbox) == 1
-    path, message = outbox[0]
-    assert path == "/emails"
-    assert message["to"] == ["alex@example.com"]
-    assert message["reply_to"] == "director@example.com"
-    text = message["text"]
+    messages = _messages(outbox)
+    # The contact, then each bowler with a new address: alex@ is both, so it gets one email.
+    assert [message["to"] for message in messages] == [["alex@example.com"], ["sam@example.com"]]
+    for message in messages:
+        assert message["from"] == "Tournament Central <no-reply@tournamentcentral.app>"
+        assert message["reply_to"] == "director@example.com"
+    text = messages[0]["text"]
     for expected in (
         "FC-1", "Fall Classic", "October 1, 2026 to October 2, 2026", "Sunset Lanes, Boise, ID",
         "Singles (Open), squad: Saturday AM October 1, 2026 9:00 AM - Confirmed", "Confirmed", "$60.00",
-        "Jamie Smith at director@example.com",
+        "Jamie Smith at director@example.com", "Payment: Unpaid", "Bowler 1", "Bowler 2",
+        f"/?tournament=tc-{tournament.id}",
     ):
         assert expected in text
+    assert "Your registration for Fall Classic is confirmed." in text
+    assert "Pat FC-1 registered you for Fall Classic." in messages[1]["text"]
 
 
 def test_resend_confirmation_reports_failure(api_client, db_session, make_auth_headers, roster, monkeypatch):
@@ -439,12 +445,57 @@ def test_public_submission_sends_confirmation(api_client, db_session, make_user,
     response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
     assert response.status_code == 200
     code = response.json()["registration_id"]
-    assert len(outbox) == 1
-    path, message = outbox[0]
-    assert path == "/emails"
+    messages = _messages(outbox)
+    assert len(messages) == 1
+    message = messages[0]
     assert message["to"] == ["riley@example.com"]
     assert code in message["text"]
     assert "Status: Confirmed" in message["text"]
+
+
+def _turn_on_notices(db_session, tournament, **details) -> None:
+    state = db_session.query(models.TournamentCentralSetupState).filter_by(tournament_id=tournament.id).one()
+    payload = dict(state.payload)
+    payload["details"] = {**payload["details"], "registrationNotifications": True, **details}
+    state.payload = payload
+    db_session.commit()
+
+
+def test_public_submission_does_not_email_the_organizer_by_default(api_client, db_session, make_user, outbox):
+    owner = make_user("tc_notice_off")
+    tournament = _tournament(db_session, owner.id)
+    response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
+    assert response.status_code == 200
+    assert [message["to"] for message in _messages(outbox)] == [["riley@example.com"]]
+
+
+def test_public_submission_emails_the_organizer_when_turned_on(api_client, db_session, make_user, outbox):
+    owner = make_user("tc_notice_on")
+    tournament = _tournament(db_session, owner.id)
+    _turn_on_notices(db_session, tournament)
+    response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
+    assert response.status_code == 200
+    code = response.json()["registration_id"]
+    notices = [message for message in _messages(outbox) if message["to"] == ["director@example.com"]]
+    assert len(notices) == 1
+    notice = notices[0]
+    assert notice["subject"] == "New registration: Riley Lane - Fall Classic"
+    assert notice["reply_to"] == "riley@example.com"
+    for expected in (code, "Riley Lane", "riley@example.com", "Singles (Open)", "$60.00",
+                     f"/organizer/tournaments/{tournament.id}/registrations"):
+        assert expected in notice["text"]
+
+
+def test_organizer_notice_address_falls_back_in_order(db_session, make_user):
+    owner = make_user("tc_notice_fallback")
+    tournament = _tournament(db_session, owner.id)
+    assert tc_emails.organizer_notice_recipient(db_session, tournament) is None
+
+    _turn_on_notices(db_session, tournament, registrationNotificationEmail="Inbox@Example.com")
+    assert tc_emails.organizer_notice_recipient(db_session, tournament) == "inbox@example.com"
+
+    _turn_on_notices(db_session, tournament, registrationNotificationEmail="", supportEmail="")
+    assert tc_emails.organizer_notice_recipient(db_session, tournament) == owner.email.lower()
 
 
 def test_public_submission_succeeds_when_sending_raises(api_client, db_session, make_user, monkeypatch):

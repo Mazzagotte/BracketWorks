@@ -1431,15 +1431,25 @@ def submit_public_tc_tournament_registration(
         )
         raise HTTPException(status_code=500, detail="Failed to submit registration")
 
-    # The registration is saved; the confirmation email is best effort and sent after the response.
+    # The registration is saved; the emails are best effort and sent after the response.
+    # Everyone on the registration gets a confirmation.
     try:
-        confirmation_email = tc_emails.build_registration_confirmation(db, registration)
-        if confirmation_email is not None:
+        confirmation_emails = tc_emails.build_registration_confirmations(db, registration)
+        if confirmation_emails:
             background_tasks.add_task(
-                tc_emails.send_email, confirmation_email, log_context="tc-registration-confirmation",
+                tc_emails.send_email_batch, confirmation_emails, log_context="tc-registration-confirmation",
             )
     except Exception:
         logger.exception("Could not prepare registration confirmation email", extra={"tournament_id": tournament_id})
+    # The organizer gets the details when they have new-registration emails turned on.
+    try:
+        organizer_notice = tc_emails.build_organizer_registration_notice(db, registration)
+        if organizer_notice is not None:
+            background_tasks.add_task(
+                tc_emails.send_email, organizer_notice, log_context="tc-organizer-registration-notice",
+            )
+    except Exception:
+        logger.exception("Could not prepare organizer registration notice", extra={"tournament_id": tournament_id})
 
     return response_body
 

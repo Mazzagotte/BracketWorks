@@ -342,6 +342,7 @@ export function buildOrganizerSetupPayload(input: {
       contactName: input.details.contactName.trim(),
       contactRole: input.details.contactRole.trim(),
       contactNote: input.details.contactNote.trim(),
+      registrationNotificationEmail: input.details.registrationNotificationEmail.trim(),
     },
     events: input.events,
     divisions: input.divisions,

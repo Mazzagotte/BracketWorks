@@ -39,6 +39,8 @@ export const defaultTournamentDetails: TournamentDetails = {
   contactRole: '',
   preferredContactMethod: 'email',
   contactNote: '',
+  registrationNotifications: false,
+  registrationNotificationEmail: '',
   registrationOpenIso: '',
   registrationCloseIso: '',
   registrationOpenTime: '00:00',
