@@ -1,3 +1,4 @@
+import secrets
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
@@ -734,6 +735,10 @@ class TcRegistration(Base):
     )
     cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     source: Mapped[str] = mapped_column(String(40), nullable=False, default="public")
+    # Secret mixed into the contact's "Manage registration" link. A new value cancels old links.
+    manage_key: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, default=lambda: secrets.token_hex(16)
+    )
 
 
 class TcRegistrationBowler(Base):
@@ -771,6 +776,10 @@ class TcRegistrationBowler(Base):
     city: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     state: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     zip_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # Secret mixed into this bowler's "Manage registration" link. Replaced when the bowler is swapped.
+    manage_key: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True, default=lambda: secrets.token_hex(16)
+    )
     checked_in_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     checked_in_by_user_id: Mapped[Optional[int]] = mapped_column(
         Integer,
@@ -910,6 +919,28 @@ class TcRegistrationAnswer(Base):
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
         index=True,
+    )
+
+
+class TcRegistrationChange(Base):
+    """One saved change to a registration, by a bowler or the organizer, for the history list."""
+
+    __tablename__ = "tc_registration_changes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    registration_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tc_registrations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tournament_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("tc_tournaments.id"), nullable=False, index=True
+    )
+    # "bowler" or "organizer"
+    changed_by: Mapped[str] = mapped_column(String(24), nullable=False)
+    actor_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # [{"label": ..., "before": ..., "after": ...}]
+    changes_json: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
     )
 
 

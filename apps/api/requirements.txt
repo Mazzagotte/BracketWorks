@@ -17,3 +17,6 @@ typing-extensions==4.15.0
 idna==3.15
 redis==5.0.8
 setuptools==84.1.0
+
+# Time zone data for tournament deadlines (slim images have no system zoneinfo)
+tzdata>=2024.1

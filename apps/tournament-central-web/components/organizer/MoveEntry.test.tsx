@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import RegistrationsPage from '@/app/organizer/tournaments/[tournamentId]/registrations/page';
-import { loadOrganizerSetupState, updateTournamentEntry, type OrganizerRegistrationRecord } from './organizerApi';
+import { listRegistrationChanges, loadOrganizerSetupState, updateTournamentEntry, type OrganizerRegistrationRecord } from './organizerApi';
 
 const mocks = vi.hoisted(() => ({ context: vi.fn() }));
 vi.mock('./TournamentContext', () => ({ useTournamentContext: () => mocks.context() }));
@@ -13,6 +13,7 @@ vi.mock('./organizerApi', () => ({
   markTournamentRegistrationsPaid: vi.fn(),
   updateTournamentEntry: vi.fn(),
   loadOrganizerSetupState: vi.fn(),
+  listRegistrationChanges: vi.fn(),
 }));
 
 const registration: OrganizerRegistrationRecord = {
@@ -46,6 +47,10 @@ beforeEach(() => {
     },
   } as never);
   vi.mocked(updateTournamentEntry).mockResolvedValue({ ok: true } as never);
+  vi.mocked(listRegistrationChanges).mockResolvedValue([{
+    id: 1, changed_by: 'bowler', who: 'Alex One', created_at: '2026-11-15T20:00:00Z',
+    items: [{ label: 'Squad', before: 'Morning', after: 'Evening' }],
+  }]);
 });
 afterEach(() => {
   cleanup();
@@ -59,6 +64,7 @@ describe('moving an entry', () => {
     await user.click(screen.getByRole('button', { name: 'More actions for Alex One' }));
     await user.click(screen.getByRole('menuitem', { name: 'Edit entry' }));
     const dialog = await screen.findByRole('dialog', { name: /Edit entry/ });
+    expect(await within(dialog).findByText('Squad: Morning to Evening')).toBeInTheDocument();
     const squad = await within(dialog).findByRole('combobox', { name: 'Squad' });
     expect(within(dialog).queryByLabelText('Squad ID')).not.toBeInTheDocument();
     expect(within(dialog).getByText('20 bowler spots left in this squad.')).toBeInTheDocument();

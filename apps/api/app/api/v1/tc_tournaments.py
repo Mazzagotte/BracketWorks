@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import timezone
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
@@ -27,6 +27,9 @@ from ...services.tc_tournament_names import (
     is_published_tournament_name_unique_violation,
 )
 from ...services.tournament_access import require_tc_tournament_permission
+from ...services import tc_emails, tc_registration_changes
+from ...services.tc_waitlist import promote_from_waitlist, send_promotion_emails
+from ...services.tc_manage_links import new_manage_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -824,6 +827,7 @@ def patch_tournament_registration(
     tournament_id: int,
     registration_id: int,
     payload: TcRegistrationStatusPatch,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
@@ -834,6 +838,8 @@ def patch_tournament_registration(
     ).first()
     if not registration:
         raise HTTPException(status_code=404, detail="Registration not found")
+    before = tc_registration_changes.snapshot(db, registration)
+    was_confirmed = registration.status == "confirmed"
 
     allowed_statuses = {"pending", "confirmed", "waitlisted", "cancelled", "refunded"}
     allowed_payment_statuses = {"unpaid", "paid", "refunded"}
@@ -850,7 +856,14 @@ def patch_tournament_registration(
     if payload.status is None and payload.payment_status is None:
         raise HTTPException(status_code=400, detail="No registration changes supplied")
 
+    _, emails = tc_registration_changes.record_changes(
+        db, registration, before, changed_by="organizer", actor_name=_staff_name(user),
+    )
+    promoted = []
+    if was_confirmed and registration.status != "confirmed":
+        promoted = _promote_for_registration(db, tournament, registration)
     db.commit()
+    _send_change_emails(background_tasks, db, emails, promoted)
     db.refresh(registration)
     return {
         "ok": True,
@@ -865,6 +878,7 @@ def patch_tournament_entry(
     tournament_id: int,
     entry_id: int,
     payload: TcEntryStatusPatch,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
@@ -875,6 +889,9 @@ def patch_tournament_entry(
     ).first()
     if not entry:
         raise HTTPException(status_code=404, detail="Entry not found")
+    changed_registration = db.get(models.TcRegistration, entry.registration_id)
+    before = tc_registration_changes.snapshot(db, changed_registration) if changed_registration else None
+    old_squad_id, old_entry_status = entry.squad_config_id, entry.status
 
     allowed_statuses = {"pending", "confirmed", "waitlisted", "cancelled"}
     if payload.status is not None:
@@ -917,7 +934,10 @@ def patch_tournament_entry(
         if payload.contact_last_name is not None:
             registration.contact_last_name = payload.contact_last_name.strip()
         if payload.contact_email is not None:
-            registration.contact_email = payload.contact_email.strip().lower()
+            next_contact_email = payload.contact_email.strip().lower()
+            if next_contact_email != (registration.contact_email or "").lower():
+                registration.manage_key = new_manage_key()
+            registration.contact_email = next_contact_email
         if payload.contact_phone is not None:
             registration.contact_phone = payload.contact_phone.strip() or None
         if payload.notes is not None:
@@ -933,6 +953,7 @@ def patch_tournament_entry(
             bowler = db.get(models.TcRegistrationBowler, link.bowler_id)
             if not bowler:
                 continue
+            identity_before = (bowler.first_name or "", bowler.last_name or "", (bowler.email or "").lower())
             for field_name in ("first_name", "last_name", "email", "phone", "usbc_number"):
                 if field_name in bowler_values:
                     value = str(bowler_values.get(field_name) or "").strip()
@@ -940,6 +961,10 @@ def patch_tournament_entry(
             if "average" in bowler_values:
                 average = bowler_values.get("average")
                 bowler.average = int(average) if average not in (None, "") else None
+            # A different person (or email) in this spot: the old Manage registration link stops working.
+            identity_after = (bowler.first_name or "", bowler.last_name or "", (bowler.email or "").lower())
+            if identity_after != identity_before:
+                bowler.manage_key = new_manage_key()
 
     if payload.entry_fee_cents is not None:
         db.flush()
@@ -964,7 +989,18 @@ def patch_tournament_entry(
     if not has_changes:
         raise HTTPException(status_code=400, detail="No entry changes supplied")
 
+    emails: list[dict] = []
+    promoted = []
+    if changed_registration is not None and before is not None:
+        _, emails = tc_registration_changes.record_changes(
+            db, changed_registration, before, changed_by="organizer", actor_name=_staff_name(user),
+        )
+        if old_squad_id and old_entry_status == "confirmed" and (
+            entry.squad_config_id != old_squad_id or entry.status != "confirmed"
+        ):
+            promoted = promote_from_waitlist(db, tournament, old_squad_id)
     db.commit()
+    _send_change_emails(background_tasks, db, emails, promoted)
     db.refresh(entry)
     return {
         "ok": True,
@@ -978,6 +1014,7 @@ def patch_tournament_entry(
 def delete_tournament_entry(
     tournament_id: int,
     entry_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
     user=Depends(deps.get_current_user),
 ):
@@ -993,6 +1030,24 @@ def delete_tournament_entry(
         models.TcRegistration.id == entry.registration_id,
         models.TcRegistration.tournament_id == tournament.id,
     ).first()
+    removed_squad_id = entry.squad_config_id if entry.status == "confirmed" else None
+
+    # Build the "cancelled" emails before the records are deleted.
+    emails: list[dict] = []
+    remaining_after_delete = db.query(func.count(models.TcEntry.id)).filter(
+        models.TcEntry.registration_id == entry.registration_id,
+        models.TcEntry.id != entry.id,
+    ).scalar() or 0
+    if registration is not None and remaining_after_delete == 0 and registration.status not in ("cancelled", "refunded"):
+        old_status = tc_emails._STATUS_LABELS.get(registration.status, registration.status.title())
+        try:
+            registration.status = "cancelled"
+            emails = tc_emails.build_registration_update_emails(
+                db, registration, [{"label": "Status", "before": old_status, "after": "Cancelled"}],
+                removed={}, changed_by="organizer", actor_name=_staff_name(user),
+            )
+        except Exception:
+            logger.exception("Could not build cancellation emails", extra={"registration_id": registration.id})
 
     db.query(models.TcEntryBowler).filter(
         models.TcEntryBowler.entry_id == entry.id,
@@ -1016,10 +1071,62 @@ def delete_tournament_entry(
         db.query(models.TcRegistrationBowler).filter(
             models.TcRegistrationBowler.registration_id == registration.id,
         ).delete(synchronize_session=False)
+        db.query(models.TcRegistrationChange).filter(
+            models.TcRegistrationChange.registration_id == registration.id,
+        ).delete(synchronize_session=False)
         db.delete(registration)
 
+    promoted = promote_from_waitlist(db, tournament, removed_squad_id) if removed_squad_id else []
     db.commit()
+    _send_change_emails(background_tasks, db, emails, promoted)
     return {"ok": True, "entry_id": entry_id}
+
+
+@router.get("/{tournament_id}/registrations/{registration_id}/changes")
+def list_registration_changes(
+    tournament_id: int,
+    registration_id: int,
+    db: Session = Depends(deps.get_db),
+    user=Depends(deps.get_current_user),
+):
+    """Every saved change to a registration, newest first, for the organizer's history list."""
+    tournament = require_tc_tournament_permission(db, tournament_id, user, "view")
+    registration = db.query(models.TcRegistration).filter(
+        models.TcRegistration.id == registration_id,
+        models.TcRegistration.tournament_id == tournament.id,
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    return {
+        "changes": [
+            {
+                "id": change.id,
+                "changed_by": change.changed_by,
+                "who": tc_registration_changes.actor_label(change),
+                "created_at": change.created_at.replace(tzinfo=timezone.utc).isoformat() if change.created_at.tzinfo is None else change.created_at.isoformat(),
+                "items": change.changes_json or [],
+            }
+            for change in tc_registration_changes.history(db, registration.id)
+        ],
+    }
+
+
+def _staff_name(user: object) -> str:
+    return " ".join(f"{getattr(user, 'first_name', '') or ''} {getattr(user, 'last_name', '') or ''}".split())
+
+
+def _promote_for_registration(db: Session, tournament: models.TournamentCentral, registration: models.TcRegistration) -> list:
+    promoted: list = []
+    for entry in db.query(models.TcEntry).filter(models.TcEntry.registration_id == registration.id).all():
+        if entry.squad_config_id:
+            promoted += promote_from_waitlist(db, tournament, entry.squad_config_id)
+    return promoted
+
+
+def _send_change_emails(background_tasks: BackgroundTasks, db: Session, emails: list[dict], promoted: list) -> None:
+    if emails:
+        background_tasks.add_task(tc_registration_changes.send_all, emails)
+    send_promotion_emails(background_tasks, db, promoted)
 
 
 @router.delete("/{tournament_id}")

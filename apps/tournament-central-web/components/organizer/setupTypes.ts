@@ -43,6 +43,13 @@ export type TournamentDetails = {
   registrationCloseIso: string;
   registrationOpenTime: string;
   registrationCloseTime: string;
+  /**
+   * Last day bowlers can change or cancel their own registration (YYYY-MM-DD). Blank: the
+   * registration close date. After it, only the organizer can change a registration.
+   */
+  bowlerChangesCloseIso: string;
+  /** Time on that day, HH:MM in the tournament timezone. */
+  bowlerChangesCloseTime: string;
   logoFileName: string;
 };
 

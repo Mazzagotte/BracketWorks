@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import tc_duplicate
 from app.api.v1 import tc_bracketworks
 from app.api.v1 import tc_messages
+from app.api.v1 import tc_manage
 from app.api.v1 import tc_scores
 from app.api.v1 import admin, health, bowlers, brackets, tournaments, users, squads, bracket_settings, scores, payouts, public, organizer_setup, tc_tournaments, tc_organizer_setup, tc_venues, tournament_activity, tournament_staff, tc_tournament_staff, tournament_lifecycle, tournament_snapshots, tournament_reconciliation, tc_check_in
 
@@ -23,6 +24,7 @@ api_router.include_router(bracket_settings.router, prefix="/bracket-settings", t
 api_router.include_router(scores.router, prefix="/scores", tags=["scores"])
 api_router.include_router(payouts.router, prefix="/payouts", tags=["payouts"])
 api_router.include_router(public.router, prefix="/public", tags=["public"])
+api_router.include_router(tc_manage.router, prefix="/public/tc-registration", tags=["public"])
 api_router.include_router(organizer_setup.router, prefix="/organizer-setup", tags=["organizer-setup"])
 api_router.include_router(tc_tournaments.router, prefix="/tc/tournaments", tags=["tc-tournaments"])
 api_router.include_router(tc_duplicate.router, prefix="/tc/tournaments", tags=["tc-tournaments"])

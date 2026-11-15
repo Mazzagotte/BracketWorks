@@ -166,6 +166,9 @@ export default function TournamentDetailsSection({
   const closeError = !details.registrationCloseIso ? 'Registration close date is required.' : dateErrors.registrationCloseIso || undefined;
   const openTimeError = dateErrors.registrationOpenTime || dateErrors.registrationOpenIso || undefined;
   const closeTimeError = dateErrors.registrationCloseTime || dateErrors.registrationCloseIso || undefined;
+  const changesCloseError = details.bowlerChangesCloseIso && details.endDateIso && details.bowlerChangesCloseIso > details.endDateIso
+    ? 'Changes must close on or before the final tournament day.'
+    : undefined;
   const contactNameError = contactTouched.name && !details.contactName.trim() ? 'Contact name is required.' : undefined;
   const contactEmailError = contactTouched.email && !supportEmailLooksValid ? 'Enter a valid contact email.' : undefined;
   const notificationEmail = details.registrationNotificationEmail.trim();
@@ -356,6 +359,27 @@ export default function TournamentDetailsSection({
                   <option key={tz.value} value={tz.value}>{tz.label}</option>
                 ))}
               </SelectField>
+            </FormGrid>
+            <CardDivider />
+            <h4 className={layout.subsectionTitle}>Changes by bowlers</h4>
+            <FormGrid>
+              <TextField
+                label="Bowlers can make changes until"
+                type="date"
+                optional
+                max={details.endDateIso || undefined}
+                value={details.bowlerChangesCloseIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, bowlerChangesCloseIso: event.target.value }))}
+                error={changesCloseError}
+                helper={changesCloseError ? undefined : 'Until then, bowlers can swap bowlers, change squads, or cancel from the link in their email. After it, only you can. Blank: when registration closes.'}
+              />
+              <TextField
+                label="Changes close at"
+                type="time"
+                value={details.bowlerChangesCloseTime}
+                disabled={!details.bowlerChangesCloseIso}
+                onChange={(event) => setDetails((prev) => ({ ...prev, bowlerChangesCloseTime: event.target.value }))}
+              />
             </FormGrid>
           </div>
         </Card>

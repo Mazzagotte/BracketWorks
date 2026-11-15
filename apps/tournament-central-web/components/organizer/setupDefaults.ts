@@ -45,6 +45,8 @@ export const defaultTournamentDetails: TournamentDetails = {
   registrationCloseIso: '',
   registrationOpenTime: '00:00',
   registrationCloseTime: '23:59',
+  bowlerChangesCloseIso: '',
+  bowlerChangesCloseTime: '23:59',
   logoFileName: '',
   rulesText: '',
 };
