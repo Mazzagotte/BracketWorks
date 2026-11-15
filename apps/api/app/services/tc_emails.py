@@ -19,6 +19,7 @@ from typing import Iterable, Literal
 from urllib import error as url_error
 from urllib import request as url_request
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..core import models
@@ -280,13 +281,12 @@ def _tournament_facts(db: Session, tournament: models.TournamentCentral) -> dict
 
 
 def _organizer_line(facts: dict[str, str]) -> str:
-    name = facts["organizer_name"]
-    email = facts["organizer_email"]
-    if name and email:
-        return f"Questions? Contact {name} at {email}."
-    if email:
-        return f"Questions? Contact the organizer at {email}."
-    if name:
+    """The one place the bowler email gives the organizer's contact info."""
+    name = facts["organizer_name"] or "the organizer"
+    ways = " or ".join(part for part in (facts["organizer_email"], facts["organizer_phone"]) if part)
+    if ways:
+        return f"Questions? Contact {name} at {ways}."
+    if facts["organizer_name"]:
         return f"Questions? Contact {name}."
     return ""
 
@@ -329,7 +329,8 @@ def _entry_lines(db: Session, registration: models.TcRegistration, *, with_bowle
         squad = f", squad: {' '.join(squad_parts)}" if squad_parts else ""
         names = names_by_entry.get(entry.id, [])
         who = f" for {', '.join(names[:-1])} and {names[-1]}" if len(names) > 1 else f" for {names[0]}" if names else ""
-        lines.append(f"{event}{squad}{who} - {_STATUS_LABELS.get(entry.status, entry.status.title())}")
+        state = "" if entry.status == "confirmed" else f" - {_STATUS_LABELS.get(entry.status, entry.status.title())}"
+        lines.append(f"{event}{squad}{who}{state}")
     return lines
 
 
@@ -533,9 +534,6 @@ def _tournament_section(facts: dict[str, str]) -> Section:
         ("Date", facts["tournament_dates"]),
         ("Location", facts["tournament_location"]),
         ("Address", facts["tournament_address"]),
-        ("Organizer", facts["organizer_name"]),
-        ("Organizer email", facts["organizer_email"]),
-        ("Organizer phone", facts["organizer_phone"]),
     ]
     return ("Tournament", [(label, value) for label, value in rows if value], [])
 
@@ -545,7 +543,8 @@ def _money_rows(registration: models.TcRegistration, has_side_events: bool) -> l
     if has_side_events:
         rows.append(("Entry fees", _format_money(registration.subtotal_cents, registration.currency)))
         rows.append(("Side events and fees", _format_money(registration.fees_cents, registration.currency)))
-    rows.append(("Total", _format_money(registration.total_cents, registration.currency)))
+    # Tournament Central never takes entry money; bowlers pay at the center.
+    rows.append(("Total due at check-in", _format_money(registration.total_cents, registration.currency)))
     return rows
 
 
@@ -579,7 +578,6 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
 
     facts = _tournament_facts(db, tournament)
     status = _STATUS_LABELS.get(registration.status, registration.status.title())
-    payment = "Paid" if registration.payment_status == "paid" else registration.payment_status.replace("_", " ").capitalize()
     entries = _entry_lines(db, registration)
     side_events = _side_event_lines(db, registration)
     contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
@@ -592,13 +590,13 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
     else:
         state_line = "was received. The organizer will confirm it soon."
 
+    contact_bowls = contact_name.casefold() in {name.casefold() for name in bowler_names}
     sections: list[Section] = [
         _tournament_section(facts),
         ("Registration", [(label, value) for label, value in (
             ("Confirmation code", registration.confirmation_code),
-            ("Status", status),
-            ("Payment", payment),
-            ("Registered by", contact_name),
+            ("Status", "" if registration.status == "confirmed" else status),
+            ("Registered by", "" if contact_bowls else contact_name),
         ) if value], []),
         ("Bowlers", [], [name for name in bowler_names if name]),
         ("Entries", [], entries),
@@ -613,7 +611,6 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
         **facts,
         "confirmation_code": registration.confirmation_code,
         "status": status,
-        "payment_status": payment,
         "registered_by": contact_name,
         "bowlers": "\n".join(bowler_names),
         "total": _format_money(registration.total_cents, registration.currency),
@@ -745,6 +742,73 @@ def _bowler_section(bowler: models.TcRegistrationBowler, answers: list[tuple[str
     return (f"Bowler {number}", [(label, value) for label, value in rows if value], [])
 
 
+def _digits(value: str | None) -> str:
+    return "".join(ch for ch in (value or "") if ch.isdigit())
+
+
+def _contact_is_a_bowler(registration: models.TcRegistration, bowlers: list[models.TcRegistrationBowler]) -> bool:
+    """True when the person who registered is one of the bowlers and their section already shows
+    the contact's email and phone, so a separate Contact section would only repeat it."""
+    name = _full_name(registration.contact_first_name, registration.contact_last_name).casefold()
+    email = _normalize_email(registration.contact_email)
+    phone = _digits(registration.contact_phone)
+    for bowler in bowlers:
+        same_person = (
+            (email and _normalize_email(bowler.email) == email)
+            or (name and _full_name(bowler.first_name, bowler.last_name).casefold() == name)
+        )
+        if (
+            same_person
+            and (not email or _normalize_email(bowler.email) == email)
+            and (not phone or _digits(bowler.phone) == phone)
+        ):
+            return True
+    return False
+
+
+def _squad_count_lines(db: Session, registration: models.TcRegistration) -> list[str]:
+    """How full each squad on this registration is now, for example "Saturday 9:00 AM: 24 of 40 spots filled"."""
+    squads = (
+        db.query(models.TcEntry.squad_config_id, models.TcEntry.squad_name_snapshot)
+        .filter(models.TcEntry.registration_id == registration.id, models.TcEntry.squad_config_id.isnot(None))
+        .order_by(models.TcEntry.id.asc())
+        .all()
+    )
+    capacities: dict[str, int] = {}
+    for squad in _setup_payload(db, registration.tournament_id).get("squads") or []:
+        if isinstance(squad, dict) and squad.get("id") is not None:
+            try:
+                capacities[str(squad["id"])] = int(squad.get("capacity") or 0)
+            except (TypeError, ValueError):
+                pass
+
+    lines: list[str] = []
+    seen: set[str] = set()
+    for squad_id, squad_name in squads:
+        if squad_id in seen:
+            continue
+        seen.add(squad_id)
+        counts = dict(
+            db.query(models.TcEntry.status, func.count(models.TcEntryBowler.id))
+            .join(models.TcEntryBowler, models.TcEntryBowler.entry_id == models.TcEntry.id)
+            .filter(
+                models.TcEntry.tournament_id == registration.tournament_id,
+                models.TcEntry.squad_config_id == squad_id,
+                models.TcEntry.status.in_(("pending", "confirmed", "waitlisted")),
+            )
+            .group_by(models.TcEntry.status)
+            .all()
+        )
+        filled = counts.get("pending", 0) + counts.get("confirmed", 0)
+        capacity = capacities.get(squad_id, 0)
+        line = f"{(squad_name or 'Squad').strip()}: "
+        line += f"{filled} of {capacity} spots filled" if capacity > 0 else f"{filled} bowler{'s' if filled != 1 else ''}"
+        if counts.get("waitlisted"):
+            line += f", {counts['waitlisted']} on the waitlist"
+        lines.append(line)
+    return lines
+
+
 def build_organizer_registration_notice(db: Session, registration: models.TcRegistration) -> dict | None:
     """The organizer's email about a new registration, with everything on the sign-up, or None when off."""
     tournament = db.get(models.TournamentCentral, registration.tournament_id)
@@ -755,7 +819,6 @@ def build_organizer_registration_notice(db: Session, registration: models.TcRegi
         return None
 
     status = _STATUS_LABELS.get(registration.status, registration.status.title())
-    payment = "Paid" if registration.payment_status == "paid" else registration.payment_status.replace("_", " ").capitalize()
     contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
     contact_email = _normalize_email(registration.contact_email) or (registration.contact_email or "").strip()
     bowlers = _bowlers(db, registration)
@@ -763,23 +826,17 @@ def build_organizer_registration_notice(db: Session, registration: models.TcRegi
     entries = _entry_lines(db, registration, with_bowlers=len(bowlers) > 1)
     side_events = _side_event_lines(db, registration)
     notes = (registration.notes or "").strip()
-    submitted = registration.submitted_at
-    submitted_text = (
-        f"{_format_date(submitted.date().isoformat())} at {_format_time(submitted.strftime('%H:%M'))} UTC"
-        if submitted else ""
-    )
+    contact_phone = (registration.contact_phone or "").strip()
 
     sections: list[Section] = [
         ("Registration", [(label, value) for label, value in (
             ("Confirmation code", registration.confirmation_code),
-            ("Status", status),
-            ("Payment", payment),
-            ("Submitted", submitted_text),
+            ("Status", "" if registration.status == "confirmed" else status),
         ) if value], []),
-        ("Contact", [(label, value) for label, value in (
+        ("Contact", [] if _contact_is_a_bowler(registration, bowlers) else [(label, value) for label, value in (
             ("Name", contact_name),
             ("Email", contact_email),
-            ("Phone", (registration.contact_phone or "").strip()),
+            ("Phone", contact_phone),
         ) if value], []),
         *(
             _bowler_section(bowler, answers.get(bowler.id, []), number)
@@ -790,6 +847,7 @@ def build_organizer_registration_notice(db: Session, registration: models.TcRegi
         ("Side events and fees", [], side_events),
         ("Fees", _money_rows(registration, bool(side_events)), []),
         ("Notes", [], [notes] if notes else []),
+        ("Squad count", [], _squad_count_lines(db, registration)),
     ]
     bowler_count = f"{len(bowlers)} bowler{'s' if len(bowlers) != 1 else ''}"
     html_body, text = _render_document(
