@@ -291,27 +291,45 @@ def _organizer_line(facts: dict[str, str]) -> str:
     return ""
 
 
-def _entry_lines(db: Session, registration: models.TcRegistration) -> list[str]:
+def _entry_lines(db: Session, registration: models.TcRegistration, *, with_bowlers: bool = False) -> list[str]:
+    """One line per entry, for example "Singles (Open), squad: Saturday 9:00 AM - Confirmed".
+
+    With with_bowlers, the line also names who bowls in it ("... for Ann Lee and Bo Ray").
+    """
     entries = (
         db.query(models.TcEntry)
         .filter(models.TcEntry.registration_id == registration.id)
         .order_by(models.TcEntry.id.asc())
         .all()
     )
+    names_by_entry: dict[int, list[str]] = {}
+    if with_bowlers and entries:
+        rows = (
+            db.query(models.TcEntryBowler, models.TcRegistrationBowler)
+            .join(models.TcRegistrationBowler, models.TcRegistrationBowler.id == models.TcEntryBowler.bowler_id)
+            .filter(models.TcEntryBowler.entry_id.in_([entry.id for entry in entries]))
+            .order_by(models.TcEntryBowler.entry_id.asc(), models.TcEntryBowler.position.asc())
+            .all()
+        )
+        for link, bowler in rows:
+            name = _full_name(bowler.first_name, bowler.last_name)
+            if name:
+                names_by_entry.setdefault(link.entry_id, []).append(name)
     lines: list[str] = []
     for entry in entries:
-        squad_parts = [
-            part for part in (
-                entry.squad_name_snapshot or "",
-                _format_date(entry.squad_date_snapshot),
-                _format_time(entry.squad_time_snapshot),
-            ) if part
-        ]
+        squad_name = (entry.squad_name_snapshot or "").strip()
+        squad_parts = [squad_name] if squad_name else []
+        # Squad names usually already hold the date and time; only add them when they are missing.
+        for part in (_format_date(entry.squad_date_snapshot), _format_time(entry.squad_time_snapshot)):
+            if part and part not in squad_name:
+                squad_parts.append(part)
         event = entry.event_name_snapshot or entry.event_config_id
         if entry.division_name_snapshot:
             event = f"{event} ({entry.division_name_snapshot})"
         squad = f", squad: {' '.join(squad_parts)}" if squad_parts else ""
-        lines.append(f"{event}{squad} - {_STATUS_LABELS.get(entry.status, entry.status.title())}")
+        names = names_by_entry.get(entry.id, [])
+        who = f" for {', '.join(names[:-1])} and {names[-1]}" if len(names) > 1 else f" for {names[0]}" if names else ""
+        lines.append(f"{event}{squad}{who} - {_STATUS_LABELS.get(entry.status, entry.status.title())}")
     return lines
 
 
@@ -654,15 +672,15 @@ def send_registration_confirmation(db: Session, registration: models.TcRegistrat
 
 
 def organizer_notice_recipient(db: Session, tournament: models.TournamentCentral) -> str | None:
-    """Where new-registration emails go, or None when the organizer has them turned off.
+    """Where new-registration emails go, or None when the organizer turned them off.
 
-    Read from the saved setup, not the published one, so turning them on or off takes effect at once.
-    The address is the one set for notifications, else the tournament's contact email, else the
-    owner's account email.
+    They are on by default. Read from the saved setup, not the published one, so turning them on or
+    off takes effect at once. The address is the one set for notifications, else the tournament's
+    contact email, else the owner's account email.
     """
     details = _setup_payload(db, tournament.id).get("details")
     details = details if isinstance(details, dict) else {}
-    if details.get("registrationNotifications") is not True:
+    if details.get("registrationNotificationsOff") is True:
         return None
     owner = db.get(models.User, tournament.user_id)
     return (
@@ -672,8 +690,63 @@ def organizer_notice_recipient(db: Session, tournament: models.TournamentCentral
     )
 
 
+_GENDER_LABELS = {"M": "Male", "F": "Female"}
+
+
+def _answer_text(value: object) -> str:
+    """A registration question's answer as one line of text."""
+    if isinstance(value, dict):
+        value = value.get("value")
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    if isinstance(value, (list, tuple)):
+        return ", ".join(part for part in (_answer_text(item) for item in value) if part)
+    return _text(value)
+
+
+def _answers_by_bowler(db: Session, registration: models.TcRegistration) -> dict[int | None, list[tuple[str, str]]]:
+    """Each bowler's answers to the organizer's questions, once per question (they repeat per entry)."""
+    rows = (
+        db.query(models.TcRegistrationAnswer)
+        .filter(models.TcRegistrationAnswer.registration_id == registration.id)
+        .order_by(models.TcRegistrationAnswer.id.asc())
+        .all()
+    )
+    answers: dict[int | None, list[tuple[str, str]]] = {}
+    seen: set[tuple[int | None, str]] = set()
+    for row in rows:
+        key = (row.bowler_id, row.question_config_id)
+        text = _answer_text(row.answer_json)
+        if key in seen or not text:
+            continue
+        seen.add(key)
+        answers.setdefault(row.bowler_id, []).append((row.question_label_snapshot or row.question_config_id, text))
+    return answers
+
+
+def _bowler_section(bowler: models.TcRegistrationBowler, answers: list[tuple[str, str]], number: int) -> Section:
+    """Everything the bowler filled in on the form."""
+    street = (bowler.address or "").strip()
+    region = " ".join(part for part in ((bowler.state or "").strip(), (bowler.zip_code or "").strip()) if part)
+    locality = ", ".join(part for part in ((bowler.city or "").strip(), region) if part)
+    address = ", ".join(part for part in (street, locality) if part)
+    gender = (bowler.gender or "").strip()
+    rows = [
+        ("Name", _full_name(bowler.first_name, bowler.last_name)),
+        ("Email", (bowler.email or "").strip()),
+        ("Phone", (bowler.phone or "").strip()),
+        ("USBC number", (bowler.usbc_number or "").strip()),
+        ("Average", str(bowler.average) if bowler.average is not None else ""),
+        ("Date of birth", _format_date(bowler.date_of_birth) if bowler.date_of_birth else ""),
+        ("Gender", _GENDER_LABELS.get(gender.upper(), gender)),
+        ("Address", address),
+        *answers,
+    ]
+    return (f"Bowler {number}", [(label, value) for label, value in rows if value], [])
+
+
 def build_organizer_registration_notice(db: Session, registration: models.TcRegistration) -> dict | None:
-    """The organizer's email about a new registration, or None when notices are off."""
+    """The organizer's email about a new registration, with everything on the sign-up, or None when off."""
     tournament = db.get(models.TournamentCentral, registration.tournament_id)
     if tournament is None:
         return None
@@ -681,42 +754,48 @@ def build_organizer_registration_notice(db: Session, registration: models.TcRegi
     if not recipient:
         return None
 
-    facts = _tournament_facts(db, tournament)
     status = _STATUS_LABELS.get(registration.status, registration.status.title())
     payment = "Paid" if registration.payment_status == "paid" else registration.payment_status.replace("_", " ").capitalize()
     contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
     contact_email = _normalize_email(registration.contact_email) or (registration.contact_email or "").strip()
-    bowlers = [
-        " ".join(part for part in (
-            _full_name(bowler.first_name, bowler.last_name),
-            f"({bowler.email.strip()})" if (bowler.email or "").strip() else "",
-        ) if part)
-        for bowler in _bowlers(db, registration)
-    ]
-    entries = _entry_lines(db, registration)
+    bowlers = _bowlers(db, registration)
+    answers = _answers_by_bowler(db, registration)
+    entries = _entry_lines(db, registration, with_bowlers=len(bowlers) > 1)
     side_events = _side_event_lines(db, registration)
     notes = (registration.notes or "").strip()
+    submitted = registration.submitted_at
+    submitted_text = (
+        f"{_format_date(submitted.date().isoformat())} at {_format_time(submitted.strftime('%H:%M'))} UTC"
+        if submitted else ""
+    )
 
+    sections: list[Section] = [
+        ("Registration", [(label, value) for label, value in (
+            ("Confirmation code", registration.confirmation_code),
+            ("Status", status),
+            ("Payment", payment),
+            ("Submitted", submitted_text),
+        ) if value], []),
+        ("Contact", [(label, value) for label, value in (
+            ("Name", contact_name),
+            ("Email", contact_email),
+            ("Phone", (registration.contact_phone or "").strip()),
+        ) if value], []),
+        *(
+            _bowler_section(bowler, answers.get(bowler.id, []), number)
+            for number, bowler in enumerate(bowlers, start=1)
+        ),
+        ("Other answers", answers.get(None, []), []),
+        ("Entries", [], entries),
+        ("Side events and fees", [], side_events),
+        ("Fees", _money_rows(registration, bool(side_events)), []),
+        ("Notes", [], [notes] if notes else []),
+    ]
+    bowler_count = f"{len(bowlers)} bowler{'s' if len(bowlers) != 1 else ''}"
     html_body, text = _render_document(
         title="New registration",
-        lead=[f"{contact_name or 'Someone'} registered for {tournament.name}."],
-        sections=[
-            ("Registration", [(label, value) for label, value in (
-                ("Confirmation code", registration.confirmation_code),
-                ("Status", status),
-                ("Payment", payment),
-            ) if value], []),
-            ("Contact", [(label, value) for label, value in (
-                ("Name", contact_name),
-                ("Email", contact_email),
-                ("Phone", (registration.contact_phone or "").strip()),
-            ) if value], []),
-            ("Bowlers", [], [line for line in bowlers if line]),
-            ("Entries", [], entries),
-            ("Side events and fees", [], side_events),
-            ("Fees", _money_rows(registration, bool(side_events)), []),
-            ("Notes", [], [notes] if notes else []),
-        ],
+        lead=[f"{contact_name or 'Someone'} registered {bowler_count} for {tournament.name}."],
+        sections=sections,
         closing=["Reply to this email to reach the person who registered."] if contact_email else [],
         button=("View registrations", organizer_registrations_url(tournament.id)),
         footer=(

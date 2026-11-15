@@ -39,7 +39,7 @@ export const defaultTournamentDetails: TournamentDetails = {
   contactRole: '',
   preferredContactMethod: 'email',
   contactNote: '',
-  registrationNotifications: false,
+  registrationNotificationsOff: false,
   registrationNotificationEmail: '',
   registrationOpenIso: '',
   registrationCloseIso: '',

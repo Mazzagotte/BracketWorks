@@ -38,20 +38,26 @@ describe('existing tournament deadline errors', () => {
 });
 
 describe('registration emails', () => {
-  it('is off by default and hides the address field', () => {
+  it('is on by default and shows the address field', () => {
     render(section(defaultTournamentDetails));
+    expect(screen.getByLabelText('Email me when someone registers')).toBeChecked();
+    expect(screen.getByLabelText(/Send to/)).toBeInTheDocument();
+  });
+
+  it('hides the address field when turned off', () => {
+    render(section({ ...defaultTournamentDetails, registrationNotificationsOff: true }));
     expect(screen.getByLabelText('Email me when someone registers')).not.toBeChecked();
     expect(screen.queryByLabelText(/Send to/)).toBeNull();
   });
 
-  it('shows the address field when on, with the contact email as the placeholder', () => {
-    render(section({ ...defaultTournamentDetails, supportEmail: 'director@example.com', registrationNotifications: true }));
+  it('uses the contact email as the address placeholder', () => {
+    render(section({ ...defaultTournamentDetails, supportEmail: 'director@example.com' }));
     expect(screen.getByLabelText('Email me when someone registers')).toBeChecked();
     expect(screen.getByLabelText(/Send to/)).toHaveAttribute('placeholder', 'director@example.com');
   });
 
   it('flags an address that is not an email', () => {
-    render(section({ ...defaultTournamentDetails, registrationNotifications: true, registrationNotificationEmail: 'nope' }));
+    render(section({ ...defaultTournamentDetails, registrationNotificationEmail: 'nope' }));
     expect(screen.getByLabelText(/Send to/)).toHaveAttribute('aria-invalid', 'true');
   });
 });

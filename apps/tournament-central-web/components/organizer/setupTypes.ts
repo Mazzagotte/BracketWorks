@@ -31,8 +31,11 @@ export type TournamentDetails = {
   contactRole: string;
   preferredContactMethod: 'email' | 'phone' | 'either';
   contactNote: string;
-  /** Email the organizer each new registration. Private: never shown on the tournament page. */
-  registrationNotifications: boolean;
+  /**
+   * True when the organizer turned off the email they get for each new registration. The email is
+   * on by default. Private: never shown on the tournament page.
+   */
+  registrationNotificationsOff: boolean;
   /** Where those emails go. Blank: the contact email. */
   registrationNotificationEmail: string;
   rulesText: string;

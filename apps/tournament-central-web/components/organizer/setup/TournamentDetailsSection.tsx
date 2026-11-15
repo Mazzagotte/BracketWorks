@@ -571,11 +571,11 @@ export default function TournamentDetailsSection({
             <CheckboxField
               className={local.fullRow}
               label="Email me when someone registers"
-              helper="Each email has the registration details: bowlers, entries, side events, and fees."
-              checked={details.registrationNotifications}
-              onChange={(event) => setDetails((prev) => ({ ...prev, registrationNotifications: event.target.checked }))}
+              helper="Each email has everything on the sign-up: contact, bowler details, answers, entries, side events, and fees."
+              checked={!details.registrationNotificationsOff}
+              onChange={(event) => setDetails((prev) => ({ ...prev, registrationNotificationsOff: !event.target.checked }))}
             />
-            {details.registrationNotifications ? (
+            {!details.registrationNotificationsOff ? (
               <TextField
                 label="Send to"
                 optional
