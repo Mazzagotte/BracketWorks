@@ -306,7 +306,7 @@ def test_confirmation_email_lists_side_events(api_client, db_session, make_user,
     assert "- High game for James Mazz: $10.00" in text
     assert "- Lineage: $2.00" in text
     assert "Side events and fees: $37.00" in text
-    assert "Total: $97.00" in text
+    assert "Total due at check-in: $97.00" in text
     assert "Handicap brackets x5" in message["html"]
 
 

@@ -384,11 +384,13 @@ def test_resend_confirmation_sends_details_to_everyone_on_the_registration(
     text = messages[0]["text"]
     for expected in (
         "FC-1", "Fall Classic", "October 1, 2026 to October 2, 2026", "Sunset Lanes, Boise, ID",
-        "Singles (Open), squad: Saturday AM October 1, 2026 9:00 AM - Confirmed", "Confirmed", "$60.00",
-        "Jamie Smith at director@example.com", "Payment: Unpaid", "Bowler 1", "Bowler 2",
+        "Singles (Open), squad: Saturday AM October 1, 2026 9:00 AM", "Total due at check-in: $60.00",
+        "Questions? Contact Jamie Smith at director@example.com", "Bowler 1", "Bowler 2",
         f"/?tournament=tc-{tournament.id}",
     ):
         assert expected in text
+    for removed in ("Payment", "Status:", "- Confirmed", "Organizer email:"):
+        assert removed not in text
     assert "Your registration for Fall Classic is confirmed." in text
     assert "Pat FC-1 registered you for Fall Classic." in messages[1]["text"]
 
@@ -449,7 +451,8 @@ def test_public_submission_sends_confirmation(api_client, db_session, make_user,
     assert len(messages) == 1
     message = messages[0]
     assert code in message["text"]
-    assert "Status: Confirmed" in message["text"]
+    assert "Registration confirmed" in message["text"]
+    assert "Status:" not in message["text"]
 
 
 def _set_notice_details(db_session, tournament, **details) -> None:
@@ -516,7 +519,7 @@ def test_organizer_notice_lists_every_sign_up_detail(db_session, make_user):
     db_session.flush()
     entry = models.TcEntry(
         registration_id=registration.id, tournament_id=tournament.id, event_config_id="doubles",
-        event_name_snapshot="Doubles", squad_name_snapshot="Saturday, February 27, 2027 - 9:00 AM",
+        event_name_snapshot="Doubles", squad_config_id="sat-9", squad_name_snapshot="Saturday, February 27, 2027 - 9:00 AM",
         squad_date_snapshot="2027-02-27", squad_time_snapshot="09:00", status="confirmed", entry_fee_cents=8000,
     )
     db_session.add(entry)
@@ -538,10 +541,14 @@ def test_organizer_notice_lists_every_sign_up_detail(db_session, make_user):
         "registered 2 bowlers", "Phone: 208-555-0100", "Bowler 1", "USBC number: 123-4567", "Average: 187",
         "Date of birth: April 2, 1990", "Gender: Female", "Address: 1 Main St, Boise, ID 83702",
         "Bowler 2", "Name: Bo Ray", "Lefty, needs lane 12",
-        "Doubles, squad: Saturday, February 27, 2027 - 9:00 AM for Ann Lee and Bo Ray - Confirmed",
+        "Doubles, squad: Saturday, February 27, 2027 - 9:00 AM for Ann Lee and Bo Ray",
+        "Squad count", "Saturday, February 27, 2027 - 9:00 AM: 2 bowlers", "Total due at check-in: $80.00",
     ):
         assert expected in text, expected
     assert text.count("Shirt size: M") == 1
+    # Ann registered herself with the same email and phone, so there is no separate Contact section.
+    for removed in ("Contact\n", "Submitted", "Status:", "Payment", "- Confirmed"):
+        assert removed not in text, removed
 
 
 def test_organizer_notice_address_falls_back_in_order(db_session, make_user):
@@ -582,3 +589,46 @@ def test_public_submission_succeeds_when_building_the_email_raises(api_client, d
     response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
     assert response.status_code == 200
     assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 1
+
+
+def test_organizer_notice_shows_contact_and_squad_capacity_when_useful(db_session, make_user):
+    owner = make_user("tc_notice_capacity")
+    tournament = _tournament(db_session, owner.id)
+    state = db_session.query(models.TournamentCentralSetupState).filter_by(tournament_id=tournament.id).one()
+    payload = dict(state.payload)
+    payload["squads"] = [{"id": "sat-am", "name": "Saturday AM", "capacity": 40}]
+    state.payload = payload
+    db_session.commit()
+
+    now = datetime.now(timezone.utc)
+    registration = models.TcRegistration(
+        confirmation_code="CAP-0001", tournament_id=tournament.id, contact_first_name="Pat",
+        contact_last_name="Parent", contact_email="pat@example.com", contact_phone="208-555-0199",
+        status="waitlisted", payment_status="unpaid", subtotal_cents=3000, fees_cents=0, total_cents=3000,
+        terms_accepted_at=now, submitted_at=now,
+    )
+    db_session.add(registration)
+    db_session.flush()
+    kid = models.TcRegistrationBowler(
+        registration_id=registration.id, tournament_id=tournament.id, first_name="Kit", last_name="Parent",
+    )
+    db_session.add(kid)
+    db_session.flush()
+    entry = models.TcEntry(
+        registration_id=registration.id, tournament_id=tournament.id, event_config_id="singles",
+        event_name_snapshot="Singles", squad_config_id="sat-am", squad_name_snapshot="Saturday AM",
+        status="waitlisted", entry_fee_cents=3000,
+    )
+    db_session.add(entry)
+    db_session.flush()
+    db_session.add(models.TcEntryBowler(entry_id=entry.id, bowler_id=kid.id, position=1))
+    db_session.commit()
+
+    text = tc_emails.build_organizer_registration_notice(db_session, registration)["text"]
+    for expected in ("Contact", "Name: Pat Parent", "Phone: 208-555-0199", "Status: Waitlisted",
+                     "Singles, squad: Saturday AM - Waitlisted", "Saturday AM: 0 of 40 spots filled, 1 on the waitlist"):
+        assert expected in text, expected
+
+    confirmation = tc_emails.build_registration_confirmation(db_session, registration)["text"]
+    assert "Registered by: Pat Parent" in confirmation
+    assert "Status: Waitlisted" in confirmation
