@@ -38,6 +38,12 @@
   color: var(--bw-text-title);
 }
 
+.helper {
+  margin: 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
 @media (max-width: 767px) {
   .selectionBar {
     padding: var(--space-4) var(--space-4) 0;

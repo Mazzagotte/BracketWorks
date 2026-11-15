@@ -29,6 +29,7 @@ from ...services.tc_tournament_names import (
 from ...services.tournament_access import require_tc_tournament_permission
 from ...services import tc_emails, tc_registration_changes
 from ...services.tc_waitlist import promote_from_waitlist, send_promotion_emails
+from ...services.tc_manage_links import new_manage_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -933,7 +934,10 @@ def patch_tournament_entry(
         if payload.contact_last_name is not None:
             registration.contact_last_name = payload.contact_last_name.strip()
         if payload.contact_email is not None:
-            registration.contact_email = payload.contact_email.strip().lower()
+            next_contact_email = payload.contact_email.strip().lower()
+            if next_contact_email != (registration.contact_email or "").lower():
+                registration.manage_key = new_manage_key()
+            registration.contact_email = next_contact_email
         if payload.contact_phone is not None:
             registration.contact_phone = payload.contact_phone.strip() or None
         if payload.notes is not None:
@@ -949,6 +953,7 @@ def patch_tournament_entry(
             bowler = db.get(models.TcRegistrationBowler, link.bowler_id)
             if not bowler:
                 continue
+            identity_before = (bowler.first_name or "", bowler.last_name or "", (bowler.email or "").lower())
             for field_name in ("first_name", "last_name", "email", "phone", "usbc_number"):
                 if field_name in bowler_values:
                     value = str(bowler_values.get(field_name) or "").strip()
@@ -956,6 +961,10 @@ def patch_tournament_entry(
             if "average" in bowler_values:
                 average = bowler_values.get("average")
                 bowler.average = int(average) if average not in (None, "") else None
+            # A different person (or email) in this spot: the old Manage registration link stops working.
+            identity_after = (bowler.first_name or "", bowler.last_name or "", (bowler.email or "").lower())
+            if identity_after != identity_before:
+                bowler.manage_key = new_manage_key()
 
     if payload.entry_fee_cents is not None:
         db.flush()

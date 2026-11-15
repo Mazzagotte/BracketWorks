@@ -134,6 +134,12 @@ type TournamentRegistrationFormProps = {
   confirmation?: { code: string; status: string } | null;
   /** `modal` (default) opens in the shared Modal; `inline` renders in place, for example as a live preview. */
   presentation?: 'modal' | 'inline';
+  /**
+   * `register` (default): a new sign-up with review and terms.
+   * `edit`: change a saved registration. The event is locked, each bowler can be replaced, and
+   * "Save changes" submits right away (the terms were accepted when they registered).
+   */
+  mode?: 'register' | 'edit';
 };
 
 function normalizeRegistrationFieldKey(key: string): string {
@@ -213,7 +219,9 @@ export default function TournamentRegistrationForm({
   documents = [],
   confirmation,
   presentation = 'modal',
+  mode = 'register',
 }: TournamentRegistrationFormProps) {
+  const isEdit = mode === 'edit';
   const [isDisclosureOpen, setIsDisclosureOpen] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
@@ -342,18 +350,37 @@ export default function TournamentRegistrationForm({
     setCopyMessage(`Bowler 1's available contact/address details copied to Bowler ${bowlerIndex + 1}. You can edit them independently.`);
   };
 
-  const openReview = () => {
+  /** True when every field is valid and the bowlers meet the rules; otherwise shows what to fix. */
+  const passesChecks = (): boolean => {
     const inputs = bodyRef.current?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea');
     for (const input of inputs ?? []) {
-      if (!input.reportValidity()) return;
+      if (!input.reportValidity()) return false;
     }
     if (eligibilityProblems.length > 0 && (eligibility === 'block' || !formState.overrideEligibility)) {
       setShowEligibility(true);
       window.setTimeout(() => eligibilityRef.current?.focus(), 0);
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const openReview = () => {
+    if (!passesChecks()) return;
     setFormState((prev) => ({ ...prev, acceptTerms: false }));
     setIsDisclosureOpen(true);
+  };
+
+  const saveChanges = () => {
+    if (passesChecks()) void onSubmit();
+  };
+
+  /** Clear a bowler's spot so someone else can be entered in it. */
+  const replaceBowler = (bowlerIndex: number) => {
+    setFormState((prev) => ({
+      ...prev,
+      bowlers: prev.bowlers.map((entry, index) => (index === bowlerIndex ? {} : entry)),
+      bowlerQuestionAnswers: prev.bowlerQuestionAnswers.map((entry, index) => (index === bowlerIndex ? {} : entry)),
+    }));
   };
 
   useEffect(() => {
@@ -562,6 +589,16 @@ export default function TournamentRegistrationForm({
 
   const footer = confirmation ? (
     <Button variant="primary" onClick={onClose}>Done</Button>
+  ) : isEdit ? (
+    <>
+      <span className={styles.footerHint}>
+        <Info size={ICON_SIZE.md} aria-hidden="true" />
+        {footerHint}
+      </span>
+      <Button variant="primary" onClick={saveChanges} disabled={isSubmitting}>
+        {isSubmitting ? 'Saving...' : 'Save changes'}
+      </Button>
+    </>
   ) : (
     <>
       <span className={styles.footerHint}>
@@ -580,8 +617,12 @@ export default function TournamentRegistrationForm({
     </>
   );
 
-  const title = confirmation ? tournamentName : `Register: ${tournamentName}`;
-  const description = confirmation ? undefined : "Choose your squad and event, then enter each bowler's information.";
+  const title = confirmation ? tournamentName : isEdit ? 'Change your registration' : `Register: ${tournamentName}`;
+  const description = confirmation
+    ? undefined
+    : isEdit
+      ? 'Make your changes, then save. Everyone on the registration and the organizer get an email about what changed.'
+      : "Choose your squad and event, then enter each bowler's information.";
 
   const body = (
     <>
@@ -599,21 +640,25 @@ export default function TournamentRegistrationForm({
         </div>
       ) : (
         <div ref={bodyRef} className={styles.form}>
-          {progress(0)}
+          {isEdit ? null : progress(0)}
           {notice}
-          <section aria-label="Payment timing">
-            <Notice tone="info">
-              <strong>Register now, pay at check-in.</strong> Payment is collected in cash at the venue during check-in. No online payment is collected on this form.
-            </Notice>
-          </section>
+          {isEdit ? null : (
+            <>
+              <section aria-label="Payment timing">
+                <Notice tone="info">
+                  <strong>Register now, pay at check-in.</strong> Payment is collected in cash at the venue during check-in. No online payment is collected on this form.
+                </Notice>
+              </section>
 
-          <div className={styles.summary}>
-            {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.logo} /> : null}
-            <dl className={styles.summaryList}>
-              <div><dt>Location</dt><dd>{tournamentLocation || 'TBD'}</dd></div>
-              <div><dt>Date</dt><dd>{tournamentDate || 'Date TBA'}</dd></div>
-            </dl>
-          </div>
+              <div className={styles.summary}>
+                {tournamentLogoUrl ? <img src={tournamentLogoUrl} alt="" className={styles.logo} /> : null}
+                <dl className={styles.summaryList}>
+                  <div><dt>Location</dt><dd>{tournamentLocation || 'TBD'}</dd></div>
+                  <div><dt>Date</dt><dd>{tournamentDate || 'Date TBA'}</dd></div>
+                </dl>
+              </div>
+            </>
+          )}
 
           {(rulesText?.trim() || documents.length > 0) ? (
             <details className={styles.rules}>
@@ -631,7 +676,13 @@ export default function TournamentRegistrationForm({
               </SelectField>
             ) : null}
             {events.length > 0 ? (
-              <SelectField label="Event" value={formState.eventId} onChange={(event) => setFormState((prev) => ({ ...prev, eventId: event.target.value }))}>
+              <SelectField
+                label="Event"
+                value={formState.eventId}
+                disabled={isEdit}
+                helper={isEdit ? 'Only the organizer can change the event.' : undefined}
+                onChange={(event) => setFormState((prev) => ({ ...prev, eventId: event.target.value }))}
+              >
                 {events.map((entry) => <option key={entry.id} value={entry.id}>{entry.name || 'Untitled event'}</option>)}
               </SelectField>
             ) : null}
@@ -642,16 +693,26 @@ export default function TournamentRegistrationForm({
             ) : null}
           </FormGrid>
 
-          <p className={styles.bowlerCount}>
-            <Info size={ICON_SIZE.md} aria-hidden="true" />
-            {`This event requires ${requiredBowlerCount} bowler ${requiredBowlerCount === 1 ? 'form' : 'forms'}.`}
-          </p>
+          {isEdit ? null : (
+            <p className={styles.bowlerCount}>
+              <Info size={ICON_SIZE.md} aria-hidden="true" />
+              {`This event requires ${requiredBowlerCount} bowler ${requiredBowlerCount === 1 ? 'form' : 'forms'}.`}
+            </p>
+          )}
 
           {formState.bowlers.map((bowlerFields, bowlerIndex) => (
             <section key={`bowler-${bowlerIndex}`} className={styles.bowler}>
               <CardDivider />
               <h3 className={styles.subsectionTitle}>{`Bowler ${bowlerIndex + 1}`}</h3>
-              {bowlerIndex === 0 && isSignedIn ? (
+              {isEdit ? (
+                <div className={styles.convenience}>
+                  <Button size="sm" variant="secondary" onClick={() => replaceBowler(bowlerIndex)}>
+                    {`Replace ${bowlerName(bowlerIndex)}`}
+                  </Button>
+                  <span className={styles.helper}>Clears this spot so you can enter someone else. The person taken off gets an email.</span>
+                </div>
+              ) : null}
+              {bowlerIndex === 0 && isSignedIn && !isEdit ? (
                 <div className={styles.convenience}>
                   <Button size="sm" variant="secondary" disabled={isLoadingProfile} onClick={() => void fillAccountInformation()}>
                     {isLoadingProfile ? 'Loading account...' : 'Use my account information'}
@@ -850,7 +911,8 @@ export default function TournamentRegistrationForm({
     return (
       <section className={styles.inline} aria-label={title}>
         <header className={styles.inlineHeader}>
-          <h3 className={styles.subsectionTitle}>{title}</h3>
+          {/* On the Manage registration page the form is its own card, so its title is a card title. */}
+          {isEdit ? <h2 className={styles.sectionTitle}>{title}</h2> : <h3 className={styles.subsectionTitle}>{title}</h3>}
           {description ? <p className={styles.helper}>{description}</p> : null}
         </header>
         {body}

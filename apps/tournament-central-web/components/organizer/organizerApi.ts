@@ -281,6 +281,34 @@ export async function listTournamentRegistrations(
   return Array.isArray(responseData?.registrations) ? responseData.registrations : [];
 }
 
+/** One saved change to a registration, from the history list. */
+export type RegistrationChange = {
+  id: number;
+  changed_by: string;
+  /** Who made it, for example "Bo Ray", "Jamie Smith (organizer)", or "Moved off the waitlist". */
+  who: string;
+  created_at: string;
+  items: Array<{ label: string; before: string; after: string }>;
+};
+
+export async function listRegistrationChanges(
+  token: string,
+  tournamentId: number,
+  registrationId: number,
+): Promise<RegistrationChange[]> {
+  const response = await fetch(`/api/v1/tc/tournaments/${tournamentId}/registrations/${registrationId}/changes`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+  const responseData = await response.json().catch(() => null) as { changes?: RegistrationChange[] } | null;
+  if (!response.ok) {
+    throw new Error(getJsonErrorDetail(responseData, `Failed to load change history (${response.status})`));
+  }
+  return Array.isArray(responseData?.changes) ? responseData.changes : [];
+}
+
 export async function loadOrganizerSetupState<TPayload>(
   token: string,
   tournamentId: number,

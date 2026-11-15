@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDownToLine, CircleDollarSign, Mail, MoreHorizontal, Pencil, Trash2, UserCheck, UserPlus, Users } from 'lucide-react';
 import {
+  ActivityList,
   Button,
   Card,
   CardDivider,
@@ -39,7 +40,7 @@ import { useTournamentContext } from '@/components/organizer/TournamentContext';
 import OrganizerStatusBadge from '@/components/organizer/OrganizerStatusBadge';
 import ConfirmDialog from '@/components/organizer/ConfirmDialog';
 import { formatMoney, formatSquadTime, formatTournamentDate } from '@/components/organizer/organizerFormatting';
-import { loadOrganizerSetupState } from '@/components/organizer/organizerApi';
+import { listRegistrationChanges, loadOrganizerSetupState, type RegistrationChange } from '@/components/organizer/organizerApi';
 import type { DivisionConfig, EventConfig, SquadConfig } from '@/components/organizer/types';
 import { buildParticipantRows, buildSquadSummaries } from '@/components/organizer/tournamentInsights';
 import { usePaymentToggle } from '@/components/organizer/usePaymentToggle';
@@ -226,6 +227,9 @@ export default function OrganizerTournamentRegistrationsPage() {
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<{ entry: RegistrationEntry; registrationId: number } | null>(null);
+  // Change history for the registration open in the editor: null while loading.
+  const [entryHistory, setEntryHistory] = useState<RegistrationChange[] | null>(null);
+  const [entryHistoryError, setEntryHistoryError] = useState('');
   const [editForm, setEditForm] = useState<EntryEditForm | null>(null);
   const [entryOptions, setEntryOptions] = useState<EntryOptions | null>(null);
   const [isMutating, setIsMutating] = useState(false);
@@ -524,8 +528,13 @@ export default function OrganizerTournamentRegistrationsPage() {
     const registrationId = Number(registration.id);
     setEditingEntry({ entry, registrationId });
     setEntryOptions(null);
+    setEntryHistory(null);
+    setEntryHistoryError('');
     const token = sessionStorage.getItem('access_token');
     if (token) {
+      void listRegistrationChanges(token, tournamentId, registrationId)
+        .then(setEntryHistory)
+        .catch((cause) => setEntryHistoryError(cause instanceof Error ? cause.message : 'Unable to load change history.'));
       void loadOrganizerSetupState<Partial<EntryOptions>>(token, tournamentId)
         .then((state) => {
           const payload = state?.payload;
@@ -1246,6 +1255,24 @@ export default function OrganizerTournamentRegistrationsPage() {
                 </FormGrid>
               </section>
             ))}
+            <CardDivider />
+            <section className={styles.editSection} aria-labelledby="edit-entry-history">
+              <h3 id="edit-entry-history" className={styles.subsectionTitle}>Change history</h3>
+              <p className={styles.helper}>Saving emails everyone on the registration about what changed.</p>
+              {entryHistoryError ? <Notice tone="danger" role="alert">{entryHistoryError}</Notice> : null}
+              {entryHistory === null && !entryHistoryError ? <p className={styles.helper} role="status">Loading changes...</p> : null}
+              {entryHistory && entryHistory.length === 0 ? <p className={styles.helper}>No changes since this registration was submitted.</p> : null}
+              {entryHistory && entryHistory.length > 0 ? (
+                <ActivityList
+                  items={entryHistory.map((change) => ({
+                    id: String(change.id),
+                    title: change.who,
+                    time: new Date(change.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+                    detail: change.items.map((item) => `${item.label}: ${item.before} to ${item.after}`).join(' \u00b7 '),
+                  }))}
+                />
+              ) : null}
+            </section>
           </div>
         ) : null}
       </Modal>

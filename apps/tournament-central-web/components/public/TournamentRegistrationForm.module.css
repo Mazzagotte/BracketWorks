@@ -361,3 +361,9 @@
   padding-top: var(--space-4);
   border-top: 1px solid var(--bw-border-subtle);
 }
+
+.sectionTitle {
+  margin: 0;
+  font: var(--type-section-title);
+  color: var(--bw-text-title);
+}

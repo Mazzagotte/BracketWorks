@@ -1,0 +1,72 @@
+.shell {
+  min-height: 100vh;
+  background: var(--bw-page);
+}
+
+.skipLink {
+  position: absolute;
+  left: var(--space-4);
+  top: calc(var(--space-4) * -10);
+  z-index: var(--z-popover);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bw-surface-card);
+  color: var(--bw-text-title);
+  font: var(--type-button);
+}
+
+.skipLink:focus {
+  top: var(--space-4);
+}
+
+.body {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.helper {
+  margin: var(--space-4) 0 0;
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--bw-border-subtle);
+}
+
+.details > div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.details dt {
+  font: var(--type-body);
+  color: var(--bw-text-body);
+}
+
+.details dd {
+  margin: 0;
+  font: var(--type-body);
+  color: var(--bw-text-title);
+  text-align: right;
+}
+
+.code {
+  font-family: var(--font-family-code);
+}
+
+.amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
