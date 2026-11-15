@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from ...api import deps
 from ...core import models
 from ...core.config import settings
-from ...services import tc_emails
+from ...services import tc_emails, tc_registration_changes
 from ...services.tournament_access import require_tc_tournament_permission
 
 logger = logging.getLogger(__name__)
@@ -129,6 +129,7 @@ def promote_waitlisted_registration(
     if registration.status != "waitlisted":
         raise HTTPException(status_code=409, detail="Only waitlisted registrations can be moved off the waitlist.")
 
+    before = tc_registration_changes.snapshot(db, registration)
     registration.status = "confirmed"
     entries = (
         db.query(models.TcEntry)
@@ -139,6 +140,11 @@ def promote_waitlisted_registration(
     for entry in entries:
         if entry.status == "waitlisted":
             entry.status = "confirmed"
+    # Saved in the history; the bowlers get the "off the waitlist" email below, not an update email.
+    tc_registration_changes.record_changes(
+        db, registration, before, changed_by="organizer",
+        actor_name=" ".join(f"{getattr(user, 'first_name', '') or ''} {getattr(user, 'last_name', '') or ''}".split()),
+    )
     db.commit()
     db.refresh(registration)
 

@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from ..core import models
 from ..core.config import settings
+from . import tc_manage_links
 
 logger = logging.getLogger(__name__)
 
@@ -553,20 +554,36 @@ def _money_rows(registration: models.TcRegistration, has_side_events: bool) -> l
 
 def _confirmation_recipients(
     db: Session, registration: models.TcRegistration
-) -> list[tuple[str, str, bool]]:
-    """(email, first name, is the contact) for everyone on the registration, each email once."""
-    people: list[tuple[str | None, str, bool]] = [
-        (registration.contact_email, (registration.contact_first_name or "").strip(), True),
+) -> list[tuple[str, str, bool, str]]:
+    """(email, first name, is the contact, manage link) for everyone on the registration, each email once."""
+    people: list[tuple[str | None, str, bool, str]] = [(
+        registration.contact_email,
+        (registration.contact_first_name or "").strip(),
+        True,
+        tc_manage_links.manage_token(registration),
+    )]
+    people += [
+        (bowler.email, (bowler.first_name or "").strip(), False, tc_manage_links.manage_token(registration, bowler))
+        for bowler in _bowlers(db, registration)
     ]
-    people += [(bowler.email, (bowler.first_name or "").strip(), False) for bowler in _bowlers(db, registration)]
     seen: set[str] = set()
-    recipients: list[tuple[str, str, bool]] = []
-    for email, first_name, is_contact in people:
+    recipients: list[tuple[str, str, bool, str]] = []
+    for email, first_name, is_contact, token in people:
         normalized = _normalize_email(email)
         if normalized and normalized not in seen:
             seen.add(normalized)
-            recipients.append((normalized, first_name, is_contact))
+            recipients.append((normalized, first_name, is_contact, tc_manage_links.manage_url(token) if token else ""))
     return recipients
+
+
+def _changes_line(db: Session, tournament: models.TournamentCentral) -> str:
+    """When bowlers can still change their registration, for the closing lines."""
+    if not tc_manage_links.changes_are_open(db, tournament):
+        return "Changes are closed. Contact the organizer to change your registration."
+    closes = tc_manage_links.format_close(tc_manage_links.changes_close_at(db, tournament))
+    if closes:
+        return f"Need to change something? Use Manage registration until {closes}."
+    return "Need to change something? Use Manage registration."
 
 
 def build_registration_confirmations(db: Session, registration: models.TcRegistration) -> list[dict]:
@@ -604,8 +621,10 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
         ("Fees", _money_rows(registration, bool(side_events)), []),
     ]
     closing = [line for line in (
+        _changes_line(db, tournament),
         "Keep this email. You'll need your confirmation code if you contact the organizer.",
         _organizer_line(facts),
+        f"Tournament page: {facts['tournament_url']}",
     ) if line]
     variables = {
         **facts,
@@ -620,7 +639,7 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
     template_id = settings.TC_REGISTRATION_CONFIRMATION_TEMPLATE_ID.strip()
 
     messages: list[dict] = []
-    for email, first_name, is_contact in recipients:
+    for email, first_name, is_contact, manage_url in recipients:
         if is_contact:
             lead = f"Your registration for {tournament.name} {state_line}"
         else:
@@ -632,14 +651,14 @@ def build_registration_confirmations(db: Session, registration: models.TcRegistr
             lead=[line for line in (greeting, lead) if line],
             sections=sections,
             closing=closing,
-            button=("View tournament", facts["tournament_url"]),
+            button=("Manage registration", manage_url) if manage_url else ("View tournament", facts["tournament_url"]),
             footer=f"You're getting this because you're on a registration for {tournament.name}.",
         )
         message = _base_message(email, f"Registration received: {tournament.name}", facts)
         messages.append(_with_body(
             message,
             template_id=template_id,
-            variables={**variables, "first_name": first_name, "lead": lead},
+            variables={**variables, "first_name": first_name, "lead": lead, "manage_url": manage_url},
             text=text,
             html_body=html_body,
         ))
@@ -873,15 +892,182 @@ def build_organizer_registration_notice(db: Session, registration: models.TcRegi
     return message
 
 
+# --- Registration changes --------------------------------------------------------------------
+
+
+def _change_rows(changes: list[dict[str, str]]) -> list[tuple[str, str]]:
+    return [(change["label"], f"{change['before']} \u2192 {change['after']}") for change in changes]
+
+
+def build_registration_update_emails(
+    db: Session,
+    registration: models.TcRegistration,
+    changes: list[dict[str, str]],
+    *,
+    removed: dict[str, str],
+    changed_by: str,
+    actor_name: str = "",
+) -> list[dict]:
+    """Emails about a change: everyone on the registration, anyone just taken off it, and the organizer.
+
+    ``removed`` is email -> first name for people who were on the registration before the change.
+    """
+    tournament = db.get(models.TournamentCentral, registration.tournament_id)
+    if tournament is None or not changes:
+        return []
+    facts = _tournament_facts(db, tournament)
+    cancelled = registration.status in INACTIVE_REGISTRATION_STATUSES
+    code = registration.confirmation_code
+    actor = (actor_name or "").strip()
+    if changed_by == "organizer":
+        who = "The organizer"
+    elif changed_by == "waitlist":
+        who = ""
+    else:
+        who = actor or "Someone on the registration"
+    if cancelled:
+        title = "Registration cancelled"
+        lead = f"{who} cancelled registration {code} for {tournament.name}." if who else f"Registration {code} for {tournament.name} was cancelled."
+    else:
+        title = "Registration updated"
+        lead = f"{who} changed registration {code} for {tournament.name}." if who else f"Registration {code} for {tournament.name} changed."
+
+    entries = _entry_lines(db, registration)
+    side_events = _side_event_lines(db, registration)
+    sections: list[Section] = [("What changed", _change_rows(changes), [])]
+    if not cancelled:
+        sections += [
+            ("Entries", [], entries),
+            ("Side events and fees", [], side_events),
+            ("Fees", _money_rows(registration, bool(side_events)), []),
+        ]
+    footer = f"You're getting this because you're on a registration for {tournament.name}."
+
+    messages: list[dict] = []
+    for email, first_name, _is_contact, manage_url in _confirmation_recipients(db, registration):
+        greeting = f"Hi {first_name}," if first_name else ""
+        closing = [line for line in (
+            "" if cancelled else _changes_line(db, tournament),
+            _organizer_line(facts),
+        ) if line]
+        html_body, text = _render_document(
+            title=title,
+            lead=[line for line in (greeting, lead) if line],
+            sections=sections,
+            closing=closing,
+            button=None if cancelled or not manage_url else ("Manage registration", manage_url),
+            footer=footer,
+        )
+        messages.append(_with_body(
+            _base_message(email, f"{title}: {tournament.name}", facts),
+            template_id="", variables={}, text=text, html_body=html_body,
+        ))
+
+    for email, first_name in removed.items():
+        greeting = f"Hi {first_name}," if first_name else ""
+        html_body, text = _render_document(
+            title="You're no longer on this registration",
+            lead=[line for line in (
+                greeting,
+                f"You were taken off registration {code} for {tournament.name}. Your old Manage registration link no longer works.",
+            ) if line],
+            sections=[_tournament_section(facts)],
+            closing=[line for line in (
+                "If this is a mistake, contact the organizer.",
+                _organizer_line(facts),
+            ) if line],
+            button=("View tournament", facts["tournament_url"]),
+            footer=f"You're getting this because you were on a registration for {tournament.name}.",
+        )
+        messages.append(_with_body(
+            _base_message(email, f"You're no longer on a registration: {tournament.name}", facts),
+            template_id="", variables={}, text=text, html_body=html_body,
+        ))
+
+    recipient = organizer_notice_recipient(db, tournament)
+    if recipient:
+        contact_name = _full_name(registration.contact_first_name, registration.contact_last_name)
+        organizer_lead = lead if changed_by != "organizer" else (
+            f"{actor or 'A staff member'} {'cancelled' if cancelled else 'changed'} registration {code} for {tournament.name}."
+        )
+        html_body, text = _render_document(
+            title=title,
+            lead=[organizer_lead],
+            sections=[
+                ("Registration", [(label, value) for label, value in (
+                    ("Confirmation code", code),
+                    ("Contact", contact_name),
+                ) if value], []),
+                *sections,
+                ("Squad count", [], _squad_count_lines(db, registration)),
+            ],
+            closing=["Reply to this email to reach the person who registered."] if _normalize_email(registration.contact_email) else [],
+            button=("View registrations", organizer_registrations_url(tournament.id)),
+            footer=(
+                f"You're getting this because new-registration emails are on for {tournament.name}. "
+                "Turn them off in the tournament's setup, under Registration emails."
+            ),
+        )
+        message: dict = {
+            "from": _from_address(),
+            "to": [recipient],
+            "subject": _clean_subject(f"{title}: {contact_name or code} - {tournament.name}"),
+            "text": text,
+            "html": html_body,
+        }
+        if _normalize_email(registration.contact_email):
+            message["reply_to"] = _normalize_email(registration.contact_email)
+        messages.append(message)
+    return messages
+
+
+def build_manage_links_email(db: Session, email: str, registrations: list[models.TcRegistration]) -> dict | None:
+    """One email listing a Manage registration link for each of this person's registrations."""
+    normalized = _normalize_email(email)
+    if not normalized or not registrations:
+        return None
+    lines: list[str] = []
+    for registration in registrations:
+        tournament = db.get(models.TournamentCentral, registration.tournament_id)
+        if tournament is None:
+            continue
+        token = ""
+        if _normalize_email(registration.contact_email) == normalized:
+            token = tc_manage_links.manage_token(registration)
+        else:
+            for bowler in _bowlers(db, registration):
+                if _normalize_email(bowler.email) == normalized:
+                    token = tc_manage_links.manage_token(registration, bowler)
+                    break
+        if token:
+            lines.append(f"{tournament.name} ({registration.confirmation_code}): {tc_manage_links.manage_url(token)}")
+    if not lines:
+        return None
+    html_body, text = _render_document(
+        title="Your registrations",
+        lead=["Here are the links to manage your Tournament Central registrations. Each one only works for you."],
+        sections=[("Registrations", [], lines)],
+        closing=["If you didn't ask for this email, you can ignore it."],
+        footer="You're getting this because someone asked for registration links for this email address.",
+    )
+    return {
+        "from": _from_address(),
+        "to": [normalized],
+        "subject": "Your Tournament Central registration links",
+        "text": text,
+        "html": html_body,
+    }
+
+
 # --- Waitlist promotion ----------------------------------------------------------------------
 
 
-def send_waitlist_promotion(db: Session, registration: models.TcRegistration) -> bool:
-    """Tell everyone on the registration that a spot opened. True when at least one email was sent."""
+def build_waitlist_promotion_emails(db: Session, registration: models.TcRegistration) -> list[dict]:
+    """Emails telling everyone on the registration that a spot opened."""
     tournament = db.get(models.TournamentCentral, registration.tournament_id)
     recipients = registration_emails(db, registration)
     if tournament is None or not recipients:
-        return False
+        return []
 
     facts = _tournament_facts(db, tournament)
     entries = _entry_lines(db, registration)
@@ -910,6 +1096,14 @@ def send_waitlist_promotion(db: Session, registration: models.TcRegistration) ->
         )
         for email in recipients
     ]
+    return messages
+
+
+def send_waitlist_promotion(db: Session, registration: models.TcRegistration) -> bool:
+    """Tell everyone on the registration that a spot opened. True when at least one email was sent."""
+    messages = build_waitlist_promotion_emails(db, registration)
+    if not messages:
+        return False
     sent, _ = send_email_batch(messages, log_context="tc-waitlist-promotion")
     return sent > 0
 

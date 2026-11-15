@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Any, Literal, Optional
 import logging
+from dataclasses import dataclass
 import json
 import re
 import unicodedata
@@ -994,55 +995,38 @@ def download_public_tc_document(
     )
 
 
-@router.post("/tc-tournament/{tournament_id}/registration")
-def submit_public_tc_tournament_registration(
-    tournament_id: int,
-    payload: PublicRegistrationSubmissionRequest,
-    background_tasks: BackgroundTasks,
-    request: Request,
-    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
-    token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-):
-    """Persist a public registration submission as relational registration records."""
-    tournament = db.query(models.TournamentCentral).filter(
-        models.TournamentCentral.id == tournament_id,
-        models.TournamentCentral.is_public.is_(True),
-    ).first()
-    if not tournament:
-        raise HTTPException(status_code=404, detail="Tournament not found")
+@dataclass
+class PreparedRegistration:
+    """A checked and priced registration form, ready to save as a new registration or an edit."""
 
-    state = db.query(models.TournamentCentralSetupState).filter(
-        models.TournamentCentralSetupState.tournament_id == tournament_id,
-        models.TournamentCentralSetupState.is_published.is_(True),
-    ).first()
-    if not state:
-        raise HTTPException(status_code=404, detail="Registration setup not available")
+    bowlers: list[dict[str, str]]
+    event: dict
+    division: Optional[dict]
+    squad: Optional[dict]
+    questions: list[dict]
+    answers: list[dict[str, Any]]
+    side_events: list
+    status: str
+    subtotal_cents: int
+    fees_cents: int
+    total_cents: int
 
-    form = payload.form
-    idempotency_record = None
 
-    # Only signed-in tournament staff who can manage entries may register a bowler past eligibility rules.
-    if form.override_eligibility:
-        staff_user = get_current_user(request, token, db)
-        if not user_has_tc_tournament_permission(db, tournament, staff_user, "manage_entries"):
-            raise HTTPException(
-                status_code=403,
-                detail="Only tournament staff who manage entries can register a bowler who doesn't meet the rules.",
-            )
+def prepare_registration(
+    db: Session,
+    tournament: models.TournamentCentral,
+    state: models.TournamentCentralSetupState,
+    form: "PublicRegistrationSubmissionForm",
+    *,
+    existing_entry: Optional[models.TcEntry] = None,
+    existing_status: Optional[str] = None,
+) -> PreparedRegistration:
+    """Run every registration rule on a form. Raises HTTPException with a message for the bowler.
 
-    if idempotency_key:
-        replay_or_record = begin_request(
-            db,
-            endpoint_scope=f"public:tc-registration:{tournament_id}",
-            idempotency_key=idempotency_key,
-            request_payload=payload.model_dump(mode="json"),
-            user_id=None,
-        )
-        if isinstance(replay_or_record, IdempotencyReplay):
-            return replay_or_record.response_body
-        idempotency_record = replay_or_record
-
+    ``existing_entry`` is the entry being edited: its own bowlers don't count against squad
+    capacity, a squad's sign-up deadline only applies when moving to a new squad, and staying in
+    the same squad keeps ``existing_status``.
+    """
     state_payload = _published_setup_payload(state)
     configured_fields = [
         field for field in (state_payload.get("fields") or [])
@@ -1146,7 +1130,8 @@ def submit_public_tc_tournament_registration(
     if form.squadId and form.squadId not in connected_squad_ids:
         raise HTTPException(status_code=400, detail="Selected squad is not available for this event")
 
-    if squad:
+    moving_squad = existing_entry is None or (existing_entry.squad_config_id or "") != (form.squadId or "")
+    if squad and moving_squad:
         deadline_iso = _clean_text(squad.get("registrationDeadlineIso"))
         if deadline_iso:
             try:
@@ -1196,7 +1181,7 @@ def submit_public_tc_tournament_registration(
                 detail=f"Bowler {bowler_index + 1}: {question_label} is required",
             )
 
-    if not form.acceptTerms:
+    if existing_entry is None and not form.acceptTerms:
         raise HTTPException(status_code=400, detail="Tournament terms must be accepted")
 
     # Setups that ask gender as a custom "Gender" question (rather than the built-in field) still count.
@@ -1241,10 +1226,6 @@ def submit_public_tc_tournament_registration(
     except SideEventError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
-    submission_id = _next_confirmation_code(db, tournament)
-    submitted_at = _safe_iso_to_datetime(payload.submittedAt)
-    now_dt = datetime.now(timezone.utc)
-
     capacity = 0
     waitlist_enabled = False
     if squad:
@@ -1261,26 +1242,110 @@ def submit_public_tc_tournament_registration(
             db.query(func.count(models.TcEntryBowler.id))
             .join(models.TcEntry, models.TcEntry.id == models.TcEntryBowler.entry_id)
             .filter(
-                models.TcEntry.tournament_id == tournament_id,
+                models.TcEntry.tournament_id == tournament.id,
                 models.TcEntry.squad_config_id == form.squadId,
                 models.TcEntry.status.in_(active_entry_statuses),
+                models.TcEntry.id != (existing_entry.id if existing_entry is not None else -1),
             )
             .scalar()
             or 0
         )
 
-    registration_status = _normalize_status_for_capacity(
-        capacity,
-        current_bowler_count,
-        required_bowler_count,
-        waitlist_enabled,
-    )
+    if existing_entry is not None and not moving_squad and existing_status:
+        # Staying in the same squad keeps the place they have (confirmed, or their spot on the waitlist).
+        registration_status = existing_status
+    else:
+        registration_status = _normalize_status_for_capacity(
+            capacity,
+            current_bowler_count,
+            required_bowler_count,
+            waitlist_enabled,
+        )
 
-    entry_status = registration_status
     event_entry_fee_cents = int(event.get("entryFeeCents") or 0)
     subtotal_cents = max(event_entry_fee_cents, 0)
     side_event_fees_cents = sum(line.total_cents for line in priced_side_events)
     total_cents = subtotal_cents + side_event_fees_cents
+
+    return PreparedRegistration(
+        bowlers=normalized_bowlers,
+        event=event,
+        division=division,
+        squad=squad,
+        questions=configured_questions,
+        answers=normalized_bowler_question_answers,
+        side_events=priced_side_events,
+        status=registration_status,
+        subtotal_cents=subtotal_cents,
+        fees_cents=side_event_fees_cents,
+        total_cents=total_cents,
+    )
+
+
+@router.post("/tc-tournament/{tournament_id}/registration")
+def submit_public_tc_tournament_registration(
+    tournament_id: int,
+    payload: PublicRegistrationSubmissionRequest,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+):
+    """Persist a public registration submission as relational registration records."""
+    tournament = db.query(models.TournamentCentral).filter(
+        models.TournamentCentral.id == tournament_id,
+        models.TournamentCentral.is_public.is_(True),
+    ).first()
+    if not tournament:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    state = db.query(models.TournamentCentralSetupState).filter(
+        models.TournamentCentralSetupState.tournament_id == tournament_id,
+        models.TournamentCentralSetupState.is_published.is_(True),
+    ).first()
+    if not state:
+        raise HTTPException(status_code=404, detail="Registration setup not available")
+
+    form = payload.form
+    idempotency_record = None
+
+    # Only signed-in tournament staff who can manage entries may register a bowler past eligibility rules.
+    if form.override_eligibility:
+        staff_user = get_current_user(request, token, db)
+        if not user_has_tc_tournament_permission(db, tournament, staff_user, "manage_entries"):
+            raise HTTPException(
+                status_code=403,
+                detail="Only tournament staff who manage entries can register a bowler who doesn't meet the rules.",
+            )
+
+    if idempotency_key:
+        replay_or_record = begin_request(
+            db,
+            endpoint_scope=f"public:tc-registration:{tournament_id}",
+            idempotency_key=idempotency_key,
+            request_payload=payload.model_dump(mode="json"),
+            user_id=None,
+        )
+        if isinstance(replay_or_record, IdempotencyReplay):
+            return replay_or_record.response_body
+        idempotency_record = replay_or_record
+
+    prepared = prepare_registration(db, tournament, state, form)
+    normalized_bowlers = prepared.bowlers
+    event, division, squad = prepared.event, prepared.division, prepared.squad
+    configured_questions = prepared.questions
+    normalized_bowler_question_answers = prepared.answers
+    priced_side_events = prepared.side_events
+    registration_status = entry_status = prepared.status
+    subtotal_cents = prepared.subtotal_cents
+    side_event_fees_cents = prepared.fees_cents
+    total_cents = prepared.total_cents
+
+    submission_id = _next_confirmation_code(db, tournament)
+    submitted_at = _safe_iso_to_datetime(payload.submittedAt)
+    now_dt = datetime.now(timezone.utc)
+
 
     registration = models.TcRegistration(
         confirmation_code=submission_id,
