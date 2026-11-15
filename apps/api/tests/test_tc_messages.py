@@ -445,34 +445,24 @@ def test_public_submission_sends_confirmation(api_client, db_session, make_user,
     response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
     assert response.status_code == 200
     code = response.json()["registration_id"]
-    messages = _messages(outbox)
+    messages = [message for message in _messages(outbox) if message["to"] == ["riley@example.com"]]
     assert len(messages) == 1
     message = messages[0]
-    assert message["to"] == ["riley@example.com"]
     assert code in message["text"]
     assert "Status: Confirmed" in message["text"]
 
 
-def _turn_on_notices(db_session, tournament, **details) -> None:
+def _set_notice_details(db_session, tournament, **details) -> None:
     state = db_session.query(models.TournamentCentralSetupState).filter_by(tournament_id=tournament.id).one()
     payload = dict(state.payload)
-    payload["details"] = {**payload["details"], "registrationNotifications": True, **details}
+    payload["details"] = {**payload["details"], **details}
     state.payload = payload
     db_session.commit()
 
 
-def test_public_submission_does_not_email_the_organizer_by_default(api_client, db_session, make_user, outbox):
-    owner = make_user("tc_notice_off")
-    tournament = _tournament(db_session, owner.id)
-    response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
-    assert response.status_code == 200
-    assert [message["to"] for message in _messages(outbox)] == [["riley@example.com"]]
-
-
-def test_public_submission_emails_the_organizer_when_turned_on(api_client, db_session, make_user, outbox):
+def test_public_submission_emails_the_organizer_by_default(api_client, db_session, make_user, outbox):
     owner = make_user("tc_notice_on")
     tournament = _tournament(db_session, owner.id)
-    _turn_on_notices(db_session, tournament)
     response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
     assert response.status_code == 200
     code = response.json()["registration_id"]
@@ -481,20 +471,90 @@ def test_public_submission_emails_the_organizer_when_turned_on(api_client, db_se
     notice = notices[0]
     assert notice["subject"] == "New registration: Riley Lane - Fall Classic"
     assert notice["reply_to"] == "riley@example.com"
-    for expected in (code, "Riley Lane", "riley@example.com", "Singles (Open)", "$60.00",
+    for expected in (code, "Riley Lane", "riley@example.com", "Singles (Open)", "$60.00", "Bowler 1",
                      f"/organizer/tournaments/{tournament.id}/registrations"):
         assert expected in notice["text"]
+
+
+def test_old_off_setting_does_not_stop_the_organizer_email(db_session, make_user):
+    owner = make_user("tc_notice_legacy")
+    tournament = _tournament(db_session, owner.id)
+    _set_notice_details(db_session, tournament, registrationNotifications=False)
+    assert tc_emails.organizer_notice_recipient(db_session, tournament) == "director@example.com"
+
+
+def test_public_submission_skips_the_organizer_when_turned_off(api_client, db_session, make_user, outbox):
+    owner = make_user("tc_notice_off")
+    tournament = _tournament(db_session, owner.id)
+    _set_notice_details(db_session, tournament, registrationNotificationsOff=True)
+    response = api_client.post(f"/api/v1/public/tc-tournament/{tournament.id}/registration", json=_public_submission())
+    assert response.status_code == 200
+    assert [message["to"] for message in _messages(outbox)] == [["riley@example.com"]]
+
+
+def test_organizer_notice_lists_every_sign_up_detail(db_session, make_user):
+    owner = make_user("tc_notice_full")
+    tournament = _tournament(db_session, owner.id)
+    now = datetime.now(timezone.utc)
+    registration = models.TcRegistration(
+        confirmation_code="FULL-0001", tournament_id=tournament.id, contact_first_name="Ann",
+        contact_last_name="Lee", contact_email="ann@example.com", contact_phone="208-555-0100",
+        status="confirmed", payment_status="unpaid", subtotal_cents=8000, fees_cents=0, total_cents=8000,
+        notes="Lefty, needs lane 12", terms_accepted_at=now, submitted_at=now,
+    )
+    db_session.add(registration)
+    db_session.flush()
+    ann = models.TcRegistrationBowler(
+        registration_id=registration.id, tournament_id=tournament.id, first_name="Ann", last_name="Lee",
+        email="ann@example.com", phone="208-555-0100", usbc_number="123-4567", average=187,
+        date_of_birth="1990-04-02", gender="F", address="1 Main St", city="Boise", state="ID", zip_code="83702",
+    )
+    bo = models.TcRegistrationBowler(
+        registration_id=registration.id, tournament_id=tournament.id, first_name="Bo", last_name="Ray",
+    )
+    db_session.add_all([ann, bo])
+    db_session.flush()
+    entry = models.TcEntry(
+        registration_id=registration.id, tournament_id=tournament.id, event_config_id="doubles",
+        event_name_snapshot="Doubles", squad_name_snapshot="Saturday, February 27, 2027 - 9:00 AM",
+        squad_date_snapshot="2027-02-27", squad_time_snapshot="09:00", status="confirmed", entry_fee_cents=8000,
+    )
+    db_session.add(entry)
+    db_session.flush()
+    db_session.add_all([
+        models.TcEntryBowler(entry_id=entry.id, bowler_id=ann.id, position=1),
+        models.TcEntryBowler(entry_id=entry.id, bowler_id=bo.id, position=2),
+        models.TcRegistrationAnswer(registration_id=registration.id, entry_id=entry.id, bowler_id=ann.id,
+                                    question_config_id="shirt", question_label_snapshot="Shirt size",
+                                    answer_json={"value": "M"}),
+        models.TcRegistrationAnswer(registration_id=registration.id, entry_id=entry.id, bowler_id=ann.id,
+                                    question_config_id="shirt", question_label_snapshot="Shirt size",
+                                    answer_json={"value": "M"}),
+    ])
+    db_session.commit()
+
+    text = tc_emails.build_organizer_registration_notice(db_session, registration)["text"]
+    for expected in (
+        "registered 2 bowlers", "Phone: 208-555-0100", "Bowler 1", "USBC number: 123-4567", "Average: 187",
+        "Date of birth: April 2, 1990", "Gender: Female", "Address: 1 Main St, Boise, ID 83702",
+        "Bowler 2", "Name: Bo Ray", "Lefty, needs lane 12",
+        "Doubles, squad: Saturday, February 27, 2027 - 9:00 AM for Ann Lee and Bo Ray - Confirmed",
+    ):
+        assert expected in text, expected
+    assert text.count("Shirt size: M") == 1
 
 
 def test_organizer_notice_address_falls_back_in_order(db_session, make_user):
     owner = make_user("tc_notice_fallback")
     tournament = _tournament(db_session, owner.id)
+    _set_notice_details(db_session, tournament, registrationNotificationsOff=True)
     assert tc_emails.organizer_notice_recipient(db_session, tournament) is None
 
-    _turn_on_notices(db_session, tournament, registrationNotificationEmail="Inbox@Example.com")
+    _set_notice_details(db_session, tournament, registrationNotificationsOff=False,
+                        registrationNotificationEmail="Inbox@Example.com")
     assert tc_emails.organizer_notice_recipient(db_session, tournament) == "inbox@example.com"
 
-    _turn_on_notices(db_session, tournament, registrationNotificationEmail="", supportEmail="")
+    _set_notice_details(db_session, tournament, registrationNotificationEmail="", supportEmail="")
     assert tc_emails.organizer_notice_recipient(db_session, tournament) == owner.email.lower()
 
 
