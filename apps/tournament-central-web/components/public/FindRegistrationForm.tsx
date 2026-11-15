@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import { Button, Notice, TextField } from '@bracketworks/ui';
 
 import AuthShell from '@/components/auth/AuthShell';
+import { BotTrapField, botCheckPayload } from './botCheck';
 import styles from '@/components/auth/authForm.module.css';
 
 const SENT_MESSAGE = "If that email is on a registration, we've sent the links to manage it. Check your inbox in a few minutes.";
@@ -16,6 +17,9 @@ export default function FindRegistrationForm() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState('');
+  const [botTrap, setBotTrap] = useState('');
+  const [openedAt, setOpenedAt] = useState<number | undefined>(undefined);
+  useEffect(() => setOpenedAt(Date.now()), []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -30,7 +34,7 @@ export default function FindRegistrationForm() {
       const response = await fetch('/api/v1/public/tc-registration/manage-links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), ...botCheckPayload(botTrap, openedAt) }),
       });
       if (!response.ok && response.status !== 429) throw new Error('We could not send your links right now. Try again.');
       setSent(SENT_MESSAGE);
@@ -62,6 +66,8 @@ export default function FindRegistrationForm() {
           autoComplete="email"
           required
         />
+
+        <BotTrapField value={botTrap} onChange={setBotTrap} />
 
         <Button type="submit" variant="primary" fullWidth disabled={sending}>
           {sending ? 'Sending...' : 'Email me my links'}

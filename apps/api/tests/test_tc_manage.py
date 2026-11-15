@@ -345,3 +345,27 @@ def test_cutoff_falls_back_to_registration_close_then_start_date(db_session, mak
     state.payload = payload
     db_session.commit()
     assert tc_manage_links.format_close(tc_manage_links.changes_close_at(db_session, tournament)) == "December 31, 2099 at 12:00 AM MST"
+
+
+def test_bots_are_quietly_ignored(api_client, db_session, make_user, outbox):
+    tournament = _tournament(db_session, make_user("manage_bot_owner").id)
+    for extra in ({"company_website": "http://spam.example"}, {"fill_seconds": 0.4}):
+        form = {**_form(_bowlers()), **extra}
+        response = api_client.post(
+            f"/api/v1/public/tc-tournament/{tournament.id}/registration",
+            json={"tournamentId": str(tournament.id), "tournamentName": tournament.name,
+                  "submittedAt": "2026-11-15T12:00:00Z", "form": form},
+        )
+        assert response.status_code == 200
+        assert response.json()["registration_id"] == "Received"
+    assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 0
+    assert _messages(outbox) == []
+
+    # A person who took their time gets through.
+    _register(api_client, tournament, **{})
+    assert db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).count() == 1
+
+    outbox.clear()
+    api_client.post("/api/v1/public/tc-registration/manage-links",
+                    json={"email": "ann@example.com", "company_website": "x"})
+    assert _messages(outbox) == []

@@ -15,6 +15,7 @@ import TournamentInformation from '@/components/public/TournamentInformation';
 import { livePagePath } from '@/components/live/liveStandingsPaths';
 import type { PublicTournamentDocument } from '@/components/public/TournamentRules';
 import { sideEventPayload, type PublicFeeConfig } from '@/components/public/registrationSideEvents';
+import { botCheckPayload } from '@/components/public/botCheck';
 import type { SideEventSelection } from '@/components/organizer/formatTypes';
 import {
   Avatar,
@@ -168,6 +169,9 @@ type RegistrationFormState = {
   bowlerQuestionAnswers: Array<Record<string, RegistrationQuestionAnswerValue>>;
   acceptTerms: boolean;
   sideEvents?: SideEventSelection[];
+  /** Bot check, filled in by the form. See components/public/botCheck.tsx. */
+  botTrap?: string;
+  openedAt?: number;
 };
 
 const EMPTY_REGISTRATION_FORM: RegistrationFormState = {
@@ -1237,6 +1241,7 @@ export default function HomePageClient({ initialDirectory }: HomePageClientProps
         fieldValues: registrationForm.bowlers[0] || {},
         acceptTerms: registrationForm.acceptTerms,
         side_events: sideEventPayload(registrationForm.sideEvents),
+        ...botCheckPayload(registrationForm.botTrap, registrationForm.openedAt),
       },
     };
 

@@ -187,6 +187,6 @@ describe('FindRegistrationForm', () => {
     expect(await screen.findByText(/we've sent the links to manage it/)).toBeInTheDocument();
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/v1/public/tc-registration/manage-links');
-    expect(JSON.parse(init.body)).toEqual({ email: 'bo@example.com' });
+    expect(JSON.parse(init.body)).toMatchObject({ email: 'bo@example.com', company_website: '' });
   });
 });

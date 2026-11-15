@@ -18,6 +18,7 @@ import {
 } from '@bracketworks/ui';
 
 import styles from './TournamentRegistrationForm.module.css';
+import { BotTrapField } from './botCheck';
 import TournamentRules, { type PublicTournamentDocument } from './TournamentRules';
 import { getMyAccount } from '@/components/organizer/organizerApi';
 import type { SideEventSelection } from '@/components/organizer/formatTypes';
@@ -46,6 +47,9 @@ export type RegistrationFormState = {
   sideEvents?: SideEventSelection[];
   /** Staff only: register even though the bowlers don't meet the rules (`eligibility="warn"`). */
   overrideEligibility?: boolean;
+  /** Bot check: the hidden trap field's value and when the form opened (ms). See botCheck.tsx. */
+  botTrap?: string;
+  openedAt?: number;
 };
 
 type RegistrationFieldConfigLike = {
@@ -298,6 +302,11 @@ export default function TournamentRegistrationForm({
     const bowler = formState.bowlers[index] ?? {};
     return `${bowler.first_name ?? ''} ${bowler.last_name ?? ''}`.trim() || `Bowler ${index + 1}`;
   };
+
+  // Start the bot-check clock when the form first opens.
+  useEffect(() => {
+    if (!isEdit && !formState.openedAt) setFormState((prev) => ({ ...prev, openedAt: Date.now() }));
+  }, [isEdit, formState.openedAt, setFormState]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -784,6 +793,9 @@ export default function TournamentRegistrationForm({
             </section>
           ) : null}
 
+          {isEdit ? null : (
+            <BotTrapField value={formState.botTrap ?? ''} onChange={(value) => setFormState((prev) => ({ ...prev, botTrap: value }))} />
+          )}
           <CardDivider />
           <TextAreaField
             label="Notes for the organizer"

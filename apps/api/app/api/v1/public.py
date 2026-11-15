@@ -282,6 +282,9 @@ class PublicRegistrationSubmissionForm(BaseModel):
     side_events: list["PublicSideEventSelection"] = Field(default_factory=list)
     # Staff only: register even when eligibility rules fail. Needs a signed-in user with manage_entries.
     override_eligibility: bool = False
+    # Bot check: a field people never see (bots fill it in) and how long the form was open.
+    company_website: str = ""
+    fill_seconds: Optional[float] = None
 
 
 class PublicSideEventSelection(BaseModel):
@@ -995,6 +998,17 @@ def download_public_tc_document(
     )
 
 
+# Faster than any person could fill in a registration form.
+MIN_HUMAN_FILL_SECONDS = 3.0
+
+
+def looks_like_a_bot(trap_value: Optional[str], fill_seconds: Optional[float]) -> bool:
+    """True when the hidden trap field was filled in, or the form was sent faster than a person could."""
+    if (trap_value or "").strip():
+        return True
+    return fill_seconds is not None and 0 <= fill_seconds < MIN_HUMAN_FILL_SECONDS
+
+
 @dataclass
 class PreparedRegistration:
     """A checked and priced registration form, ready to save as a new registration or an edit."""
@@ -1309,6 +1323,16 @@ def submit_public_tc_tournament_registration(
 
     form = payload.form
     idempotency_record = None
+
+    # Bots get an ordinary-looking answer so they don't learn what gave them away; nothing is saved.
+    if not form.override_eligibility and looks_like_a_bot(form.company_website, form.fill_seconds):
+        logger.warning(
+            "Ignored a registration that looks automated",
+            extra={"tournament_id": tournament_id, "fill_seconds": form.fill_seconds},
+        )
+        return {"status": "pending", "registration_id": "Received", "submission_id": "Received",
+                "submitted_at": datetime.now(timezone.utc).isoformat(), "subtotal_cents": 0,
+                "fees_cents": 0, "total_cents": 0, "side_events": []}
 
     # Only signed-in tournament staff who can manage entries may register a bowler past eligibility rules.
     if form.override_eligibility:

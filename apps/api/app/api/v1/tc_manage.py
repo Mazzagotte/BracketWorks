@@ -26,6 +26,7 @@ from .public import (
     _clean_email,
     _clean_text,
     _is_question_answered,
+    looks_like_a_bot,
     prepare_registration,
 )
 from ...services.tc_eligibility import normalize_gender
@@ -67,6 +68,9 @@ class ManageUpdateRequest(BaseModel):
 
 class ManageLinksRequest(BaseModel):
     email: str
+    # Bot check, as on the registration form.
+    company_website: str = ""
+    fill_seconds: Optional[float] = None
 
 
 # --- Helpers -----------------------------------------------------------------------------------
@@ -468,7 +472,7 @@ def email_manage_links(
     used to find out who is registered."""
     email = tc_emails._normalize_email(payload.email)
     response = {"ok": True}
-    if not email:
+    if not email or looks_like_a_bot(payload.company_website, payload.fill_seconds):
         return response
     if not rate_limiter.hit(f"tc-manage-links:{email}", limit=3, window_seconds=3600).allowed:
         return response

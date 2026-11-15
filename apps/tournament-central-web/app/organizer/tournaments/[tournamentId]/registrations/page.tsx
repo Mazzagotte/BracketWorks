@@ -53,6 +53,7 @@ import {
 import TournamentRegistrationForm from '@/components/public/TournamentRegistrationForm';
 import type { RegistrationFormState, RegistrationQuestionAnswerValue } from '@/components/public/TournamentRegistrationForm';
 import { sideEventPayload, summarizeSideEvents, type PublicFeeConfig } from '@/components/public/registrationSideEvents';
+import { botCheckPayload } from '@/components/public/botCheck';
 import styles from './registrations.module.css';
 import cells from '@/components/organizer/OrganizerTable.module.css';
 
@@ -498,6 +499,7 @@ export default function OrganizerTournamentRegistrationsPage() {
             fieldValues: firstBowler,
             acceptTerms: manualRegistrationForm.acceptTerms,
             side_events: sideEventPayload(manualRegistrationForm.sideEvents),
+            ...botCheckPayload(manualRegistrationForm.botTrap, manualRegistrationForm.openedAt),
             override_eligibility: overrideEligibility,
           },
         }),
