@@ -10,6 +10,7 @@ import pytest
 from app.core import models
 from app.services import tc_emails
 from app.services.tc_side_events import SideEventError, price_side_events
+from tests.email_helpers import email_text, email_vars, template_id
 
 
 BRACKETS = {
@@ -301,13 +302,15 @@ def test_confirmation_email_lists_side_events(api_client, db_session, make_user,
     message = tc_emails.build_registration_confirmation(db_session, registration)
 
     assert message is not None
-    text = message["text"]
-    assert "- Handicap brackets x5 for James Mazz: $25.00" in text
-    assert "- High game for James Mazz: $10.00" in text
-    assert "- Lineage: $2.00" in text
+    text = email_text(message)
+    assert email_vars(message)["side_events"].splitlines() == [
+        "Handicap brackets x5 for James Mazz: $25.00",
+        "High game for James Mazz: $10.00",
+        "Lineage: $2.00",
+    ]
     assert "Side events and fees: $37.00" in text
     assert "Total due at check-in: $97.00" in text
-    assert "Handicap brackets x5" in message["html"]
+    assert template_id(message) == "tc-registration-confirmation"
 
 
 def test_deleting_the_last_entry_removes_side_events(api_client, db_session, make_user, make_auth_headers, outbox):

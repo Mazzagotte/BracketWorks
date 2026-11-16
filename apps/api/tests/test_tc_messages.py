@@ -7,6 +7,7 @@ import pytest
 from app.core import models
 from app.core.config import settings
 from app.services import tc_emails
+from tests.email_helpers import email_text, email_vars, template_id
 
 
 @pytest.fixture()
@@ -193,8 +194,8 @@ def test_send_message_sends_one_private_email_per_recipient(api_client, make_aut
         assert "cc" not in message and "bcc" not in message
         assert message["subject"] == "Lane draw is posted"
         assert message["reply_to"] == "director@example.com"
-        assert "See you <Saturday>." in message["text"]
-        assert "&lt;Saturday&gt;" in message["html"]
+        assert "See you <Saturday>." in email_text(message)
+        assert "&lt;Saturday&gt;" in message["template"]["variables"]["message"]
 
 
 def test_send_message_reports_failures(api_client, make_auth_headers, roster, monkeypatch):
@@ -302,7 +303,7 @@ def test_promote_confirms_registration_and_entries_and_notifies(api_client, db_s
     messages = _messages(outbox)
     assert sorted(message["to"][0] for message in messages) == ["next@example.com", "partner@example.com"]
     assert "off the waitlist" in messages[0]["subject"]
-    assert "FC-7" in messages[0]["text"]
+    assert "FC-7" in email_text(messages[0])
 
 
 def test_promote_without_notify_sends_nothing(api_client, db_session, make_auth_headers, roster, outbox):
@@ -381,7 +382,7 @@ def test_resend_confirmation_sends_details_to_everyone_on_the_registration(
     for message in messages:
         assert message["from"] == "Tournament Central <no-reply@tournamentcentral.app>"
         assert message["reply_to"] == "director@example.com"
-    text = messages[0]["text"]
+    text = email_text(messages[0])
     for expected in (
         "FC-1", "Fall Classic", "October 1, 2026 to October 2, 2026", "Sunset Lanes, Boise, ID",
         "Singles (Open), squad: Saturday AM October 1, 2026 9:00 AM", "Total due at check-in: $60.00",
@@ -392,7 +393,7 @@ def test_resend_confirmation_sends_details_to_everyone_on_the_registration(
     for removed in ("Payment", "Status:", "- Confirmed", "Organizer email:"):
         assert removed not in text
     assert "Your registration for Fall Classic is confirmed." in text
-    assert "Pat FC-1 registered you for Fall Classic." in messages[1]["text"]
+    assert "Pat FC-1 registered you for Fall Classic." in email_text(messages[1])
 
 
 def test_resend_confirmation_reports_failure(api_client, db_session, make_auth_headers, roster, monkeypatch):
@@ -412,8 +413,8 @@ def test_waitlisted_confirmation_says_waitlist(db_session, roster):
     registration = db_session.query(models.TcRegistration).filter_by(confirmation_code="FC-3").one()
     message = tc_emails.build_registration_confirmation(db_session, registration)
     assert message is not None
-    assert "waitlist" in message["text"]
-    assert "Status: Waitlisted" in message["text"]
+    assert "waitlist" in email_text(message)
+    assert "Status: Waitlisted" in email_text(message)
 
 
 def test_configured_template_id_is_used(db_session, roster, monkeypatch):
@@ -450,9 +451,9 @@ def test_public_submission_sends_confirmation(api_client, db_session, make_user,
     messages = [message for message in _messages(outbox) if message["to"] == ["riley@example.com"]]
     assert len(messages) == 1
     message = messages[0]
-    assert code in message["text"]
-    assert "Registration confirmed" in message["text"]
-    assert "Status:" not in message["text"]
+    assert code in email_text(message)
+    assert "Registration confirmed" in email_text(message)
+    assert "Status:" not in email_text(message)
 
 
 def _set_notice_details(db_session, tournament, **details) -> None:
@@ -476,7 +477,7 @@ def test_public_submission_emails_the_organizer_by_default(api_client, db_sessio
     assert notice["reply_to"] == "riley@example.com"
     for expected in (code, "Riley Lane", "riley@example.com", "Singles (Open)", "$60.00", "Bowler 1",
                      f"/organizer/tournaments/{tournament.id}/registrations"):
-        assert expected in notice["text"]
+        assert expected in email_text(notice)
 
 
 def test_old_off_setting_does_not_stop_the_organizer_email(db_session, make_user):
@@ -536,18 +537,21 @@ def test_organizer_notice_lists_every_sign_up_detail(db_session, make_user):
     ])
     db_session.commit()
 
-    text = tc_emails.build_organizer_registration_notice(db_session, registration)["text"]
+    text = email_text(tc_emails.build_organizer_registration_notice(db_session, registration))
     for expected in (
         "registered 2 bowlers", "Phone: 208-555-0100", "Bowler 1", "USBC number: 123-4567", "Average: 187",
         "Date of birth: April 2, 1990", "Gender: Female", "Address: 1 Main St, Boise, ID 83702",
-        "Bowler 2", "Name: Bo Ray", "Lefty, needs lane 12",
+        "Bowler 2: Bo Ray", "Lefty, needs lane 12",
         "Doubles, squad: Saturday, February 27, 2027 - 9:00 AM for Ann Lee and Bo Ray",
-        "Squad count", "Saturday, February 27, 2027 - 9:00 AM: 2 bowlers", "Total due at check-in: $80.00",
+        "Saturday, February 27, 2027 - 9:00 AM: 2 bowlers", "Total due at check-in: $80.00",
     ):
         assert expected in text, expected
     assert text.count("Shirt size: M") == 1
-    # Ann registered herself with the same email and phone, so there is no separate Contact section.
-    for removed in ("Contact\n", "Submitted", "Status:", "Payment", "- Confirmed"):
+    # Ann registered herself with the same email and phone, so the Contact section doesn't repeat her.
+    notice_vars = email_vars(tc_emails.build_organizer_registration_notice(db_session, registration))
+    assert notice_vars["contact_info"] == "Same as the bowler with this name below"
+    assert notice_vars["registration_info"] == ""
+    for removed in ("Submitted", "Status:", "Payment", "- Confirmed"):
         assert removed not in text, removed
 
 
@@ -624,11 +628,14 @@ def test_organizer_notice_shows_contact_and_squad_capacity_when_useful(db_sessio
     db_session.add(models.TcEntryBowler(entry_id=entry.id, bowler_id=kid.id, position=1))
     db_session.commit()
 
-    text = tc_emails.build_organizer_registration_notice(db_session, registration)["text"]
-    for expected in ("Contact", "Name: Pat Parent", "Phone: 208-555-0199", "Status: Waitlisted",
+    text = email_text(tc_emails.build_organizer_registration_notice(db_session, registration))
+    assert email_vars(tc_emails.build_organizer_registration_notice(db_session, registration))["contact_info"] == (
+        "Name: Pat Parent\nEmail: pat@example.com\nPhone: 208-555-0199"
+    )
+    for expected in ("Status: Waitlisted",
                      "Singles, squad: Saturday AM - Waitlisted", "Saturday AM: 0 of 40 spots filled, 1 on the waitlist"):
         assert expected in text, expected
 
-    confirmation = tc_emails.build_registration_confirmation(db_session, registration)["text"]
+    confirmation = email_text(tc_emails.build_registration_confirmation(db_session, registration))
     assert "Registered by: Pat Parent" in confirmation
     assert "Status: Waitlisted" in confirmation
