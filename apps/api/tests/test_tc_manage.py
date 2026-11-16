@@ -10,6 +10,7 @@ import pytest
 from app.core import models
 from app.middleware.rate_limit import rate_limiter
 from app.services import tc_emails, tc_manage_links
+from tests.email_helpers import email_text, email_vars, template_id
 
 
 @pytest.fixture()
@@ -118,8 +119,8 @@ def _register(api_client, tournament, bowlers=None, **form) -> str:
 
 
 def _token_from(message: dict) -> str:
-    match = re.search(r"/registration/manage\?token=([\w.]+)", message["text"])
-    assert match, message["text"]
+    match = re.search(r"/registration/manage\?token=([\w.]+)", email_text(message))
+    assert match, email_text(message)
     return match.group(1)
 
 
@@ -140,8 +141,8 @@ def test_confirmation_has_a_personal_manage_link_for_each_person(api_client, db_
     ann_token = _token_from(_to(outbox, "ann@example.com")[0])
     bo_token = _token_from(_to(outbox, "bo@example.com")[0])
     assert ann_token != bo_token
-    assert "Manage registration" in _to(outbox, "ann@example.com")[0]["html"]
-    assert "Use Manage registration until December 30, 2099 at 11:59 PM MST" in _to(outbox, "ann@example.com")[0]["text"]
+    assert email_vars(_to(outbox, "ann@example.com")[0])["manage_url"].startswith("http")
+    assert "Use Manage registration until December 30, 2099 at 11:59 PM MST" in email_text(_to(outbox, "ann@example.com")[0])
 
     page = api_client.get("/api/v1/public/tc-registration/manage", params={"token": bo_token})
     assert page.status_code == 200
@@ -180,11 +181,11 @@ def test_bowler_changes_are_saved_emailed_and_kept_in_history(
     for address in ("ann@example.com", "bo@example.com"):
         [update] = _to(outbox, address)
         assert update["subject"] == "Registration updated: Spring Doubles"
-        assert "Bo Ray changed registration" in update["text"]
-        assert "Squad: Saturday AM → Saturday PM" in update["text"]
-        assert "Bowler 2 phone: None → 208-555-0123" in update["text"]
+        assert "Bo Ray changed registration" in email_text(update)
+        assert "Squad: Saturday AM → Saturday PM" in email_text(update)
+        assert "Bowler 2 phone: None → 208-555-0123" in email_text(update)
     [organizer] = _to(outbox, "director@example.com")
-    assert "Squad: Saturday AM → Saturday PM" in organizer["text"]
+    assert "Squad: Saturday AM → Saturday PM" in email_text(organizer)
 
     registration = _registration(db_session, code)
     history = api_client.get(
@@ -212,7 +213,7 @@ def test_swapping_a_bowler_emails_both_and_ends_the_old_link(api_client, db_sess
     [removed] = _to(outbox, "bo@example.com")
     assert removed["subject"] == "You're no longer on a registration: Spring Doubles"
     [new_bowler] = _to(outbox, "cy@example.com")
-    assert "Bowler 2: Bo Ray → Cy Day" in new_bowler["text"]
+    assert "Bowler 2: Bo Ray → Cy Day" in email_text(new_bowler)
     assert _token_from(new_bowler) != bo_token
     assert api_client.get("/api/v1/public/tc-registration/manage", params={"token": bo_token}).status_code == 404
     assert api_client.get(
@@ -287,7 +288,17 @@ def test_cancelling_moves_the_next_team_off_the_waitlist(api_client, db_session,
 
     [cancelled] = _to(outbox, "bo@example.com")
     assert cancelled["subject"] == "Registration cancelled: Spring Doubles"
-    assert any(m["subject"] == "You're off the waitlist: Spring Doubles" for m in _to(outbox, "dee@example.com"))
+    [promoted] = [m for m in _to(outbox, "dee@example.com") if m["subject"] == "You're off the waitlist: Spring Doubles"]
+    assert "Hi Dee," in email_text(promoted)
+    assert "Total due at check-in: $80.00" in email_text(promoted)
+    assert "Status:" not in email_text(promoted)
+    assert template_id(promoted) == "tc-waitlist-promotion" and email_vars(promoted)["manage_url"]
+    # Each person gets their own link, and it opens their registration.
+    dee_token = _token_from(promoted)
+    [eli_email] = [m for m in _to(outbox, "eli@example.com") if "off the waitlist" in m["subject"]]
+    assert _token_from(eli_email) != dee_token
+    page = api_client.get("/api/v1/public/tc-registration/manage", params={"token": dee_token}).json()
+    assert page["registration"]["status"] == "confirmed"
 
 
 def test_lost_link_email_lists_each_registration(api_client, db_session, make_user, outbox):
@@ -299,7 +310,7 @@ def test_lost_link_email_lists_each_registration(api_client, db_session, make_us
     assert response.json() == {"ok": True}
     [message] = _to(outbox, "bo@example.com")
     assert message["subject"] == "Your Tournament Central registration links"
-    token = parse_qs(urlparse(re.search(r"https?://\S+", message["text"]).group(0)).query)["token"][0]
+    token = parse_qs(urlparse(re.search(r"https?://\S+/registration/manage\?\S+", email_text(message)).group(0)).query)["token"][0]
     assert api_client.get("/api/v1/public/tc-registration/manage", params={"token": token}).json()["viewer"]["name"] == "Bo Ray"
 
     outbox.clear()
@@ -323,8 +334,8 @@ def test_organizer_edits_email_the_bowlers(api_client, db_session, make_user, ma
     assert response.status_code == 200, response.text
     for address in ("ann@example.com", "bo@example.com"):
         [update] = _to(outbox, address)
-        assert "The organizer changed registration" in update["text"]
-        assert "Notes: None → Needs lane 12" in update["text"]
+        assert "The organizer changed registration" in email_text(update)
+        assert "Notes: None → Needs lane 12" in email_text(update)
 
     outbox.clear()
     response = api_client.delete(
@@ -369,3 +380,44 @@ def test_bots_are_quietly_ignored(api_client, db_session, make_user, outbox):
     api_client.post("/api/v1/public/tc-registration/manage-links",
                     json={"email": "ann@example.com", "company_website": "x"})
     assert _messages(outbox) == []
+
+
+# The variables each Resend template declares. An email may only send these.
+RESEND_TEMPLATE_VARIABLES = {
+    "tc-registration-confirmation": {"product_name", "site_url", "logo_url", "footer_note", "title", "greeting", "lead", "manage_url", "tournament_name", "tournament_dates", "tournament_location", "tournament_address", "confirmation_code", "registration_info", "bowlers", "entries", "side_events", "total_due", "fee_details", "closing"},
+    "tc-waitlist-promotion": {"product_name", "site_url", "logo_url", "footer_note", "greeting", "lead", "manage_url", "tournament_name", "tournament_dates", "tournament_location", "tournament_address", "confirmation_code", "entries", "side_events", "total_due", "fee_details", "closing"},
+    "tc-organizer-new-registration": {"product_name", "site_url", "logo_url", "footer_note", "lead", "registrations_url", "tournament_name", "contact_name", "confirmation_code", "registration_info", "contact_info", "bowler_details", "entries", "side_events", "total_due", "fee_details", "notes", "squad_count", "closing"},
+    "tc-registration-updated": {"product_name", "site_url", "logo_url", "footer_note", "greeting", "lead", "manage_url", "tournament_name", "changes", "entries", "side_events", "total_due", "fee_details", "closing", "confirmation_code"},
+    "tc-organizer-registration-updated": {"product_name", "site_url", "logo_url", "footer_note", "lead", "registrations_url", "tournament_name", "confirmation_code", "contact_name", "changes", "entries", "side_events", "total_due", "fee_details", "squad_count", "closing"},
+    "tc-registration-cancelled": {"product_name", "site_url", "logo_url", "footer_note", "greeting", "lead", "tournament_name", "button_label", "button_url", "changes", "closing"},
+    "tc-registration-removed": {"product_name", "site_url", "logo_url", "footer_note", "greeting", "lead", "tournament_name", "tournament_dates", "tournament_location", "tournament_address", "tournament_url", "closing"},
+    "tc-registration-links": {"product_name", "site_url", "logo_url", "footer_note", "lead", "registrations", "closing"},
+    "tc-organizer-message": {"product_name", "site_url", "logo_url", "footer_note", "message_subject", "tournament_name", "message"},
+}
+
+
+def test_every_email_uses_a_resend_template_and_only_its_declared_values(
+    api_client, db_session, make_user, make_auth_headers, outbox
+):
+    owner = make_user("manage_templates_owner")
+    tournament = _tournament(db_session, owner.id, capacity=2)
+    _register(api_client, tournament)
+    _register(api_client, tournament, bowlers=_bowlers(first=("Dee", "Fox", "dee@example.com"), second=("Eli", "Gray", "eli@example.com")))
+    token = _token_from(_to(outbox, "ann@example.com")[0])
+    api_client.put("/api/v1/public/tc-registration/manage", json={
+        "token": token, "form": _form(_bowlers(second=("Cy", "Day", "cy@example.com"))),
+    })
+    api_client.post("/api/v1/public/tc-registration/manage-links", json={"email": "cy@example.com"})
+    api_client.post("/api/v1/public/tc-registration/manage/cancel", json={"token": token})
+    registration = db_session.query(models.TcRegistration).filter_by(tournament_id=tournament.id).first()
+    tc_emails.send_organizer_message(db_session, tournament, ["ann@example.com"], subject="Oil pattern", body="Hi <all>")
+
+    used = set()
+    for message in _messages(outbox):
+        assert "html" not in message and "text" not in message
+        template = template_id(message)
+        assert template in RESEND_TEMPLATE_VARIABLES, template
+        assert set(email_vars(message)) <= RESEND_TEMPLATE_VARIABLES[template], (template, set(email_vars(message)) - RESEND_TEMPLATE_VARIABLES[template])
+        used.add(template)
+    assert registration is not None
+    assert used == set(RESEND_TEMPLATE_VARIABLES)
