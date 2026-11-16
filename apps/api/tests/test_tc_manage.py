@@ -287,7 +287,17 @@ def test_cancelling_moves_the_next_team_off_the_waitlist(api_client, db_session,
 
     [cancelled] = _to(outbox, "bo@example.com")
     assert cancelled["subject"] == "Registration cancelled: Spring Doubles"
-    assert any(m["subject"] == "You're off the waitlist: Spring Doubles" for m in _to(outbox, "dee@example.com"))
+    [promoted] = [m for m in _to(outbox, "dee@example.com") if m["subject"] == "You're off the waitlist: Spring Doubles"]
+    assert "Hi Dee," in promoted["text"]
+    assert "Total due at check-in: $80.00" in promoted["text"]
+    assert "Status:" not in promoted["text"]
+    assert "Manage registration" in promoted["html"]
+    # Each person gets their own link, and it opens their registration.
+    dee_token = _token_from(promoted)
+    [eli_email] = [m for m in _to(outbox, "eli@example.com") if "off the waitlist" in m["subject"]]
+    assert _token_from(eli_email) != dee_token
+    page = api_client.get("/api/v1/public/tc-registration/manage", params={"token": dee_token}).json()
+    assert page["registration"]["status"] == "confirmed"
 
 
 def test_lost_link_email_lists_each_registration(api_client, db_session, make_user, outbox):

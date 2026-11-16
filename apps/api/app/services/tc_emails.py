@@ -1063,39 +1063,56 @@ def build_manage_links_email(db: Session, email: str, registrations: list[models
 
 
 def build_waitlist_promotion_emails(db: Session, registration: models.TcRegistration) -> list[dict]:
-    """Emails telling everyone on the registration that a spot opened."""
+    """Emails telling everyone on the registration that a spot opened, each with their own
+    Manage registration link."""
     tournament = db.get(models.TournamentCentral, registration.tournament_id)
-    recipients = registration_emails(db, registration)
+    recipients = _confirmation_recipients(db, registration)
     if tournament is None or not recipients:
         return []
 
     facts = _tournament_facts(db, tournament)
     entries = _entry_lines(db, registration)
-    html_body, text = _render_document(
-        title="You're off the waitlist",
-        lead=[f"Good news: a spot opened up and you're now confirmed for {tournament.name}."],
-        sections=[
-            _tournament_section(facts),
-            ("Registration", [("Confirmation code", registration.confirmation_code), ("Status", "Confirmed")], []),
-            ("Entries", [], entries),
-        ],
-        closing=[line for line in (_organizer_line(facts),) if line],
-        button=("View tournament", facts["tournament_url"]),
-        footer=f"You're getting this because you're on a registration for {tournament.name}.",
-    )
+    side_events = _side_event_lines(db, registration)
+    lead = f"Good news: a spot opened up and you're now confirmed for {tournament.name}."
+    sections: list[Section] = [
+        _tournament_section(facts),
+        ("Registration", [("Confirmation code", registration.confirmation_code)], []),
+        ("Entries", [], entries),
+        ("Side events and fees", [], side_events),
+        ("Fees", _money_rows(registration, bool(side_events)), []),
+    ]
+    closing = [line for line in (
+        _changes_line(db, tournament),
+        _organizer_line(facts),
+        f"Tournament page: {facts['tournament_url']}",
+    ) if line]
     template_id = settings.TC_WAITLIST_PROMOTION_TEMPLATE_ID.strip()
-    variables = {**facts, "confirmation_code": registration.confirmation_code, "entries": "\n".join(entries)}
+    variables = {
+        **facts,
+        "confirmation_code": registration.confirmation_code,
+        "entries": "\n".join(entries),
+        "side_events": "\n".join(side_events),
+        "total": _format_money(registration.total_cents, registration.currency),
+    }
 
-    messages = [
-        _with_body(
+    messages: list[dict] = []
+    for email, first_name, _is_contact, manage_url in recipients:
+        greeting = f"Hi {first_name}," if first_name else ""
+        html_body, text = _render_document(
+            title="You're off the waitlist",
+            lead=[line for line in (greeting, lead) if line],
+            sections=sections,
+            closing=closing,
+            button=("Manage registration", manage_url) if manage_url else ("View tournament", facts["tournament_url"]),
+            footer=f"You're getting this because you're on a registration for {tournament.name}.",
+        )
+        messages.append(_with_body(
             _base_message(email, f"You're off the waitlist: {tournament.name}", facts),
             template_id=template_id,
-            variables=variables,
+            variables={**variables, "first_name": first_name, "manage_url": manage_url},
             text=text,
             html_body=html_body,
-        )
-        for email in recipients
-    ]
+        ))
     return messages
 
 
