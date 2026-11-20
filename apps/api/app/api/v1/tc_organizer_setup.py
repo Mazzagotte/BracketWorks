@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ...api import deps
 from ...core import models, schemas
+from ...services.tc_dashboard_summary import filled_spots_by_tournament, registration_summary
 from ...services.tc_tournament_logo import validate_tournament_logo_upload
 from ...services.tournament_access import require_tc_tournament_permission
 from ...services.tc_setup_validation import (
@@ -40,19 +41,28 @@ def list_my_tournament_setup_states(
         .all()
     )
 
-    return [
-        schemas.TournamentSetupStateSummary(
-            tournament_id=state.tournament_id,
-            tournament_name=tournament.name,
-            tournament_location=tournament.location,
-            tournament_start_date=tournament.start_date,
-            tournament_end_date=tournament.end_date,
-            is_published=state.is_published,
-            created_at=state.created_at,
-            updated_at=state.updated_at,
+    filled = filled_spots_by_tournament(db, [int(state.tournament_id) for state, _ in rows])
+    summaries = []
+    for state, tournament in rows:
+        registration = registration_summary(state, filled.get(int(state.tournament_id), 0))
+        summaries.append(
+            schemas.TournamentSetupStateSummary(
+                tournament_id=state.tournament_id,
+                tournament_name=tournament.name,
+                tournament_location=tournament.location,
+                tournament_start_date=tournament.start_date,
+                tournament_end_date=tournament.end_date,
+                is_published=state.is_published,
+                visibility=registration.visibility,
+                registration_opens_at=registration.registration_opens_at,
+                registration_closes_at=registration.registration_closes_at,
+                spots_total=registration.spots_total,
+                spots_filled=registration.spots_filled,
+                created_at=state.created_at,
+                updated_at=state.updated_at,
+            )
         )
-        for state, tournament in rows
-    ]
+    return summaries
 
 
 @router.get("/{tournament_id}", response_model=schemas.TournamentSetupState | None)

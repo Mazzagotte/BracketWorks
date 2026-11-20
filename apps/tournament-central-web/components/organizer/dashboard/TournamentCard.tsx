@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
-import { hasTournamentDate, isPast, todayIso } from './tournamentTiming';
+import { countdownLabel, todayIso, tournamentStage } from './tournamentTiming';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
@@ -51,6 +51,7 @@ type TournamentCardProps = {
 export default function TournamentCard({ tournament, isDeleting, onDelete, onDuplicate }: TournamentCardProps) {
   const hasRegistrations = (tournament.entryCount ?? 0) > 0;
   const logoUrl = useTournamentLogo(tournament.id, tournament.hasLogo);
+  const stage = tournamentStage(tournament);
   return (
     <article className={styles.tournamentRow} aria-label={tournament.name}>
       <div className={styles.tournamentIdentity}>
@@ -64,20 +65,30 @@ export default function TournamentCard({ tournament, isDeleting, onDelete, onDup
             <h3 className={styles.rowTitle}>
               <Link href={organizerRoutes.overview(tournament.id)} className={styles.rowLink}>{tournament.name}</Link>
             </h3>
-            <TournamentStatusBadge isPublic={tournament.isPublic} hasPublishedSetup={tournament.hasPublishedSetup} />
-            {hasTournamentDate(tournament) ? (
-              isPast(tournament, todayIso())
-                ? <Badge tone="neutral">Past</Badge>
-                : <Badge tone="info">Upcoming</Badge>
-            ) : null}
+            <TournamentStatusBadge
+              isPublic={tournament.isPublic}
+              hasPublishedSetup={tournament.hasPublishedSetup}
+              visibility={tournament.visibility}
+            />
+            {stage ? <Badge tone={stage.tone}>{stage.label}</Badge> : null}
           </div>
           <p className={styles.rowMeta}>
-            {formatTournamentDateRange(tournament.startDate, tournament.endDate)} · {tournament.location || 'Location not set'}
+            {[
+              formatTournamentDateRange(tournament.startDate, tournament.endDate),
+              countdownLabel(tournament, todayIso()),
+              tournament.location || 'Location not set',
+            ].filter(Boolean).join(' · ')}
           </p>
         </div>
       </div>
       <dl className={styles.metrics}>
-        <div><dt>Registrations</dt><dd>{tournament.entryCount ?? 0}</dd></div>
+        <div>
+          <dt>Registrations</dt>
+          <dd>{tournament.entryCount ?? 0}</dd>
+          {tournament.spotsTotal ? (
+            <dd className={styles.metricNote}>{`${tournament.spotsFilled ?? 0} of ${tournament.spotsTotal} spots`}</dd>
+          ) : null}
+        </div>
         <div><dt>Squads</dt><dd>{tournament.squadCount ?? 0}</dd></div>
         <div><dt>Collected</dt><dd>{formatMoney(tournament.amountPaidCents)}</dd></div>
       </dl>
