@@ -55,14 +55,28 @@ describe('operations dashboard tournament list', () => {
     expect(screen.queryByRole('article', { name: 'Spring Doubles' })).not.toBeInTheDocument();
   });
 
-  it('lists upcoming tournaments soonest first and keeps finished ones under Past', async () => {
+  it('shows all tournaments by default, upcoming first, and filters by Upcoming or Past', async () => {
     const user = userEvent.setup();
     const finished: OrganizerDashboardTournament = { ...tournaments[0], id: 60, name: 'Last Year Classic', startDate: '2020-03-01', endDate: '2020-03-01' };
+    const older: OrganizerDashboardTournament = { ...tournaments[0], id: 62, name: 'Old Timers', startDate: '2019-03-01', endDate: '2019-03-01' };
     const later: OrganizerDashboardTournament = { ...tournaments[0], id: 61, name: 'Far Future Open', startDate: '2099-01-01', endDate: '2099-01-01' };
-    render(<TournamentGrid tournaments={[later, finished, ...tournaments]} deletingTournamentId={null} onDeleteTournament={vi.fn()} />);
-    expect(screen.getAllByRole('article').map((row) => row.getAttribute('aria-label'))).toEqual(['County Open', 'Far Future Open', 'Spring Doubles']);
+    render(<TournamentGrid tournaments={[later, older, finished, ...tournaments]} deletingTournamentId={null} onDeleteTournament={vi.fn()} />);
+    const names = () => screen.getAllByRole('article').map((row) => row.getAttribute('aria-label'));
+    expect(names()).toEqual(['County Open', 'Far Future Open', 'Spring Doubles', 'Last Year Classic', 'Old Timers']);
+    await user.click(screen.getByRole('button', { name: /Upcoming/ }));
+    expect(names()).toEqual(['County Open', 'Far Future Open', 'Spring Doubles']);
     await user.click(screen.getByRole('button', { name: /Past/ }));
-    expect(screen.getAllByRole('article').map((row) => row.getAttribute('aria-label'))).toEqual(['Last Year Classic']);
+    expect(names()).toEqual(['Last Year Classic', 'Old Timers']);
+  });
+
+  it('labels dated tournaments Past or Upcoming next to the publication badge', () => {
+    const finished: OrganizerDashboardTournament = { ...tournaments[0], id: 60, name: 'Last Year Classic', startDate: '2020-03-01', endDate: '2020-03-01' };
+    render(<TournamentGrid tournaments={[finished, ...tournaments]} deletingTournamentId={null} onDeleteTournament={vi.fn()} />);
+    expect(within(screen.getByRole('article', { name: 'Last Year Classic' })).getByText('Past')).toBeInTheDocument();
+    expect(within(screen.getByRole('article', { name: 'County Open' })).getByText('Upcoming')).toBeInTheDocument();
+    const undated = screen.getByRole('article', { name: 'Spring Doubles' });
+    expect(within(undated).queryByText('Upcoming')).not.toBeInTheDocument();
+    expect(within(undated).queryByText('Past')).not.toBeInTheDocument();
   });
 
   it('routes deletion through the existing confirmation handler', async () => {
