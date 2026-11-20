@@ -4,6 +4,7 @@ import { Button, Card, CardHeader, EmptyState, SearchField, SegmentedControl, Se
 import { useMemo, useState } from 'react';
 
 import TournamentCard from './TournamentCard';
+import { isPast, todayIso } from './tournamentTiming';
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import styles from './OrganizerDashboard.module.css';
 
@@ -16,36 +17,28 @@ type TournamentGridProps = {
 
 type When = 'upcoming' | 'past' | 'all';
 
-function todayIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
-
-/** Finished once its last day is before today. Undated tournaments count as upcoming. */
-function isPast(tournament: OrganizerDashboardTournament, today: string): boolean {
-  const lastDay = tournament.endDate || tournament.startDate;
-  return Boolean(lastDay && lastDay < today);
-}
-
 export default function TournamentGrid({ tournaments, deletingTournamentId, onDeleteTournament, onDuplicateTournament }: TournamentGridProps) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
-  const [when, setWhen] = useState<When>('upcoming');
+  const [when, setWhen] = useState<When>('all');
   const today = todayIso();
   const counts = useMemo(() => {
     const past = tournaments.filter((tournament) => isPast(tournament, today)).length;
     return { upcoming: tournaments.length - past, past, all: tournaments.length };
   }, [today, tournaments]);
-  // Upcoming: soonest first, undated last. Past: most recent first.
+  // Upcoming: soonest first, undated last. Past: most recent first. All: upcoming ones, then past ones.
   const visible = useMemo(() => tournaments.filter((tournament) => {
     const matchesSearch = `${tournament.name} ${tournament.location || ''}`.toLowerCase().includes(search.trim().toLowerCase());
     const published = tournament.hasPublishedSetup;
     const matchesWhen = when === 'all' || (when === 'past') === isPast(tournament, today);
     return matchesSearch && matchesWhen && (status === 'all' || (status === 'published' ? published : !published));
   }).sort((a, b) => {
+    const aPast = isPast(a, today);
+    const bPast = isPast(b, today);
+    if (aPast !== bPast) return aPast ? 1 : -1;
     const aDate = a.startDate ?? '9999-12-31';
     const bDate = b.startDate ?? '9999-12-31';
-    return when === 'past' ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate);
+    return aPast ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate);
   }), [tournaments, search, status, today, when]);
 
   return (

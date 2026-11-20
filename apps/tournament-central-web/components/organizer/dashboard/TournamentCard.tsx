@@ -1,4 +1,4 @@
-import { Avatar, ICON_SIZE, Menu, MenuItem, MenuNote, buttonClassName, menuItemClassName } from '@bracketworks/ui';
+import { Avatar, Badge, ICON_SIZE, Menu, MenuItem, MenuNote, buttonClassName, menuItemClassName } from '@bracketworks/ui';
 import { ArrowUpRight, Copy, ExternalLink, MoreHorizontal, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import type { OrganizerDashboardTournament } from './useOrganizerDashboard';
 import TournamentStatusBadge from './TournamentStatusBadge';
+import { hasTournamentDate, isPast, todayIso } from './tournamentTiming';
 import styles from './OrganizerDashboard.module.css';
 import { organizerRoutes } from '../organizerRoutes';
 import { formatTournamentDateRange } from '@/lib/tournamentDates';
@@ -64,6 +65,11 @@ export default function TournamentCard({ tournament, isDeleting, onDelete, onDup
               <Link href={organizerRoutes.overview(tournament.id)} className={styles.rowLink}>{tournament.name}</Link>
             </h3>
             <TournamentStatusBadge isPublic={tournament.isPublic} hasPublishedSetup={tournament.hasPublishedSetup} />
+            {hasTournamentDate(tournament) ? (
+              isPast(tournament, todayIso())
+                ? <Badge tone="neutral">Past</Badge>
+                : <Badge tone="info">Upcoming</Badge>
+            ) : null}
           </div>
           <p className={styles.rowMeta}>
             {formatTournamentDateRange(tournament.startDate, tournament.endDate)} · {tournament.location || 'Location not set'}
