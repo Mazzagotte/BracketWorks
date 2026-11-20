@@ -48,6 +48,15 @@ export interface TournamentSetupStateSummaryContract {
   tournament_start_date: IsoDateString | null;
   tournament_end_date: IsoDateString | null;
   is_published: boolean;
+  /** Visibility from the published setup (or the draft, if never published). */
+  visibility?: 'public' | 'unlisted' | 'private' | null;
+  /** When registration opens and closes, in the tournament's time zone. */
+  registration_opens_at?: IsoDateTimeString | null;
+  registration_closes_at?: IsoDateTimeString | null;
+  /** All squad capacities added up; null when any squad has no limit. */
+  spots_total?: number | null;
+  /** Bowlers holding a squad spot (waitlisted people don't count). */
+  spots_filled?: number;
   created_at: IsoDateTimeString;
   updated_at: IsoDateTimeString;
 }

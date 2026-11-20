@@ -133,6 +133,11 @@
   color: var(--bw-text-title);
 }
 
+.metrics .metricNote {
+  font: var(--type-body-small);
+  color: var(--bw-text-body);
+}
+
 .loading {
   margin: 0;
   font: var(--type-body);

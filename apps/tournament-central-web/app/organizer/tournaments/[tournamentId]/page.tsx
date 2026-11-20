@@ -199,7 +199,7 @@ export default function OrganizerTournamentOverviewPage() {
         title={tournament?.name || 'Tournament'}
         badge={tournament ? (
           <span className={styles.badges}>
-            <TournamentStatusBadge isPublic={Boolean(tournament.is_public)} hasPublishedSetup={Boolean(setupSummary?.is_published)} />
+            <TournamentStatusBadge isPublic={Boolean(tournament.is_public)} hasPublishedSetup={Boolean(setupSummary?.is_published)} visibility={setupSummary?.visibility} />
             <Badge tone="neutral">{visibilityLabel}</Badge>
           </span>
         ) : null}

@@ -497,6 +497,11 @@ class TournamentSetupStateSummary(BaseModel):
     tournament_start_date: str | None = None
     tournament_end_date: str | None = None
     is_published: bool
+    visibility: str | None = None
+    registration_opens_at: datetime | None = None
+    registration_closes_at: datetime | None = None
+    spots_total: int | None = None
+    spots_filled: int = 0
     created_at: datetime
     updated_at: datetime
 

@@ -25,6 +25,11 @@ export type OrganizerDashboardTournament = {
   hasPublishedSetup: boolean;
   publicUrl: string | null;
   hasLogo: boolean;
+  visibility?: 'public' | 'unlisted' | 'private' | null;
+  registrationOpensAt?: string | null;
+  registrationClosesAt?: string | null;
+  spotsTotal?: number | null;
+  spotsFilled?: number;
 };
 
 function countSquads(squadTimes: TournamentContract['squad_times']): number | null {
@@ -139,8 +144,10 @@ export function useOrganizerDashboard() {
         listMyOrganizerSetupStates(token),
       ]);
 
+      const setupByTournament = new Map(setupRows.map((row) => [row.tournament_id, row]));
       const mapped = tournamentRows.map((item) => {
         const publicUrl = (item as { public_url?: string | null }).public_url ?? null;
+        const setup = setupByTournament.get(item.id);
         return {
           id: item.id,
           name: item.name,
@@ -152,9 +159,14 @@ export function useOrganizerDashboard() {
           squadCount: countSquads(item.squad_times),
           upcomingSquadCount: countUpcomingSquads(item.squad_times, new Date(), 7),
           amountPaidCents: item.amount_paid_cents ?? 0,
-          hasPublishedSetup: setupRows.some((row) => row.tournament_id === item.id && row.is_published),
+          hasPublishedSetup: Boolean(setup?.is_published),
           publicUrl,
           hasLogo: Boolean(item.has_logo),
+          visibility: setup?.visibility ?? null,
+          registrationOpensAt: setup?.registration_opens_at ?? null,
+          registrationClosesAt: setup?.registration_closes_at ?? null,
+          spotsTotal: setup?.spots_total ?? null,
+          spotsFilled: setup?.spots_filled ?? 0,
         } satisfies OrganizerDashboardTournament;
       });
 
